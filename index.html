@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Golf Finder">
+<meta name="theme-color" content="#0f1a0f">
+<title>Brisbane Golf Finder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+
+  :root {
+    --green: #2d5a1b;
+    --green-light: #3d7a25;
+    --green-bright: #5aab35;
+    --green-glow: #7ed44f;
+    --amber: #c47f17;
+    --amber-light: #f5a623;
+    --red: #c0392b;
+    --red-light: #e74c3c;
+    --bg: #0a120a;
+    --bg2: #0f1a0f;
+    --bg3: #152015;
+    --bg4: #1a2a1a;
+    --surface: #1e2e1e;
+    --surface2: #243424;
+    --border: rgba(90,171,53,0.15);
+    --border2: rgba(90,171,53,0.25);
+    --text: #e8f5e0;
+    --text2: #a8c89a;
+    --text3: #6a8f60;
+    --mono: 'DM Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    min-height: 100dvh;
+    overscroll-behavior: none;
+  }
+
+  body { padding-bottom: env(safe-area-inset-bottom, 20px); }
+
+  .app { max-width: 480px; margin: 0 auto; padding: 0 16px 32px; }
+
+  /* Header */
+  .header {
+    padding: 20px 0 16px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+  .header-left {}
+  .app-title {
+    font-size: 26px;
+    font-weight: 800;
+    color: var(--text);
+    line-height: 1;
+    letter-spacing: -0.5px;
+  }
+  .app-title span { color: var(--green-glow); }
+  .app-subtitle {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+  }
+  .refresh-btn {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    padding: 8px 12px;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .refresh-btn:active { transform: scale(0.95); background: var(--surface2); }
+  .refresh-icon { font-size: 15px; display: inline-block; }
+  .refresh-icon.spinning { animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Stats row */
+  .stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+  }
+  .stat-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 4px;
+  }
+  .stat-value {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1;
+  }
+  .stat-value.warn { color: var(--amber-light); }
+  .stat-value.danger { color: var(--red-light); }
+  .stat-sub {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 3px;
+  }
+
+  /* Daylight bar */
+  .daybar-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 12px;
+  }
+  .daybar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-bottom: 8px;
+  }
+  .daybar-track {
+    height: 8px;
+    background: var(--bg3);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .daybar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.6s ease, background 0.6s ease;
+  }
+  .daybar-markers {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--text3);
+    margin-top: 6px;
+  }
+  .marker-18 { color: var(--green-bright); }
+  .marker-9 { color: var(--amber-light); }
+
+  /* Open all button */
+  .open-all-card {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 14px;
+    padding: 14px 16px;
+    margin-bottom: 14px;
+  }
+  .open-all-desc {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 12px;
+    line-height: 1.5;
+  }
+  .open-all-desc strong { color: var(--text); font-weight: 600; }
+  .open-all-btn {
+    width: 100%;
+    background: var(--green);
+    border: 1px solid var(--green-light);
+    border-radius: 10px;
+    padding: 14px;
+    color: var(--green-glow);
+    font-family: var(--sans);
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .open-all-btn:active { transform: scale(0.98); background: var(--green-light); }
+  .open-all-btn.disabled {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text3);
+    cursor: not-allowed;
+  }
+  .filter-toggles {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    flex-wrap: wrap;
+  }
+  .toggle-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+  }
+  .toggle-label input { accent-color: var(--green-bright); cursor: pointer; }
+
+  /* Filter pills */
+  .filters {
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    margin-bottom: 14px;
+    scrollbar-width: none;
+  }
+  .filters::-webkit-scrollbar { display: none; }
+  .fpill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 6px 13px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .fpill.on {
+    background: var(--bg3);
+    border-color: var(--green-bright);
+    color: var(--green-glow);
+  }
+
+  /* Section head */
+  .section-head {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text3);
+    margin: 16px 0 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .section-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .dot-green { background: var(--green-bright); }
+  .dot-red { background: var(--red-light); }
+
+  /* Course card */
+  .ccard {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 15px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    transition: border-color 0.15s;
+  }
+  .ccard:active { border-color: var(--border2); }
+  .ccard.dimmed { opacity: 0.3; }
+  .ccard-left { flex: 1; min-width: 0; }
+  .ccard-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 3px;
+  }
+  .ccard-meta {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    margin-bottom: 7px;
+  }
+  .ccard-leave {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--amber-light);
+    margin-bottom: 7px;
+  }
+  .badges { display: flex; gap: 5px; flex-wrap: wrap; }
+  .badge {
+    font-family: var(--mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-weight: 500;
+  }
+  .b18 { background: rgba(90,171,53,0.15); color: var(--green-glow); border: 1px solid rgba(90,171,53,0.25); }
+  .b9 { background: rgba(196,127,23,0.15); color: var(--amber-light); border: 1px solid rgba(196,127,23,0.25); }
+  .btype { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid var(--border); }
+  .bno { background: rgba(192,57,43,0.12); color: var(--red-light); border: 1px solid rgba(192,57,43,0.2); }
+  .bgn { background: rgba(55,138,221,0.12); color: #7ab8f5; border: 1px solid rgba(55,138,221,0.2); }
+
+  .book-btn {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    padding: 8px 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.15s;
+    align-self: flex-start;
+    margin-top: 2px;
+  }
+  .book-btn:active { background: var(--surface2); transform: scale(0.95); }
+
+  .no-results {
+    text-align: center;
+    padding: 32px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text3);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+  }
+
+  .loading-pulse {
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-left">
+      <div class="app-title">Brisbane<br><span>Golf</span> Finder</div>
+      <div class="app-subtitle" id="updated-ts">tap refresh to load</div>
+    </div>
+    <button class="refresh-btn" onclick="init()" id="refresh-btn">
+      <span class="refresh-icon" id="refresh-icon">↻</span>
+      <span>Refresh</span>
+    </button>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">Now</div>
+      <div class="stat-value loading-pulse" id="s-now">--:--</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Last light</div>
+      <div class="stat-value loading-pulse" id="s-sunset">--:--</div>
+      <div class="stat-sub" id="s-sunset-src"></div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Daylight left</div>
+      <div class="stat-value loading-pulse" id="s-daylight">-- hrs</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">Viable courses</div>
+      <div class="stat-value loading-pulse" id="s-viable">--</div>
+      <div class="stat-sub" id="s-viable-sub"></div>
+    </div>
+  </div>
+
+  <div class="daybar-wrap">
+    <div class="daybar-labels">
+      <span>sunrise</span>
+      <span id="daybar-mid">daylight remaining</span>
+      <span>last light</span>
+    </div>
+    <div class="daybar-track">
+      <div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--green-bright);"></div>
+    </div>
+    <div class="daybar-markers">
+      <span></span>
+      <span class="marker-18" id="marker-18"></span>
+      <span class="marker-9" id="marker-9"></span>
+    </div>
+  </div>
+
+  <div class="open-all-card">
+    <div class="open-all-desc" id="open-all-desc">Loading course availability...</div>
+    <button class="open-all-btn disabled" id="open-all-btn" onclick="openAll()">
+      ⛳ Open all booking pages
+    </button>
+    <div class="filter-toggles">
+      <label class="toggle-label"><input type="checkbox" id="chk-18" onchange="render()"> 18 holes only</label>
+      <label class="toggle-label"><input type="checkbox" id="chk-9" onchange="render()"> 9 holes only</label>
+    </div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="fpill on" onclick="setFilter('all',this)">All courses</button>
+    <button class="fpill" onclick="setFilter('playable',this)">Playable now</button>
+    <button class="fpill" onclick="setFilter('18',this)">18 holes</button>
+    <button class="fpill" onclick="setFilter('9',this)">9 holes</button>
+    <button class="fpill" onclick="setFilter('close',this)">≤25 min</button>
+    <button class="fpill" onclick="setFilter('public',this)">Public</button>
+    <button class="fpill" onclick="setFilter('golfnow',this)">GolfNow</button>
+  </div>
+
+  <div id="course-list"></div>
+
+</div>
+
+<script>
+const COURSES = [
+  { name:"Brisbane Golf Club", suburb:"Yeerongpilly", drive:10, holes:[18], type:"private", golfnow:false, url:"https://www.brisbanegolfclub.com.au/book-a-tee-time" },
+  { name:"Ashgrove Golf Club", suburb:"Ashgrove", drive:12, holes:[9,18], type:"private", golfnow:false, url:"https://www.ashgrovegolf.com.au/book-a-tee-time" },
+  { name:"Keperra Country Golf Club", suburb:"Keperra", drive:14, holes:[9,18], type:"semi-private", golfnow:false, url:"https://www.keperra.com.au/golf/book-a-tee-time/" },
+  { name:"Virginia Golf Club", suburb:"Virginia", drive:16, holes:[9,18], type:"public", golfnow:false, url:"https://www.virginiagolfclub.com.au/tee-times" },
+  { name:"Indooroopilly Golf Club", suburb:"Indooroopilly", drive:16, holes:[9,18], type:"private", golfnow:false, url:"https://www.indooroopillygolf.com.au/book" },
+  { name:"Mt Gravatt Golf Club", suburb:"Mt Gravatt", drive:18, holes:[9,18], type:"public", golfnow:false, url:"https://www.mtgravattgolf.com.au/book-tee-time" },
+  { name:"Pacific Golf Club", suburb:"Carindale", drive:18, holes:[18], type:"private", golfnow:false, url:"https://www.pacificgolfclub.com.au/book" },
+  { name:"Nudgee Golf Club", suburb:"Nudgee", drive:20, holes:[9,18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/nudgee-golf-club-bay-course/search" },
+  { name:"Oxley Golf Club", suburb:"Oxley", drive:22, holes:[9,18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/oxley-golf-club/search" },
+  { name:"Wynnum Golf Club", suburb:"Wynnum", drive:24, holes:[9,18], type:"semi-private", golfnow:false, url:"https://www.wynnumgolfclub.com.au/tee-times" },
+  { name:"Gailes Golf Club", suburb:"Gailes", drive:30, holes:[9,18], type:"public", golfnow:false, url:"https://www.gailesgolf.com.au/tee-times" },
+  { name:"Meadowbrook Golf Club", suburb:"Meadowbrook", drive:32, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/meadowbrook-golf-club/search" },
+  { name:"Pine Rivers Golf Club", suburb:"Bray Park", drive:35, holes:[9,18], type:"public", golfnow:false, url:"https://www.pineriversgolf.com.au/tee-times" },
+  { name:"Carbrook Golf Club", suburb:"Carbrook", drive:35, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search" },
+  { name:"Brisbane River Golf Club", suburb:"Karana Downs", drive:38, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/16297-brisbane-river-golf-club/search" },
+  { name:"North Lakes Golf Club", suburb:"North Lakes", drive:38, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search" },
+  { name:"Redcliffe Golf Club", suburb:"Redcliffe", drive:42, holes:[9,18], type:"public", golfnow:false, url:"https://www.redcliffegolf.com.au/book" },
+  { name:"Ipswich Golf Club", suburb:"Ipswich", drive:45, holes:[18], type:"public", golfnow:false, url:"https://www.ipswichgolfclub.com.au/tee-times" },
+  { name:"Beenleigh Golf Club", suburb:"Beenleigh", drive:45, holes:[9,18], type:"public", golfnow:false, url:"https://www.beenleighgolfclub.com.au/book" },
+  { name:"Caboolture Golf Club", suburb:"Caboolture", drive:50, holes:[18], type:"public", golfnow:false, url:"https://www.caboolturegolf.com.au/tee-times" },
+  { name:"Maroochy River Golf Club", suburb:"Bli Bli", drive:90, holes:[18], type:"public", golfnow:false, url:"https://www.maroochyrivergolf.com.au/book" },
+];
+
+const BUFFER = 15;
+let sunsetMins = null;
+let activeFilter = 'all';
+
+function pad(n){ return String(n).padStart(2,'0'); }
+function nowMins(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function minsToStr(m){
+  const h=Math.floor(((m%1440)+1440)%1440/60), mn=((m%60)+60)%60;
+  const ap=h>=12?'pm':'am', h12=h%12||12;
+  return `${h12}:${pad(mn)}${ap}`;
+}
+function canPlay9(drive,daylight){ return daylight >= drive+150+BUFFER; }
+function canPlay18(drive,daylight){ return daylight >= drive+270+BUFFER; }
+
+async function fetchSunset(){
+  try {
+    const r = await fetch('https://api.sunrisesunset.io/json?lat=-27.4698&lng=153.0251&timezone=Australia/Brisbane&date=today');
+    const d = await r.json();
+    if(d.status==='OK'){
+      const [time,ap] = d.results.sunset.split(' ');
+      const [hh,mm] = time.split(':').map(Number);
+      let h=hh;
+      if(ap==='PM'&&hh!==12) h+=12;
+      if(ap==='AM'&&hh===12) h=0;
+      return {mins:h*60+mm, live:true};
+    }
+  } catch(e){}
+  const mo=new Date().getMonth();
+  return {mins:(mo>=4&&mo<=8)?17*60+10:18*60+25, live:false};
+}
+
+function setFilter(f,btn){
+  activeFilter=f;
+  document.querySelectorAll('.fpill').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function getViable(daylight){
+  return COURSES.filter(c=>(canPlay9(c.drive,daylight)&&c.holes.includes(9))||(canPlay18(c.drive,daylight)&&c.holes.includes(18)));
+}
+
+function getFiltered(daylight){
+  const only18=document.getElementById('chk-18').checked;
+  const only9=document.getElementById('chk-9').checked;
+  return COURSES.filter(c=>{
+    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
+    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
+    if(only18&&!p18) return false;
+    if(only9&&p18) return false;
+    if(activeFilter==='playable') return p9||p18;
+    if(activeFilter==='18') return p18;
+    if(activeFilter==='9') return p9&&!p18;
+    if(activeFilter==='close') return c.drive<=25;
+    if(activeFilter==='public') return c.type==='public';
+    if(activeFilter==='golfnow') return c.golfnow;
+    return true;
+  });
+}
+
+function render(){
+  if(sunsetMins===null) return;
+  const now=nowMins();
+  const daylight=Math.max(0,sunsetMins-now);
+  const dLeft=(daylight/60).toFixed(1);
+
+  document.getElementById('s-now').textContent=minsToStr(now);
+  document.getElementById('s-sunset').textContent=minsToStr(sunsetMins);
+
+  const dlEl=document.getElementById('s-daylight');
+  dlEl.textContent=dLeft+' hrs';
+  dlEl.className='stat-value'+(daylight<120?' danger':daylight<240?' warn':'');
+
+  const sunriseMins=5*60+30;
+  const totalDay=sunsetMins-sunriseMins;
+  const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
+  const fill=document.getElementById('daybar-fill');
+  fill.style.width=pct+'%';
+  fill.style.background=pct>85?'var(--red-light)':pct>65?'var(--amber-light)':'var(--green-bright)';
+
+  const viable=getViable(daylight);
+  const c18=viable.filter(c=>canPlay18(c.drive,daylight)&&c.holes.includes(18)).length;
+  const c9=viable.filter(c=>canPlay9(c.drive,daylight)&&c.holes.includes(9)&&!canPlay18(c.drive,daylight)).length;
+  document.getElementById('s-viable').textContent=viable.length;
+  document.getElementById('s-viable-sub').textContent=`${c18} for 18 · ${c9} for 9`;
+
+  const openable=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
+  const btn=document.getElementById('open-all-btn');
+  const desc=document.getElementById('open-all-desc');
+  if(openable.length>0){
+    desc.innerHTML=`<strong>${openable.length} course${openable.length!==1?'s':''}</strong> reachable with enough daylight — open all booking pages at once`;
+    btn.classList.remove('disabled');
+  } else {
+    desc.innerHTML='No courses reachable with enough daylight remaining today.';
+    btn.classList.add('disabled');
+  }
+
+  const filtered=getFiltered(daylight);
+  const sortedAll=[...COURSES].sort((a,b)=>a.drive-b.drive);
+  const display=activeFilter==='all'?sortedAll:filtered;
+
+  const playable=display.filter(c=>{
+    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
+    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
+    return p9||p18;
+  });
+  const notPlayable=activeFilter==='all'?display.filter(c=>{
+    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
+    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
+    return !(p9||p18);
+  }):[];
+
+  let html='';
+  if(playable.length){
+    html+=`<div class="section-head"><span class="section-dot dot-green"></span>Playable today &mdash; ${playable.length} course${playable.length!==1?'s':''}</div>`;
+    playable.forEach(c=>{ html+=courseCard(c,daylight,false); });
+  }
+  if(notPlayable.length){
+    html+=`<div class="section-head" style="margin-top:20px;"><span class="section-dot dot-red"></span>Not enough daylight &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
+    notPlayable.forEach(c=>{ html+=courseCard(c,daylight,true); });
+  }
+  if(!playable.length&&!notPlayable.length){
+    html='<div class="no-results">No courses match this filter.</div>';
+  }
+
+  document.getElementById('course-list').innerHTML=html;
+}
+
+function courseCard(c,daylight,dimmed){
+  const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
+  const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
+  const leaveTime=minsToStr(nowMins()+c.drive);
+  const leaveStr=!dimmed?`⬆ leave by ${leaveTime} for first tee`:'';
+  const typeBadge=`<span class="badge btype">${c.type}</span>`;
+  const gnBadge=c.golfnow?`<span class="badge bgn">GolfNow</span>`:'';
+  return `<div class="ccard${dimmed?' dimmed':''}">
+    <div class="ccard-left">
+      <div class="ccard-name">${c.name}</div>
+      <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive</div>
+      ${leaveStr&&!dimmed?`<div class="ccard-leave">${leaveStr}</div>`:''}
+      <div class="badges">
+        ${p18?'<span class="badge b18">18 holes</span>':''}
+        ${p9?'<span class="badge b9">9 holes</span>':''}
+        ${dimmed?'<span class="badge bno">no time today</span>':''}
+        ${typeBadge}${gnBadge}
+      </div>
+    </div>
+    <a class="book-btn" href="${c.url}" target="_blank">Book ↗</a>
+  </div>`;
+}
+
+function openAll(){
+  const btn=document.getElementById('open-all-btn');
+  if(btn.classList.contains('disabled')) return;
+  const daylight=Math.max(0,sunsetMins-nowMins());
+  const toOpen=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
+  toOpen.forEach((c,i)=>{ setTimeout(()=>{ window.open(c.url,'_blank'); },i*200); });
+}
+
+async function init(){
+  const icon=document.getElementById('refresh-icon');
+  icon.classList.add('spinning');
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('loading-pulse'));
+  const result=await fetchSunset();
+  sunsetMins=result.mins;
+  document.getElementById('s-sunset-src').textContent=result.live?'live':'estimated';
+  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  document.getElementById('updated-ts').textContent=`updated ${ts}`;
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('loading-pulse'));
+  icon.classList.remove('spinning');
+  render();
+  clearInterval(window._interval);
+  window._interval=setInterval(()=>{
+    render();
+    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+    document.getElementById('updated-ts').textContent=`updated ${t}`;
+  },60000);
+}
+
+init();
+</script>
+</body>
+</html>
