@@ -8,518 +8,234 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <meta name="theme-color" content="#0f1a0f">
-<title>Brisbane Golf Finder</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
-
-  :root {
-    --green: #2d5a1b;
-    --green-light: #3d7a25;
-    --green-bright: #5aab35;
-    --green-glow: #7ed44f;
-    --amber: #c47f17;
-    --amber-light: #f5a623;
-    --red: #c0392b;
-    --red-light: #e74c3c;
-    --bg: #0a120a;
-    --bg2: #0f1a0f;
-    --bg3: #152015;
-    --bg4: #1a2a1a;
-    --surface: #1e2e1e;
-    --surface2: #243424;
-    --border: rgba(90,171,53,0.15);
-    --border2: rgba(90,171,53,0.25);
-    --text: #e8f5e0;
-    --text2: #a8c89a;
-    --text3: #6a8f60;
-    --mono: 'DM Mono', monospace;
-    --sans: 'Syne', sans-serif;
-  }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-
-  html, body {
-    background: var(--bg);
-    color: var(--text);
-    font-family: var(--sans);
-    min-height: 100vh;
-    min-height: 100dvh;
-    overscroll-behavior: none;
-  }
-
-  body { padding-bottom: env(safe-area-inset-bottom, 20px); }
-
-  .app { max-width: 480px; margin: 0 auto; padding: 0 16px 32px; }
-
-  /* Header */
-  .header {
-    padding: 20px 0 16px;
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 12px;
-  }
-  .header-left {}
-  .app-title {
-    font-size: 26px;
-    font-weight: 800;
-    color: var(--text);
-    line-height: 1;
-    letter-spacing: -0.5px;
-  }
-  .app-title span { color: var(--green-glow); }
-  .app-subtitle {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    margin-top: 4px;
-    letter-spacing: 0.05em;
-  }
-  .refresh-btn {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 10px;
-    padding: 8px 12px;
-    color: var(--text2);
-    font-family: var(--mono);
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-    transition: all 0.15s;
-  }
-  .refresh-btn:active { transform: scale(0.95); background: var(--surface2); }
-  .refresh-icon { font-size: 15px; display: inline-block; }
-  .refresh-icon.spinning { animation: spin 0.8s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Stats row */
-  .stats {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 12px;
-  }
-  .stat {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-  }
-  .stat-label {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    margin-bottom: 4px;
-  }
-  .stat-value {
-    font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1;
-  }
-  .stat-value.warn { color: var(--amber-light); }
-  .stat-value.danger { color: var(--red-light); }
-  .stat-sub {
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    margin-top: 3px;
-  }
-
-  /* Daylight bar */
-  .daybar-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 12px 14px;
-    margin-bottom: 12px;
-  }
-  .daybar-labels {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    margin-bottom: 8px;
-  }
-  .daybar-track {
-    height: 8px;
-    background: var(--bg3);
-    border-radius: 4px;
-    overflow: hidden;
-    position: relative;
-  }
-  .daybar-fill {
-    height: 100%;
-    border-radius: 4px;
-    transition: width 0.6s ease, background 0.6s ease;
-  }
-  .daybar-markers {
-    display: flex;
-    justify-content: space-between;
-    font-family: var(--mono);
-    font-size: 10px;
-    color: var(--text3);
-    margin-top: 6px;
-  }
-  .marker-18 { color: var(--green-bright); }
-  .marker-9 { color: var(--amber-light); }
-
-  /* Open all button */
-  .open-all-card {
-    background: var(--surface);
-    border: 1px solid var(--border2);
-    border-radius: 14px;
-    padding: 14px 16px;
-    margin-bottom: 14px;
-  }
-  .open-all-desc {
-    font-size: 13px;
-    color: var(--text2);
-    margin-bottom: 12px;
-    line-height: 1.5;
-  }
-  .open-all-desc strong { color: var(--text); font-weight: 600; }
-  .open-all-btn {
-    width: 100%;
-    background: var(--green);
-    border: 1px solid var(--green-light);
-    border-radius: 10px;
-    padding: 14px;
-    color: var(--green-glow);
-    font-family: var(--sans);
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    transition: all 0.15s;
-    letter-spacing: 0.01em;
-  }
-  .open-all-btn:active { transform: scale(0.98); background: var(--green-light); }
-  .open-all-btn.disabled {
-    background: var(--surface2);
-    border-color: var(--border);
-    color: var(--text3);
-    cursor: not-allowed;
-  }
-  .filter-toggles {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    flex-wrap: wrap;
-  }
-  .toggle-label {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    cursor: pointer;
-  }
-  .toggle-label input { accent-color: var(--green-bright); cursor: pointer; }
-
-  /* Filter pills */
-  .filters {
-    display: flex;
-    gap: 6px;
-    overflow-x: auto;
-    padding-bottom: 4px;
-    margin-bottom: 14px;
-    scrollbar-width: none;
-  }
-  .filters::-webkit-scrollbar { display: none; }
-  .fpill {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    padding: 6px 13px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    cursor: pointer;
-    white-space: nowrap;
-    flex-shrink: 0;
-    transition: all 0.15s;
-  }
-  .fpill.on {
-    background: var(--bg3);
-    border-color: var(--green-bright);
-    color: var(--green-glow);
-  }
-
-  /* Section head */
-  .section-head {
-    font-family: var(--mono);
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.1em;
-    color: var(--text3);
-    margin: 16px 0 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .section-dot {
-    width: 6px; height: 6px;
-    border-radius: 50%;
-    flex-shrink: 0;
-  }
-  .dot-green { background: var(--green-bright); }
-  .dot-red { background: var(--red-light); }
-
-  /* Course card */
-  .ccard {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 14px 15px;
-    margin-bottom: 8px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    transition: border-color 0.15s;
-  }
-  .ccard:active { border-color: var(--border2); }
-  .ccard.dimmed { opacity: 0.3; }
-  .ccard-left { flex: 1; min-width: 0; }
-  .ccard-name {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    margin-bottom: 3px;
-  }
-  .ccard-meta {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text3);
-    margin-bottom: 7px;
-  }
-  .ccard-leave {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--amber-light);
-    margin-bottom: 7px;
-  }
-  .badges { display: flex; gap: 5px; flex-wrap: wrap; }
-  .badge {
-    font-family: var(--mono);
-    font-size: 10px;
-    padding: 2px 7px;
-    border-radius: 5px;
-    font-weight: 500;
-  }
-  .b18 { background: rgba(90,171,53,0.15); color: var(--green-glow); border: 1px solid rgba(90,171,53,0.25); }
-  .b9 { background: rgba(196,127,23,0.15); color: var(--amber-light); border: 1px solid rgba(196,127,23,0.25); }
-  .btype { background: rgba(255,255,255,0.05); color: var(--text3); border: 1px solid var(--border); }
-  .bno { background: rgba(192,57,43,0.12); color: var(--red-light); border: 1px solid rgba(192,57,43,0.2); }
-  .bgn { background: rgba(55,138,221,0.12); color: #7ab8f5; border: 1px solid rgba(55,138,221,0.2); }
-
-  .book-btn {
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 9px;
-    padding: 8px 11px;
-    color: var(--text2);
-    font-family: var(--mono);
-    font-size: 11px;
-    cursor: pointer;
-    text-decoration: none;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-    transition: all 0.15s;
-    align-self: flex-start;
-    margin-top: 2px;
-  }
-  .book-btn:active { background: var(--surface2); transform: scale(0.95); }
-
-  .no-results {
-    text-align: center;
-    padding: 32px 20px;
-    font-family: var(--mono);
-    font-size: 13px;
-    color: var(--text3);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 14px;
-  }
-
-  .loading-pulse {
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-</style>
+<title>Golf Finder</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
 <script>
-if ('serviceWorker' in navigator) {
-  const MANIFEST = {
-    name: 'Brisbane Golf Finder',
-    short_name: 'Golf Finder',
-    description: 'Find playable golf courses near Brisbane based on daylight remaining',
-    start_url: '.',
-    display: 'standalone',
-    background_color: '#0a120a',
-    theme_color: '#0f1a0f',
-    orientation: 'portrait',
-    icons: [
-      { src: 'data:image/png;base64,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', sizes: '192x192', type: 'image/png', purpose: 'any maskable' },
-      { src: 'data:image/png;base64,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', sizes: '512x512', type: 'image/png', purpose: 'any maskable' }
-    ]
-  };
-  const blob = new Blob([JSON.stringify(MANIFEST)], {type:'application/manifest+json'});
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('link');
-  link.rel = 'manifest';
-  link.href = url;
-  document.head.appendChild(link);
+if('serviceWorker' in navigator){
+  const M={name:'Golf Finder SEQ',short_name:'Golf Finder',description:'Find playable golf courses based on your location and daylight remaining',start_url:'.',display:'standalone',background_color:'#0a120a',theme_color:'#0f1a0f',orientation:'portrait',icons:[{src:'data:image/png;base64,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',sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:'data:image/png;base64,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',sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
+  const b=new Blob([JSON.stringify(M)],{type:'application/manifest+json'});
+  const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(b);
+  document.head.appendChild(l);
 }
 </script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
+:root{
+  --green:#2d5a1b;--green-light:#3d7a25;--green-bright:#5aab35;--green-glow:#7ed44f;
+  --amber:#c47f17;--amber-light:#f5a623;--red:#c0392b;--red-light:#e74c3c;
+  --bg:#0a120a;--bg2:#0f1a0f;--bg3:#152015;--bg4:#1a2a1a;
+  --surface:#1e2e1e;--surface2:#243424;
+  --border:rgba(90,171,53,0.15);--border2:rgba(90,171,53,0.25);
+  --text:#e8f5e0;--text2:#a8c89a;--text3:#6a8f60;
+  --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;min-height:100dvh;overscroll-behavior:none;}
+body{padding-bottom:env(safe-area-inset-bottom,20px);}
+.app{max-width:480px;margin:0 auto;padding:0 16px 32px;}
+.header{padding:20px 0 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.app-title{font-size:26px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-0.5px;}
+.app-title span{color:var(--green-glow);}
+.app-subtitle{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:0.05em;}
+.loc-status{font-family:var(--mono);font-size:10px;margin-top:3px;}
+.loc-ok{color:var(--green-glow);} .loc-est{color:var(--amber-light);} .loc-err{color:var(--red-light);}
+.refresh-btn{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:all 0.15s;}
+.refresh-btn:active{transform:scale(0.95);background:var(--surface2);}
+.spin{animation:spin 0.8s linear infinite;display:inline-block;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
+.stat-value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1;}
+.stat-value.warn{color:var(--amber-light);} .stat-value.danger{color:var(--red-light);}
+.stat-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
+.daybar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.daybar-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;}
+.daybar-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;}
+.daybar-fill{height:100%;border-radius:4px;transition:width 0.6s ease,background 0.6s ease;}
+.open-all-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
+.open-all-desc{font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5;}
+.open-all-desc strong{color:var(--text);font-weight:600;}
+.open-all-btn{width:100%;background:var(--green);border:1px solid var(--green-light);border-radius:10px;padding:14px;color:var(--green-glow);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;}
+.open-all-btn:active{transform:scale(0.98);background:var(--green-light);}
+.open-all-btn.disabled{background:var(--surface2);border-color:var(--border);color:var(--text3);cursor:not-allowed;}
+.filter-toggles{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.toggle-label{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;}
+.toggle-label input{accent-color:var(--green-bright);cursor:pointer;}
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.fpill{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
+.fpill.on{background:var(--bg3);border-color:var(--green-bright);color:var(--green-glow);}
+.section-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
+.section-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.dot-green{background:var(--green-bright);} .dot-red{background:var(--red-light);}
+.ccard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;}
+.ccard.dimmed{opacity:0.3;}
+.ccard-left{flex:1;min-width:0;}
+.ccard-name{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
+.ccard-meta{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:5px;}
+.ccard-region{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em;}
+.ccard-leave{font-family:var(--mono);font-size:11px;color:var(--amber-light);margin-bottom:7px;}
+.badges{display:flex;gap:5px;flex-wrap:wrap;}
+.badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500;}
+.b18{background:rgba(90,171,53,0.15);color:var(--green-glow);border:1px solid rgba(90,171,53,0.25);}
+.b9{background:rgba(196,127,23,0.15);color:var(--amber-light);border:1px solid rgba(196,127,23,0.25);}
+.btype{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border);}
+.bno{background:rgba(192,57,43,0.12);color:var(--red-light);border:1px solid rgba(192,57,43,0.2);}
+.bgn{background:rgba(55,138,221,0.12);color:#7ab8f5;border:1px solid rgba(55,138,221,0.2);}
+.book-btn{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;text-decoration:none;flex-shrink:0;display:flex;align-items:center;gap:4px;align-self:flex-start;margin-top:2px;}
+.book-btn:active{background:var(--surface2);transform:scale(0.95);}
+.no-results{text-align:center;padding:32px 20px;font-family:var(--mono);font-size:13px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:14px;}
+.pulse{animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+</style>
 </head>
 <body>
 <div class="app">
-
   <div class="header">
-    <div class="header-left">
-      <div class="app-title">Brisbane<br><span>Golf</span> Finder</div>
+    <div>
+      <div class="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-subtitle" id="updated-ts">tap refresh to load</div>
+      <div class="loc-status" id="loc-status"></div>
     </div>
     <button class="refresh-btn" onclick="init()" id="refresh-btn">
-      <span class="refresh-icon" id="refresh-icon">↻</span>
-      <span>Refresh</span>
+      <span id="refresh-icon">↻</span> Refresh
     </button>
   </div>
 
   <div class="stats">
-    <div class="stat">
-      <div class="stat-label">Now</div>
-      <div class="stat-value loading-pulse" id="s-now">--:--</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Last light</div>
-      <div class="stat-value loading-pulse" id="s-sunset">--:--</div>
-      <div class="stat-sub" id="s-sunset-src"></div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Daylight left</div>
-      <div class="stat-value loading-pulse" id="s-daylight">-- hrs</div>
-    </div>
-    <div class="stat">
-      <div class="stat-label">Viable courses</div>
-      <div class="stat-value loading-pulse" id="s-viable">--</div>
-      <div class="stat-sub" id="s-viable-sub"></div>
-    </div>
+    <div class="stat"><div class="stat-label">Now</div><div class="stat-value pulse" id="s-now">--:--</div></div>
+    <div class="stat"><div class="stat-label">Last light</div><div class="stat-value pulse" id="s-sunset">--:--</div><div class="stat-sub" id="s-sunset-src"></div></div>
+    <div class="stat"><div class="stat-label">Daylight left</div><div class="stat-value pulse" id="s-daylight">--</div></div>
+    <div class="stat"><div class="stat-label">Viable courses</div><div class="stat-value pulse" id="s-viable">--</div><div class="stat-sub" id="s-viable-sub"></div></div>
   </div>
 
   <div class="daybar-wrap">
-    <div class="daybar-labels">
-      <span>sunrise</span>
-      <span id="daybar-mid">daylight remaining</span>
-      <span>last light</span>
-    </div>
-    <div class="daybar-track">
-      <div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--green-bright);"></div>
-    </div>
-    <div class="daybar-markers">
-      <span></span>
-      <span class="marker-18" id="marker-18"></span>
-      <span class="marker-9" id="marker-9"></span>
-    </div>
+    <div class="daybar-labels"><span>sunrise</span><span>daylight remaining</span><span>last light</span></div>
+    <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--green-bright);"></div></div>
   </div>
 
   <div class="open-all-card">
-    <div class="open-all-desc" id="open-all-desc">Loading course availability...</div>
-    <button class="open-all-btn disabled" id="open-all-btn" onclick="openAll()">
-      ⛳ Open all booking pages
-    </button>
+    <div class="open-all-desc" id="open-all-desc">Loading...</div>
+    <button class="open-all-btn disabled" id="open-all-btn" onclick="openAll()">⛳ Open all booking pages</button>
     <div class="filter-toggles">
       <label class="toggle-label"><input type="checkbox" id="chk-18" onchange="render()"> 18 holes only</label>
       <label class="toggle-label"><input type="checkbox" id="chk-9" onchange="render()"> 9 holes only</label>
     </div>
   </div>
 
-  <div class="filters" id="filters">
-    <button class="fpill on" onclick="setFilter('all',this)">All courses</button>
+  <div class="filters">
+    <button class="fpill on" onclick="setFilter('all',this)">All</button>
     <button class="fpill" onclick="setFilter('playable',this)">Playable now</button>
     <button class="fpill" onclick="setFilter('18',this)">18 holes</button>
     <button class="fpill" onclick="setFilter('9',this)">9 holes</button>
-    <button class="fpill" onclick="setFilter('close',this)">≤25 min</button>
+    <button class="fpill" onclick="setFilter('close',this)">≤30 min</button>
     <button class="fpill" onclick="setFilter('public',this)">Public</button>
     <button class="fpill" onclick="setFilter('golfnow',this)">GolfNow</button>
+    <button class="fpill" onclick="setFilter('brisbane',this)">Brisbane</button>
+    <button class="fpill" onclick="setFilter('goldcoast',this)">Gold Coast</button>
+    <button class="fpill" onclick="setFilter('sunshine',this)">Sunshine Coast</button>
+    <button class="fpill" onclick="setFilter('toowoomba',this)">Toowoomba</button>
   </div>
 
   <div id="course-list"></div>
-
 </div>
 
 <script>
 const COURSES = [
-  { name:"Brisbane Golf Club", suburb:"Yeerongpilly", drive:10, holes:[18], type:"private", golfnow:false, url:"https://www.brisbanegolfclub.com.au/book-a-tee-time" },
-  { name:"Ashgrove Golf Club", suburb:"Ashgrove", drive:12, holes:[9,18], type:"private", golfnow:false, url:"https://www.ashgrovegolf.com.au/book-a-tee-time" },
-  { name:"Keperra Country Golf Club", suburb:"Keperra", drive:14, holes:[9,18], type:"semi-private", golfnow:false, url:"https://www.keperra.com.au/golf/book-a-tee-time/" },
-  { name:"Virginia Golf Club", suburb:"Virginia", drive:16, holes:[9,18], type:"public", golfnow:false, url:"https://www.virginiagolfclub.com.au/tee-times" },
-  { name:"Indooroopilly Golf Club", suburb:"Indooroopilly", drive:16, holes:[9,18], type:"private", golfnow:false, url:"https://www.indooroopillygolf.com.au/book" },
-  { name:"Mt Gravatt Golf Club", suburb:"Mt Gravatt", drive:18, holes:[9,18], type:"public", golfnow:false, url:"https://www.mtgravattgolf.com.au/book-tee-time" },
-  { name:"Pacific Golf Club", suburb:"Carindale", drive:18, holes:[18], type:"private", golfnow:false, url:"https://www.pacificgolfclub.com.au/book" },
-  { name:"Nudgee Golf Club", suburb:"Nudgee", drive:20, holes:[9,18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/nudgee-golf-club-bay-course/search" },
-  { name:"Oxley Golf Club", suburb:"Oxley", drive:22, holes:[9,18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/oxley-golf-club/search" },
-  { name:"Wynnum Golf Club", suburb:"Wynnum", drive:24, holes:[9,18], type:"semi-private", golfnow:false, url:"https://www.wynnumgolfclub.com.au/tee-times" },
-  { name:"Gailes Golf Club", suburb:"Gailes", drive:30, holes:[9,18], type:"public", golfnow:false, url:"https://www.gailesgolf.com.au/tee-times" },
-  { name:"Meadowbrook Golf Club", suburb:"Meadowbrook", drive:32, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/meadowbrook-golf-club/search" },
-  { name:"Pine Rivers Golf Club", suburb:"Bray Park", drive:35, holes:[9,18], type:"public", golfnow:false, url:"https://www.pineriversgolf.com.au/tee-times" },
-  { name:"Carbrook Golf Club", suburb:"Carbrook", drive:35, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search" },
-  { name:"Brisbane River Golf Club", suburb:"Karana Downs", drive:38, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/16297-brisbane-river-golf-club/search" },
-  { name:"North Lakes Golf Club", suburb:"North Lakes", drive:38, holes:[18], type:"public", golfnow:true, url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search" },
-  { name:"Redcliffe Golf Club", suburb:"Redcliffe", drive:42, holes:[9,18], type:"public", golfnow:false, url:"https://www.redcliffegolf.com.au/book" },
-  { name:"Ipswich Golf Club", suburb:"Ipswich", drive:45, holes:[18], type:"public", golfnow:false, url:"https://www.ipswichgolfclub.com.au/tee-times" },
-  { name:"Beenleigh Golf Club", suburb:"Beenleigh", drive:45, holes:[9,18], type:"public", golfnow:false, url:"https://www.beenleighgolfclub.com.au/book" },
-  { name:"Caboolture Golf Club", suburb:"Caboolture", drive:50, holes:[18], type:"public", golfnow:false, url:"https://www.caboolturegolf.com.au/tee-times" },
-  { name:"Maroochy River Golf Club", suburb:"Bli Bli", drive:90, holes:[18], type:"public", golfnow:false, url:"https://www.maroochyrivergolf.com.au/book" },
+  // === BRISBANE (≤45 min) ===
+  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.brisbanegolfclub.com.au/book-a-tee-time"},
+  {name:"Ashgrove Golf Club",suburb:"Ashgrove",drive:10,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/book-a-tee-time"},
+  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.keperra.com.au/golf/book-a-tee-time/"},
+  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/book"},
+  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.mtgravattgolf.com.au/book-tee-time"},
+  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.virginiagolfclub.com.au/tee-times"},
+  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.pacificgolfclub.com.au/book"},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/nudgee-golf-club-bay-course/search"},
+  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/oxley-golf-club/search"},
+  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.wynnumgolfclub.com.au/tee-times"},
+  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.royalqueensland.com.au"},
+  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/book-online"},
+  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/tee-times"},
+  {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/meadowbrook-golf-club/search"},
+  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.pineriversgolf.com.au/tee-times"},
+  {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search"},
+  {name:"Brisbane River Golf Club",suburb:"Karana Downs",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/16297-brisbane-river-golf-club/search"},
+  {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search"},
+  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.redcliffegolf.com.au/book"},
+  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",golfnow:false,region:"brisbane",url:"https://www.ipswichgolfclub.com.au/tee-times"},
+  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.beenleighgolfclub.com.au/book"},
+  // === GOLD COAST (45–90 min) ===
+  {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/parkwood-international/search"},
+  {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/emerald-lakes-golf-club/search"},
+  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.palmmeadowsgolf.com.au/book-tee-time"},
+  {name:"Royal Pines Resort Golf Course",suburb:"Benowa",drive:62,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.royalpines.com.au/golf/book-tee-time"},
+  {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/lakelands-golf-club/search"},
+  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.surfersparadisegolf.com.au/book"},
+  {name:"Hope Island Golf Course",suburb:"Hope Island",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.hopeislandresort.com.au/golf/book-tee-time"},
+  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/book-tee-time"},
+  {name:"Pines Golf Course (Sanctuary Cove)",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/book-tee-time"},
+  {name:"RACV Royal Pines",suburb:"Benowa",drive:62,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html"},
+  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.robinawoodsgolf.com.au/book"},
+  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.ctgolf.com.au/book-tee-time"},
+  // === SUNSHINE COAST (60–130 min) ===
+  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/tee-times"},
+  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/book"},
+  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.beerwahgolf.com.au/tee-times"},
+  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.pelicanwatersgolf.com.au/book"},
+  {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",golfnow:true,region:"sunshine",url:"https://www.golfnow.com/tee-times/facility/twin-waters-golf-club/search"},
+  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.maroochyrivergolf.com.au/book"},
+  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.peregianspringsgolf.com.au/book"},
+  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/book-tee-time"},
+  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/golf/book"},
+  // === TOOWOOMBA / SCENIC RIM (75–150 min) ===
+  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/book-tee-time"},
+  {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/"},
+  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.scenicrimgolf.com.au/book"},
+  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.boonahgolf.com.au"},
 ];
 
-const BUFFER = 15;
-let sunsetMins = null;
-let activeFilter = 'all';
+const BUFFER=15;
+let sunsetMins=null, activeFilter='all', userLat=null, userLng=null;
 
-function pad(n){ return String(n).padStart(2,'0'); }
-function nowMins(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+function pad(n){return String(n).padStart(2,'0');}
+function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes();}
 function minsToStr(m){
-  const h=Math.floor(((m%1440)+1440)%1440/60), mn=((m%60)+60)%60;
-  const ap=h>=12?'pm':'am', h12=h%12||12;
+  const h=Math.floor(((m%1440)+1440)%1440/60),mn=((m%60)+60)%60;
+  const ap=h>=12?'pm':'am',h12=h%12||12;
   return `${h12}:${pad(mn)}${ap}`;
 }
-function canPlay9(drive,daylight){ return daylight >= drive+150+BUFFER; }
-function canPlay18(drive,daylight){ return daylight >= drive+270+BUFFER; }
+function canPlay9(drive,daylight){return daylight>=drive+150+BUFFER;}
+function canPlay18(drive,daylight){return daylight>=drive+270+BUFFER;}
 
-async function fetchSunset(){
-  try {
-    const r = await fetch('https://api.sunrisesunset.io/json?lat=-27.4698&lng=153.0251&timezone=Australia/Brisbane&date=today');
-    const d = await r.json();
+function getLocation(){
+  return new Promise((resolve)=>{
+    if(!navigator.geolocation){resolve(null);return;}
+    navigator.geolocation.getCurrentPosition(
+      p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
+      ()=>resolve(null),
+      {timeout:8000,maximumAge:300000}
+    );
+  });
+}
+
+async function fetchSunset(lat,lng){
+  const la=lat||-27.4698, lo=lng||153.0251;
+  try{
+    const r=await fetch(`https://api.sunrisesunset.io/json?lat=${la}&lng=${lo}&timezone=auto&date=today`);
+    const d=await r.json();
     if(d.status==='OK'){
-      const [time,ap] = d.results.sunset.split(' ');
-      const [hh,mm] = time.split(':').map(Number);
+      const[time,ap]=d.results.sunset.split(' ');
+      const[hh,mm]=time.split(':').map(Number);
       let h=hh;
-      if(ap==='PM'&&hh!==12) h+=12;
-      if(ap==='AM'&&hh===12) h=0;
-      return {mins:h*60+mm, live:true};
+      if(ap==='PM'&&hh!==12)h+=12;
+      if(ap==='AM'&&hh===12)h=0;
+      return{mins:h*60+mm,live:true};
     }
-  } catch(e){}
+  }catch(e){}
   const mo=new Date().getMonth();
-  return {mins:(mo>=4&&mo<=8)?17*60+10:18*60+25, live:false};
+  return{mins:(mo>=4&&mo<=8)?17*60+10:18*60+25,live:false};
 }
 
 function setFilter(f,btn){
@@ -539,33 +255,36 @@ function getFiltered(daylight){
   return COURSES.filter(c=>{
     const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
     const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-    if(only18&&!p18) return false;
-    if(only9&&p18) return false;
-    if(activeFilter==='playable') return p9||p18;
-    if(activeFilter==='18') return p18;
-    if(activeFilter==='9') return p9&&!p18;
-    if(activeFilter==='close') return c.drive<=25;
-    if(activeFilter==='public') return c.type==='public';
-    if(activeFilter==='golfnow') return c.golfnow;
+    if(only18&&!p18)return false;
+    if(only9&&p18)return false;
+    if(activeFilter==='playable')return p9||p18;
+    if(activeFilter==='18')return p18;
+    if(activeFilter==='9')return p9&&!p18;
+    if(activeFilter==='close')return c.drive<=30;
+    if(activeFilter==='public')return c.type==='public';
+    if(activeFilter==='golfnow')return c.golfnow;
+    if(activeFilter==='brisbane')return c.region==='brisbane';
+    if(activeFilter==='goldcoast')return c.region==='goldcoast';
+    if(activeFilter==='sunshine')return c.region==='sunshine';
+    if(activeFilter==='toowoomba')return c.region==='toowoomba';
     return true;
   });
 }
 
+const REGION_LABELS={brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim'};
+
 function render(){
-  if(sunsetMins===null) return;
-  const now=nowMins();
-  const daylight=Math.max(0,sunsetMins-now);
+  if(sunsetMins===null)return;
+  const now=nowMins(), daylight=Math.max(0,sunsetMins-now);
   const dLeft=(daylight/60).toFixed(1);
 
   document.getElementById('s-now').textContent=minsToStr(now);
   document.getElementById('s-sunset').textContent=minsToStr(sunsetMins);
-
   const dlEl=document.getElementById('s-daylight');
   dlEl.textContent=dLeft+' hrs';
   dlEl.className='stat-value'+(daylight<120?' danger':daylight<240?' warn':'');
 
-  const sunriseMins=5*60+30;
-  const totalDay=sunsetMins-sunriseMins;
+  const sunriseMins=5*60+30, totalDay=sunsetMins-sunriseMins;
   const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
   const fill=document.getElementById('daybar-fill');
   fill.style.width=pct+'%';
@@ -578,58 +297,45 @@ function render(){
   document.getElementById('s-viable-sub').textContent=`${c18} for 18 · ${c9} for 9`;
 
   const openable=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
-  const btn=document.getElementById('open-all-btn');
-  const desc=document.getElementById('open-all-desc');
+  const btn=document.getElementById('open-all-btn'), desc=document.getElementById('open-all-desc');
   if(openable.length>0){
     desc.innerHTML=`<strong>${openable.length} course${openable.length!==1?'s':''}</strong> reachable with enough daylight — open all booking pages at once`;
     btn.classList.remove('disabled');
-  } else {
+  }else{
     desc.innerHTML='No courses reachable with enough daylight remaining today.';
     btn.classList.add('disabled');
   }
 
   const filtered=getFiltered(daylight);
-  const sortedAll=[...COURSES].sort((a,b)=>a.drive-b.drive);
-  const display=activeFilter==='all'?sortedAll:filtered;
-
-  const playable=display.filter(c=>{
-    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
-    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-    return p9||p18;
-  });
-  const notPlayable=activeFilter==='all'?display.filter(c=>{
-    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
-    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-    return !(p9||p18);
-  }):[];
+  const displayAll=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
+  const playable=displayAll.filter(c=>{const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);return p9||p18;});
+  const notPlayable=activeFilter==='all'?displayAll.filter(c=>{const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);return!(p9||p18);}):[];
 
   let html='';
   if(playable.length){
     html+=`<div class="section-head"><span class="section-dot dot-green"></span>Playable today &mdash; ${playable.length} course${playable.length!==1?'s':''}</div>`;
-    playable.forEach(c=>{ html+=courseCard(c,daylight,false); });
+    playable.forEach(c=>{html+=courseCard(c,daylight,false);});
   }
   if(notPlayable.length){
     html+=`<div class="section-head" style="margin-top:20px;"><span class="section-dot dot-red"></span>Not enough daylight &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
-    notPlayable.forEach(c=>{ html+=courseCard(c,daylight,true); });
+    notPlayable.forEach(c=>{html+=courseCard(c,daylight,true);});
   }
-  if(!playable.length&&!notPlayable.length){
-    html='<div class="no-results">No courses match this filter.</div>';
-  }
-
+  if(!playable.length&&!notPlayable.length)html='<div class="no-results">No courses match this filter.</div>';
   document.getElementById('course-list').innerHTML=html;
 }
 
 function courseCard(c,daylight,dimmed){
   const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
   const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-  const leaveTime=minsToStr(nowMins()+c.drive);
-  const leaveStr=!dimmed?`⬆ leave by ${leaveTime} for first tee`:'';
+  const leaveStr=!dimmed?`&#8593; leave by ${minsToStr(nowMins()+c.drive)} for first tee`:'';
   const typeBadge=`<span class="badge btype">${c.type}</span>`;
   const gnBadge=c.golfnow?`<span class="badge bgn">GolfNow</span>`:'';
+  const regionLabel=REGION_LABELS[c.region]||c.region;
   return `<div class="ccard${dimmed?' dimmed':''}">
     <div class="ccard-left">
       <div class="ccard-name">${c.name}</div>
       <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive</div>
+      <div class="ccard-region">${regionLabel}</div>
       ${leaveStr&&!dimmed?`<div class="ccard-leave">${leaveStr}</div>`:''}
       <div class="badges">
         ${p18?'<span class="badge b18">18 holes</span>':''}
@@ -638,35 +344,46 @@ function courseCard(c,daylight,dimmed){
         ${typeBadge}${gnBadge}
       </div>
     </div>
-    <a class="book-btn" href="${c.url}" target="_blank">Book ↗</a>
+    <a class="book-btn" href="${c.url}" target="_blank">Book &#8599;</a>
   </div>`;
 }
 
 function openAll(){
   const btn=document.getElementById('open-all-btn');
-  if(btn.classList.contains('disabled')) return;
+  if(btn.classList.contains('disabled'))return;
   const daylight=Math.max(0,sunsetMins-nowMins());
   const toOpen=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
-  toOpen.forEach((c,i)=>{ setTimeout(()=>{ window.open(c.url,'_blank'); },i*200); });
+  toOpen.forEach((c,i)=>{setTimeout(()=>{window.open(c.url,'_blank');},i*200);});
 }
 
 async function init(){
   const icon=document.getElementById('refresh-icon');
-  icon.classList.add('spinning');
-  document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('loading-pulse'));
-  const result=await fetchSunset();
+  icon.className='spin';
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('pulse'));
+  document.getElementById('loc-status').textContent='Getting your location...';
+  document.getElementById('loc-status').className='loc-status loc-est';
+
+  const loc=await getLocation();
+  if(loc){
+    userLat=loc.lat; userLng=loc.lng;
+    document.getElementById('loc-status').textContent=`GPS: ${loc.lat.toFixed(3)}, ${loc.lng.toFixed(3)}`;
+    document.getElementById('loc-status').className='loc-status loc-ok';
+  }else{
+    document.getElementById('loc-status').textContent='Location unavailable — using Toowong default';
+    document.getElementById('loc-status').className='loc-status loc-est';
+  }
+
+  const result=await fetchSunset(userLat,userLng);
   sunsetMins=result.mins;
   document.getElementById('s-sunset-src').textContent=result.live?'live':'estimated';
-  const ts=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-  document.getElementById('updated-ts').textContent=`updated ${ts}`;
-  document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('loading-pulse'));
-  icon.classList.remove('spinning');
+  document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
+  icon.className='';
   render();
-  clearInterval(window._interval);
-  window._interval=setInterval(()=>{
+  clearInterval(window._iv);
+  window._iv=setInterval(()=>{
     render();
-    const t=new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-    document.getElementById('updated-ts').textContent=`updated ${t}`;
+    document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   },60000);
 }
 
