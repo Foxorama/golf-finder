@@ -24,68 +24,89 @@ if('serviceWorker' in navigator){
 :root{
   --green:#2d5a1b;--green-light:#3d7a25;--green-bright:#5aab35;--green-glow:#7ed44f;
   --amber:#c47f17;--amber-light:#f5a623;--red:#c0392b;--red-light:#e74c3c;
-  --bg:#0a120a;--bg2:#0f1a0f;--bg3:#152015;--bg4:#1a2a1a;
-  --surface:#1e2e1e;--surface2:#243424;
+  --bg:#0a120a;--bg3:#152015;--surface:#1e2e1e;--surface2:#243424;
   --border:rgba(90,171,53,0.15);--border2:rgba(90,171,53,0.25);
   --text:#e8f5e0;--text2:#a8c89a;--text3:#6a8f60;
   --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
 }
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
-html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100vh;min-height:100dvh;overscroll-behavior:none;}
+html,body{background:var(--bg);color:var(--text);font-family:var(--sans);min-height:100dvh;overscroll-behavior:none;}
 body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .app{max-width:480px;margin:0 auto;padding:0 16px 32px;}
-.header{padding:20px 0 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+
+/* Header */
+.header{padding:20px 0 14px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
 .app-title{font-size:26px;font-weight:800;color:var(--text);line-height:1;letter-spacing:-0.5px;}
 .app-title span{color:var(--green-glow);}
-.app-subtitle{font-family:var(--mono);font-size:11px;color:var(--text3);margin-top:4px;letter-spacing:0.05em;}
-.loc-status{font-family:var(--mono);font-size:10px;margin-top:3px;}
-.loc-ok{color:var(--green-glow);} .loc-est{color:var(--amber-light);} .loc-err{color:var(--red-light);}
-.refresh-btn{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;transition:all 0.15s;}
-.refresh-btn:active{transform:scale(0.95);background:var(--surface2);}
+.app-meta{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:4px;}
+.loc-ok{color:var(--green-glow);} .loc-est{color:var(--amber-light);}
+.refresh-btn{background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:8px 12px;color:var(--text2);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+.refresh-btn:active{transform:scale(0.95);}
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
+
+/* Filters — top */
+.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
+.filters::-webkit-scrollbar{display:none;}
+.fpill{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
+.fpill.on{background:var(--bg3);border-color:var(--green-bright);color:var(--green-glow);}
+.fpill.fav-pill.on{border-color:var(--amber-light);color:var(--amber-light);}
+
+/* Stat grid */
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;}
 .stat{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;}
+.stat.clickable{cursor:pointer;transition:border-color 0.15s;}
+.stat.clickable:active{border-color:var(--green-bright);}
 .stat-label{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;}
 .stat-value{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--text);line-height:1;}
 .stat-value.warn{color:var(--amber-light);} .stat-value.danger{color:var(--red-light);}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--text3);margin-top:3px;}
-.daybar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;}
+.stat-hint{font-family:var(--mono);font-size:10px;color:var(--green-bright);margin-top:4px;}
+
+/* Daylight bar */
+.daybar-wrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;}
 .daybar-labels{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:8px;}
 .daybar-track{height:8px;background:var(--bg3);border-radius:4px;overflow:hidden;}
 .daybar-fill{height:100%;border-radius:4px;transition:width 0.6s ease,background 0.6s ease;}
-.open-all-card{background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:14px 16px;margin-bottom:14px;}
-.open-all-desc{font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5;}
-.open-all-desc strong{color:var(--text);font-weight:600;}
-.open-all-btn{width:100%;background:var(--green);border:1px solid var(--green-light);border-radius:10px;padding:14px;color:var(--green-glow);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;}
-.open-all-btn:active{transform:scale(0.98);background:var(--green-light);}
-.open-all-btn.disabled{background:var(--surface2);border-color:var(--border);color:var(--text3);cursor:not-allowed;}
-.filter-toggles{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
-.toggle-label{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;}
-.toggle-label input{accent-color:var(--green-bright);cursor:pointer;}
-.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:14px;scrollbar-width:none;}
-.filters::-webkit-scrollbar{display:none;}
-.fpill{background:var(--surface);border:1px solid var(--border);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--text3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
-.fpill.on{background:var(--bg3);border-color:var(--green-bright);color:var(--green-glow);}
+
+/* Open-all popover */
+.openall-pop{display:none;background:var(--surface2);border:1px solid var(--border2);border-radius:12px;padding:14px;margin-top:8px;}
+.openall-pop.open{display:block;}
+.openall-pop p{font-family:var(--mono);font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.5;}
+.openall-btn{width:100%;background:var(--green);border:1px solid var(--green-light);border-radius:9px;padding:12px;color:var(--green-glow);font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;}
+.openall-btn:active{transform:scale(0.98);background:var(--green-light);}
+.openall-btn.disabled{background:var(--surface);border-color:var(--border);color:var(--text3);cursor:not-allowed;}
+
+/* Section head */
 .section-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--text3);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
-.section-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.dot-green{background:var(--green-bright);} .dot-red{background:var(--red-light);}
-.ccard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px 15px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px;}
+.sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.sdot-g{background:var(--green-bright);} .sdot-r{background:var(--red-light);}
+
+/* Course card */
+.ccard{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
 .ccard.dimmed{opacity:0.3;}
 .ccard-left{flex:1;min-width:0;}
-.ccard-name{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:3px;}
-.ccard-meta{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:5px;}
-.ccard-region{font-family:var(--mono);font-size:10px;color:var(--text3);margin-bottom:5px;text-transform:uppercase;letter-spacing:0.05em;}
-.ccard-leave{font-family:var(--mono);font-size:11px;color:var(--amber-light);margin-bottom:7px;}
-.badges{display:flex;gap:5px;flex-wrap:wrap;}
+.ccard-name{font-size:14px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.ccard-meta{font-family:var(--mono);font-size:11px;color:var(--text3);margin-bottom:4px;}
+.ccard-region{font-family:var(--mono);font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;}
+.ccard-times{font-family:var(--mono);font-size:11px;margin-bottom:6px;display:flex;gap:10px;flex-wrap:wrap;}
+.t-leave{color:var(--amber-light);} .t-arrive{color:var(--green-bright);}
+.badges{display:flex;gap:4px;flex-wrap:wrap;}
 .badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500;}
 .b18{background:rgba(90,171,53,0.15);color:var(--green-glow);border:1px solid rgba(90,171,53,0.25);}
 .b9{background:rgba(196,127,23,0.15);color:var(--amber-light);border:1px solid rgba(196,127,23,0.25);}
 .btype{background:rgba(255,255,255,0.05);color:var(--text3);border:1px solid var(--border);}
 .bno{background:rgba(192,57,43,0.12);color:var(--red-light);border:1px solid rgba(192,57,43,0.2);}
 .bgn{background:rgba(55,138,221,0.12);color:#7ab8f5;border:1px solid rgba(55,138,221,0.2);}
-.book-btn{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:8px 11px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;text-decoration:none;flex-shrink:0;display:flex;align-items:center;gap:4px;align-self:flex-start;margin-top:2px;}
+
+/* Card right actions */
+.ccard-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.book-btn{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:7px 10px;color:var(--text2);font-family:var(--mono);font-size:11px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:4px;white-space:nowrap;}
 .book-btn:active{background:var(--surface2);transform:scale(0.95);}
+.fav-btn{background:none;border:none;font-size:18px;cursor:pointer;padding:2px;line-height:1;opacity:0.5;transition:opacity 0.15s,transform 0.15s;}
+.fav-btn.on{opacity:1;}
+.fav-btn:active{transform:scale(1.3);}
+
 .no-results{text-align:center;padding:32px 20px;font-family:var(--mono);font-size:13px;color:var(--text3);background:var(--surface);border:1px solid var(--border);border-radius:14px;}
 .pulse{animation:pulse 1.2s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
@@ -93,45 +114,27 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 </head>
 <body>
 <div class="app">
+
   <div class="header">
     <div>
       <div class="app-title">SEQ <span>Golf</span> Finder</div>
-      <div class="app-subtitle" id="updated-ts">tap refresh to load</div>
-      <div class="loc-status" id="loc-status"></div>
+      <div class="app-meta" id="updated-ts">tap refresh to load</div>
+      <div class="app-meta" id="loc-status"></div>
     </div>
-    <button class="refresh-btn" onclick="init()" id="refresh-btn">
+    <button class="refresh-btn" onclick="init()">
       <span id="refresh-icon">↻</span> Refresh
     </button>
   </div>
 
-  <div class="stats">
-    <div class="stat"><div class="stat-label">Now</div><div class="stat-value pulse" id="s-now">--:--</div></div>
-    <div class="stat"><div class="stat-label">Last light</div><div class="stat-value pulse" id="s-sunset">--:--</div><div class="stat-sub" id="s-sunset-src"></div></div>
-    <div class="stat"><div class="stat-label">Daylight left</div><div class="stat-value pulse" id="s-daylight">--</div></div>
-    <div class="stat"><div class="stat-label">Viable courses</div><div class="stat-value pulse" id="s-viable">--</div><div class="stat-sub" id="s-viable-sub"></div></div>
-  </div>
-
-  <div class="daybar-wrap">
-    <div class="daybar-labels"><span>sunrise</span><span>daylight remaining</span><span>last light</span></div>
-    <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--green-bright);"></div></div>
-  </div>
-
-  <div class="open-all-card">
-    <div class="open-all-desc" id="open-all-desc">Loading...</div>
-    <button class="open-all-btn disabled" id="open-all-btn" onclick="openAll()">⛳ Open all booking pages</button>
-    <div class="filter-toggles">
-      <label class="toggle-label"><input type="checkbox" id="chk-18" onchange="render()"> 18 holes only</label>
-      <label class="toggle-label"><input type="checkbox" id="chk-9" onchange="render()"> 9 holes only</label>
-    </div>
-  </div>
-
-  <div class="filters">
+  <!-- Filters FIRST -->
+  <div class="filters" id="filter-bar">
+    <button class="fpill fav-pill" onclick="setFilter('favs',this)">⭐ Favourites</button>
     <button class="fpill on" onclick="setFilter('all',this)">All</button>
     <button class="fpill" onclick="setFilter('playable',this)">Playable now</button>
     <button class="fpill" onclick="setFilter('18',this)">18 holes</button>
     <button class="fpill" onclick="setFilter('9',this)">9 holes</button>
     <button class="fpill" onclick="setFilter('close',this)">≤30 min</button>
-    <button class="fpill" onclick="setFilter('public',this)">Public</button>
+    <button class="fpill" onclick="setFilter('visitor',this)">Visitor-friendly</button>
     <button class="fpill" onclick="setFilter('golfnow',this)">GolfNow</button>
     <button class="fpill" onclick="setFilter('brisbane',this)">Brisbane</button>
     <button class="fpill" onclick="setFilter('goldcoast',this)">Gold Coast</button>
@@ -139,252 +142,340 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
     <button class="fpill" onclick="setFilter('toowoomba',this)">Toowoomba</button>
   </div>
 
+  <!-- Stat widgets -->
+  <div class="stats">
+    <div class="stat"><div class="stat-label">Now</div><div class="stat-value pulse" id="s-now">--:--</div><div class="stat-sub" id="s-sunset-src"></div></div>
+    <div class="stat"><div class="stat-label">Last light</div><div class="stat-value pulse" id="s-sunset">--:--</div></div>
+    <div class="stat"><div class="stat-label">Daylight left</div><div class="stat-value pulse" id="s-daylight">--</div></div>
+    <div class="stat clickable" onclick="toggleOpenAll()" id="viable-stat">
+      <div class="stat-label">Viable courses</div>
+      <div class="stat-value pulse" id="s-viable">--</div>
+      <div class="stat-sub" id="s-viable-sub"></div>
+      <div class="stat-hint" id="s-viable-hint"></div>
+    </div>
+  </div>
+
+  <!-- Open-all popover (inside viable stat area) -->
+  <div class="openall-pop" id="openall-pop">
+    <p id="openall-desc">—</p>
+    <button class="openall-btn" id="openall-btn" onclick="openAll()">⛳ Open all booking pages</button>
+  </div>
+
+  <!-- Daylight bar -->
+  <div class="daybar-wrap">
+    <div class="daybar-labels"><span>sunrise</span><span>daylight remaining</span><span>last light</span></div>
+    <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--green-bright);"></div></div>
+  </div>
+
   <div id="course-list"></div>
 </div>
 
 <script>
+// ── Course data ──────────────────────────────────────────────
 const COURSES = [
-  // === BRISBANE (≤45 min) ===
-  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.brisbanegolfclub.com.au/book-a-tee-time"},
-  {name:"Ashgrove Golf Club",suburb:"Ashgrove",drive:10,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/book-a-tee-time"},
-  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.keperra.com.au/golf/book-a-tee-time/"},
-  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/book"},
-  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.mtgravattgolf.com.au/book-tee-time"},
-  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.virginiagolfclub.com.au/tee-times"},
-  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.pacificgolfclub.com.au/book"},
-  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/nudgee-golf-club-bay-course/search"},
-  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/oxley-golf-club/search"},
-  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.wynnumgolfclub.com.au/tee-times"},
-  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.royalqueensland.com.au"},
-  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/book-online"},
-  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/tee-times"},
+  // BRISBANE
+  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/"},
+  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/"},
+  {name:"Ashgrove Golf Club",suburb:"The Gap",drive:10,holes:[9,18],type:"private",golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/"},
+  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.keperra.com.au/"},
+  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.mtgravattgolf.com.au/"},
+  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.virginiagolfclub.com.au/"},
+  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.pacificgolfclub.com.au/"},
+  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",golfnow:false,region:"brisbane",url:"https://www.royalqueensland.com.au/"},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.nudgeegolf.com.au/cms/"},
+  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",golfnow:true,region:"brisbane",url:"https://www.oxleygolfclub.com.au/"},
+  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.wynnumgolfclub.com.au/"},
+  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/"},
+  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/"},
   {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/meadowbrook-golf-club/search"},
-  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.pineriversgolf.com.au/tee-times"},
+  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.pineriversgolf.com.au/"},
   {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search"},
-  {name:"Brisbane River Golf Club",suburb:"Karana Downs",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/16297-brisbane-river-golf-club/search"},
   {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search"},
-  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.redcliffegolf.com.au/book"},
-  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",golfnow:false,region:"brisbane",url:"https://www.ipswichgolfclub.com.au/tee-times"},
-  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.beenleighgolfclub.com.au/book"},
-  // === GOLD COAST (45–90 min) ===
+  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.redcliffegolfclub.com.au/"},
+  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",golfnow:false,region:"brisbane",url:"https://www.ipswichgolfclub.com.au/"},
+  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",golfnow:false,region:"brisbane",url:"https://www.beenleighgolfclub.com.au/"},
+  // GOLD COAST
+  {name:"Hope Island Golf Course",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.hopeislandresort.com.au/golf/"},
+  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/"},
   {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/parkwood-international/search"},
   {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/emerald-lakes-golf-club/search"},
-  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.palmmeadowsgolf.com.au/book-tee-time"},
-  {name:"Royal Pines Resort Golf Course",suburb:"Benowa",drive:62,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.royalpines.com.au/golf/book-tee-time"},
+  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.palmmeadowsgolf.com.au/"},
   {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/lakelands-golf-club/search"},
-  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.surfersparadisegolf.com.au/book"},
-  {name:"Hope Island Golf Course",suburb:"Hope Island",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.hopeislandresort.com.au/golf/book-tee-time"},
-  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/book-tee-time"},
-  {name:"Pines Golf Course (Sanctuary Cove)",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/book-tee-time"},
-  {name:"RACV Royal Pines",suburb:"Benowa",drive:62,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html"},
-  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.robinawoodsgolf.com.au/book"},
-  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.ctgolf.com.au/book-tee-time"},
-  // === SUNSHINE COAST (60–130 min) ===
-  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/tee-times"},
-  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/book"},
-  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.beerwahgolf.com.au/tee-times"},
-  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.pelicanwatersgolf.com.au/book"},
+  {name:"RACV Royal Pines Resort",suburb:"Benowa",drive:63,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines.html"},
+  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.surfersparadisegolf.com.au/"},
+  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",golfnow:false,region:"goldcoast",url:"https://www.robinawoodsgolf.com.au/"},
+  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"goldcoast",url:"https://www.ctgolf.com.au/"},
+  // SUNSHINE COAST
+  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/"},
+  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/"},
+  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.beerwahgolf.com.au/"},
+  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.pelicanwatersgolf.com.au/"},
   {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",golfnow:true,region:"sunshine",url:"https://www.golfnow.com/tee-times/facility/twin-waters-golf-club/search"},
-  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.maroochyrivergolf.com.au/book"},
-  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.peregianspringsgolf.com.au/book"},
-  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/book-tee-time"},
-  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/golf/book"},
-  // === TOOWOOMBA / SCENIC RIM (75–150 min) ===
-  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/book-tee-time"},
+  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.maroochyrivergolf.com.au/"},
+  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.peregianspringsgolf.com.au/"},
+  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/"},
+  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/"},
+  // TOOWOOMBA / SCENIC RIM
+  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.scenicrimgolf.com.au/"},
+  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/"},
+  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/"},
   {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/"},
-  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.scenicrimgolf.com.au/book"},
-  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",golfnow:false,region:"toowoomba",url:"https://www.boonahgolf.com.au"},
 ];
 
-const BUFFER=15;
-let sunsetMins=null, activeFilter='all', userLat=null, userLng=null;
+// ── Constants ────────────────────────────────────────────────
+const PREP = 20;   // mins prep before leaving house
+const BUFFER = 15; // mins buffer before tee time
+const REGION_LABELS = {brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim'};
 
-function pad(n){return String(n).padStart(2,'0');}
-function nowMins(){const d=new Date();return d.getHours()*60+d.getMinutes();}
+// ── State ────────────────────────────────────────────────────
+let sunsetMins = null;
+let activeFilter = localStorage.getItem('gf_filter') || 'all';
+let favourites = JSON.parse(localStorage.getItem('gf_favs') || '[]');
+let popOpen = false;
+
+// ── Time helpers ─────────────────────────────────────────────
+function pad(n){ return String(n).padStart(2,'0'); }
+function nowMins(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
 function minsToStr(m){
-  const h=Math.floor(((m%1440)+1440)%1440/60),mn=((m%60)+60)%60;
-  const ap=h>=12?'pm':'am',h12=h%12||12;
-  return `${h12}:${pad(mn)}${ap}`;
+  const h=Math.floor(((m%1440)+1440)%1440/60), mn=((m%60)+60)%60;
+  return `${h%12||12}:${pad(mn)}${h>=12?'pm':'am'}`;
 }
-function canPlay9(drive,daylight){return daylight>=drive+150+BUFFER;}
-function canPlay18(drive,daylight){return daylight>=drive+270+BUFFER;}
 
+// ── Playability — drive + prep already accounted for caller side ──
+// Can play 9 if: daylight >= drive + 150 (round) + BUFFER
+// Leave by = now + PREP; Arrival = now + PREP + drive
+function canPlay9(drive, daylight){ return daylight >= drive + 150 + BUFFER; }
+function canPlay18(drive, daylight){ return daylight >= drive + 270 + BUFFER; }
+
+// ── Location + sunset ────────────────────────────────────────
 function getLocation(){
-  return new Promise((resolve)=>{
-    if(!navigator.geolocation){resolve(null);return;}
+  return new Promise(resolve => {
+    if(!navigator.geolocation){ resolve(null); return; }
     navigator.geolocation.getCurrentPosition(
-      p=>resolve({lat:p.coords.latitude,lng:p.coords.longitude}),
-      ()=>resolve(null),
-      {timeout:8000,maximumAge:300000}
+      p => resolve({lat:p.coords.latitude, lng:p.coords.longitude}),
+      () => resolve(null),
+      {timeout:8000, maximumAge:300000}
     );
   });
 }
 
-async function fetchSunset(lat,lng){
-  const la=lat||-27.4698, lo=lng||153.0251;
-  try{
-    const r=await fetch(`https://api.sunrisesunset.io/json?lat=${la}&lng=${lo}&timezone=auto&date=today`);
-    const d=await r.json();
+async function fetchSunset(lat, lng){
+  const la = lat||-27.4698, lo = lng||153.0251;
+  try {
+    const r = await fetch(`https://api.sunrisesunset.io/json?lat=${la}&lng=${lo}&timezone=auto&date=today`);
+    const d = await r.json();
     if(d.status==='OK'){
-      const[time,ap]=d.results.sunset.split(' ');
-      const[hh,mm]=time.split(':').map(Number);
-      let h=hh;
-      if(ap==='PM'&&hh!==12)h+=12;
-      if(ap==='AM'&&hh===12)h=0;
-      return{mins:h*60+mm,live:true};
+      const [time,ap] = d.results.sunset.split(' ');
+      const [hh,mm] = time.split(':').map(Number);
+      let h = hh;
+      if(ap==='PM'&&hh!==12) h+=12;
+      if(ap==='AM'&&hh===12) h=0;
+      return {mins:h*60+mm, live:true};
     }
-  }catch(e){}
-  const mo=new Date().getMonth();
-  return{mins:(mo>=4&&mo<=8)?17*60+10:18*60+25,live:false};
+  } catch(e) {}
+  const mo = new Date().getMonth();
+  return {mins:(mo>=4&&mo<=8)?17*60+10:18*60+25, live:false};
 }
 
-function setFilter(f,btn){
-  activeFilter=f;
+// ── Filter logic ─────────────────────────────────────────────
+function setFilter(f, btn){
+  activeFilter = f;
+  localStorage.setItem('gf_filter', f);
   document.querySelectorAll('.fpill').forEach(b=>b.classList.remove('on'));
   btn.classList.add('on');
+  popOpen = false;
+  document.getElementById('openall-pop').classList.remove('open');
   render();
 }
 
-function getViable(daylight){
-  return COURSES.filter(c=>(canPlay9(c.drive,daylight)&&c.holes.includes(9))||(canPlay18(c.drive,daylight)&&c.holes.includes(18)));
-}
-
 function getFiltered(daylight){
-  const only18=document.getElementById('chk-18').checked;
-  const only9=document.getElementById('chk-9').checked;
-  return COURSES.filter(c=>{
-    const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
-    const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-    if(only18&&!p18)return false;
-    if(only9&&p18)return false;
-    if(activeFilter==='playable')return p9||p18;
-    if(activeFilter==='18')return p18;
-    if(activeFilter==='9')return p9&&!p18;
-    if(activeFilter==='close')return c.drive<=30;
-    if(activeFilter==='public')return c.type==='public';
-    if(activeFilter==='golfnow')return c.golfnow;
-    if(activeFilter==='brisbane')return c.region==='brisbane';
-    if(activeFilter==='goldcoast')return c.region==='goldcoast';
-    if(activeFilter==='sunshine')return c.region==='sunshine';
-    if(activeFilter==='toowoomba')return c.region==='toowoomba';
-    return true;
+  return COURSES.filter(c => {
+    const p9  = canPlay9(c.drive, daylight)  && c.holes.includes(9);
+    const p18 = canPlay18(c.drive, daylight) && c.holes.includes(18);
+    switch(activeFilter){
+      case 'favs':     return favourites.includes(c.name);
+      case 'playable': return p9 || p18;
+      case '18':       return p18;
+      // FIX: 9-hole filter shows all courses where 9 is playable (even if 18 also available)
+      case '9':        return p9;
+      case 'close':    return c.drive <= 30;
+      // visitor-friendly = public + semi-private (not members-only private)
+      case 'visitor':  return c.type !== 'private';
+      case 'golfnow':  return c.golfnow;
+      case 'brisbane': return c.region === 'brisbane';
+      case 'goldcoast':return c.region === 'goldcoast';
+      case 'sunshine': return c.region === 'sunshine';
+      case 'toowoomba':return c.region === 'toowoomba';
+      default:         return true;
+    }
   });
 }
 
-const REGION_LABELS={brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim'};
-
-function render(){
-  if(sunsetMins===null)return;
-  const now=nowMins(), daylight=Math.max(0,sunsetMins-now);
-  const dLeft=(daylight/60).toFixed(1);
-
-  document.getElementById('s-now').textContent=minsToStr(now);
-  document.getElementById('s-sunset').textContent=minsToStr(sunsetMins);
-  const dlEl=document.getElementById('s-daylight');
-  dlEl.textContent=dLeft+' hrs';
-  dlEl.className='stat-value'+(daylight<120?' danger':daylight<240?' warn':'');
-
-  const sunriseMins=5*60+30, totalDay=sunsetMins-sunriseMins;
-  const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
-  const fill=document.getElementById('daybar-fill');
-  fill.style.width=pct+'%';
-  fill.style.background=pct>85?'var(--red-light)':pct>65?'var(--amber-light)':'var(--green-bright)';
-
-  const viable=getViable(daylight);
-  const c18=viable.filter(c=>canPlay18(c.drive,daylight)&&c.holes.includes(18)).length;
-  const c9=viable.filter(c=>canPlay9(c.drive,daylight)&&c.holes.includes(9)&&!canPlay18(c.drive,daylight)).length;
-  document.getElementById('s-viable').textContent=viable.length;
-  document.getElementById('s-viable-sub').textContent=`${c18} for 18 · ${c9} for 9`;
-
-  const openable=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
-  const btn=document.getElementById('open-all-btn'), desc=document.getElementById('open-all-desc');
-  if(openable.length>0){
-    desc.innerHTML=`<strong>${openable.length} course${openable.length!==1?'s':''}</strong> reachable with enough daylight — open all booking pages at once`;
-    btn.classList.remove('disabled');
-  }else{
-    desc.innerHTML='No courses reachable with enough daylight remaining today.';
-    btn.classList.add('disabled');
-  }
-
-  const filtered=getFiltered(daylight);
-  const displayAll=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
-  const playable=displayAll.filter(c=>{const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);return p9||p18;});
-  const notPlayable=activeFilter==='all'?displayAll.filter(c=>{const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);return!(p9||p18);}):[];
-
-  let html='';
-  if(playable.length){
-    html+=`<div class="section-head"><span class="section-dot dot-green"></span>Playable today &mdash; ${playable.length} course${playable.length!==1?'s':''}</div>`;
-    playable.forEach(c=>{html+=courseCard(c,daylight,false);});
-  }
-  if(notPlayable.length){
-    html+=`<div class="section-head" style="margin-top:20px;"><span class="section-dot dot-red"></span>Not enough daylight &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
-    notPlayable.forEach(c=>{html+=courseCard(c,daylight,true);});
-  }
-  if(!playable.length&&!notPlayable.length)html='<div class="no-results">No courses match this filter.</div>';
-  document.getElementById('course-list').innerHTML=html;
+// ── Toggle open-all popover ──────────────────────────────────
+function toggleOpenAll(){
+  popOpen = !popOpen;
+  document.getElementById('openall-pop').classList.toggle('open', popOpen);
 }
 
-function courseCard(c,daylight,dimmed){
-  const p9=canPlay9(c.drive,daylight)&&c.holes.includes(9);
-  const p18=canPlay18(c.drive,daylight)&&c.holes.includes(18);
-  const leaveStr=!dimmed?`&#8593; leave by ${minsToStr(nowMins()+c.drive)} for first tee`:'';
-  const typeBadge=`<span class="badge btype">${c.type}</span>`;
-  const gnBadge=c.golfnow?`<span class="badge bgn">GolfNow</span>`:'';
-  const regionLabel=REGION_LABELS[c.region]||c.region;
+function openAll(){
+  const daylight = Math.max(0, sunsetMins - nowMins());
+  const toOpen = getFiltered(daylight).filter(c => canPlay9(c.drive,daylight) || canPlay18(c.drive,daylight));
+  if(!toOpen.length) return;
+  toOpen.forEach((c,i) => { setTimeout(()=>{ window.open(c.url,'_blank'); }, i*200); });
+}
+
+// ── Favourites ───────────────────────────────────────────────
+function toggleFav(name, btn){
+  const idx = favourites.indexOf(name);
+  if(idx === -1){ favourites.push(name); btn.classList.add('on'); btn.textContent='⭐'; }
+  else { favourites.splice(idx,1); btn.classList.remove('on'); btn.textContent='☆'; }
+  localStorage.setItem('gf_favs', JSON.stringify(favourites));
+  if(activeFilter==='favs') render();
+}
+
+// ── Render ───────────────────────────────────────────────────
+function render(){
+  if(sunsetMins === null) return;
+  const now = nowMins();
+  const daylight = Math.max(0, sunsetMins - now);
+
+  // Stats
+  document.getElementById('s-now').textContent = minsToStr(now);
+  document.getElementById('s-sunset').textContent = minsToStr(sunsetMins);
+  const dlEl = document.getElementById('s-daylight');
+  dlEl.textContent = (daylight/60).toFixed(1)+' hrs';
+  dlEl.className = 'stat-value' + (daylight<120?' danger':daylight<240?' warn':'');
+
+  // Daylight bar
+  const sunriseMins = 5*60+30, totalDay = sunsetMins-sunriseMins;
+  const pct = Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
+  const fill = document.getElementById('daybar-fill');
+  fill.style.width = pct+'%';
+  fill.style.background = pct>85?'var(--red-light)':pct>65?'var(--amber-light)':'var(--green-bright)';
+
+  // Viable counts — all courses regardless of filter
+  // 9-avail = any course where 9 is playable; 18-avail = any where 18 is playable
+  const all18 = COURSES.filter(c=>canPlay18(c.drive,daylight)&&c.holes.includes(18)).length;
+  const all9  = COURSES.filter(c=>canPlay9(c.drive,daylight)&&c.holes.includes(9)).length;
+  const totalViable = COURSES.filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight)).length;
+  document.getElementById('s-viable').textContent = totalViable;
+  document.getElementById('s-viable-sub').textContent = `${all18} for 18 · ${all9} for 9`;
+
+  // Open-all popover content — respects current filter
+  const filtered = getFiltered(daylight);
+  const openable = filtered.filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
+  const hint = document.getElementById('s-viable-hint');
+  const pop = document.getElementById('openall-pop');
+  const popDesc = document.getElementById('openall-desc');
+  const popBtn = document.getElementById('openall-btn');
+  if(openable.length>0){
+    hint.textContent = 'tap to open booking pages ↓';
+    popDesc.textContent = `${openable.length} course${openable.length!==1?'s':''} match your current filter with enough daylight. Opens each booking page in a new tab.`;
+    popBtn.classList.remove('disabled');
+  } else {
+    hint.textContent = totalViable>0?'change filter to open bookings':'no playable courses today';
+    popDesc.textContent = 'No courses in current filter have enough daylight remaining.';
+    popBtn.classList.add('disabled');
+  }
+
+  // Restore active filter pill
+  document.querySelectorAll('.fpill').forEach(btn=>{
+    const f = btn.getAttribute('onclick').match(/setFilter\('(.*?)'/)?.[1];
+    btn.classList.toggle('on', f===activeFilter);
+  });
+
+  // Course list — use filtered for non-'all', full sorted list for 'all'
+  const display = activeFilter==='all'
+    ? [...COURSES].sort((a,b)=>a.drive-b.drive)
+    : filtered;
+
+  const playable    = display.filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
+  const notPlayable = activeFilter==='all'
+    ? display.filter(c=>!canPlay9(c.drive,daylight)&&!canPlay18(c.drive,daylight))
+    : [];
+
+  let html = '';
+  if(playable.length){
+    html += `<div class="section-head"><span class="sdot sdot-g"></span>Playable today &mdash; ${playable.length} course${playable.length!==1?'s':''}</div>`;
+    playable.forEach(c => { html += courseCard(c, daylight, false); });
+  }
+  if(notPlayable.length){
+    html += `<div class="section-head" style="margin-top:20px;"><span class="sdot sdot-r"></span>Not enough daylight &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
+    notPlayable.forEach(c => { html += courseCard(c, daylight, true); });
+  }
+  if(!playable.length && !notPlayable.length){
+    html = '<div class="no-results">No courses match this filter.</div>';
+  }
+  document.getElementById('course-list').innerHTML = html;
+}
+
+function courseCard(c, daylight, dimmed){
+  const p9  = canPlay9(c.drive, daylight)  && c.holes.includes(9);
+  const p18 = canPlay18(c.drive, daylight) && c.holes.includes(18);
+  const isFav = favourites.includes(c.name);
+
+  // FIX: Leave by = now + PREP (20 min to get ready and out)
+  //      Arrival  = now + PREP + drive
+  const leaveBy  = nowMins() + PREP;
+  const arriveAt = nowMins() + PREP + c.drive;
+  const timeLine = !dimmed
+    ? `<div class="ccard-times"><span class="t-leave">leave ${minsToStr(leaveBy)}</span><span class="t-arrive">arrive ~${minsToStr(arriveAt)}</span></div>`
+    : '';
+
+  const typeBadge = `<span class="badge btype">${c.type}</span>`;
+  const gnBadge   = c.golfnow ? `<span class="badge bgn">GolfNow</span>` : '';
+  const regionLabel = REGION_LABELS[c.region]||c.region;
+
   return `<div class="ccard${dimmed?' dimmed':''}">
     <div class="ccard-left">
       <div class="ccard-name">${c.name}</div>
       <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive</div>
       <div class="ccard-region">${regionLabel}</div>
-      ${leaveStr&&!dimmed?`<div class="ccard-leave">${leaveStr}</div>`:''}
+      ${timeLine}
       <div class="badges">
         ${p18?'<span class="badge b18">18 holes</span>':''}
-        ${p9?'<span class="badge b9">9 holes</span>':''}
+        ${p9 ?'<span class="badge b9">9 holes</span>':''}
         ${dimmed?'<span class="badge bno">no time today</span>':''}
         ${typeBadge}${gnBadge}
       </div>
     </div>
-    <a class="book-btn" href="${c.url}" target="_blank">Book &#8599;</a>
+    <div class="ccard-right">
+      <a class="book-btn" href="${c.url}" target="_blank">Visit &#8599;</a>
+      <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${c.name}',this)">${isFav?'⭐':'☆'}</button>
+    </div>
   </div>`;
 }
 
-function openAll(){
-  const btn=document.getElementById('open-all-btn');
-  if(btn.classList.contains('disabled'))return;
-  const daylight=Math.max(0,sunsetMins-nowMins());
-  const toOpen=getFiltered(daylight).filter(c=>canPlay9(c.drive,daylight)||canPlay18(c.drive,daylight));
-  toOpen.forEach((c,i)=>{setTimeout(()=>{window.open(c.url,'_blank');},i*200);});
-}
-
+// ── Init ─────────────────────────────────────────────────────
 async function init(){
-  const icon=document.getElementById('refresh-icon');
-  icon.className='spin';
+  const icon = document.getElementById('refresh-icon');
+  icon.className = 'spin';
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('pulse'));
-  document.getElementById('loc-status').textContent='Getting your location...';
-  document.getElementById('loc-status').className='loc-status loc-est';
+  document.getElementById('loc-status').textContent = 'getting location...';
+  document.getElementById('loc-status').className = 'app-meta loc-est';
 
-  const loc=await getLocation();
+  const loc = await getLocation();
+  const lat = loc?.lat, lng = loc?.lng;
   if(loc){
-    userLat=loc.lat; userLng=loc.lng;
-    document.getElementById('loc-status').textContent=`GPS: ${loc.lat.toFixed(3)}, ${loc.lng.toFixed(3)}`;
-    document.getElementById('loc-status').className='loc-status loc-ok';
-  }else{
-    document.getElementById('loc-status').textContent='Location unavailable — using Toowong default';
-    document.getElementById('loc-status').className='loc-status loc-est';
+    document.getElementById('loc-status').textContent = `GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
+    document.getElementById('loc-status').className = 'app-meta loc-ok';
+  } else {
+    document.getElementById('loc-status').textContent = 'location unavailable — using Toowong default';
+    document.getElementById('loc-status').className = 'app-meta loc-est';
   }
 
-  const result=await fetchSunset(userLat,userLng);
-  sunsetMins=result.mins;
-  document.getElementById('s-sunset-src').textContent=result.live?'live':'estimated';
-  document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  const result = await fetchSunset(lat, lng);
+  sunsetMins = result.mins;
+  document.getElementById('s-sunset-src').textContent = result.live ? 'live sunset' : 'est. sunset';
+  document.getElementById('updated-ts').textContent = 'updated ' + new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
-  icon.className='';
+  icon.className = '';
   render();
   clearInterval(window._iv);
-  window._iv=setInterval(()=>{
+  window._iv = setInterval(()=>{
     render();
-    document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-  },60000);
+    document.getElementById('updated-ts').textContent = 'updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
+  }, 60000);
 }
 
 init();
