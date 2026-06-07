@@ -218,6 +218,7 @@ const COURSES = [
   {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.jindalee.com.au/"},
   {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.nudgeegolf.com.au/cms/"},
   {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.oxleygolfclub.com.au/"},
+  {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/"},
   {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandgategolfclub.com.au/"},
   {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.wynnumgolfclub.com.au/"},
   {name:"Howeston Golf Course",suburb:"Birkdale",drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/"},
@@ -228,7 +229,8 @@ const COURSES = [
   {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search"},
   {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search"},
   {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.redcliffegolfclub.com.au/"},
-  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ipswichgolfclub.com.au/"},
+  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/"},
+  {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.golfpass.com/travel-advisor/courses/18745-ipswich-par-3-course"},
   {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.beenleighgolfclub.com.au/"},
   // GOLD COAST
   {name:"Hope Island Golf Course",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.hopeislandresort.com.au/golf/"},
@@ -417,15 +419,14 @@ function render(){
   const leaveBy=nearest?minsToStr(now+PREP):null;
 
   document.getElementById('s-playable').textContent=playableInFilterCount;
-  document.getElementById('s-playable-sub').textContent=
-    playableInFilterCount===1?'course':activeFilter==='all'?'of '+COURSES.length+' total':'in filter';
+  const filterLabels={'all':'of '+COURSES.length+' total','playable':'playable','18':'for 18 holes','9':'for 9+ holes','par3':'par 3 courses','close':'within 30 min','visitor':'visitor-friendly','golfnow':'on GolfNow','nobooking':'walk-up','brisbane':'Brisbane','goldcoast':'Gold Coast','sunshine':'Sunshine Coast','toowoomba':'Toowoomba'};
+  document.getElementById('s-playable-sub').textContent=filterLabels[activeFilter]||'in filter';
 
   document.getElementById('s-leaveby').textContent=leaveBy||'--:--';
   document.getElementById('s-leaveby-sub').textContent=nearest?`for ${nearest.suburb}`:'no viable course';
 
   document.getElementById('s-nearest').textContent=nearestDrive?nearestDrive+' min':'--';
-  document.getElementById('s-nearest-sub').textContent=nearest?nearest.name.split(' ').slice(0,2).join(' '):'';
-
+  document.getElementById('s-nearest-sub').textContent='drive away';
   // Drawer content
   const openable=playableInFilter;
   const hint=document.getElementById('s-viable-hint');
