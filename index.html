@@ -78,10 +78,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .nearest-link{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:11px;color:var(--gb);text-decoration:none;border-bottom:1px solid rgba(90,171,53,0.3);}
 .nearest-link:active{opacity:0.7;}
 
-/* ── Open all — always visible ── */
-.openall-btn-main{width:100%;background:var(--green);border:1px solid var(--gl);border-radius:12px;padding:14px;color:var(--gg);font-family:var(--sans);font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:14px;transition:all 0.15s;}
-.openall-btn-main:active{transform:scale(0.98);background:var(--gl);}
-.openall-btn-main.disabled{background:var(--sur);border-color:var(--bdr);color:var(--tx3);cursor:not-allowed;}
+
 
 /* ── Section head ── */
 .section-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--tx3);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
@@ -183,10 +180,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
     </div>
   </div>
 
-  <!-- Open all — always visible -->
-  <button class="openall-btn-main disabled" id="openall-btn" onclick="openAll()">
-    ⛳ Open all course websites
-  </button>
 
   <div id="course-list"></div>
 </div>
@@ -199,63 +192,63 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 // holes: array of available hole counts
 const COURSES = [
   // BRISBANE — par-3 / short courses
-  {name:"St Lucia Golf Links",suburb:"St Lucia",drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/"},
-  {name:"Bulimba Golf Club",suburb:"Bulimba",drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulgolf.com.au/"},
-  {name:"Pacific Golf Club Par-3",suburb:"Carindale",drive:18,holes:[9],type:"semi-private",par3:true,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.pacificgolfclub.com.au/"},
+  {name:"St Lucia Golf Links",suburb:"St Lucia",drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28},
+  {name:"Bulimba Golf Club",suburb:"Bulimba",drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulimbagolfclub.com.au/",fee18:15,fee9:null},
+  
   // BRISBANE — full courses
-  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/"},
-  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/"},
-  {name:"Ashgrove Golf Club",suburb:"The Gap",drive:10,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/"},
-  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperra.com.au/"},
-  {name:"Minnippi Golf & Range",suburb:"Cannon Hill",drive:15,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://minnippipublicgolfcourse.com.au/"},
-  {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/"},
-  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mtgravattgolf.com.au/"},
-  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.virginiagolfclub.com.au/"},
-  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.pacificgolfclub.com.au/"},
-  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.royalqueensland.com.au/"},
-  {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.jindalee.com.au/"},
-  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.nudgeegolf.com.au/cms/"},
-  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.oxleygolfclub.com.au/"},
-  {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/"},
-  {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandgategolfclub.com.au/"},
-  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.wynnumgolfclub.com.au/"},
-  {name:"Howeston Golf Course",suburb:"Birkdale",drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/"},
-  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/"},
-  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/"},
-  {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/meadowbrook-golf-club/search"},
-  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.pineriversgolf.com.au/"},
-  {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/carbrook-golf-club/search"},
-  {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com/tee-times/facility/north-lakes-golf-club/search"},
-  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.redcliffegolfclub.com.au/"},
-  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/"},
-  {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.golfpass.com/travel-advisor/courses/18745-ipswich-par-3-course"},
-  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.beenleighgolfclub.com.au/"},
+  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/",fee18:null,fee9:null},
+  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/",fee18:null,fee9:null},
+  {name:"Ashgrove Golf Club",suburb:"The Gap",drive:10,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/",fee18:null,fee9:null},
+  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperragolf.com.au/cms/",fee18:null,fee9:null},
+  {name:"Minnippi Golf & Range",suburb:"Cannon Hill",drive:15,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://minnippipublicgolfcourse.com.au/",fee18:45,fee9:28},
+  {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/",fee18:null,fee9:null},
+  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mt-gravatt-golf-club",fee18:null,fee9:null},
+  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.virginiagolf.com.au/cms/",fee18:55,fee9:32},
+  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null},
+  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null},
+  {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",fee18:95,fee9:null},
+  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30},
+  {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null},
+  {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null},
+  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32},
+  {name:"Howeston Golf Course",suburb:"Birkdale",drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/",fee18:28,fee9:16},
+  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",fee18:45,fee9:27},
+  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/",fee18:null,fee9:null},
+  {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null},
+  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null},
+  {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2514-carbrook-golf-club/search",fee18:55,fee9:null},
+  {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-north-lakes-golf-club/search",fee18:60,fee9:null},
+  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redcliffe-golf-club",fee18:null,fee9:null},
+  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/",fee18:null,fee9:null},
+  {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/ipswich-par-3-golf-course",fee18:15,fee9:null},
+  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/beenleigh-golf-club",fee18:null,fee9:null},
   // GOLD COAST
-  {name:"Hope Island Golf Course",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.hopeislandresort.com.au/golf/"},
-  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/"},
-  {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/parkwood-international/search"},
-  {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/emerald-lakes-golf-club/search"},
-  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.palmmeadowsgolf.com.au/"},
-  {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com/tee-times/facility/lakelands-golf-club/search"},
-  {name:"RACV Royal Pines Resort",suburb:"Benowa",drive:63,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines.html"},
-  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.surfersparadisegolf.com.au/"},
-  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.robinawoodsgolf.com.au/"},
-  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.ctgolf.com.au/"},
+  {name:"Links Hope Island Golf Club",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/15324-links-hope-island-golf-club/search",fee18:158,fee9:80},
+  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/",fee18:null,fee9:null},
+  {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2529-parkwood-international-golf-club/search",fee18:54,fee9:null},
+  {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2518-emerald-lakes-golf-club/search",fee18:70,fee9:null},
+  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2530-palm-meadows-golf-course/search",fee18:80,fee9:null},
+  {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2524-lakelands-golf-club/search",fee18:145,fee9:85},
+  {name:"RACV Royal Pines Resort",suburb:"Benowa",drive:63,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html",fee18:120,fee9:null},
+  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2536-surfers-paradise-golf-club/search",fee18:58,fee9:null},
+  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2534-robina-woods-golf-course/search",fee18:100,fee9:null},
+  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://golf.com.au/venue/coolangatta-tweed-heads-golf-club",fee18:null,fee9:null},
   // SUNSHINE COAST
-  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/"},
-  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/"},
-  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.beerwahgolf.com.au/"},
-  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.pelicanwatersgolf.com.au/"},
-  {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com/tee-times/facility/twin-waters-golf-club/search"},
-  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.maroochyrivergolf.com.au/"},
-  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.peregianspringsgolf.com.au/"},
-  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/"},
-  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/"},
+  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/",fee18:null,fee9:null},
+  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/",fee18:null,fee9:null},
+  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/beerwah-golf-club",fee18:null,fee9:null},
+  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2531-pelican-waters-golf-club/search",fee18:null,fee9:null},
+  {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2537-twin-waters-golf-club/search",fee18:null,fee9:null},
+  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/maroochy-river-golf-club",fee18:null,fee9:null},
+  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2532-peregian-springs-golf-club/search",fee18:null,fee9:null},
+  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/",fee18:null,fee9:null},
+  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/",fee18:null,fee9:null},
   // TOOWOOMBA / SCENIC RIM
-  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.scenicrimgolf.com.au/"},
-  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/"},
-  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/"},
-  {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/"},
+  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://golf.com.au/venue/scenic-rim-golf-club",fee18:null,fee9:null},
+  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/",fee18:null,fee9:null},
+  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/",fee18:null,fee9:null},
+  {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/",fee18:null,fee9:null},
 ];
 
 // ── Constants ────────────────────────────────────────────────
@@ -357,47 +350,6 @@ function getFiltered(daylight){
   });
 }
 
-// ── Open all — intermediate page (works in PWA/home screen context) ──────────
-function openAll(){
-  if(sunsetMins===null)return;
-  const btn=document.getElementById('openall-btn');
-  if(btn.classList.contains('disabled'))return;
-  const daylight=Math.max(0,sunsetMins-nowMins());
-  const toOpen=getFiltered(daylight).filter(c=>canPlayAny(c,daylight));
-  if(!toOpen.length)return;
-
-  // Build a self-contained HTML page listing all courses as tappable links.
-  // Opening one blob URL works reliably from PWA context; no popup blocking.
-  const now=nowMins();
-  const leaveStr=minsToStr(now+PREP);
-  const rows=toOpen.map(c=>{
-    const arriveStr=minsToStr(now+PREP+c.drive);
-    const holes=c.holes.includes(18)?'18 holes':c.holes.includes(9)?'9 holes':'';
-    return `<a href="${c.url}" style="display:block;background:#1e2e1e;border:1px solid rgba(90,171,53,0.2);border-radius:12px;padding:14px 16px;margin-bottom:10px;text-decoration:none;color:#e8f5e0;">
-      <div style="font-family:Syne,sans-serif;font-size:15px;font-weight:700;margin-bottom:3px;">${c.name}</div>
-      <div style="font-family:'DM Mono',monospace;font-size:11px;color:#6a8f60;margin-bottom:6px;">${c.suburb} &middot; ${c.drive} min drive &middot; arrive ~${arriveStr}</div>
-      <span style="font-family:'DM Mono',monospace;font-size:10px;padding:2px 8px;border-radius:5px;background:rgba(90,171,53,0.15);color:#7ed44f;border:1px solid rgba(90,171,53,0.25);">${holes}</span>
-      ${c.par3?'<span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 8px;border-radius:5px;background:rgba(126,212,79,0.1);color:#a8e06b;border:1px solid rgba(126,212,79,0.2);margin-left:4px;">par 3</span>':''}
-      ${c.noBooking?'<span style="font-family:DM Mono,monospace;font-size:10px;padding:2px 8px;border-radius:5px;background:rgba(255,255,255,0.05);color:#a8c89a;border:1px solid rgba(90,171,53,0.15);margin-left:4px;">walk-up</span>':''}
-    </a>`;
-  }).join('');
-
-  const page=`<!DOCTYPE html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Golf Courses — ${toOpen.length} open</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <style>*{box-sizing:border-box;margin:0;padding:0;}body{background:#0a120a;color:#e8f5e0;font-family:sans-serif;padding:20px 16px 40px;}
-  .hdr{margin-bottom:20px;}.title{font-size:20px;font-weight:800;color:#7ed44f;margin-bottom:4px;}
-  .sub{font-family:monospace;font-size:11px;color:#6a8f60;}.back{display:inline-block;margin-bottom:16px;font-family:monospace;font-size:12px;color:#5aab35;text-decoration:none;}</style></head>
-  <body><a class="back" href="javascript:history.back()">← Back to Golf Finder</a>
-  <div class="hdr"><div class="title">${toOpen.length} course${toOpen.length!==1?'s':''} available</div>
-  <div class="sub">Leave by ${leaveStr} &middot; tap a course to visit its website</div></div>
-  ${rows}</body></html>`;
-
-  const blob=new Blob([page],{type:'text/html'});
-  const url=URL.createObjectURL(blob);
-  window.location.href=url;
-}
-
 // ── Favourites ───────────────────────────────────────────────
 function toggleFav(name,btn){
   const idx=favourites.indexOf(name);
@@ -457,7 +409,6 @@ function render(){
 
   // Open-all button
   const openable=playableInFilter;
-  document.getElementById('openall-btn').classList.toggle('disabled',openable.length===0);
 
   // Restore active pill
   document.querySelectorAll('.fpill').forEach(b=>{
