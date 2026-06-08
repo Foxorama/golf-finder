@@ -106,7 +106,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .bfee{background:rgba(90,171,53,0.12);color:var(--gg);border:1px solid rgba(90,171,53,0.3);font-weight:600;}
 .bfee-na{background:rgba(255,255,255,0.04);color:var(--tx3);border:1px solid var(--bdr);}
 .ccard-rating{font-family:var(--mono);font-size:11px;color:var(--al);letter-spacing:0.02em;}
-.ccard-wx{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.ccard-wx{font-family:var(--mono);font-size:10px;color:var(--tx2);margin-top:4px;text-align:right;line-height:1.5;}
 .ccard-wx.wx-warn{color:var(--al);}
 .ccard-wx.wx-bad{color:var(--rl);}
 .ccard-note{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;margin-bottom:4px;}
@@ -258,6 +258,16 @@ const COURSES = [
   {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/",fee18:null,fee9:null,rating:3.8,note:'Public 18-hole Scenic Rim. Quiet country club atmosphere.',zone:'toowoomba'},
   {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Semi-private 18-hole championship course. Garden City\'s premier club.',zone:'toowoomba'},
   {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole. Affordable Toowoomba option, open to all.',zone:'toowoomba'},
+  // BRISBANE MISSING
+  {name:"Wolston Park Golf Club",suburb:"Wacol",drive:20,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wpgc.com.au/",fee18:22,fee9:13,rating:4.2,note:'Hidden gem on Brisbane River bend. Kangaroo spectators, great value, WK Hynd design.',zone:'ipswich'},
+  {name:"Wantima Country Club",suburb:"Brendale",drive:32,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.wantimacountryclub.com.au/cms/",fee18:50,fee9:null,rating:4.3,note:'Cam Smith\'s home course. Tree-lined fairways, open 7 days, friendly club.',zone:'brisbane_metro'},
+  {name:"Riverlakes Golf Club",suburb:"Cornubia",drive:38,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://riverlakes.com.au/",fee18:55,fee9:null,rating:4.1,note:'Championship layout along Logan River. Maintained to Gold Coast resort standards.',zone:'ipswich'},
+  {name:"Windaroo Lakes Golf Club",suburb:"Windaroo",drive:45,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://windaroolakes.com.au/",fee18:55,fee9:null,rating:4.2,note:'Midway Brisbane and Gold Coast. Albert River setting, one of SEQ\'s toughest par 4s.',zone:'ipswich'},
+  {name:"Redland Bay Golf Club",suburb:"Redland Bay",drive:42,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redland-bay-golf-club",fee18:null,fee9:null,rating:4.0,note:'Scenic bayside location. Easy-walking layout with bay views.',zone:'bayside'},
+  {name:"Mount Warren Park Golf Club",suburb:"Mount Warren Park",drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mount-warren-park-golf-club",fee18:null,fee9:null,rating:3.9,note:'Affordable public 18-hole in Logan. Flat, accessible course for all levels.',zone:'ipswich'},
+  {name:"Sandy Gallop Golf Club",suburb:"Churchill, Ipswich",drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandygallop.com.au/",fee18:null,fee9:null,rating:3.9,note:'Historic 1922 course. Visitors welcome weekdays and Sundays. Site of Greg Norman\'s first pro win.',zone:'ipswich'},
+  {name:"Woodford Golf Club",suburb:"Woodford",drive:75,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://woodfordgolfclub.com.au/",fee18:48,fee9:32,rating:4.1,note:'Country 18-hole par 72 in Woodford township. Visitors welcome most days. Picturesque hinterland layout.',zone:'sunshine'},
+  {name:"Southport Golf Club",suburb:"Southport",drive:65,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://southportgolfclub.com.au/",fee18:null,fee9:null,rating:4.4,note:'Private members club. Visitors limited to interstate/international club members with current handicap.',zone:'gc_south'},
 ];
 
 // ── Constants ────────────────────────────────────────────────
@@ -523,7 +533,7 @@ function courseCard(c,daylight,dimmed){
     const isWarn = wx.label.includes('Rain') || wx.label.includes('Drizzle') || wx.label.includes('Shower');
     const isBad  = wx.label.includes('Storm') || wx.label.includes('hail');
     const wxClass = isBad?'ccard-wx wx-bad':isWarn?'ccard-wx wx-warn':'ccard-wx';
-    wxHtml = `<div class="${wxClass}">${wx.icon} ${wx.temp}° &middot; ${wx.wind} km/h &middot; ${wx.label}</div>`;
+    wxHtml = `<div class="${wxClass}">${wx.icon} ${wx.temp}°<br>${wx.wind} km/h · ${wx.label}</div>`;
   }
 
   // Course note
@@ -558,13 +568,13 @@ function courseCard(c,daylight,dimmed){
       <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive &middot; ${roundTime}</div>
       <div class="ccard-region">${REGION_LABELS[c.region]||c.region}</div>
       ${noteHtml}
-      ${wxHtml}
       ${timeLine}
       <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
       <a class="visit-btn" href="${c.url}" target="_blank">⛳ tap to open</a>
       <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)">${isFav?'⭐':'☆'}</button>
+      ${wxHtml}
     </div>
   </div>`;
 }
