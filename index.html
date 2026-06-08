@@ -103,6 +103,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .bno{background:rgba(192,57,43,0.12);color:var(--rl);border:1px solid rgba(192,57,43,0.2);}
 .bgn{background:rgba(55,138,221,0.12);color:#7ab8f5;border:1px solid rgba(55,138,221,0.2);}
 .bnobk{background:rgba(90,171,53,0.08);color:var(--tx2);border:1px solid rgba(90,171,53,0.15);}
+.bfee{background:rgba(90,171,53,0.12);color:var(--gg);border:1px solid rgba(90,171,53,0.3);font-weight:600;}
+.bfee-na{background:rgba(255,255,255,0.04);color:var(--tx3);border:1px solid var(--bdr);}
 .ccard-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;min-width:0;}
 .visit-btn{background:var(--bg3);border:1px solid var(--bdr);border-radius:9px;padding:7px 8px;color:var(--tx2);font-family:var(--mono);font-size:10px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:3px;white-space:nowrap;}
 .visit-btn:active{background:var(--sur2);transform:scale(0.95);}
@@ -448,6 +450,18 @@ function courseCard(c,daylight,dimmed){
 
   const roundTime=c.par3?'~1 hr/9':can18?'~4.5 hrs/18':'~2.5 hrs/9';
 
+  // Fee badge — show 9-hole rate if only 9 is playable or par3; else 18-hole rate
+  // Private clubs with no published fee show nothing
+  let bFee='';
+  if(c.type!=='private'){
+    const showNine = c.par3 || (can9 && !can18);
+    const feeVal = showNine ? (c.fee9||c.fee18) : c.fee18;
+    if(feeVal){
+      const label = showNine ? `Est. $${feeVal}/9` : `Est. $${feeVal}/18`;
+      bFee=`<span class="badge bfee">${label}</span>`;
+    }
+  }
+
   const b18 =can18?'<span class="badge b18">18 holes</span>':'';
   const b9  =can9 ?'<span class="badge b9">9 holes</span>':'';
   const bP3 =c.par3?'<span class="badge bpar3">par 3</span>':'';
@@ -463,7 +477,7 @@ function courseCard(c,daylight,dimmed){
       <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive &middot; ${roundTime}</div>
       <div class="ccard-region">${REGION_LABELS[c.region]||c.region}</div>
       ${timeLine}
-      <div class="badges">${b18}${b9}${bP3}${bNo}${bType}${bGN}${bNB}</div>
+      <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
       <a class="visit-btn" href="${c.url}" target="_blank">⛳ tap to open</a>
