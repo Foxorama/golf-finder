@@ -39,26 +39,26 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .app-title span{color:var(--gg);}
 .app-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
-.refresh-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:8px 12px;color:var(--tx2);font-family:var(--mono);font-size:12px;cursor:pointer;display:flex;align-items:center;gap:6px;flex-shrink:0;}
-.refresh-btn:active{transform:scale(0.95);}
+.hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;width:42px;height:38px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;}
+.hdr-btn:active{transform:scale(0.95);background:var(--sur2);}
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
 .daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;}
-.daybar-icons{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;}
-.daybar-icon-col{display:flex;flex-direction:column;align-items:center;gap:2px;}
-.daybar-icon-col.mid{flex:1;align-items:center;}
-.daybar-icon-emoji{font-size:20px;line-height:1;}
-.daybar-icon-time{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1;}
-.daybar-icon-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.06em;}
-.daybar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative;margin-bottom:14px;}
+.daybar-icons{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;position:relative;}
+.daybar-icon-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.daybar-icon-col.mid{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translateX(-50%);transition:left 0.8s ease;}
+.daybar-icon-emoji{font-size:22px;line-height:1;}
+.daybar-icon-time{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1;}
+.daybar-icon-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.06em;}
+.daybar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative;margin-bottom:12px;}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
 .daybar-bottom{display:flex;justify-content:space-between;align-items:baseline;}
 .daybar-remain-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;}
-.daybar-remain{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;}
+.daybar-remain{font-family:var(--mono);font-size:21px;font-weight:500;color:var(--tx);line-height:1;}
 .daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
-.daybar-remain-unit{font-family:var(--mono);font-size:13px;color:var(--tx3);margin-left:4px;}
+.daybar-remain-unit{font-family:var(--mono);font-size:12px;color:var(--tx3);margin-left:3px;}
 
 /* ── Stat row — fancy pass ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
@@ -77,7 +77,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .stat-playable-row{display:flex;align-items:center;justify-content:center;margin-bottom:5px;}
 /* Leave by — tap to open as pill button */
 .stat-leaveby{cursor:default;}
-.nearest-link{display:block;margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:4px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;}
+.nearest-link{display:block;margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:4px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nearest-link:active{opacity:0.75;}
 /* Weather stat card */
 .stat-wx-nearest{border-color:var(--bdr2);text-align:center;}
@@ -88,8 +88,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .stat-wx-nearest.warn .stat-wx-temp{color:var(--al);}
 .stat-wx-nearest.bad .stat-wx-temp{color:#f07060;}
 .stat-wx-detail{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;}
-.stat-wx-nearest.warn .stat-wx-detail{color:rgba(196,127,23,0.8);}
-.stat-wx-nearest.bad .stat-wx-detail{color:rgba(240,112,96,0.85);}
+.stat-wx-detail.wind{color:var(--tx2);font-weight:500;}
+.stat-wx-nearest.warn .stat-wx-detail.wind{color:var(--al);}
+.stat-wx-nearest.bad .stat-wx-detail.wind{color:#f07060;}
 
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
 .filters::-webkit-scrollbar{display:none;}
@@ -162,7 +163,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .ccard.closed-today .ccard-name{opacity:0.6;}
 
 /* ── Share button on card ── */
-.share-btn{background:none;border:none;font-size:15px;cursor:pointer;padding:2px;line-height:1;opacity:0.45;transition:opacity 0.15s,transform 0.15s;}
+.share-btn{background:none;border:none;font-size:15px;cursor:pointer;padding:2px;line-height:1;color:rgba(122,184,245,0.8);transition:opacity 0.15s,transform 0.15s;}
 .share-btn:active{transform:scale(1.2);opacity:1;}
 
 /* ── Hole-in-one panel ── */
@@ -204,8 +205,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="app-meta" id="loc-status"></div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
-      <button class="refresh-btn" onclick="showHio()" aria-label="Hole in one tracker" style="font-size:15px;padding:8px 10px;">🏆</button>
-      <button class="refresh-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true">↻</span> Refresh</button>
+      <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
+      <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
     </div>
   </div>
 
@@ -241,13 +242,14 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
   <!-- HERO: Daylight bar -->
   <div class="daybar">
-    <div class="daybar-icons">
+    <div class="daybar-icons" id="daybar-icons-row" style="min-height:52px;">
       <div class="daybar-icon-col">
         <div class="daybar-icon-emoji" id="db-sunrise-icon" aria-hidden="true">🌅</div>
         <div class="daybar-icon-time" id="db-sunrise">--:--</div>
         <div class="daybar-icon-label">Sunrise</div>
       </div>
-      <div class="daybar-icon-col mid">
+      <!-- Now icon — absolutely positioned, slides with bar -->
+      <div class="daybar-icon-col mid" id="db-now-col" style="left:50%;">
         <div class="daybar-icon-emoji" id="db-now-icon" aria-hidden="true">☀️</div>
         <div class="daybar-icon-time" id="db-now">--:--</div>
         <div class="daybar-icon-label">Now</div>
@@ -350,6 +352,8 @@ const COURSES = [
   {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole championship course. Ipswich\'s main course.',zone:'ipswich'},
   {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/ipswich-par-3-golf-course",fee18:15,fee9:null,rating:3.6,note:'Walk-up par-3 course in Churchill. Beginner and family-friendly.',zone:'ipswich'},
   {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/beenleigh-golf-club",fee18:null,fee9:null,rating:3.8,note:'Public 9/18-hole south of Brisbane. Affordable local course.',zone:'ipswich'},
+  {name:"Gainsborough Greens Golf Club",suburb:"Pimpama",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://gainsboroughgolf.com.au/",fee18:50,fee9:null,rating:4.3,note:'Championship layout hosted Queensland PGA three times. Surrounded by 230 hectares of wildlife sanctuary with Eastern Grey kangaroos on course.',zone:'gc_north'},
+  {name:"Hills International Golf Club",suburb:"Jimboomba",drive:40,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillsgolfclub.com.au/",fee18:35,fee9:null,rating:4.0,note:'One of SEQ\'s best kept secrets. Social play 7 days a week. Challenging par 72 at 6,906m from the tips.',zone:'ipswich'},
   // GOLD COAST
   {name:"Links Hope Island Golf Club",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/15324-links-hope-island-golf-club/search",fee18:158,fee9:80,rating:4.5,note:'Peter Thomson links design. One of Australia\'s top-ranked courses.',zone:'gc_north'},
   {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/",fee18:null,fee9:null,rating:4.3,note:'Two championship courses in resort setting. Members and resort guests.',zone:'gc_north'},
@@ -404,6 +408,16 @@ const ZONE_COORDS = {
   sunshine:       {lat:-26.6500, lng:153.0700},
   toowoomba:      {lat:-27.5598, lng:151.9507},
 };
+
+// Find nearest zone to a GPS coordinate
+function getNearestZone(lat,lng){
+  let best='brisbane_metro', bestDist=Infinity;
+  for(const [zone,coords] of Object.entries(ZONE_COORDS)){
+    const d=Math.sqrt(Math.pow(lat-coords.lat,2)+Math.pow(lng-coords.lng,2));
+    if(d<bestDist){bestDist=d;best=zone;}
+  }
+  return best;
+}
 
 // ── State ────────────────────────────────────────────────────
 let sunsetMins   = null;
@@ -572,22 +586,32 @@ function render(){
   document.getElementById('db-sunset').textContent=minsToStr(sunsetMins);
   document.getElementById('db-sunrise').textContent=minsToStr(sunriseMins);
 
-  // Now icon — shifts with time of day, overlaid with GPS weather
   const totalDay=sunsetMins-sunriseMins;
   const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
   const fill=document.getElementById('daybar-fill');
   fill.style.width=pct+'%';
   fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
 
-  // Pick now icon: base on time of day, override with GPS weather if available
-  const gpsWx=weatherCache['brisbane_metro'];
+  // Sliding Now icon — position absolutely over icon row, clamped 6%–94%
+  const nowCol=document.getElementById('db-now-col');
+  if(now<=sunriseMins||now>=sunsetMins){
+    nowCol.style.display='none'; // hide before sunrise and after sunset
+  } else {
+    nowCol.style.display='flex';
+    const clampedPct=Math.min(94,Math.max(6,pct));
+    nowCol.style.left=clampedPct+'%';
+  }
+
+  // Now icon — time of day base, override with nearest GPS zone weather
+  // Use the zone closest to user's GPS, or brisbane_metro as fallback
+  const gpsZone=window._gpsZone||'brisbane_metro';
+  const gpsWx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
   let nowIcon='☀️';
-  if(pct<8)       nowIcon='🌅'; // just after sunrise
-  else if(pct<35) nowIcon='🌤'; // morning
-  else if(pct<65) nowIcon='☀️'; // midday
-  else if(pct<85) nowIcon='🌆'; // afternoon
-  else            nowIcon='🌇'; // near sunset
-  // Override with weather condition if available
+  if(pct<8)       nowIcon='🌅';
+  else if(pct<35) nowIcon='🌤';
+  else if(pct<65) nowIcon='☀️';
+  else if(pct<85) nowIcon='🌆';
+  else            nowIcon='🌇';
   if(gpsWx&&gpsWx.ok){
     const lbl=gpsWx.label;
     if(lbl.includes('Storm')||lbl.includes('hail')) nowIcon='⛈';
@@ -615,22 +639,27 @@ function render(){
     dot.className='avail-dot off';
     playableCard.classList.remove('live');
   }
+  // Playable now — show count large, sub label contextual
+  document.getElementById('s-playable').textContent=playableInFilterCount;
+  const filterLabels={'all':'of '+COURSES.length+' total','playable':'playable','18':'for 18 holes','9':'for 9+ holes','par3':'par 3 courses','close':'within 30 min','visitor':'visitor-friendly','golfnow':'on GolfNow','nobooking':'walk-up','brisbane':'Brisbane','goldcoast':'Gold Coast','sunshine':'Sunshine Coast','toowoomba':'Toowoomba'};
+  document.getElementById('s-playable-sub').textContent=filterLabels[activeFilter]||'in filter';
 
   // Nearest viable course in current filter
   const nearest=playableInFilter.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
   const leaveBy=nearest?minsToStr(now+PREP):null;
 
-  document.getElementById('s-playable').textContent=playableInFilterCount;
-  const filterLabels={'all':'of '+COURSES.length+' total','playable':'playable','18':'for 18 holes','9':'for 9+ holes','par3':'par 3 courses','close':'within 30 min','visitor':'visitor-friendly','golfnow':'on GolfNow','nobooking':'walk-up','brisbane':'Brisbane','goldcoast':'Gold Coast','sunshine':'Sunshine Coast','toowoomba':'Toowoomba'};
-  document.getElementById('s-playable-sub').textContent=filterLabels[activeFilter]||'in filter';
-
   document.getElementById('s-leaveby').textContent=leaveBy||'--:--';
   document.getElementById('s-leaveby-sub').textContent=nearest?`for ${nearest.suburb}`:'no viable course';
 
-  // Leave by card — tap to open nearest
+  // Leave by — nearest link, fixed height pill, never wraps
   const nearestLink=document.getElementById('nearest-link');
-  if(nearest){nearestLink.href=nearest.url;nearestLink.style.display='block';}
-  else{nearestLink.style.display='none';}
+  if(nearest){
+    nearestLink.href=nearest.url;
+    nearestLink.textContent='⛳ '+nearest.name.split(' ').slice(0,2).join(' ');
+    nearestLink.style.display='block';
+  } else {
+    nearestLink.style.display='none';
+  }
 
   // Weather stat card — shows weather for nearest course's zone
   const wxCard=document.getElementById('stat-wx-card');
@@ -648,7 +677,9 @@ function render(){
       wxCard.className='stat stat-wx-nearest'+(isBad?' bad':isWarn?' warn':'');
       wxIcon.textContent=wx.icon;
       wxTemp.textContent=wx.temp+'°';
-      wxWind.textContent=wx.wind+' km/h wind';
+      wxWind.className='stat-wx-detail wind';
+      wxWind.textContent=wx.wind+' km/h';
+      wxLbl2.className='stat-wx-detail';
       wxLbl2.textContent=wx.label;
     } else {
       wxCard.className='stat stat-wx-nearest';
@@ -733,7 +764,7 @@ function courseCard(c,daylight,dimmed){
   }
 
   const b18=can18?'<span class="badge b18">18 holes</span>':'';
-  const b9=can9?'<span class="badge b9">9 holes</span>':'';
+  const b9=can9&&!can18?'<span class="badge b9">9 holes</span>':'';  // only show if 18 not available
   const bP3=c.par3?'<span class="badge bpar3">par 3</span>':'';
   const bType=`<span class="badge btype">${c.type}</span>`;
   const bGN=c.golfnow?'<span class="badge bgn">GolfNow</span>':'';
@@ -843,6 +874,16 @@ function shareCourse(name, suburb, drive){
 }
 
 // ── Init ─────────────────────────────────────────────────────
+// Apply saved filter pill immediately on load (before async init)
+(function applyInitialFilter(){
+  document.querySelectorAll('.fpill').forEach(b=>{
+    const f=b.getAttribute('onclick').match(/setFilter\('([^']+)'/)?.[1];
+    if(f){
+      b.classList.toggle('on',f===activeFilter);
+      b.setAttribute('aria-pressed',f===activeFilter?'true':'false');
+    }
+  });
+})();
 async function init(){
   const icon=document.getElementById('refresh-icon');
   icon.className='spin';
@@ -855,9 +896,12 @@ async function init(){
   if(loc){
     document.getElementById('loc-status').textContent=`GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
     document.getElementById('loc-status').className='app-meta loc-ok';
+    // Detect nearest weather zone to GPS position
+    window._gpsZone=getNearestZone(lat,lng);
   }else{
     document.getElementById('loc-status').textContent='location unavailable — using Toowong';
     document.getElementById('loc-status').className='app-meta loc-est';
+    window._gpsZone='brisbane_metro';
   }
 
   const [result] = await Promise.all([
