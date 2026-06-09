@@ -62,7 +62,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Stat row — fancy pass ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;}
+.stat{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;text-align:center;}
 .stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(90,171,53,0.3),transparent);opacity:0;}
 .stat.live::before{opacity:1;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
@@ -74,13 +74,13 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .avail-dot.on{background:var(--gb);animation:dotpulse 2s ease-in-out infinite;}
 .avail-dot.off{background:var(--tx3);}
 @keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
-.stat-playable-row{display:flex;align-items:center;margin-bottom:5px;}
+.stat-playable-row{display:flex;align-items:center;justify-content:center;margin-bottom:5px;}
 /* Leave by — tap to open as pill button */
 .stat-leaveby{cursor:default;}
 .nearest-link{display:block;margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:4px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;}
 .nearest-link:active{opacity:0.75;}
 /* Weather stat card */
-.stat-wx-nearest{border-color:var(--bdr2);}
+.stat-wx-nearest{border-color:var(--bdr2);text-align:center;}
 .stat-wx-nearest.warn{border-color:rgba(196,127,23,0.4);background:rgba(196,127,23,0.05);}
 .stat-wx-nearest.bad{border-color:rgba(192,57,43,0.4);background:rgba(192,57,43,0.05);}
 .stat-wx-icon{font-size:24px;line-height:1;margin:2px 0 3px;}
@@ -96,16 +96,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
 .fpill.on{background:var(--bg3);border-color:var(--gb);color:var(--gg);}
 .fpill.fav-pill.on{border-color:var(--al);color:var(--al);}
-
-/* ── Stat row ── */
-.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr);border-radius:12px;padding:11px 12px;}
-.stat.viable-stat{cursor:pointer;border-color:var(--bdr2);position:relative;}
-.stat.viable-stat:active{border-color:var(--gb);}
-.stat-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:3px;}
-.stat-value{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--tx);line-height:1;}
-.stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:3px;}
-.viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
 
 /* ── Nearest card with direct link ── */
 .stat-leaveby{cursor:default;}
@@ -165,6 +155,42 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .no-results{text-align:center;padding:32px 20px;font-family:var(--mono);font-size:13px;color:var(--tx3);background:var(--sur);border:1px solid var(--bdr);border-radius:14px;}
 .pulse{animation:pulse 1.2s ease-in-out infinite;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* ── Closed today badge ── */
+.bclosed{background:rgba(192,57,43,0.12);color:#f07060;border:1px solid rgba(192,57,43,0.25);}
+.ccard.closed-today{border-color:rgba(192,57,43,0.2);}
+.ccard.closed-today .ccard-name{opacity:0.6;}
+
+/* ── Share button on card ── */
+.share-btn{background:none;border:none;font-size:15px;cursor:pointer;padding:2px;line-height:1;opacity:0.45;transition:opacity 0.15s,transform 0.15s;}
+.share-btn:active{transform:scale(1.2);opacity:1;}
+
+/* ── Hole-in-one panel ── */
+.hio-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;backdrop-filter:blur(2px);}
+.hio-sheet{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--sur);border-top:1px solid var(--bdr2);border-radius:20px 20px 0 0;z-index:101;padding:20px 20px env(safe-area-inset-bottom,16px);max-height:85dvh;overflow-y:auto;}
+.hio-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
+.hio-title{font-size:17px;font-weight:700;color:var(--tx);}
+.hio-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:2px;}
+.hio-close{background:var(--sur2);border:none;border-radius:50%;width:28px;height:28px;color:var(--tx2);cursor:pointer;font-size:14px;margin-left:auto;display:flex;align-items:center;justify-content:center;}
+.hio-form{background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:14px;margin-bottom:16px;display:flex;flex-direction:column;gap:8px;}
+.hio-form-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:2px;}
+.hio-input{background:var(--sur);border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;color:var(--tx);font-family:var(--mono);font-size:13px;width:100%;outline:none;}
+.hio-input:focus{border-color:var(--gb);}
+.hio-input::placeholder{color:var(--tx3);}
+.hio-submit{background:var(--green);border:1px solid var(--gl);border-radius:9px;padding:12px;color:var(--gg);font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;width:100%;}
+.hio-submit:active{transform:scale(0.98);background:var(--gl);}
+.hio-celebration{text-align:center;padding:16px;animation:celebfade 0.4s ease;}
+@keyframes celebfade{from{opacity:0;transform:scale(0.9);}to{opacity:1;transform:scale(1);}}
+.hio-cel-emoji{font-size:40px;margin-bottom:8px;}
+.hio-cel-text{font-size:18px;font-weight:700;color:var(--gg);margin-bottom:4px;}
+.hio-cel-sub{font-family:var(--mono);font-size:12px;color:var(--tx2);}
+.hio-entry{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:10px;}
+.hio-entry-icon{font-size:20px;flex-shrink:0;margin-top:1px;}
+.hio-entry-course{font-size:14px;font-weight:600;color:var(--tx);margin-bottom:2px;}
+.hio-entry-detail{font-family:var(--mono);font-size:11px;color:var(--tx3);}
+.hio-entry-del{background:none;border:none;color:var(--tx3);font-size:13px;cursor:pointer;margin-left:auto;padding:2px 6px;flex-shrink:0;}
+.hio-entry-del:active{color:var(--rl);}
+.hio-empty{font-family:var(--mono);font-size:12px;color:var(--tx3);text-align:center;padding:20px;}
 </style>
 </head>
 <body>
@@ -177,7 +203,40 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
     </div>
-    <button class="refresh-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true">↻</span> Refresh</button>
+    <div style="display:flex;gap:8px;align-items:flex-start;">
+      <button class="refresh-btn" onclick="showHio()" aria-label="Hole in one tracker" style="font-size:15px;padding:8px 10px;">🏆</button>
+      <button class="refresh-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true">↻</span> Refresh</button>
+    </div>
+  </div>
+
+  <!-- Hole-in-one panel -->
+  <div id="hio-panel" style="display:none;">
+    <div class="hio-overlay" onclick="hideHio()"></div>
+    <div class="hio-sheet">
+      <div class="hio-header">
+        <span style="font-size:22px;" aria-hidden="true">🏆</span>
+        <div>
+          <div class="hio-title">Hole-in-One Tracker</div>
+          <div class="hio-sub" id="hio-count-label">Your aces</div>
+        </div>
+        <button class="hio-close" onclick="hideHio()" aria-label="Close">✕</button>
+      </div>
+      <div class="hio-form">
+        <div class="hio-form-label">Record a new ace</div>
+        <input class="hio-input" id="hio-course" type="text" placeholder="Course name" aria-label="Course name">
+        <div style="display:flex;gap:8px;">
+          <input class="hio-input" id="hio-hole" type="number" placeholder="Hole #" min="1" max="18" aria-label="Hole number" style="width:90px;flex-shrink:0;">
+          <input class="hio-input" id="hio-club" type="text" placeholder="Club used (optional)" aria-label="Club used" style="flex:1;">
+        </div>
+        <button class="hio-submit" onclick="recordHio()" aria-label="Record hole in one">⛳ Record Ace</button>
+      </div>
+      <div id="hio-celebration" style="display:none;" class="hio-celebration">
+        <div class="hio-cel-emoji" aria-hidden="true">🎉</div>
+        <div class="hio-cel-text">Ace recorded!</div>
+        <div class="hio-cel-sub" id="hio-cel-detail"></div>
+      </div>
+      <div id="hio-list"></div>
+    </div>
   </div>
 
   <!-- HERO: Daylight bar -->
@@ -267,7 +326,7 @@ const COURSES = [
   {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/",fee18:null,fee9:null,rating:4.4,note:'36-hole championship club. Stunning river views, one of Brisbane\'s most prestigious.',zone:'brisbane_metro'},
   {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/",fee18:null,fee9:null,rating:4.3,note:'Established 1890. Waitlist-only membership, private access only.',zone:'brisbane_metro'},
   {name:"Ashgrove Golf Club",suburb:"The Gap",drive:10,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/",fee18:null,fee9:null,rating:4.2,note:'Private members club in The Gap. Challenging layout, friendly community.',zone:'brisbane_metro'},
-  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperragolf.com.au/cms/",fee18:null,fee9:null,rating:4.2,note:'27-hole championship course. Hosts the prestigious Keperra Bowl annually.',zone:'brisbane_metro'},
+  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperragolf.com.au/cms/",visitorNote:"Sat visitors after 3pm only",fee18:null,fee9:null,rating:4.2,note:'27-hole championship course. Hosts the prestigious Keperra Bowl annually.',zone:'brisbane_metro'},
   {name:"Minnippi Golf & Range",suburb:"Cannon Hill",drive:15,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://minnippipublicgolfcourse.com.au/",fee18:45,fee9:28,rating:4.3,note:'Brisbane\'s newest public course (2023). Flood-resilient design, 6/9/18 hole options.',zone:'brisbane_metro'},
   {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/",fee18:null,fee9:null,rating:4.1,note:'Scenic Mt Ommaney layout. Challenging hills, well-maintained greens.',zone:'brisbane_metro'},
   {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mt-gravatt-golf-club",fee18:null,fee9:null,rating:3.8,note:'Public 9/18-hole course in Brisbane\'s south. No official website.',zone:'brisbane_metro'},
@@ -275,13 +334,13 @@ const COURSES = [
   {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Private club in Carindale. 18-hole and par-3 course. Members and guests only.',zone:'brisbane_metro'},
   {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null,rating:4.5,note:'One of Australia\'s top-ranked courses. Private, host of numerous national events.',zone:'brisbane_metro'},
   {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null,rating:3.9,note:'Semi-private 18-hole. Undulating layout with good variety of holes.',zone:'ipswich'},
-  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedDays:[],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
   {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
   {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null,rating:3.8,note:'Driving range + 9-hole course + 18-hole pitch & putt. Walk-up, no booking needed.',zone:'brisbane_metro'},
   {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null,rating:3.8,note:'Semi-private bayside course. Quiet, local club feel.',zone:'brisbane_metro'},
   {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32,rating:4.0,note:'Semi-private bayside club. Pleasant layout with sea breezes.',zone:'bayside'},
   {name:"Howeston Golf Course",suburb:"Birkdale",drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/",fee18:28,fee9:16,rating:4.0,note:'27-hole family-owned walk-up course. Best value in SEQ, sunrise to sunset.',zone:'bayside'},
-  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",fee18:45,fee9:27,rating:4.1,note:'Public 9/18-hole course. Well-maintained and one of Ipswich\'s most popular.',zone:'ipswich'},
+  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",visitorNote:"Reduced hours Sundays — check ahead",fee18:45,fee9:27,rating:4.1,note:'Public 9/18-hole course. Well-maintained and one of Ipswich\'s most popular.',zone:'ipswich'},
   {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/",fee18:null,fee9:null,rating:4.6,note:'Greg Norman design. One of SEQ\'s best semi-private layouts.',zone:'ipswich'},
   {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null,rating:4.0,note:'Public 18-hole south of Brisbane. Affordable and accessible.',zone:'ipswich'},
   {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 9/18-hole north Brisbane. Local community club.',zone:'brisbane_metro'},
@@ -615,10 +674,13 @@ function render(){
     if(f)b.classList.toggle('on',f===activeFilter);
   });
 
-  // Course list
-  const display=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
-  const playable=display.filter(c=>canPlayAny(c,daylight));
-  const notPlayable=activeFilter==='all'?display.filter(c=>!canPlayAny(c,daylight)):[];
+  // Course list — always show unavailable courses dimmed, regardless of filter
+  const display=activeFilter==='all'
+    ?[...COURSES].sort((a,b)=>a.drive-b.drive)
+    :filtered;
+  const allInFilter=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
+  const playable=allInFilter.filter(c=>canPlayAny(c,daylight));
+  const notPlayable=allInFilter.filter(c=>!canPlayAny(c,daylight));
 
   let html='';
   if(playable.length){
@@ -638,7 +700,10 @@ function courseCard(c,daylight,dimmed){
   const can18=canPlayHoles(c,18,daylight);
   const isFav=favourites.includes(c.name);
 
-  // Leave by = now + PREP; Arrive = now + PREP + drive
+  // Closed today
+  const todayDay=new Date().getDay();
+  const isClosed=c.closedDays&&c.closedDays.includes(todayDay);
+
   const leaveBy =nowMins()+PREP;
   const arriveAt=nowMins()+PREP+c.drive;
   const timeLine=!dimmed
@@ -646,44 +711,39 @@ function courseCard(c,daylight,dimmed){
     :'';
 
   const roundTime=c.par3?'~1 hr/9':can18?'~4.5 hrs/18':'~2.5 hrs/9';
+  const ratingStr=c.rating?`★ ${c.rating.toFixed(1)}`:'';
 
-  // Rating stars
-  const ratingStr = c.rating ? `★ ${c.rating.toFixed(1)}` : '';
-
-  // Weather for this course's zone
-  const wx = weatherCache[c.zone];
-  let wxHtml = '';
-  if(wx && wx.ok){
-    const isWarn = wx.label.includes('Rain') || wx.label.includes('Drizzle') || wx.label.includes('Shower');
-    const isBad  = wx.label.includes('Storm') || wx.label.includes('hail');
-    const wxClass = isBad?'ccard-wx wx-bad':isWarn?'ccard-wx wx-warn':'ccard-wx';
-    wxHtml = `<div class="${wxClass}"><span class="wx-icon">${wx.icon}</span><span class="wx-temp">${wx.temp}°</span><span class="wx-wind">${wx.wind} km/h</span><span class="wx-cond">${wx.label}</span></div>`;
+  const wx=weatherCache[c.zone];
+  let wxHtml='';
+  if(wx&&wx.ok){
+    const isWarn=wx.label.includes('Rain')||wx.label.includes('Drizzle')||wx.label.includes('Shower');
+    const isBad=wx.label.includes('Storm')||wx.label.includes('hail');
+    const wxClass=isBad?'ccard-wx wx-bad':isWarn?'ccard-wx wx-warn':'ccard-wx';
+    wxHtml=`<div class="${wxClass}"><span class="wx-icon">${wx.icon}</span><span class="wx-temp">${wx.temp}°</span><span class="wx-wind">${wx.wind} km/h</span><span class="wx-cond">${wx.label}</span></div>`;
   }
 
-  // Course note
-  const noteHtml = c.note ? `<div class="ccard-note">${c.note}</div>` : '';
+  const noteHtml=c.note?`<div class="ccard-note">${c.note}</div>`:'';
+  const visitorNoteHtml=c.visitorNote?`<div class="ccard-note" style="color:var(--al);">⚠ ${c.visitorNote}</div>`:'';
 
-  // Fee badge — show 9-hole rate if only 9 is playable or par3; else 18-hole rate
   let bFee='';
   if(c.type!=='private'){
-    const showNine = c.par3 || (can9 && !can18);
-    const feeVal = showNine ? (c.fee9||c.fee18) : c.fee18;
-    if(feeVal){
-      const label = showNine ? `Est. $${feeVal}/9` : `Est. $${feeVal}/18`;
-      bFee=`<span class="badge bfee">${label}</span>`;
-    }
+    const showNine=c.par3||(can9&&!can18);
+    const feeVal=showNine?(c.fee9||c.fee18):c.fee18;
+    if(feeVal) bFee=`<span class="badge bfee">Est. $${feeVal}/${showNine?'9':'18'}</span>`;
   }
 
-  const b18 =can18?'<span class="badge b18">18 holes</span>':'';
-  const b9  =can9 ?'<span class="badge b9">9 holes</span>':'';
-  const bP3 =c.par3?'<span class="badge bpar3">par 3</span>':'';
+  const b18=can18?'<span class="badge b18">18 holes</span>':'';
+  const b9=can9?'<span class="badge b9">9 holes</span>':'';
+  const bP3=c.par3?'<span class="badge bpar3">par 3</span>':'';
   const bType=`<span class="badge btype">${c.type}</span>`;
-  const bGN =c.golfnow?'<span class="badge bgn">GolfNow</span>':'';
-  const bNB =c.noBooking?'<span class="badge bnobk">walk-up</span>':'';
-  const bNo =dimmed?'<span class="badge bno">no time today</span>':'';
+  const bGN=c.golfnow?'<span class="badge bgn">GolfNow</span>':'';
+  const bNB=c.noBooking?'<span class="badge bnobk">walk-up</span>':'';
+  const bNo=dimmed?'<span class="badge bno">no time today</span>':'';
+  const bClosed=isClosed?'<span class="badge bclosed">closed today</span>':'';
 
   const safeName=c.name.replace(/'/g,"\\'");
-  return `<div class="ccard${dimmed?' dimmed':''}">
+  const safeSuburb=c.suburb.replace(/'/g,"\\'");
+  return `<div class="ccard${dimmed?' dimmed':''}${isClosed?' closed-today':''}">
     <div class="ccard-left">
       <div class="ccard-name-row">
         <div class="ccard-name">${c.name}</div>
@@ -691,16 +751,95 @@ function courseCard(c,daylight,dimmed){
       </div>
       <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive &middot; ${roundTime}</div>
       <div class="ccard-region">${REGION_LABELS[c.region]||c.region}</div>
-      ${noteHtml}
+      ${noteHtml}${visitorNoteHtml}
       ${timeLine}
-      <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bType}${bGN}${bNB}</div>
+      <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bClosed}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
       <a class="visit-btn" href="${c.url}" target="_blank" aria-label="Open ${c.name} website">⛳ tap to open</a>
-      <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
+        <button class="share-btn" onclick="shareCourse('${safeName}','${safeSuburb}',${c.drive})" aria-label="Share ${safeName}">↗️</button>
+        <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
+      </div>
       ${wxHtml}
     </div>
   </div>`;
+}
+
+// ── Hole-in-one tracker ──────────────────────────────────────
+let hios = JSON.parse(localStorage.getItem('gf_hios')||'[]');
+
+function showHio(){
+  document.getElementById('hio-panel').style.display='block';
+  document.body.style.overflow='hidden';
+  renderHioList();
+}
+function hideHio(){
+  document.getElementById('hio-panel').style.display='none';
+  document.body.style.overflow='';
+  document.getElementById('hio-celebration').style.display='none';
+}
+function recordHio(){
+  const course=document.getElementById('hio-course').value.trim();
+  const hole=document.getElementById('hio-hole').value.trim();
+  const club=document.getElementById('hio-club').value.trim();
+  if(!course){document.getElementById('hio-course').focus();return;}
+  const entry={
+    id:Date.now(),
+    course,
+    hole:hole?parseInt(hole):null,
+    club:club||null,
+    date:new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'})
+  };
+  hios.unshift(entry);
+  localStorage.setItem('gf_hios',JSON.stringify(hios));
+  // Clear form
+  document.getElementById('hio-course').value='';
+  document.getElementById('hio-hole').value='';
+  document.getElementById('hio-club').value='';
+  // Show celebration
+  const cel=document.getElementById('hio-celebration');
+  const detail=`${entry.course}${entry.hole?', hole '+entry.hole:''}${entry.club?' · '+entry.club:''}`;
+  document.getElementById('hio-cel-detail').textContent=detail;
+  cel.style.display='block';
+  setTimeout(()=>{cel.style.display='none';},3000);
+  renderHioList();
+}
+function deleteHio(id){
+  hios=hios.filter(h=>h.id!==id);
+  localStorage.setItem('gf_hios',JSON.stringify(hios));
+  renderHioList();
+}
+function renderHioList(){
+  const count=hios.length;
+  document.getElementById('hio-count-label').textContent=
+    count===0?'No aces yet — go get one':count===1?'1 ace on record':`${count} aces on record`;
+  const list=document.getElementById('hio-list');
+  if(!count){list.innerHTML='<div class="hio-empty">Your hole-in-ones will appear here</div>';return;}
+  list.innerHTML=hios.map(h=>`
+    <div class="hio-entry">
+      <div class="hio-entry-icon" aria-hidden="true">⛳</div>
+      <div style="flex:1;min-width:0;">
+        <div class="hio-entry-course">${h.course}</div>
+        <div class="hio-entry-detail">
+          ${h.hole?`Hole ${h.hole} · `:''}${h.date}${h.club?` · ${h.club}`:''}
+        </div>
+      </div>
+      <button class="hio-entry-del" onclick="deleteHio(${h.id})" aria-label="Delete this ace">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── Share a course ───────────────────────────────────────────
+function shareCourse(name, suburb, drive){
+  const leaveStr=minsToStr(nowMins()+PREP);
+  const arriveStr=minsToStr(nowMins()+PREP+drive);
+  const text=`🏌️ Heading to ${name} (${suburb}) — leaving ${leaveStr}, arrive ~${arriveStr}. You in?`;
+  if(navigator.share){
+    navigator.share({text}).catch(()=>{});
+  } else {
+    navigator.clipboard?.writeText(text).then(()=>alert('Copied to clipboard!')).catch(()=>alert(text));
+  }
 }
 
 // ── Init ─────────────────────────────────────────────────────
