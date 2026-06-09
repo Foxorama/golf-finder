@@ -44,19 +44,53 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
-/* ── DAYLIGHT BAR — hero ── */
-.daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:18px 18px 14px;margin-bottom:14px;}
-.daybar-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px;}
-.daybar-title{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.1em;}
-.daybar-remain{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;}
-.daybar-remain.warn{color:var(--al);} .daybar-remain.danger{color:var(--rl);}
-.daybar-remain span{font-size:13px;color:var(--tx3);margin-left:4px;}
-.daybar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative;}
+/* ── DAYLIGHT BAR — hero redesign ── */
+.daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;}
+.daybar-icons{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:6px;}
+.daybar-icon-col{display:flex;flex-direction:column;align-items:center;gap:2px;}
+.daybar-icon-col.mid{flex:1;align-items:center;}
+.daybar-icon-emoji{font-size:20px;line-height:1;}
+.daybar-icon-time{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1;}
+.daybar-icon-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.06em;}
+.daybar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative;margin-bottom:14px;}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
-.daybar-labels{display:flex;justify-content:space-between;margin-top:8px;font-family:var(--mono);font-size:10px;color:var(--tx3);}
-.daybar-times{display:flex;justify-content:space-between;margin-top:2px;font-family:var(--mono);font-size:12px;color:var(--tx2);}
+.daybar-bottom{display:flex;justify-content:space-between;align-items:baseline;}
+.daybar-remain-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;}
+.daybar-remain{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;}
+.daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
+.daybar-remain-unit{font-family:var(--mono);font-size:13px;color:var(--tx3);margin-left:4px;}
 
-/* ── Filters ── */
+/* ── Stat row — fancy pass ── */
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
+.stat{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(90,171,53,0.3),transparent);opacity:0;}
+.stat.live::before{opacity:1;}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
+.stat-value{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--tx);line-height:1;}
+.stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:3px;line-height:1.3;}
+.viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
+/* Playable now — pulsing availability dot */
+.avail-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:5px;vertical-align:2px;flex-shrink:0;}
+.avail-dot.on{background:var(--gb);animation:dotpulse 2s ease-in-out infinite;}
+.avail-dot.off{background:var(--tx3);}
+@keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+.stat-playable-row{display:flex;align-items:center;margin-bottom:5px;}
+/* Leave by — tap to open as pill button */
+.stat-leaveby{cursor:default;}
+.nearest-link{display:block;margin-top:7px;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:4px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;}
+.nearest-link:active{opacity:0.75;}
+/* Weather stat card */
+.stat-wx-nearest{border-color:var(--bdr2);}
+.stat-wx-nearest.warn{border-color:rgba(196,127,23,0.4);background:rgba(196,127,23,0.05);}
+.stat-wx-nearest.bad{border-color:rgba(192,57,43,0.4);background:rgba(192,57,43,0.05);}
+.stat-wx-icon{font-size:24px;line-height:1;margin:2px 0 3px;}
+.stat-wx-temp{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--tx);line-height:1;margin-bottom:2px;}
+.stat-wx-nearest.warn .stat-wx-temp{color:var(--al);}
+.stat-wx-nearest.bad .stat-wx-temp{color:var(--rl);}
+.stat-wx-detail{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;}
+.stat-wx-nearest.warn .stat-wx-detail{color:rgba(196,127,23,0.8);}
+.stat-wx-nearest.bad .stat-wx-detail{color:rgba(192,57,43,0.8);}
+
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
 .filters::-webkit-scrollbar{display:none;}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
@@ -148,16 +182,27 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
   <!-- HERO: Daylight bar -->
   <div class="daybar">
-    <div class="daybar-top">
-      <div class="daybar-title">Daylight remaining</div>
-      <div class="daybar-remain pulse" id="db-remain">-- hrs</div>
+    <div class="daybar-icons">
+      <div class="daybar-icon-col">
+        <div class="daybar-icon-emoji" id="db-sunrise-icon">🌅</div>
+        <div class="daybar-icon-time" id="db-sunrise">--:--</div>
+        <div class="daybar-icon-label">Sunrise</div>
+      </div>
+      <div class="daybar-icon-col mid">
+        <div class="daybar-icon-emoji" id="db-now-icon">☀️</div>
+        <div class="daybar-icon-time" id="db-now">--:--</div>
+        <div class="daybar-icon-label">Now</div>
+      </div>
+      <div class="daybar-icon-col" style="align-items:flex-end;">
+        <div class="daybar-icon-emoji">🌇</div>
+        <div class="daybar-icon-time" id="db-sunset">--:--</div>
+        <div class="daybar-icon-label">Last light</div>
+      </div>
     </div>
     <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--gb);"></div></div>
-    <div class="daybar-labels"><span>Sunrise</span><span>Now</span><span>Last light</span></div>
-    <div class="daybar-times">
-      <span id="db-sunrise">--:--</span>
-      <span id="db-now">--:--</span>
-      <span id="db-sunset">--:--</span>
+    <div class="daybar-bottom">
+      <div class="daybar-remain-label">Daylight remaining</div>
+      <div class="daybar-remain pulse" id="db-remain">--<span class="daybar-remain-unit">hrs</span></div>
     </div>
   </div>
 
@@ -181,9 +226,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
   <!-- Stats row -->
   <div class="stats">
-    <div class="stat">
+    <div class="stat" id="stat-playable-card">
       <div class="stat-label">Playable now</div>
-      <div class="stat-value pulse" id="s-playable">--</div>
+      <div class="stat-playable-row">
+        <span class="avail-dot off" id="avail-dot"></span>
+        <div class="stat-value pulse" id="s-playable">--</div>
+      </div>
       <div class="stat-sub" id="s-playable-sub">in filter</div>
     </div>
     <div class="stat stat-leaveby" id="stat-leaveby-card">
@@ -452,27 +500,58 @@ function render(){
   const daylight=Math.max(0,sunsetMins-now);
   const dHrs=(daylight/60).toFixed(1);
 
-  // Hero daylight bar
+  // Hero daylight bar — remaining hours
   const remEl=document.getElementById('db-remain');
-  remEl.textContent=dHrs+' ';
-  const span=document.createElement('span');span.textContent='hrs left';
-  remEl.appendChild(span);
+  remEl.innerHTML=`${dHrs}<span class="daybar-remain-unit">hrs</span>`;
   remEl.className='daybar-remain'+(daylight<120?' danger':daylight<240?' warn':'');
 
   document.getElementById('db-now').textContent=minsToStr(now);
   document.getElementById('db-sunset').textContent=minsToStr(sunsetMins);
   document.getElementById('db-sunrise').textContent=minsToStr(sunriseMins);
 
+  // Now icon — shifts with time of day, overlaid with GPS weather
   const totalDay=sunsetMins-sunriseMins;
   const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
   const fill=document.getElementById('daybar-fill');
   fill.style.width=pct+'%';
   fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
 
+  // Pick now icon: base on time of day, override with GPS weather if available
+  const gpsWx=weatherCache['brisbane_metro'];
+  let nowIcon='☀️';
+  if(pct<8)       nowIcon='🌅'; // just after sunrise
+  else if(pct<35) nowIcon='🌤'; // morning
+  else if(pct<65) nowIcon='☀️'; // midday
+  else if(pct<85) nowIcon='🌆'; // afternoon
+  else            nowIcon='🌇'; // near sunset
+  // Override with weather condition if available
+  if(gpsWx&&gpsWx.ok){
+    const lbl=gpsWx.label;
+    if(lbl.includes('Storm')||lbl.includes('hail')) nowIcon='⛈';
+    else if(lbl.includes('Rain'))    nowIcon='🌧';
+    else if(lbl.includes('Shower'))  nowIcon='🌦';
+    else if(lbl.includes('Drizzle')) nowIcon='🌦';
+    else if(lbl.includes('Overcast'))nowIcon='☁️';
+    else if(lbl.includes('cloudy'))  nowIcon='⛅';
+    else if(lbl.includes('Foggy'))   nowIcon='🌫';
+  }
+  document.getElementById('db-now-icon').textContent=nowIcon;
+
   // Stats — all respond to active filter
   const filtered=getFiltered(daylight);
   const playableInFilter=filtered.filter(c=>canPlayAny(c,daylight));
   const playableInFilterCount=playableInFilter.length;
+
+  // Pulsing availability dot
+  const dot=document.getElementById('avail-dot');
+  const playableCard=document.getElementById('stat-playable-card');
+  if(playableInFilterCount>0){
+    dot.className='avail-dot on';
+    playableCard.classList.add('live');
+  } else {
+    dot.className='avail-dot off';
+    playableCard.classList.remove('live');
+  }
 
   // Nearest viable course in current filter
   const nearest=playableInFilter.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
@@ -487,7 +566,7 @@ function render(){
 
   // Leave by card — tap to open nearest
   const nearestLink=document.getElementById('nearest-link');
-  if(nearest){nearestLink.href=nearest.url;nearestLink.style.display='inline-block';}
+  if(nearest){nearestLink.href=nearest.url;nearestLink.style.display='block';}
   else{nearestLink.style.display='none';}
 
   // Weather stat card — shows weather for nearest course's zone
