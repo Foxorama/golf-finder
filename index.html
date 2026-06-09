@@ -74,13 +74,23 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
 
 /* ── Nearest card with direct link ── */
-.stat-nearest{position:relative;}
+.stat-leaveby{cursor:default;}
+.stat-wx-nearest{background:var(--sur);border:1px solid var(--bdr2);}
 .nearest-link{display:inline-block;margin-top:5px;font-family:var(--mono);font-size:11px;color:var(--gb);text-decoration:none;border-bottom:1px solid rgba(90,171,53,0.3);}
 .nearest-link:active{opacity:0.7;}
-
-
-
-/* ── Section head ── */
+.stat-wx-icon{font-size:22px;line-height:1;margin:4px 0 2px;}
+.stat-wx-temp{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--tx);line-height:1;margin-bottom:2px;}
+.stat-wx-detail{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;}
+.stat-wx-nearest.warn .stat-wx-temp,.stat-wx-nearest.warn .stat-wx-detail{color:var(--al);}
+.stat-wx-nearest.bad .stat-wx-temp,.stat-wx-nearest.bad .stat-wx-detail{color:var(--rl);}
+/* Course card weather — right column, split lines, more prominent */
+.ccard-wx{margin-top:6px;text-align:right;}
+.ccard-wx .wx-icon{font-size:18px;display:block;margin-bottom:2px;}
+.ccard-wx .wx-temp{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--tx);display:block;line-height:1.2;}
+.ccard-wx .wx-wind{font-family:var(--mono);font-size:11px;color:var(--tx3);display:block;line-height:1.4;}
+.ccard-wx .wx-cond{font-family:var(--mono);font-size:11px;display:block;line-height:1.4;}
+.ccard-wx.wx-warn .wx-temp,.ccard-wx.wx-warn .wx-cond{color:var(--al);}
+.ccard-wx.wx-bad .wx-temp,.ccard-wx.wx-bad .wx-cond{color:var(--rl);}
 .section-head{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--tx3);margin:16px 0 8px;display:flex;align-items:center;gap:6px;}
 .sdot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
 .sdot-g{background:var(--gb);} .sdot-r{background:var(--rl);}
@@ -176,19 +186,20 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="stat-value pulse" id="s-playable">--</div>
       <div class="stat-sub" id="s-playable-sub">in filter</div>
     </div>
-    <div class="stat">
+    <div class="stat stat-leaveby" id="stat-leaveby-card">
       <div class="stat-label">Leave by</div>
       <div class="stat-value pulse" id="s-leaveby">--:--</div>
       <div class="stat-sub" id="s-leaveby-sub">for nearest</div>
-    </div>
-    <div class="stat stat-nearest" id="stat-nearest-card">
-      <div class="stat-label">Nearest</div>
-      <div class="stat-value pulse" id="s-nearest">-- min</div>
-      <div class="stat-sub">drive away</div>
       <a class="nearest-link" id="nearest-link" href="#" target="_blank">⛳ tap to open</a>
     </div>
+    <div class="stat stat-wx-nearest" id="stat-wx-card">
+      <div class="stat-label" id="wx-card-label">Nearest weather</div>
+      <div class="stat-wx-icon" id="wx-card-icon">--</div>
+      <div class="stat-wx-temp" id="wx-card-temp">--°</div>
+      <div class="stat-wx-detail" id="wx-card-wind">-- km/h</div>
+      <div class="stat-wx-detail" id="wx-card-label2">--</div>
+    </div>
   </div>
-
 
   <div id="course-list"></div>
 </div>
@@ -458,14 +469,13 @@ function render(){
   fill.style.width=pct+'%';
   fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
 
-  // Stats — all three respond to active filter
+  // Stats — all respond to active filter
   const filtered=getFiltered(daylight);
   const playableInFilter=filtered.filter(c=>canPlayAny(c,daylight));
   const playableInFilterCount=playableInFilter.length;
 
   // Nearest viable course in current filter
-  const nearest=playableInFilter.sort((a,b)=>a.drive-b.drive)[0]||null;
-  const nearestDrive=nearest?nearest.drive:null;
+  const nearest=playableInFilter.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
   const leaveBy=nearest?minsToStr(now+PREP):null;
 
   document.getElementById('s-playable').textContent=playableInFilterCount;
@@ -475,12 +485,43 @@ function render(){
   document.getElementById('s-leaveby').textContent=leaveBy||'--:--';
   document.getElementById('s-leaveby-sub').textContent=nearest?`for ${nearest.suburb}`:'no viable course';
 
-  document.getElementById('s-nearest').textContent=nearestDrive?nearestDrive+' min':'--';
-
-  // Nearest — direct visible link
+  // Leave by card — tap to open nearest
   const nearestLink=document.getElementById('nearest-link');
   if(nearest){nearestLink.href=nearest.url;nearestLink.style.display='inline-block';}
   else{nearestLink.style.display='none';}
+
+  // Weather stat card — shows weather for nearest course's zone
+  const wxCard=document.getElementById('stat-wx-card');
+  const wxIcon=document.getElementById('wx-card-icon');
+  const wxTemp=document.getElementById('wx-card-temp');
+  const wxWind=document.getElementById('wx-card-wind');
+  const wxLbl2=document.getElementById('wx-card-label2');
+  const wxLbl =document.getElementById('wx-card-label');
+  if(nearest){
+    const wx=weatherCache[nearest.zone];
+    wxLbl.textContent=nearest.suburb+' weather';
+    if(wx&&wx.ok){
+      const isBad =wx.label.includes('Storm')||wx.label.includes('hail');
+      const isWarn=wx.label.includes('Rain')||wx.label.includes('Drizzle')||wx.label.includes('Shower');
+      wxCard.className='stat stat-wx-nearest'+(isBad?' bad':isWarn?' warn':'');
+      wxIcon.textContent=wx.icon;
+      wxTemp.textContent=wx.temp+'°';
+      wxWind.textContent=wx.wind+' km/h wind';
+      wxLbl2.textContent=wx.label;
+    } else {
+      wxCard.className='stat stat-wx-nearest';
+      wxIcon.textContent='🌡';
+      wxTemp.textContent='--°';
+      wxWind.textContent='loading...';
+      wxLbl2.textContent='';
+    }
+  } else {
+    wxLbl.textContent='Nearest weather';
+    wxIcon.textContent='--';
+    wxTemp.textContent='';
+    wxWind.textContent='no course';
+    wxLbl2.textContent='in filter';
+  }
 
   // Open-all button
   const openable=playableInFilter;
@@ -533,7 +574,7 @@ function courseCard(c,daylight,dimmed){
     const isWarn = wx.label.includes('Rain') || wx.label.includes('Drizzle') || wx.label.includes('Shower');
     const isBad  = wx.label.includes('Storm') || wx.label.includes('hail');
     const wxClass = isBad?'ccard-wx wx-bad':isWarn?'ccard-wx wx-warn':'ccard-wx';
-    wxHtml = `<div class="${wxClass}">${wx.icon} ${wx.temp}°<br>${wx.wind} km/h · ${wx.label}</div>`;
+    wxHtml = `<div class="${wxClass}"><span class="wx-icon">${wx.icon}</span><span class="wx-temp">${wx.temp}°</span><span class="wx-wind">${wx.wind} km/h</span><span class="wx-cond">${wx.label}</span></div>`;
   }
 
   // Course note
