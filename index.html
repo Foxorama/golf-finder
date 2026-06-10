@@ -64,16 +64,26 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
 .daybar-remain-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:2px;}
 
-/* ── Daybar night mode ── */
-#daybar-night{padding:4px 0;}
-.night-row{display:flex;align-items:center;gap:14px;margin-bottom:14px;}
-.night-icon{font-size:32px;line-height:1;}
-.night-text{flex:1;}
+/* ── Daybar night mode — starfield scene ── */
+#daybar-night{margin:-2px;}
+.night-scene{position:relative;height:90px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#0a0e1f 0%,#10162e 55%,#1a1530 100%);margin-bottom:12px;}
+.night-stars{position:absolute;inset:0;}
+.night-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
+@keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
+.night-moon{position:absolute;top:14px;right:22px;font-size:42px;line-height:1;filter:drop-shadow(0 0 8px rgba(220,230,255,0.4));z-index:2;}
+.night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift 14s linear infinite;}
+@keyframes cloudDrift{0%{transform:translateX(-40px);}100%{transform:translateX(340px);}}
+.night-raindrop{position:absolute;width:1.5px;height:9px;background:linear-gradient(transparent,#6db3f2);border-radius:1px;animation:rainFall 0.8s linear infinite;}
+@keyframes rainFall{0%{transform:translateY(-12px);opacity:0;}30%{opacity:0.8;}100%{transform:translateY(70px);opacity:0;}}
+.night-bolt{position:absolute;font-size:26px;animation:flash 4s ease-in-out infinite;}
+@keyframes flash{0%,92%,100%{opacity:0;}94%,97%{opacity:1;}}
+.night-info{padding:0 2px;}
 .night-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:3px;}
-.night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;}
-.night-countdown{display:flex;justify-content:space-between;align-items:baseline;border-top:1px solid var(--bdr);padding-top:12px;}
-.night-countdown-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;}
-.night-countdown-val{font-family:var(--mono);font-size:21px;color:#8da9d6;font-weight:500;}
+.night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;margin-bottom:12px;}
+.night-countdown{display:flex;justify-content:flex-end;align-items:baseline;gap:8px;border-top:1px solid var(--bdr);padding-top:12px;}
+.night-countdown-label{font-family:var(--mono);font-size:11px;color:var(--tx2);letter-spacing:0.02em;}
+.night-countdown-val{font-family:var(--mono);font-size:21px;color:#8da9d6;font-weight:500;white-space:nowrap;}
 
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
@@ -279,16 +289,16 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
     </div>
     <!-- NIGHT MODE -->
     <div id="daybar-night" style="display:none;">
-      <div class="night-row">
-        <div class="night-icon" aria-hidden="true">🌙</div>
-        <div class="night-text">
-          <div class="night-label">Past last light — no golf today</div>
-          <div class="night-resume" id="night-resume">Golf resumes ~5:30am</div>
-        </div>
+      <div class="night-scene" id="night-scene">
+        <div class="night-stars" id="night-stars"></div>
+        <div class="night-moon" id="night-moon" aria-hidden="true">🌙</div>
+        <div class="night-wx" id="night-wx" aria-hidden="true"></div>
       </div>
-      <div class="night-countdown">
-        <span class="night-countdown-label">Daylight returns in</span>
-        <span class="night-countdown-val" id="night-countdown">-- hrs</span>
+      <div class="night-info">
+        <div class="night-countdown">
+          <span class="night-countdown-label" id="night-resume">Golf resumes ~5:30am in</span>
+          <span class="night-countdown-val" id="night-countdown">-- hrs</span>
+        </div>
       </div>
     </div>
   </div>
@@ -452,6 +462,70 @@ let weatherCache = {};  // zone -> {temp, wind, code, label}
 let drawerOpen=false; // unused, kept for safety
 
 // ── Weather helpers ───────────────────────────────────────────
+// Moon phase — calculated from synodic cycle, no API needed
+// Reference new moon: 2025-01-29 12:36 UTC, synodic month 29.530588853 days
+function moonPhase(date){
+  const knownNew=Date.UTC(2025,0,29,12,36)/86400000; // days
+  const synodic=29.530588853;
+  const now=date.getTime()/86400000;
+  let age=((now-knownNew)%synodic+synodic)%synodic;
+  const emojis=['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
+  const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
+  const idx=Math.round((age/synodic)*8)%8;
+  return {icon:emojis[idx], name:names[idx], age};
+}
+
+// Build the night scene: stars, accurate moon phase, weather overlay
+let _nightBuilt=false;
+function buildNightScene(){
+  // Stars only need building once (they're static positions)
+  const starsEl=document.getElementById('night-stars');
+  if(starsEl && !_nightBuilt){
+    let html='';
+    for(let i=0;i<34;i++){
+      const x=Math.random()*100, y=Math.random()*100;
+      const sz=Math.random()*1.6+0.8;
+      const dur=Math.random()*2.5+2;
+      const delay=Math.random()*3;
+      html+=`<span class="night-star" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;--dur:${dur}s;--delay:${delay}s;"></span>`;
+    }
+    starsEl.innerHTML=html;
+    _nightBuilt=true;
+  }
+  // Moon phase
+  const mp=moonPhase(new Date());
+  const moonEl=document.getElementById('night-moon');
+  if(moonEl){ moonEl.textContent=mp.icon; moonEl.title=mp.name; }
+  // Weather overlay based on GPS zone current conditions
+  const gpsZone=window._gpsZone||'brisbane_metro';
+  const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
+  const wxEl=document.getElementById('night-wx');
+  if(wxEl){
+    let html='';
+    if(wx&&wx.ok){
+      const lbl=wx.label;
+      const isStorm=lbl.includes('Storm')||lbl.includes('hail');
+      const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
+      const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
+      if(isStorm||isRain||isCloud){
+        // Drifting clouds
+        html+=`<span class="night-cloud" style="top:8px;left:0;animation-delay:0s;">☁️</span>`;
+        html+=`<span class="night-cloud" style="top:30px;left:0;font-size:22px;animation-delay:-7s;opacity:0.6;">☁️</span>`;
+      }
+      if(isStorm||isRain){
+        // Raindrops
+        for(let i=0;i<18;i++){
+          const x=Math.random()*100, d=Math.random()*0.8, dur=Math.random()*0.3+0.6;
+          html+=`<span class="night-raindrop" style="left:${x}%;top:${Math.random()*30}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        }
+      }
+      if(isStorm){
+        html+=`<span class="night-bolt" style="top:18px;left:30%;">⚡</span>`;
+      }
+    }
+    wxEl.innerHTML=html;
+  }
+}
 // Convert hex colour to rgba string with given alpha
 function hexToRgba(hex,a){
   const h=hex.replace('#','');
@@ -638,15 +712,14 @@ function render(){
     // Minutes until next sunrise
     let untilSunrise;
     if(now>=sunsetMins){
-      // After sunset tonight — sunrise is tomorrow
       untilSunrise = (1440 - now) + sunriseMins;
     } else {
-      // Before sunrise this morning
       untilSunrise = sunriseMins - now;
     }
     const h=Math.floor(untilSunrise/60), m=untilSunrise%60;
     document.getElementById('night-countdown').textContent = h>0?`${h}h ${m}m`:`${m}m`;
-    document.getElementById('night-resume').textContent = `Golf resumes ~${minsToStr(sunriseMins)}`;
+    document.getElementById('night-resume').textContent = `Golf resumes ~${minsToStr(sunriseMins)} in`;
+    buildNightScene();
   }
 
   // Hero daylight bar — remaining hours
