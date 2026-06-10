@@ -174,6 +174,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .fav-btn:active{transform:scale(1.3);}
 .no-results{text-align:center;padding:32px 20px;font-family:var(--mono);font-size:13px;color:var(--tx3);background:var(--sur);border:1px solid var(--bdr);border-radius:14px;}
 .pulse{animation:pulse 1.2s ease-in-out infinite;}
+#test-banner{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--al);text-align:center;cursor:pointer;}
+#test-banner #test-banner-text{font-weight:700;letter-spacing:0.06em;}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
 
 /* ── Closed today badge ── */
@@ -257,6 +259,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       </div>
       <div id="hio-list"></div>
     </div>
+  </div>
+
+  <!-- Test mode banner (hidden unless active) -->
+  <div id="test-banner" style="display:none;" onclick="cycleTestTime()">
+    <span id="test-banner-text">TEST MODE</span>
+    <span style="opacity:0.7;">· tap to cycle · </span><span onclick="event.stopPropagation();clearTime();hideTestBanner();" style="text-decoration:underline;">exit</span>
   </div>
 
   <!-- HERO: Daylight bar -->
@@ -599,7 +607,48 @@ async function fetchAllWeather(){
 
 // ── Time helpers ─────────────────────────────────────────────
 function pad(n){ return String(n).padStart(2,'0'); }
-function nowMins(){ const d=new Date(); return d.getHours()*60+d.getMinutes(); }
+// Test mode: override "now" via ?time=HH:MM (e.g. ?time=10:00 or ?time=20:30)
+// or set window._testTime in minutes. Lets you demo any time of day.
+let _testTime = null;
+(function initTestTime(){
+  const p = new URLSearchParams(location.search).get('time');
+  if(p){
+    const m = p.match(/^(\d{1,2}):(\d{2})$/);
+    if(m){ _testTime = parseInt(m[1])*60 + parseInt(m[2]); }
+  }
+})();
+function nowMins(){
+  if(_testTime!==null) return _testTime;
+  const d=new Date(); return d.getHours()*60+d.getMinutes();
+}
+// Console helpers for live demos: setTime('20:30'), setTime('10:00'), clearTime()
+function setTime(hhmm){
+  const m=String(hhmm).match(/^(\d{1,2}):(\d{2})$/);
+  if(m){ _testTime=parseInt(m[1])*60+parseInt(m[2]); render(); console.log('Test time set to '+hhmm); }
+  else console.log('Use format HH:MM, e.g. setTime("10:00")');
+}
+function clearTime(){ _testTime=null; render(); console.log('Test time cleared — using real time'); }
+
+// Demo cycle: morning → midday → afternoon → dusk → night → back
+const _demoTimes=[['7:30am',450],['10:00am',600],['1:00pm',780],['4:30pm',990],['6:00pm',1080],['8:30pm',1230],['11:00pm',1380]];
+let _demoIdx=0;
+function cycleTestTime(){
+  _demoIdx=(_demoIdx+1)%_demoTimes.length;
+  _testTime=_demoTimes[_demoIdx][1];
+  updateTestBanner();
+  render();
+}
+function updateTestBanner(){
+  const b=document.getElementById('test-banner');
+  const t=document.getElementById('test-banner-text');
+  if(_testTime!==null){
+    b.style.display='block';
+    t.textContent='TEST MODE · '+minsToStr(_testTime);
+  }
+}
+function hideTestBanner(){ document.getElementById('test-banner').style.display='none'; }
+// Show banner on load if test mode active via URL
+function showTestBanner(){ if(_testTime!==null) updateTestBanner(); }
 function minsToStr(m){
   const norm=((m%1440)+1440)%1440;
   const h=Math.floor(norm/60), mn=norm%60;
@@ -1096,6 +1145,7 @@ async function init(){
 }
 
 init();
+showTestBanner();
 </script>
 </body>
 </html>
