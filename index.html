@@ -64,36 +64,35 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
 .daybar-remain-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:2px;}
 
-/* ── Stat row — fancy pass ── */
+/* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;}
-.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,rgba(90,171,53,0.3),transparent);opacity:0;}
-.stat.live::before{opacity:1;}
+.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;transition:border-color 0.3s,background 0.3s;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
 .stat-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
 .viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
-/* Top rated card */
-#stat-toprated-card #s-toprated-stars{font-family:var(--mono);font-size:24px;font-weight:500;line-height:1;}
+
+/* Top Rated card — amber accent (matches stars) */
+#stat-toprated-card{border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.05);}
+#stat-toprated-card.dim{border-color:var(--bdr2);background:var(--sur);}
+#stat-toprated-card #s-toprated-stars{font-family:var(--mono);font-size:24px;font-weight:500;line-height:1;color:var(--al);}
 #stat-toprated-card #s-toprated-name{font-family:var(--mono);font-size:10px;color:var(--tx2);line-height:1.3;margin-top:5px;min-height:26px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:center;padding:0 2px;}
-@keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
-/* Leave by — tap to open as pill button */
-.stat-leaveby{cursor:default;}
+
+/* Leave By card — green accent */
+.stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35)!important;background:rgba(90,171,53,0.05)!important;}
+.stat-leaveby.dim{border-color:var(--bdr2)!important;background:var(--sur)!important;}
+.stat-leaveby #s-leaveby{color:var(--gg);}
+.stat-leaveby.dim #s-leaveby{color:var(--tx2);}
 .nearest-link{display:block;margin-top:auto;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:5px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .nearest-link:active{opacity:0.75;}
-/* ── Weather stat card ── */
-.stat-wx-nearest{border-color:var(--bdr2);text-align:center;}
-.stat-wx-nearest.warn{border-color:rgba(196,127,23,0.4);background:rgba(196,127,23,0.05);}
-.stat-wx-nearest.bad{border-color:rgba(192,57,43,0.4);background:rgba(192,57,43,0.05);}
+@keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
+
+/* ── Weather stat card — dynamic colour per condition ── */
+.stat-wx-nearest{text-align:center;border-color:var(--bdr2);}
 .stat-wx-icon{font-size:22px;line-height:1;margin:2px 0 3px;display:block;}
 .stat-wx-temp{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--tx);line-height:1;margin-bottom:1px;}
-.stat-wx-nearest.warn .stat-wx-temp{color:var(--al);}
-.stat-wx-nearest.bad .stat-wx-temp{color:#f07060;}
-/* Wind is prominent (coloured), condition is muted — same logic as course cards */
 .stat-wx-detail{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;display:block;}
 .stat-wx-detail.wind{color:var(--tx2);font-weight:500;}
-.stat-wx-nearest.warn .stat-wx-detail.wind{color:var(--al);}
-.stat-wx-nearest.bad .stat-wx-detail.wind{color:#f07060;}
 
 /* ── Course card weather — right column, matches stat card styling ── */
 .ccard-wx{margin-top:6px;text-align:right;}
@@ -424,21 +423,28 @@ let weatherCache = {};  // zone -> {temp, wind, code, label}
 let drawerOpen=false; // unused, kept for safety
 
 // ── Weather helpers ───────────────────────────────────────────
-// Open-Meteo WMO weather codes -> emoji + short label
+// Convert hex colour to rgba string with given alpha
+function hexToRgba(hex,a){
+  const h=hex.replace('#','');
+  const r=parseInt(h.substring(0,2),16),g=parseInt(h.substring(2,4),16),b=parseInt(h.substring(4,6),16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+// Open-Meteo WMO weather codes -> emoji + short label + accessible colour
 // Daytime icons. Drizzle/rain/showers use proper rain clouds (no sun).
+// Colours: sunny=yellow, cloudy=blue-grey, rain=blue, storm=red, fog=grey (all AA on dark)
 function wxDesc(code){
-  if(code===0)                       return {icon:'☀️', label:'Clear'};
-  if(code===1)                       return {icon:'🌤', label:'Mostly clear'};
-  if(code===2)                       return {icon:'⛅', label:'Partly cloudy'};
-  if(code===3)                       return {icon:'☁️', label:'Overcast'};
-  if(code>=45&&code<=48)             return {icon:'🌫', label:'Foggy'};
-  if(code>=51&&code<=57)             return {icon:'🌧', label:'Drizzle'};
-  if(code>=61&&code<=67)             return {icon:'🌧', label:'Rain'};
-  if(code>=71&&code<=77)             return {icon:'❄️', label:'Snow'};
-  if(code>=80&&code<=82)             return {icon:'🌧', label:'Showers'};
-  if(code===95)                      return {icon:'⛈', label:'Thunderstorm'};
-  if(code>=96&&code<=99)             return {icon:'⛈', label:'Storm+hail'};
-  return {icon:'🌡', label:'Unknown'};
+  if(code===0)                       return {icon:'☀️', label:'Clear',        c:'#f5c542'};
+  if(code===1)                       return {icon:'🌤', label:'Mostly clear', c:'#f5c542'};
+  if(code===2)                       return {icon:'⛅', label:'Partly cloudy', c:'#9db4c0'};
+  if(code===3)                       return {icon:'☁️', label:'Overcast',     c:'#9db4c0'};
+  if(code>=45&&code<=48)             return {icon:'🌫', label:'Foggy',        c:'#b0b0b0'};
+  if(code>=51&&code<=57)             return {icon:'🌧', label:'Drizzle',      c:'#6db3f2'};
+  if(code>=61&&code<=67)             return {icon:'🌧', label:'Rain',         c:'#6db3f2'};
+  if(code>=71&&code<=77)             return {icon:'❄️', label:'Snow',         c:'#cfe8ff'};
+  if(code>=80&&code<=82)             return {icon:'🌧', label:'Showers',      c:'#6db3f2'};
+  if(code===95)                      return {icon:'⛈', label:'Thunderstorm', c:'#f07060'};
+  if(code>=96&&code<=99)             return {icon:'⛈', label:'Storm+hail',   c:'#f07060'};
+  return {icon:'🌡', label:'Unknown', c:'var(--tx2)'};
 }
 
 // Fetch current + hourly forecast for a zone, store weather at sunrise/now/sunset
@@ -456,6 +462,7 @@ async function fetchWeatherZone(zone){
       wind: Math.round(c.wind_speed_10m),
       icon: desc.icon,
       label: desc.label,
+      color: desc.c,
       ok: true,
       hourly: d.hourly || null
     };
@@ -655,16 +662,14 @@ function render(){
   const trName=document.getElementById('s-toprated-name');
   const trLink=document.getElementById('toprated-link');
   if(topRated){
-    trCard.classList.toggle('live',anyPlayable);
+    trCard.classList.toggle('dim',!anyPlayable);
     trStars.textContent='★ '+(topRated.rating||0).toFixed(1);
-    trStars.style.color='var(--al)';
     trName.textContent=topRated.name;
     trLink.href=topRated.url;
     trLink.style.display='block';
   } else {
-    trCard.classList.remove('live');
+    trCard.classList.add('dim');
     trStars.textContent='--';
-    trStars.style.color='';
     trName.textContent='no course in filter';
     trLink.style.display='none';
   }
@@ -672,14 +677,18 @@ function render(){
   // Nearest — from widget pool
   const nearest=widgetPool.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
   const leaveBy=anyPlayable&&nearest?minsToStr(now+PREP):null;
+  const lbCard=document.getElementById('stat-leaveby-card');
 
   if(anyPlayable&&nearest){
+    lbCard.classList.remove('dim');
     document.getElementById('s-leaveby').textContent=leaveBy;
     document.getElementById('s-leaveby-sub').textContent=`for ${nearest.suburb}`;
   } else if(nearest){
+    lbCard.classList.add('dim');
     document.getElementById('s-leaveby').textContent='—';
     document.getElementById('s-leaveby-sub').textContent='none playable today';
   } else {
+    lbCard.classList.add('dim');
     document.getElementById('s-leaveby').textContent='--:--';
     document.getElementById('s-leaveby-sub').textContent='no course in filter';
   }
@@ -704,29 +713,36 @@ function render(){
     const wx=weatherCache[nearest.zone];
     wxLbl.textContent=nearest.suburb+' weather';
     if(wx&&wx.ok){
-      const isBad =wx.label.includes('Storm')||wx.label.includes('hail');
-      const isWarn=wx.label.includes('Rain')||wx.label.includes('Drizzle')||wx.label.includes('Shower');
-      wxCard.className='stat stat-wx-nearest'+(isBad?' bad':isWarn?' warn':'');
+      const col=wx.color||'var(--tx2)';
+      // Tint the whole card to match the condition colour
+      wxCard.className='stat stat-wx-nearest';
+      wxCard.style.borderColor=col;
+      wxCard.style.background=col.startsWith('#')?hexToRgba(col,0.07):'var(--sur)';
       wxIcon.textContent=wx.icon;
       wxTemp.textContent=wx.temp+'°';
+      wxTemp.style.color=col;
       wxWind.className='stat-wx-detail wind';
       wxWind.textContent=wx.wind+' km/h';
+      wxWind.style.color=col;
       wxLbl2.className='stat-wx-detail';
       wxLbl2.textContent=wx.label;
+      wxLbl2.style.color=col;
     } else {
       wxCard.className='stat stat-wx-nearest';
+      wxCard.style.borderColor='';wxCard.style.background='';
       wxIcon.textContent='🌡';
-      wxTemp.textContent='--°';
-      wxWind.textContent='loading...';
-      wxLbl2.textContent='';
+      wxTemp.textContent='--°';wxTemp.style.color='';
+      wxWind.textContent='loading...';wxWind.style.color='';
+      wxLbl2.textContent='';wxLbl2.style.color='';
     }
   } else {
     wxCard.className='stat stat-wx-nearest';
+    wxCard.style.borderColor='';wxCard.style.background='';
     wxLbl.textContent='Nearest weather';
     wxIcon.textContent='⛅';
-    wxTemp.textContent='--°';
+    wxTemp.textContent='--°';wxTemp.style.color='';
     wxWind.className='stat-wx-detail';
-    wxWind.textContent='no course';
+    wxWind.textContent='no course';wxWind.style.color='';
     wxLbl2.textContent='in filter';
   }
 
@@ -784,10 +800,8 @@ function courseCard(c,daylight,dimmed){
   const wx=weatherCache[c.zone];
   let wxHtml='';
   if(wx&&wx.ok){
-    const isWarn=wx.label.includes('Rain')||wx.label.includes('Drizzle')||wx.label.includes('Shower');
-    const isBad=wx.label.includes('Storm')||wx.label.includes('hail');
-    const wxClass=isBad?'ccard-wx wx-bad':isWarn?'ccard-wx wx-warn':'ccard-wx';
-    wxHtml=`<div class="${wxClass}"><span class="wx-icon">${wx.icon}</span><span class="wx-temp">${wx.temp}°</span><span class="wx-wind">${wx.wind} km/h</span><span class="wx-cond">${wx.label}</span></div>`;
+    const col=wx.color||'var(--tx2)';
+    wxHtml=`<div class="ccard-wx"><span class="wx-icon">${wx.icon}</span><span class="wx-temp" style="color:${col}">${wx.temp}°</span><span class="wx-wind" style="color:${col}">${wx.wind} km/h</span><span class="wx-cond" style="color:${col};opacity:0.8">${wx.label}</span></div>`;
   }
 
   const noteHtml=c.note?`<div class="ccard-note">${c.note}</div>`:'';
