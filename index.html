@@ -560,9 +560,9 @@ function getFiltered(daylight){
   return COURSES.filter(c=>{
     switch(activeFilter){
       case 'favs':      return favourites.includes(c.name);
-      case 'playable':  return canPlayAny(c,daylight);
-      case '18':        return canPlayHoles(c,18,daylight);
-      case '9':         return canPlayHoles(c,9,daylight)||canPlayHoles(c,18,daylight);
+      case 'playable':  return true;  // all courses; render splits playable/dimmed
+      case '18':        return c.holes.includes(18);
+      case '9':         return c.holes.includes(9)||c.holes.includes(18);
       case 'par3':      return c.par3;
       case 'close':     return c.drive<=30;
       case 'visitor':   return c.type!=='private';
@@ -608,13 +608,13 @@ function render(){
   fill.style.width=pct+'%';
   fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
 
-  // Sliding Now icon — position absolutely over icon row, clamped 6%–94%
+  // Sliding Now icon — position absolutely over icon row, clamped 12%–88%
   const nowCol=document.getElementById('db-now-col');
   if(now<=sunriseMins||now>=sunsetMins){
     nowCol.style.display='none'; // hide before sunrise and after sunset
   } else {
     nowCol.style.display='flex';
-    const clampedPct=Math.min(94,Math.max(6,pct));
+    const clampedPct=Math.min(88,Math.max(12,pct));
     nowCol.style.left=clampedPct+'%';
   }
 
@@ -642,18 +642,22 @@ function render(){
   // Stats — all respond to active filter
   const filtered=getFiltered(daylight);
   const playableInFilter=filtered.filter(c=>canPlayAny(c,daylight));
+  const anyPlayable=playableInFilter.length>0;
 
-  // Top rated playable course in current filter
-  const topRated=playableInFilter.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0]||null;
+  // Pool for the widgets: playable courses if any, otherwise all filtered courses
+  // (so the widgets stay populated and good-looking even when nothing's playable today)
+  const widgetPool=anyPlayable?playableInFilter:filtered;
+
+  // Top rated — from widget pool
+  const topRated=widgetPool.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0]||null;
   const trCard=document.getElementById('stat-toprated-card');
   const trStars=document.getElementById('s-toprated-stars');
   const trName=document.getElementById('s-toprated-name');
   const trLink=document.getElementById('toprated-link');
   if(topRated){
-    trCard.classList.add('live');
-    trStars.textContent='★ '+topRated.rating.toFixed(1);
+    trCard.classList.toggle('live',anyPlayable);
+    trStars.textContent='★ '+(topRated.rating||0).toFixed(1);
     trStars.style.color='var(--al)';
-    // Full name — CSS handles wrapping/clamping to 2 lines
     trName.textContent=topRated.name;
     trLink.href=topRated.url;
     trLink.style.display='block';
@@ -665,14 +669,21 @@ function render(){
     trLink.style.display='none';
   }
 
-  // Nearest viable course in current filter
-  const nearest=playableInFilter.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
-  const leaveBy=nearest?minsToStr(now+PREP):null;
+  // Nearest — from widget pool
+  const nearest=widgetPool.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
+  const leaveBy=anyPlayable&&nearest?minsToStr(now+PREP):null;
 
-  document.getElementById('s-leaveby').textContent=leaveBy||'--:--';
-  document.getElementById('s-leaveby-sub').textContent=nearest?`for ${nearest.suburb}`:'no viable course';
+  if(anyPlayable&&nearest){
+    document.getElementById('s-leaveby').textContent=leaveBy;
+    document.getElementById('s-leaveby-sub').textContent=`for ${nearest.suburb}`;
+  } else if(nearest){
+    document.getElementById('s-leaveby').textContent='—';
+    document.getElementById('s-leaveby-sub').textContent='none playable today';
+  } else {
+    document.getElementById('s-leaveby').textContent='--:--';
+    document.getElementById('s-leaveby-sub').textContent='no course in filter';
+  }
 
-  // Leave by — simple clean label, no course name that truncates
   const nearestLink=document.getElementById('nearest-link');
   if(nearest){
     nearestLink.href=nearest.url;
@@ -682,7 +693,7 @@ function render(){
     nearestLink.style.display='none';
   }
 
-  // Weather stat card — shows weather for nearest course's zone
+  // Weather stat card — shows weather for the relevant course's zone
   const wxCard=document.getElementById('stat-wx-card');
   const wxIcon=document.getElementById('wx-card-icon');
   const wxTemp=document.getElementById('wx-card-temp');
@@ -710,9 +721,11 @@ function render(){
       wxLbl2.textContent='';
     }
   } else {
+    wxCard.className='stat stat-wx-nearest';
     wxLbl.textContent='Nearest weather';
-    wxIcon.textContent='--';
-    wxTemp.textContent='';
+    wxIcon.textContent='⛅';
+    wxTemp.textContent='--°';
+    wxWind.className='stat-wx-detail';
     wxWind.textContent='no course';
     wxLbl2.textContent='in filter';
   }
@@ -727,12 +740,15 @@ function render(){
   });
 
   // Course list — always show unavailable courses dimmed, regardless of filter
-  const display=activeFilter==='all'
-    ?[...COURSES].sort((a,b)=>a.drive-b.drive)
-    :filtered;
   const allInFilter=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
-  const playable=allInFilter.filter(c=>canPlayAny(c,daylight));
-  const notPlayable=allInFilter.filter(c=>!canPlayAny(c,daylight));
+  // Playability check respects the active filter's hole requirement
+  const playableCheck=(c)=>{
+    if(activeFilter==='18') return canPlayHoles(c,18,daylight);
+    if(activeFilter==='9')  return canPlayHoles(c,9,daylight)||canPlayHoles(c,18,daylight);
+    return canPlayAny(c,daylight);
+  };
+  const playable=allInFilter.filter(playableCheck);
+  const notPlayable=allInFilter.filter(c=>!playableCheck(c));
 
   let html='';
   if(playable.length){
