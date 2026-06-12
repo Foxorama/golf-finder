@@ -121,9 +121,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 12px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;transition:border-color 0.3s,background 0.3s;}
+.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;transition:border-color 0.3s,background 0.3s;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
-.stat-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;}
+.stat-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;white-space:nowrap;}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
 .viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
 
@@ -140,7 +140,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Leave By card — green accent */
 .stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35)!important;background:rgba(90,171,53,0.05)!important;}
 .stat-leaveby.dim{border-color:rgba(90,171,53,0.15)!important;background:rgba(90,171,53,0.02)!important;}
-.stat-leaveby #s-leaveby{color:var(--gg);}
+.stat-leaveby #s-leaveby{color:var(--gg);font-size:22px;white-space:nowrap;}
 .stat-leaveby.dim #s-leaveby{color:var(--tx3);}
 @keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
 
