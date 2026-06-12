@@ -79,13 +79,13 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Wind gust streaks drifting across */
 .day-gust{position:absolute;left:0;animation:gustBlow linear infinite;pointer-events:none;}
 .day-gust svg{display:block;overflow:visible;}
-.day-gust path{fill:none;stroke:rgba(255,255,255,0.6);stroke-linecap:round;}
+.day-gust path{fill:none;stroke:rgba(245,248,250,0.7);stroke-linecap:round;}
 @keyframes gustBlow{
-  0%{transform:translateX(-70px);opacity:0;}
-  12%{opacity:0.75;}
-  50%{opacity:0.85;}
-  82%{opacity:0.6;}
-  100%{transform:translateX(400px);opacity:0;}
+  0%{transform:translateX(-90px);opacity:0;}
+  15%{opacity:0.8;}
+  55%{opacity:0.85;}
+  85%{opacity:0.55;}
+  100%{transform:translateX(420px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
 .day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
@@ -574,6 +574,27 @@ function buildNightScene(){
 }
 
 // Build the day scene: time-of-day sky, arcing sun, weather overlay
+// A wind gust = 2-3 stacked flowing lines, some ending in a curl,
+// modelled on the classic wind glyph (long sweeping strokes + curls).
+function gustCluster(){
+  const sw=1.4;
+  // Each entry: a path. Curls are the little loops at line ends.
+  // Lines sit at different y heights and lengths to feel like one gust of air.
+  const variants=[
+    // long top line with end curl, mid line, short lower line
+    `<path d="M2 8 H66 q10 0 10 -4 t-8 -3" style="stroke-width:${sw}"/>`+
+    `<path d="M10 14 H74" style="stroke-width:${sw}"/>`+
+    `<path d="M2 20 H50 q9 0 9 4 t-7 3" style="stroke-width:${sw}"/>`,
+    // two long sweeping lines, lower one curls up
+    `<path d="M2 9 H78" style="stroke-width:${sw}"/>`+
+    `<path d="M14 17 H70 q10 0 10 -5 t-8 -3" style="stroke-width:${sw}"/>`,
+    // gentle single sweep with a curl, plus a short trailing line
+    `<path d="M2 11 H72 q11 0 11 5 t-8 3" style="stroke-width:${sw}"/>`+
+    `<path d="M20 18 H58" style="stroke-width:${sw}"/>`
+  ];
+  return variants[Math.floor(Math.random()*variants.length)];
+}
+
 function buildDayScene(now){
   const scene=document.getElementById('day-scene');
   const sun=document.getElementById('day-sun');
@@ -704,27 +725,26 @@ function buildDayScene(now){
     // Lightning for storms
     if(isStorm) html+=`<span class="day-bolt" style="top:14px;left:34%;">⚡</span>`;
 
-    // ── Wind gusts — curved swooshes; count and speed scale with wind km/h ──
+    // ── Wind gusts — flowing line clusters with curl ends ──
+    // Gentle and slow at low wind, more numerous and faster as it builds.
     if(wind>=3){
       const gustCount=wind>=25?5:wind>=15?4:wind>=8?3:2;
-      const gustSpeed=wind>=25?1.6:wind>=15?2.2:wind>=8?2.8:3.6; // faster = stronger
-      // Wavy swoosh paths with a little curl at the end (wind-symbol style)
-      const swooshes=[
-        'M2 8 Q 22 2 42 8 T 78 7 q 8 -1 8 -6 t -7 -3',
-        'M2 7 Q 20 12 40 7 T 76 8 q 9 1 8 6 t -8 2',
-        'M2 6 Q 26 1 50 7 T 88 6',
-        'M2 9 Q 18 4 36 9 T 70 8 q 7 -1 6 -5'
-      ];
+      // Slower = gentler. Higher duration = slower drift across.
+      // ~12km/h should feel gentle; 25+ blustery.
+      let baseDur;
+      if(wind>=25)      baseDur=4.5;   // blustery
+      else if(wind>=15) baseDur=6;     // breezy
+      else if(wind>=8)  baseDur=8;     // moderate
+      else              baseDur=10.5;  // gentle
+      // A gust = a cluster of 2-3 stacked flowing lines, some with a curl
       for(let i=0;i<gustCount;i++){
-        const top=8+Math.random()*62;
-        const scale=0.7+Math.random()*0.6;     // varied size
-        const d=Math.random()*gustSpeed;
-        const dur=gustSpeed+Math.random()*1.0;
-        const sw=1+Math.random()*0.8;          // stroke width
-        const path=swooshes[Math.floor(Math.random()*swooshes.length)];
+        const top=8+Math.random()*60;
+        const scale=0.7+Math.random()*0.5;
+        const d=Math.random()*baseDur;
+        const dur=baseDur+Math.random()*2.5;
         html+=`<span class="day-gust" style="top:${top}%;animation-delay:${d}s;animation-duration:${dur}s;">`
-            +`<svg width="${96*scale}" height="${20*scale}" viewBox="0 0 96 20">`
-            +`<path d="${path}" style="stroke-width:${sw}"/></svg></span>`;
+            +`<svg width="${100*scale}" height="${26*scale}" viewBox="0 0 100 26">`
+            +gustCluster()+`</svg></span>`;
       }
     }
   }
