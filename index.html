@@ -49,20 +49,36 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 @keyframes spin{to{transform:rotate(360deg);}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
-.daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;}
-.daybar-icons{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:8px;position:relative;}
-.daybar-icon-col{display:flex;flex-direction:column;align-items:center;gap:3px;}
-.daybar-icon-col.mid{position:absolute;display:flex;flex-direction:column;align-items:center;gap:3px;transform:translateX(-50%);transition:left 0.8s ease;}
-.daybar-icon-emoji{font-size:22px;line-height:1;}
-.daybar-icon-time{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1;}
-.daybar-icon-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.06em;}
-.daybar-track{height:12px;background:var(--bg3);border-radius:6px;overflow:hidden;position:relative;margin-bottom:12px;}
+.daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;transition:background 1.2s ease;}
+.daybar-track{height:10px;background:var(--bg3);border-radius:0 0 6px 6px;overflow:hidden;position:relative;}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
 .daybar-bottom{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
 .daybar-remain-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;}
 .daybar-remain{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--tx);line-height:1;text-align:right;}
 .daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
 .daybar-remain-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:2px;}
+
+/* ── Daybar day mode — unified sky scene ── */
+.day-scene{position:relative;height:128px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;border:1px solid rgba(255,255,255,0.08);}
+.day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
+.day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
+.day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
+.day-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.day-cloud{position:absolute;font-size:28px;opacity:0.92;animation:cloudDrift 16s linear infinite;}
+.day-raindrop{position:absolute;width:1.5px;height:8px;background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;animation:rainFall 0.7s linear infinite;}
+.day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
+.day-ray{position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,240,180,0.45),transparent 40%);z-index:1;pointer-events:none;}
+/* Ground band — translucent strip at the bottom holding markers + horizon */
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
+.day-marker{display:flex;align-items:center;gap:5px;}
+.day-marker-icon{font-size:16px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));}
+.day-marker-time{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
+/* Floating Now tracker — sits just above the horizon */
+.day-now-float{position:absolute;transform:translate(-50%,0);z-index:4;transition:left 1s ease,top 1s ease;pointer-events:none;}
+.day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(20,30,40,0.72);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);}
+/* Horizon line = progress bar, pinned to the very bottom of the sky */
+#daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:4;}
+#daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
@@ -93,20 +109,21 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
 .viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
 
-/* Top Rated card — amber accent (matches stars) */
-#stat-toprated-card{border-color:rgba(245,166,35,0.35);background:rgba(245,166,35,0.05);}
-#stat-toprated-card.dim{border-color:rgba(245,166,35,0.15);background:rgba(245,166,35,0.02);}
-#stat-toprated-card.dim #s-toprated-stars{opacity:0.55;}
-#stat-toprated-card #s-toprated-stars{font-family:var(--mono);font-size:24px;font-weight:500;line-height:1;color:var(--al);}
-#stat-toprated-card #s-toprated-name{font-family:var(--mono);font-size:10px;color:var(--tx2);line-height:1.3;margin-top:5px;min-height:26px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;text-align:center;padding:0 2px;}
+/* Daylight Remaining card — green default, amber/red as light runs out */
+.stat-icon{font-size:22px;line-height:1;margin:2px 0 3px;display:block;}
+/* Daylight Remaining card — green default, amber/red as light runs out */
+#stat-daylight-card{border-color:rgba(90,171,53,0.35);background:rgba(90,171,53,0.05);}
+#stat-daylight-card #s-daylight-hrs{color:var(--gg);}
+#stat-daylight-card.dl-warn{border-color:rgba(245,166,35,0.4);background:rgba(245,166,35,0.05);}
+#stat-daylight-card.dl-warn #s-daylight-hrs{color:var(--al);}
+#stat-daylight-card.dl-danger{border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.05);}
+#stat-daylight-card.dl-danger #s-daylight-hrs{color:#f07060;}
 
 /* Leave By card — green accent */
 .stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35)!important;background:rgba(90,171,53,0.05)!important;}
 .stat-leaveby.dim{border-color:rgba(90,171,53,0.15)!important;background:rgba(90,171,53,0.02)!important;}
 .stat-leaveby #s-leaveby{color:var(--gg);}
 .stat-leaveby.dim #s-leaveby{color:var(--tx3);}
-.nearest-link{display:block;margin-top:auto;font-family:var(--mono);font-size:10px;color:var(--bg);background:var(--gb);text-decoration:none;border-radius:6px;padding:5px 8px;text-align:center;font-weight:600;letter-spacing:0.03em;transition:opacity 0.15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.nearest-link:active{opacity:0.75;}
 @keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
 
 /* ── Weather stat card — dynamic colour per condition ── */
@@ -271,29 +288,29 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   <div class="daybar">
     <!-- DAY MODE -->
     <div id="daybar-day">
-    <div class="daybar-icons" id="daybar-icons-row" style="min-height:52px;">
-      <div class="daybar-icon-col">
-        <div class="daybar-icon-emoji" id="db-sunrise-icon" aria-hidden="true">🌅</div>
-        <div class="daybar-icon-time" id="db-sunrise">--:--</div>
-        <div class="daybar-icon-label">Sunrise</div>
+      <div class="day-scene" id="day-scene">
+        <div class="day-glow" id="day-glow" aria-hidden="true"></div>
+        <div class="day-dim" id="day-dim" aria-hidden="true"></div>
+        <div class="day-wx" id="day-wx" aria-hidden="true"></div>
+        <div class="day-sun" id="day-sun" aria-hidden="true">☀️</div>
+        <!-- Floating Now label tracks the sun horizontally -->
+        <div class="day-now-float" id="day-now-float">
+          <span class="day-now-time" id="db-now">--:--</span>
+        </div>
+        <!-- Ground band at the bottom holds the horizon + edge markers -->
+        <div class="day-ground">
+          <div class="day-marker day-marker-left">
+            <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true">🌅</span>
+            <span class="day-marker-time" id="db-sunrise">--:--</span>
+          </div>
+          <div class="day-marker day-marker-right">
+            <span class="day-marker-time" id="db-sunset">--:--</span>
+            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true">🌇</span>
+          </div>
+        </div>
+        <!-- Horizon line = progress bar, sits at very bottom of the sky -->
+        <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--gb);"></div></div>
       </div>
-      <!-- Now icon — absolutely positioned, slides with bar -->
-      <div class="daybar-icon-col mid" id="db-now-col" style="left:50%;">
-        <div class="daybar-icon-emoji" id="db-now-icon" aria-hidden="true">☀️</div>
-        <div class="daybar-icon-time" id="db-now">--:--</div>
-        <div class="daybar-icon-label">Now</div>
-      </div>
-      <div class="daybar-icon-col" style="align-items:flex-end;">
-        <div class="daybar-icon-emoji" id="db-lastlight-icon" aria-hidden="true">🌇</div>
-        <div class="daybar-icon-time" id="db-sunset">--:--</div>
-        <div class="daybar-icon-label">Last light</div>
-      </div>
-    </div>
-    <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--gb);"></div></div>
-    <div class="daybar-bottom">
-      <div class="daybar-remain-label">Daylight remaining</div>
-      <div class="daybar-remain pulse" id="db-remain">--<span class="daybar-remain-unit">hrs</span></div>
-    </div>
     </div>
     <!-- NIGHT MODE -->
     <div id="daybar-night" style="display:none;">
@@ -331,17 +348,17 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
   <!-- Stats row -->
   <div class="stats" role="region" aria-label="Current conditions">
-    <div class="stat" id="stat-toprated-card">
-      <div class="stat-label">Top rated</div>
-      <div class="stat-value pulse" id="s-toprated-stars">--</div>
-      <div class="stat-sub" id="s-toprated-name" style="margin-top:4px;font-size:10px;line-height:1.3;">--</div>
-      <a class="nearest-link" id="toprated-link" href="#" target="_blank" aria-label="Open top rated course website">⛳ Open ↗</a>
+    <div class="stat" id="stat-daylight-card">
+      <div class="stat-label" id="daylight-card-label">Daylight left</div>
+      <div class="stat-icon" id="daylight-icon" aria-hidden="true">☀️</div>
+      <div class="stat-value" id="s-daylight-hrs">--</div>
+      <div class="stat-sub" id="s-daylight-sub">until last light</div>
     </div>
     <div class="stat stat-leaveby" id="stat-leaveby-card">
       <div class="stat-label">Leave by</div>
-      <div class="stat-value pulse" id="s-leaveby">--:--</div>
+      <div class="stat-icon" id="leaveby-icon" aria-hidden="true">🚗</div>
+      <div class="stat-value" id="s-leaveby">--:--</div>
       <div class="stat-sub" id="s-leaveby-sub">for nearest</div>
-      <a class="nearest-link" id="nearest-link" href="#" target="_blank" aria-label="Open nearest course website">⛳ Open ↗</a>
     </div>
     <div class="stat stat-wx-nearest" id="stat-wx-card">
       <div class="stat-label" id="wx-card-label">Nearest weather</div>
@@ -534,6 +551,88 @@ function buildNightScene(){
     wxEl.innerHTML=html;
   }
 }
+
+// Build the day scene: time-of-day sky, arcing sun, weather overlay
+function buildDayScene(now){
+  const scene=document.getElementById('day-scene');
+  const sun=document.getElementById('day-sun');
+  const wxEl=document.getElementById('day-wx');
+  if(!scene||!sun)return;
+  const totalDay=sunsetMins-sunriseMins;
+  const frac=Math.min(1,Math.max(0,(now-sunriseMins)/totalDay));
+
+  // Sky gradient shifts through the day
+  let sky;
+  if(frac<0.1)       sky='linear-gradient(180deg,#e89a6b 0%,#e8b888 50%,#d8cba0 100%)';   // dawn
+  else if(frac<0.3)  sky='linear-gradient(180deg,#5a8fc0 0%,#84b3d8 55%,#bcdcef 100%)';   // morning
+  else if(frac<0.55) sky='linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 60%,#a9d0e8 100%)';   // midday
+  else if(frac<0.78) sky='linear-gradient(180deg,#4a82b0 0%,#8ab0cc 50%,#e0c89a 100%)';   // afternoon
+  else if(frac<0.92) sky='linear-gradient(180deg,#c98a5a 0%,#e0a868 50%,#f0c878 100%)';   // golden
+  else               sky='linear-gradient(180deg,#a85a4a 0%,#d4825a 45%,#e8a868 100%)';   // dusk
+  scene.style.background=sky;
+
+  // Dusk dimming — scene darkens as last light approaches (final ~18% of day)
+  const dim=document.getElementById('day-dim');
+  if(dim){
+    let dimOpacity=0;
+    if(frac>0.82) dimOpacity=Math.min(0.45,(frac-0.82)/0.18*0.45);
+    dim.style.opacity=dimOpacity;
+  }
+
+  // Sun arcs across the sky, rising from and setting to the horizon (~72%)
+  // Ground band occupies the bottom ~26%, so sun stays in the upper sky.
+  const t=frac;
+  const sx=(1-t)*(1-t)*6 + 2*(1-t)*t*50 + t*t*94;
+  const sy=(1-t)*(1-t)*70 + 2*(1-t)*t*10 + t*t*70;
+  sun.style.left=sx+'%';
+  sun.style.top=sy+'%';
+
+  // Floating Now tracker rides the sun's arc, sitting just below it.
+  // Clamps horizontally so the pill text stays readable near the edges,
+  // and clamps vertically so it never dips into the ground band.
+  const nowFloat=document.getElementById('day-now-float');
+  if(nowFloat){
+    const clampedX=Math.min(82,Math.max(18,sx));
+    const belowSun=Math.min(70,sy+14); // 14% below the sun, capped above the ground
+    nowFloat.style.left=clampedX+'%';
+    nowFloat.style.top=belowSun+'%';
+  }
+
+  // Ambient glow halo around the sun — warm tint that follows it
+  const glow=document.getElementById('day-glow');
+  if(glow){
+    glow.style.background=`radial-gradient(circle at ${sx}% ${sy}%, rgba(255,238,180,0.35), transparent 38%)`;
+  }
+
+  // Sun icon = current GPS weather condition icon
+  const gpsZone=window._gpsZone||'brisbane_metro';
+  const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
+  sun.textContent=(wx&&wx.ok)?wx.icon:'☀️';
+
+  // Weather overlay
+  let html='';
+  if(wx&&wx.ok){
+    const lbl=wx.label;
+    const isStorm=lbl.includes('Storm')||lbl.includes('hail');
+    const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
+    const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
+    const isClear=lbl.includes('Clear');
+    if(isClear) html+=`<div class="day-ray" style="--sx:${sx}%;--sy:${sy}%;"></div>`;
+    if(isStorm||isRain||isCloud){
+      html+=`<span class="day-cloud" style="top:8px;left:0;animation-delay:0s;">☁️</span>`;
+      html+=`<span class="day-cloud" style="top:30px;left:0;font-size:20px;animation-delay:-8s;opacity:0.7;">☁️</span>`;
+    }
+    if(isStorm||isRain){
+      for(let i=0;i<14;i++){
+        const x=Math.random()*100, d=Math.random()*0.7, dur=Math.random()*0.3+0.5;
+        html+=`<span class="day-raindrop" style="left:${x}%;top:${Math.random()*30}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
+    if(isStorm) html+=`<span class="day-bolt" style="top:16px;left:34%;">⚡</span>`;
+  }
+  wxEl.innerHTML=html;
+}
+
 // Convert hex colour to rgba string with given alpha
 function hexToRgba(hex,a){
   const h=hex.replace('#','');
@@ -771,11 +870,7 @@ function render(){
     buildNightScene();
   }
 
-  // Hero daylight bar — remaining hours
-  const remEl=document.getElementById('db-remain');
-  remEl.innerHTML=`${dHrs}<span class="daybar-remain-unit">hrs</span>`;
-  remEl.className='daybar-remain'+(daylight<120?' danger':daylight<240?' warn':'');
-
+  // Hero daylight bar — progress only (hours now shown in stat card)
   document.getElementById('db-now').textContent=minsToStr(now);
   document.getElementById('db-sunset').textContent=minsToStr(sunsetMins);
   document.getElementById('db-sunrise').textContent=minsToStr(sunriseMins);
@@ -786,36 +881,21 @@ function render(){
   fill.style.width=pct+'%';
   fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
 
-  // Sliding Now icon — only show during daylight, clamped 12%–88%
-  const nowCol=document.getElementById('db-now-col');
-  if(isNight){
-    nowCol.style.display='none';
-  } else {
-    nowCol.style.display='flex';
-    const clampedPct=Math.min(88,Math.max(12,pct));
-    nowCol.style.left=clampedPct+'%';
-  }
-
-  // Now icon — time of day base, override with current GPS zone weather
+  // Sunrise & Last Light horizon icons — weather-aware from hourly forecast
   const gpsZone=window._gpsZone||'brisbane_metro';
-  const gpsWx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
-  let nowIcon='☀️';
-  if(pct<8)       nowIcon='🌅';
-  else if(pct<35) nowIcon='🌤';
-  else if(pct<65) nowIcon='☀️';
-  else if(pct<85) nowIcon='🌆';
-  else            nowIcon='🌇';
-  if(gpsWx&&gpsWx.ok) nowIcon=gpsWx.icon;  // use actual current condition icon
-  document.getElementById('db-now-icon').textContent=nowIcon;
-
-  // Sunrise & Last Light icons — weather-aware from hourly forecast
-  // Falls back to fixed 🌅/🌇 if no hourly data available
   const sunriseWx=wxAtHour(gpsZone, sunriseMins);
   const sunsetWx =wxAtHour(gpsZone, sunsetMins);
   const srIcon=document.getElementById('db-sunrise-icon');
   const slIcon=document.getElementById('db-lastlight-icon');
   if(srIcon) srIcon.textContent = sunriseWx ? sunriseWx.icon : '🌅';
   if(slIcon) slIcon.textContent = sunsetWx  ? sunsetWx.icon  : '🌇';
+
+  // Build the day sky scene (sky gradient, arcing sun, weather)
+  if(!isNight) buildDayScene(now);
+
+  // Reset daybar background (scenes handle their own backgrounds)
+  const daybarEl=document.querySelector('.daybar');
+  if(daybarEl) daybarEl.style.background='var(--sur)';
 
   // Stats — all respond to active filter
   const filtered=getFiltered(daylight);
@@ -826,23 +906,29 @@ function render(){
   // (so the widgets stay populated and good-looking even when nothing's playable today)
   const widgetPool=anyPlayable?playableInFilter:filtered;
 
-  // Top rated — from widget pool
-  const topRated=widgetPool.slice().sort((a,b)=>(b.rating||0)-(a.rating||0))[0]||null;
-  const trCard=document.getElementById('stat-toprated-card');
-  const trStars=document.getElementById('s-toprated-stars');
-  const trName=document.getElementById('s-toprated-name');
-  const trLink=document.getElementById('toprated-link');
-  if(topRated){
-    trCard.classList.toggle('dim',!anyPlayable);
-    trStars.textContent='★ '+(topRated.rating||0).toFixed(1);
-    trName.textContent=topRated.name;
-    trLink.href=topRated.url;
-    trLink.style.display='block';
+  // Daylight stat card
+  const dlCard=document.getElementById('stat-daylight-card');
+  const dlHrs=document.getElementById('s-daylight-hrs');
+  const dlSub=document.getElementById('s-daylight-sub');
+  const dlLabel=document.getElementById('daylight-card-label');
+  const dlIcon=document.getElementById('daylight-icon');
+  if(isNight){
+    let untilSunrise = now>=sunsetMins ? (1440-now)+sunriseMins : sunriseMins-now;
+    const h=Math.floor(untilSunrise/60), m=untilSunrise%60;
+    dlLabel.textContent='Golf resumes';
+    dlIcon.textContent='🌙';
+    dlHrs.textContent=minsToStr(sunriseMins);
+    dlHrs.style.color='#8da9d6';
+    dlSub.textContent=(h>0?`in ${h}h ${m}m`:`in ${m}m`);
+    dlCard.className='stat';
   } else {
-    trCard.classList.add('dim');
-    trStars.textContent='--';
-    trName.textContent='no course in filter';
-    trLink.style.display='none';
+    dlLabel.textContent='Daylight left';
+    dlHrs.style.color='';
+    dlHrs.innerHTML=`${dHrs}<span style="font-size:13px;color:var(--tx3);margin-left:2px;">hrs</span>`;
+    dlSub.textContent='until last light';
+    const lvl=daylight<120?'danger':daylight<240?'warn':'ok';
+    dlIcon.textContent = lvl==='danger'?'⏳':lvl==='warn'?'⌛':'☀️';
+    dlCard.className='stat'+(lvl==='danger'?' dl-danger':lvl==='warn'?' dl-warn':'');
   }
 
   // Nearest — from widget pool
@@ -862,15 +948,6 @@ function render(){
     lbCard.classList.add('dim');
     document.getElementById('s-leaveby').textContent='--:--';
     document.getElementById('s-leaveby-sub').textContent='no course in filter';
-  }
-
-  const nearestLink=document.getElementById('nearest-link');
-  if(nearest){
-    nearestLink.href=nearest.url;
-    nearestLink.textContent='⛳ Open ↗';
-    nearestLink.style.display='block';
-  } else {
-    nearestLink.style.display='none';
   }
 
   // Weather stat card — shows weather for the relevant course's zone
