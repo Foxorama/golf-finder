@@ -11,9 +11,9 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <meta name="theme-color" content="#0f1a0f">
-<!-- app version: 2026-06-12-v4 — hero last-call line, night planning mode, verdict/urgency widgets -->
+<!-- app version: 2026-06-12-v8 — true GPS weather slot: night sky + outside-SEQ day scene; courses keep zone forecasts -->
 <title>Golf Finder</title>
-<link rel="icon" type="image/png" href="data:image/png;base64,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">
+<link rel="icon" id="favicon" type="image/png" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
 <script>
 // Inject web app manifest (no service worker is registered — install/A2HS only,
@@ -110,12 +110,35 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
-.night-scene{position:relative;height:90px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#0a0e1f 0%,#10162e 55%,#1a1530 100%);margin-bottom:12px;}
+.night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:12px;}
+/* ── Sky panorama: real positions, az 0–360 left→right (N E S W N), alt 0–90 bottom→top ── */
+.night-sky{position:absolute;inset:0;z-index:2;pointer-events:none;}
+.sky-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0.85;transform:translate(-50%,-50%);}
+.sky-star[data-big]{width:3px;height:3px;box-shadow:0 0 5px rgba(255,255,255,0.9);}
+.sky-star.crux{background:#9fd4ff;box-shadow:0 0 5px rgba(159,212,255,0.9);width:2.5px;height:2.5px;}
+.sky-obj{position:absolute;transform:translate(-50%,-50%);text-align:center;line-height:1;}
+.sky-obj .so-dot{width:5px;height:5px;border-radius:50%;margin:0 auto;box-shadow:0 0 6px currentColor;}
+.sky-obj .so-icon{font-size:22px;filter:drop-shadow(0 0 9px rgba(220,230,255,0.5));}
+.sky-obj .so-label{font-family:var(--mono);font-size:8px;color:rgba(205,218,255,0.9);text-shadow:0 1px 3px rgba(0,0,0,0.9);margin-top:2px;display:block;white-space:nowrap;}
+.sky-compass{position:absolute;bottom:1px;left:0;right:0;height:12px;z-index:3;pointer-events:none;}
+.sky-compass span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:8px;color:rgba(160,180,220,0.55);letter-spacing:0.05em;}
+.sky-horizon{position:absolute;bottom:13px;left:0;right:0;height:1px;background:rgba(160,180,220,0.18);z-index:1;}
+.sky-mw{position:absolute;transform:translate(-50%,-50%) rotate(-24deg);width:64px;height:22px;border-radius:50%;background:radial-gradient(ellipse,rgba(235,240,255,0.20),rgba(200,215,255,0.07) 55%,transparent 75%);filter:blur(1.5px);pointer-events:none;}
+.sky-mc{position:absolute;transform:translate(-50%,-50%);border-radius:50%;background:radial-gradient(circle,rgba(225,232,255,0.30),transparent 70%);filter:blur(1px);pointer-events:none;}
+.sky-aurora{position:absolute;bottom:13px;height:58px;width:36%;background:linear-gradient(to top,rgba(80,255,170,0.32),rgba(190,90,255,0.14),transparent);filter:blur(7px);z-index:1;pointer-events:none;animation:auroraShimmer 5s ease-in-out infinite alternate;}
+@keyframes auroraShimmer{from{opacity:0.65;transform:scaleY(0.92);}to{opacity:1;transform:scaleY(1.05);}}
+/* ── Astro cards ── */
+.acard{background:var(--sur);border:1px solid rgba(120,140,200,0.22);border-radius:14px;padding:12px 14px;margin-bottom:8px;}
+.acard-head{display:flex;align-items:center;gap:8px;margin-bottom:4px;}
+.acard-icon{font-size:18px;line-height:1;}
+.acard-dot{width:9px;height:9px;border-radius:50%;box-shadow:0 0 7px currentColor;}
+.acard-name{font-size:13px;font-weight:700;color:var(--tx);}
+.acard-pos{font-family:var(--mono);font-size:11px;color:#8da9d6;margin-left:auto;}
+.acard-note{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.55;}
+.acard.alert{border-color:rgba(80,255,170,0.45);background:rgba(80,255,170,0.05);}
 .night-stars{position:absolute;inset:0;}
 .night-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
 @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
-.night-moon{position:absolute;top:14px;right:22px;font-size:42px;line-height:1;filter:drop-shadow(0 0 8px rgba(220,230,255,0.4));z-index:2;}
-.night-moon-name{position:absolute;top:60px;right:14px;font-family:var(--mono);font-size:9px;color:rgba(200,215,255,0.7);z-index:2;}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift 14s linear infinite;}
 @keyframes cloudDrift{0%{transform:translateX(-40px);}100%{transform:translateX(340px);}}
@@ -126,10 +149,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .night-info{padding:0 2px;}
 .night-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:3px;}
 .night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;margin-bottom:12px;}
-.night-tomorrow{font-family:var(--mono);font-size:11px;color:var(--tx2);padding:0 2px 10px;line-height:1.7;}
-.night-countdown{display:flex;justify-content:flex-end;align-items:baseline;gap:8px;border-top:1px solid var(--bdr);padding-top:12px;}
-.night-countdown-label{font-family:var(--mono);font-size:11px;color:var(--tx2);letter-spacing:0.02em;}
-.night-countdown-val{font-family:var(--mono);font-size:21px;color:#8da9d6;font-weight:500;white-space:nowrap;}
+.night-line{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1.7;padding:0 2px;}
+.night-line.dim{color:var(--tx3);font-size:10px;}
 
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
@@ -165,12 +186,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .stat-wx-detail.wind{color:var(--tx2);font-weight:500;}
 
 /* ── Course card weather — right column, matches stat card styling ── */
-.ccard-wx{margin-top:6px;text-align:right;}
-.ccard-wx .wx-icon{font-size:18px;display:block;margin-bottom:2px;}
-.ccard-wx .wx-temp{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--tx);display:block;line-height:1.2;}
+.ccard-wx{margin-top:6px;display:flex;align-items:center;justify-content:flex-end;gap:5px;}
+.ccard-wx .wx-icon{font-size:15px;line-height:1;}
+.ccard-wx .wx-temp{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--tx);}
 /* Wind prominent (brighter), condition muted */
-.ccard-wx .wx-wind{font-family:var(--mono);font-size:11px;color:var(--tx2);font-weight:500;display:block;line-height:1.4;}
-.ccard-wx .wx-cond{font-family:var(--mono);font-size:11px;color:var(--tx3);display:block;line-height:1.4;}
+.ccard-wx .wx-wind{font-family:var(--mono);font-size:10px;color:var(--tx3);}
+.ccard-wx .wx-at{font-family:var(--mono);font-size:9px;color:var(--tx3);opacity:0.8;}
 
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
 .filters::-webkit-scrollbar{display:none;}
@@ -184,16 +205,16 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Course card ── */
 .ccard{background:var(--sur);border:1px solid var(--bdr);border-radius:14px;padding:13px 14px;margin-bottom:8px;display:flex;align-items:stretch;gap:10px;}
-.ccard.dimmed{opacity:0.28;}
+.ccard.dimmed{opacity:0.55;}
 .ccard-left{flex:1;min-width:0;display:flex;flex-direction:column;}
-.ccard-name{font-size:14px;font-weight:700;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-bottom:2px;}
+.ccard-name{font-size:14px;font-weight:700;color:var(--tx);line-height:1.25;margin-bottom:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
 .ccard-meta{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-bottom:3px;}
-.ccard-region{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.04em;margin-bottom:5px;}
 .ccard-times{font-family:var(--mono);font-size:11px;margin-bottom:6px;display:flex;gap:10px;flex-wrap:wrap;}
-.t-leave{color:var(--al);} .t-arrive{color:var(--gb);}
+.t-leave{color:var(--al);} .t-arrive{color:var(--gb);} .t-need{color:var(--tx3);}
 .badges{display:flex;gap:4px;flex-wrap:wrap;margin-top:auto;}
 .badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500;}
 .b18{background:rgba(90,171,53,0.15);color:var(--gg);border:1px solid rgba(90,171,53,0.25);}
+.bh-off{background:rgba(255,255,255,0.03);color:var(--tx3);border:1px solid var(--bdr);}
 .b9{background:rgba(196,127,23,0.15);color:var(--al);border:1px solid rgba(196,127,23,0.25);}
 .bpar3{background:rgba(126,212,79,0.1);color:#a8e06b;border:1px solid rgba(126,212,79,0.2);}
 .btype{background:rgba(255,255,255,0.05);color:#6aac60;border:1px solid var(--bdr);}
@@ -202,9 +223,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .bnobk{background:rgba(90,171,53,0.08);color:var(--tx2);border:1px solid rgba(90,171,53,0.15);}
 .bfee{background:rgba(90,171,53,0.12);color:var(--gg);border:1px solid rgba(90,171,53,0.3);font-weight:600;}
 .bfee-na{background:rgba(255,255,255,0.04);color:var(--tx3);border:1px solid var(--bdr);}
-.ccard-rating{font-family:var(--mono);font-size:11px;color:var(--al);letter-spacing:0.02em;display:block;margin-bottom:2px;}
+.ccard-rating{color:var(--al);}
 .ccard-note{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.5;margin-bottom:4px;}
-.ccard-name-row{margin-bottom:0;}
 .ccard-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;min-width:0;}
 .visit-btn{background:var(--bg3);border:1px solid var(--bdr);border-radius:9px;padding:7px 8px;color:var(--tx2);font-family:var(--mono);font-size:10px;cursor:pointer;text-decoration:none;display:flex;align-items:center;gap:3px;white-space:nowrap;}
 .visit-btn:active{background:var(--sur2);transform:scale(0.95);}
@@ -270,7 +290,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   <!-- Header -->
   <div class="header">
     <div>
-      <div class="app-title">SEQ <span>Golf</span> Finder</div>
+      <div class="app-title" id="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
       <div class="app-meta" id="drive-origin">drive times est. from Toowong</div>
@@ -361,16 +381,14 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div id="daybar-night" style="display:none;">
       <div class="night-scene" id="night-scene">
         <div class="night-stars" id="night-stars"></div>
-        <div class="night-moon" id="night-moon" aria-hidden="true">🌙</div>
-        <div class="night-moon-name" id="night-moon-name"></div>
+        <div class="sky-horizon" aria-hidden="true"></div>
+        <div class="night-sky" id="night-sky" aria-hidden="true"></div>
+        <div class="sky-compass" aria-hidden="true"><span style="left:1.5%">N</span><span style="left:25%">E</span><span style="left:50%">S</span><span style="left:75%">W</span><span style="left:98.5%">N</span></div>
         <div class="night-wx" id="night-wx" aria-hidden="true"></div>
       </div>
       <div class="night-info">
-        <div class="night-tomorrow" id="night-tomorrow"></div>
-        <div class="night-countdown">
-          <span class="night-countdown-label" id="night-resume">First light ~5:05am in</span>
-          <span class="night-countdown-val" id="night-countdown">-- hrs</span>
-        </div>
+        <div class="night-line" id="night-best"></div>
+        <div class="night-line dim" id="night-first"></div>
       </div>
     </div>
   </div>
@@ -599,17 +617,12 @@ function buildNightScene(){
     starsEl.innerHTML=html;
     _nightBuilt=true;
   }
-  // Moon phase — name shown as a caption (title-tooltips don't exist on touch)
-  const mp=moonPhase(new Date());
-  const moonEl=document.getElementById('night-moon');
-  if(moonEl){ moonEl.textContent=mp.icon; moonEl.title=mp.name; }
-  const moonName=document.getElementById('night-moon-name');
-  if(moonName) moonName.textContent=mp.name;
-  // Weather overlay based on GPS zone current conditions.
+  // Real sky: moon, planets, bright stars at their actual alt/az right now
+  buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
+  // Weather overlay from the true at-your-GPS forecast (zone fallback).
   // Cached on condition so the 60s re-render doesn't restart the rain animation
   // (same fix the day scene already has).
-  const gpsZone=window._gpsZone||'brisbane_metro';
-  const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
+  const wx=weatherCache[skyWxZone()]||weatherCache['brisbane_metro'];
   const nightKey=(wx&&wx.ok)?wx.label:'none';
   const wxEl=document.getElementById('night-wx');
   if(wxEl && window._nightWxKey!==nightKey){
@@ -707,9 +720,9 @@ function buildDayScene(now){
     nowFloat.style.top=Math.min(66,sy+14)+'%';
   }
 
-  // Weather for the scene (GPS zone)
-  const gpsZone=window._gpsZone||'brisbane_metro';
-  const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
+  // Weather for the scene: zone forecast in SEQ, true GPS forecast when outside
+  const sceneZone = window._gpsFar ? skyWxZone() : (window._gpsZone||'brisbane_metro');
+  const wx=weatherCache[sceneZone]||weatherCache['brisbane_metro'];
   const lblNow=(wx&&wx.ok)?wx.label:'Clear';
   const sunOut = lblNow.includes('Clear')||lblNow.includes('Mostly');
   const partlyNow = lblNow.includes('Partly');
@@ -882,12 +895,12 @@ function wxDesc(code){
   return {icon:'🌡', label:'Unknown', c:'var(--tx2)'};
 }
 
-// Fetch current + hourly forecast for a zone, store weather at sunrise/now/sunset
-async function fetchWeatherZone(zone){
+// Fetch current + hourly forecast for a zone (or explicit coords for the 'gps' slot)
+async function fetchWeatherZone(zone, coords){
   if(weatherCache[zone]) return weatherCache[zone];
-  const {lat,lng} = ZONE_COORDS[zone];
+  const {lat,lng} = coords || ZONE_COORDS[zone];
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,weather_code&timezone=auto&forecast_days=2`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
     const r = await fetch(url);
     const d = await r.json();
     const c = d.current;
@@ -932,7 +945,8 @@ function hourlyAt(zone, dayOffset, targetMins){
   if(bestIdx === -1) return null;
   return {
     desc: wxDesc(wx.hourly.weather_code[bestIdx]),
-    temp: wx.hourly.temperature_2m ? Math.round(wx.hourly.temperature_2m[bestIdx]) : null
+    temp: wx.hourly.temperature_2m ? Math.round(wx.hourly.temperature_2m[bestIdx]) : null,
+    cloud: wx.hourly.cloud_cover ? Math.round(wx.hourly.cloud_cover[bestIdx]) : null
   };
 }
 // Back-compat shim used by the day-scene markers
@@ -943,7 +957,26 @@ function wxAtHour(zone, targetMins){
 
 async function fetchAllWeather(){
   const zones = Object.keys(ZONE_COORDS);
-  await Promise.all(zones.map(z => fetchWeatherZone(z)));
+  const jobs = zones.map(z => fetchWeatherZone(z));
+  // True at-your-coordinates forecast — used for the night sky and, when you're
+  // outside the SEQ zones, for the day scene too. Courses keep zone forecasts.
+  if(window._gpsLat!=null && window._gpsLng!=null){
+    let nearestKm=Infinity;
+    for(const z of zones){
+      const c=ZONE_COORDS[z];
+      nearestKm=Math.min(nearestKm, haversineKm(window._gpsLat, window._gpsLng, c.lat, c.lng));
+    }
+    window._gpsFar = nearestKm > 80;  // beyond ~80km, zone forecasts stop representing your sky
+    jobs.push(fetchWeatherZone('gps', {lat:window._gpsLat, lng:window._gpsLng}));
+  } else {
+    window._gpsFar = false;
+  }
+  await Promise.all(jobs);
+}
+// Weather slot for "your sky": raw GPS when available, nearest zone otherwise
+function skyWxZone(){
+  const g=weatherCache['gps'];
+  return (g&&g.ok) ? 'gps' : (window._gpsZone||'brisbane_metro');
 }
 
 // ── Time helpers ─────────────────────────────────────────────
@@ -1139,6 +1172,365 @@ function toggleFav(name,btn){
 }
 
 // ── Render ───────────────────────────────────────────────────
+// ═══════════════ ASTRONOMY ENGINE ═══════════════
+// All client-side: JPL approximate Keplerian elements (valid 1800–2050) for
+// planets, low-precision lunar theory (±0.3°), sidereal-time alt/az transforms.
+// Plenty accurate for a sky map; not for navigation.
+const RAD=Math.PI/180, DEG=180/Math.PI, OBLIQ=23.4393*Math.PI/180;
+// Date honouring ?t= test-time override so the sky matches the simulated clock
+function nowDate(){
+  if(_testTime!==null){const d=new Date();d.setHours(0,0,0,0);return new Date(d.getTime()+_testTime*60000);}
+  return new Date();
+}
+function jdays(date){ return date.getTime()/86400000 + 2440587.5 - 2451545.0; } // days since J2000
+
+function eclToEq(lonDeg, latDeg){
+  const l=lonDeg*RAD, b=latDeg*RAD;
+  const x=Math.cos(b)*Math.cos(l), y=Math.cos(b)*Math.sin(l), z=Math.sin(b);
+  const ye=y*Math.cos(OBLIQ)-z*Math.sin(OBLIQ), ze=y*Math.sin(OBLIQ)+z*Math.cos(OBLIQ);
+  return {ra:((Math.atan2(ye,x)*DEG)+360)%360, dec:Math.asin(ze)*DEG};
+}
+// Equatorial (RA/Dec, deg) → horizontal (alt/az, deg; az from N clockwise)
+function altAz(raDeg, decDeg, lat, lng, date){
+  const d=jdays(date);
+  const lst=(((280.46061837+360.98564736629*d+lng)%360)+360)%360;
+  const H=((lst-raDeg+540)%360-180)*RAD;
+  const phi=lat*RAD, dec=decDeg*RAD;
+  const alt=Math.asin(Math.sin(phi)*Math.sin(dec)+Math.cos(phi)*Math.cos(dec)*Math.cos(H));
+  const az=Math.atan2(Math.sin(H), Math.cos(H)*Math.sin(phi)-Math.tan(dec)*Math.cos(phi));
+  return {alt:alt*DEG, az:((az*DEG+180)%360+360)%360};
+}
+// Moon: low-precision series (Astronomical Almanac)
+function moonEcl(date){
+  const d=jdays(date);
+  const M=((134.963+13.064993*d)%360)*RAD;   // mean anomaly
+  const F=((93.272+13.229350*d)%360)*RAD;    // argument of latitude
+  return {lon:(218.316+13.176396*d+6.289*Math.sin(M))%360, lat:5.128*Math.sin(F)};
+}
+function moonAltAz(lat,lng,date){
+  const e=moonEcl(date), eq=eclToEq(e.lon,e.lat);
+  return altAz(eq.ra,eq.dec,lat,lng,date);
+}
+// Moon illumination fraction from synodic age
+function moonIllum(date){
+  const age=((jdays(date)-(2451550.1-2451545))%29.530588)+ (0);
+  const a=((age%29.530588)+29.530588)%29.530588;
+  return (1-Math.cos(2*Math.PI*a/29.530588))/2;
+}
+// Next moonrise/set within 24h — 10-min sampling of altitude sign changes
+function moonEvents(lat,lng,from){
+  const out={rise:null,set:null};
+  let prev=moonAltAz(lat,lng,from).alt;
+  for(let m=10;m<=1440;m+=10){
+    const t=new Date(from.getTime()+m*60000);
+    const alt=moonAltAz(lat,lng,t).alt;
+    if(prev<=0&&alt>0&&!out.rise) out.rise=t;
+    if(prev>0&&alt<=0&&!out.set)  out.set=t;
+    prev=alt;
+    if(out.rise&&out.set)break;
+  }
+  return out;
+}
+// JPL approximate elements: [value, rate/century] — a(au) e I(°) L(°) ϖ(°) Ω(°)
+const PLANETS={
+  mercury:{label:'Mercury',dot:'#b9b3a8',a:[0.38709927,0.00000037],e:[0.20563593,0.00001906],I:[7.00497902,-0.00594749],L:[252.25032350,149472.67411175],w:[77.45779628,0.16047689],O:[48.33076593,-0.12534081],note:'Low in twilight — hardest naked-eye planet'},
+  venus:{label:'Venus',dot:'#f3ecd2',a:[0.72333566,0.00000390],e:[0.00677672,-0.00004107],I:[3.39467605,-0.00078890],L:[181.97909950,58517.81538729],w:[131.60246718,0.00268329],O:[76.67984255,-0.27769418],note:'Brightest planet — unmistakable'},
+  earth:{label:'Earth',a:[1.00000261,0.00000562],e:[0.01671123,-0.00004392],I:[-0.00001531,-0.01294668],L:[100.46457166,35999.37244981],w:[102.93768193,0.32327364],O:[0,0]},
+  mars:{label:'Mars',dot:'#e0795a',a:[1.52371034,0.00001847],e:[0.09339410,0.00007882],I:[1.84969142,-0.00813131],L:[-4.55343205,19140.30268499],w:[-23.94362959,0.44441088],O:[49.55953891,-0.29257343],note:'Distinctly orange-red to the eye'},
+  jupiter:{label:'Jupiter',dot:'#e8d9b8',a:[5.20288700,-0.00011607],e:[0.04838624,-0.00013253],I:[1.30439695,-0.00183714],L:[34.39644051,3034.74612775],w:[14.72847983,0.21252668],O:[100.47390909,0.20469106],note:'Second-brightest planet; moons visible in binoculars'},
+  saturn:{label:'Saturn',dot:'#ded2a8',a:[9.53667594,-0.00125060],e:[0.05386179,-0.00050991],I:[2.48599187,0.00193609],L:[49.95424423,1222.49362201],w:[92.59887831,-0.41897216],O:[113.66242448,-0.28867794],note:'Steady pale-gold point; rings need a small telescope'}
+};
+function planetHelio(p,T){
+  const a=p.a[0]+p.a[1]*T, e=p.e[0]+p.e[1]*T, I=(p.I[0]+p.I[1]*T)*RAD;
+  const L=p.L[0]+p.L[1]*T, wb=p.w[0]+p.w[1]*T, O=p.O[0]+p.O[1]*T;
+  const w=(wb-O)*RAD, Om=O*RAD;
+  let M=((L-wb)%360+360)%360; if(M>180)M-=360; M*=RAD;
+  let E=M+e*Math.sin(M);
+  for(let k=0;k<7;k++) E=E-(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));
+  const xp=a*(Math.cos(E)-e), yp=a*Math.sqrt(1-e*e)*Math.sin(E);
+  const cw=Math.cos(w),sw=Math.sin(w),cO=Math.cos(Om),sO=Math.sin(Om),cI=Math.cos(I),sI=Math.sin(I);
+  return {
+    x:(cw*cO-sw*sO*cI)*xp+(-sw*cO-cw*sO*cI)*yp,
+    y:(cw*sO+sw*cO*cI)*xp+(-sw*sO+cw*cO*cI)*yp,
+    z:(sw*sI)*xp+(cw*sI)*yp
+  };
+}
+// Geocentric alt/az + distance for the five naked-eye planets
+function planetPositions(lat,lng,date){
+  const T=jdays(date)/36525;
+  const E=planetHelio(PLANETS.earth,T);
+  const out=[];
+  for(const key of ['mercury','venus','mars','jupiter','saturn']){
+    const p=PLANETS[key], h=planetHelio(p,T);
+    const gx=h.x-E.x, gy=h.y-E.y, gz=h.z-E.z;
+    const eq=eclToEq(Math.atan2(gy,gx)*DEG, Math.atan2(gz,Math.hypot(gx,gy))*DEG);
+    out.push({key, label:p.label, dot:p.dot, note:p.note,
+      dist:Math.hypot(gx,gy,gz), ...altAz(eq.ra,eq.dec,lat,lng,date)});
+  }
+  return out;
+}
+// Sun geocentric (for validation + twilight checks): sun = −earth vector
+function sunEq(date){
+  const E=planetHelio(PLANETS.earth, jdays(date)/36525);
+  return eclToEq(Math.atan2(-E.y,-E.x)*DEG, Math.atan2(-E.z,Math.hypot(E.x,E.y))*DEG);
+}
+
+// Bright stars + Southern Cross (J2000, deg). Brightest first.
+const BRIGHT_STARS=[
+  {n:'Sirius',ra:101.287,dec:-16.716,big:1},
+  {n:'Canopus',ra:95.988,dec:-52.696,big:1},
+  {n:'α Centauri',ra:219.902,dec:-60.834,big:1},
+  {n:'Arcturus',ra:213.915,dec:19.182},
+  {n:'Vega',ra:279.235,dec:38.784},
+  {n:'Rigel',ra:78.634,dec:-8.202},
+  {n:'Achernar',ra:24.429,dec:-57.237},
+  {n:'Betelgeuse',ra:88.793,dec:7.407},
+  {n:'Altair',ra:297.696,dec:8.868},
+  {n:'Antares',ra:247.352,dec:-26.432},
+  {n:'Spica',ra:201.298,dec:-11.161},
+  {n:'Fomalhaut',ra:344.413,dec:-29.622},
+  {n:'Acrux',ra:186.650,dec:-63.099,crux:1},
+  {n:'Mimosa',ra:191.930,dec:-59.689,crux:1},
+  {n:'Gacrux',ra:187.791,dec:-57.113,crux:1},
+  {n:'δ Crucis',ra:183.786,dec:-58.749,crux:1}
+];
+
+// Naked-eye deep-sky anchors (J2000): galactic core + Magellanic Clouds
+const GAL_CORE={ra:266.42,dec:-29.01};
+const MAGELLANIC=[{n:'LMC',ra:80.89,dec:-69.76,sz:15},{n:'SMC',ra:13.16,dec:-72.80,sz:10}];
+// Next time an object's altitude rises above 3°, sampling 15-min steps
+function nextRise(altFn,from,untilMins){
+  for(let m=15;m<=untilMins;m+=15){
+    const t=new Date(from.getTime()+m*60000);
+    if(altFn(t)>3) return t;
+  }
+  return null;
+}
+// Longest moon-down, low-cloud stretch between now and first light
+function bestViewingWindow(lat,lng){
+  const now=nowMins();
+  const startAbs=(now>=lastLightMins||now<firstLightMins)?now:lastLightMins;
+  const span=startAbs<firstLightMins?firstLightMins-startAbs:(1440-startAbs)+firstLightMins;
+  if(span<=0)return null;
+  const zone=skyWxZone();
+  const d0=nowDate(), today=localDateStr(0);
+  let runs=[],cur=null;
+  const base=new Date(d0.getTime()+((startAbs-now+1440)%1440)*60000);
+  for(let m=0;m<=span;m+=20){
+    const t=new Date(base.getTime()+m*60000);
+    const abs=(startAbs+m)%1440;
+    const dayOff=(`${t.getFullYear()}-${pad(t.getMonth()+1)}-${pad(t.getDate())}`===today)?0:1;
+    const moonUp=moonAltAz(lat,lng,t).alt>0;
+    const hc=hourlyAt(zone,dayOff,abs);
+    const cloud=hc&&hc.cloud!==null?hc.cloud:null;
+    const ok=!moonUp&&(cloud===null||cloud<60);
+    if(ok){ if(!cur)cur={s:abs,e:abs,cl:[]}; cur.e=abs; if(cloud!==null)cur.cl.push(cloud); }
+    else if(cur){ runs.push(cur); cur=null; }
+  }
+  if(cur)runs.push(cur);
+  if(!runs.length)return null;
+  const len=r=>r.e>=r.s?r.e-r.s:(1440-r.s)+r.e;
+  runs.sort((a,b)=>len(b)-len(a));
+  if(len(runs[0])<60)return null;
+  const r=runs[0];
+  return {from:r.s,to:r.e,cloud:r.cl.length?Math.round(r.cl.reduce((a,b)=>a+b,0)/r.cl.length):null};
+}
+
+// Annual meteor showers (approximate peaks; southern-hemisphere notes)
+const SHOWERS=[
+  {n:'Quadrantids',peak:[1,4],start:[12,28],end:[1,12],zhr:110,ra:230,dec:49,note:'Radiant too far north — poor from SEQ'},
+  {n:'Lyrids',peak:[4,22],start:[4,14],end:[4,30],zhr:18,ra:271,dec:34,note:'Low northern radiant — modest from SEQ, pre-dawn'},
+  {n:'η Aquariids',peak:[5,6],start:[4,19],end:[5,28],zhr:50,ra:338,dec:-1,note:'One of the best southern showers — pre-dawn east'},
+  {n:'δ Aquariids',peak:[7,30],start:[7,12],end:[8,23],zhr:25,ra:340,dec:-16,note:'Good from the south — best after midnight'},
+  {n:'α Capricornids',peak:[7,31],start:[7,3],end:[8,15],zhr:5,ra:307,dec:-10,note:'Few but famously bright slow fireballs'},
+  {n:'Perseids',peak:[8,13],start:[7,17],end:[8,24],zhr:100,ra:48,dec:58,note:'Radiant barely rises from SEQ — largely a northern show'},
+  {n:'Orionids',peak:[10,21],start:[10,2],end:[11,7],zhr:20,ra:95,dec:16,note:'Halley\u2019s comet debris — pre-dawn, decent from SEQ'},
+  {n:'Leonids',peak:[11,17],start:[11,6],end:[11,30],zhr:15,ra:152,dec:22,note:'Pre-dawn northeast'},
+  {n:'Geminids',peak:[12,14],start:[12,4],end:[12,17],zhr:150,ra:112,dec:32,note:'Best shower of the year, strong even from SEQ'}
+];
+function showerStatus(date){
+  // Returns {sh, daysToPeak, active} for the most relevant shower, or null
+  const y=date.getFullYear();
+  let best=null;
+  for(const sh of SHOWERS){
+    for(const yy of [y-1,y,y+1]){
+      const peak=new Date(yy,sh.peak[0]-1,sh.peak[1],12);
+      const start=new Date(sh.start[0]>sh.peak[0]?yy-1:yy,sh.start[0]-1,sh.start[1]);
+      const end  =new Date(sh.end[0]  <sh.peak[0]?yy+1:yy,sh.end[0]-1,sh.end[1],23,59);
+      const days=(peak-date)/86400000;
+      const active=date>=start&&date<=end;
+      if(active||(days>0&&days<=21)){
+        const score=active?Math.abs(days):days+100;
+        if(!best||score<best.score) best={sh,daysToPeak:days,active,score};
+      }
+    }
+  }
+  return best;
+}
+
+// Aurora australis: rough Kp needed for naked-eye chance at a geographic latitude (AU)
+function auroraNeedKp(lat){
+  if(lat<=-42.5)return 5; if(lat<=-37.5)return 6; if(lat<=-32.5)return 7; if(lat<=-28.5)return 8; return 9;
+}
+function auroraStatus(lat){
+  const k=window._kp; if(!k)return null;
+  const need=auroraNeedKp(lat);
+  const level = k.kp>=need?'alert' : k.kp>=need-1?'watch' : k.kp>=5?'storm-south' : null;
+  return {kp:k.kp, need, level};
+}
+
+// ISS: elevation above observer's horizon from its current ground position
+function issElevation(lat,lng){
+  const iss=window._iss; if(!iss)return null;
+  const R=6371, c=haversineKm(lat,lng,iss.lat,iss.lng)/R;
+  return Math.atan2(Math.cos(c)-R/(R+iss.alt), Math.sin(c))*DEG;
+}
+
+function compass16(az){
+  const pts=['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return pts[Math.round(az/22.5)%16];
+}
+// Tonight's headline phenomenon, in priority order
+function skyHeadline(lat,lng,date){
+  const au=auroraStatus(lat);
+  if(au&&au.level==='alert') return {icon:'🌌',value:'Kp '+au.kp.toFixed(0),sub:'aurora possible — look S!'};
+  if(au&&au.level==='watch') return {icon:'🌌',value:'Kp '+au.kp.toFixed(0),sub:'aurora watch — geomagnetic storm'};
+  const ss=showerStatus(date);
+  if(ss&&ss.active&&Math.abs(ss.daysToPeak)<=2) return {icon:'☄️',value:ss.sh.n,sub:`peaking now · ZHR ${ss.sh.zhr}`};
+  if(ss&&ss.active) return {icon:'☄️',value:ss.sh.n,sub:`active · peak in ${Math.max(0,Math.round(ss.daysToPeak))}d`};
+  if(ss) return {icon:'☄️',value:ss.sh.n,sub:`peak in ${Math.round(ss.daysToPeak)}d`};
+  const vis=planetPositions(lat,lng,date).filter(p=>p.alt>8);
+  const order=['venus','jupiter','mars','saturn','mercury'];
+  vis.sort((a,b)=>order.indexOf(a.key)-order.indexOf(b.key));
+  if(vis.length) return {icon:'🪐',value:vis[0].label,sub:`${Math.round(vis[0].alt)}° up in ${compass16(vis[0].az)}`};
+  const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
+  if(gc.alt>25&&moonIllum(date)<0.45) return {icon:'🌠',value:'Milky Way',sub:`core ${Math.round(gc.alt)}° up in ${compass16(gc.az)}`};
+  const m=moonAltAz(lat,lng,date), mp=moonPhase(date);
+  if(m.alt>0) return {icon:mp.icon,value:mp.name,sub:`moon ${Math.round(m.alt)}° in ${compass16(m.az)}`};
+  return {icon:'✨',value:'Dark sky',sub:'moon below horizon — great for stars'};
+}
+
+// ── Sky panorama renderer: az 0–360 → x, alt 0–90 → y ──
+function buildSkyObjects(lat,lng){
+  const layer=document.getElementById('night-sky'); if(!layer)return;
+  const date=nowDate();
+  const pos=(az,alt)=>({x:(az/360)*100, y:8+(1-Math.min(alt,90)/90)*76});
+  let html='';
+  // Aurora glow on the southern horizon during a storm watch/alert
+  const au=auroraStatus(lat);
+  if(au&&(au.level==='alert'||au.level==='watch')) html+='<div class="sky-aurora" style="left:32%"></div>';
+  for(const st of BRIGHT_STARS){
+    const aa=altAz(st.ra,st.dec,lat,lng,date);
+    if(aa.alt<2)continue;
+    const p=pos(aa.az,aa.alt);
+    html+=`<div class="sky-star${st.crux?' crux':''}"${st.big?' data-big':''} style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div>`;
+  }
+  const ac=altAz(186.65,-63.099,lat,lng,date); // Acrux anchors the Crux label
+  if(ac.alt>6){const p=pos(ac.az,ac.alt);html+=`<div class="sky-obj" style="left:${p.x.toFixed(1)}%;top:${Math.min(95,p.y+8).toFixed(1)}%"><span class="so-label">Crux</span></div>`;}
+  for(const pl of planetPositions(lat,lng,date)){
+    if(pl.alt<3)continue;
+    const p=pos(pl.az,pl.alt);
+    html+=`<div class="sky-obj" style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%;color:${pl.dot}"><div class="so-dot" style="background:${pl.dot}"></div><span class="so-label">${pl.label}</span></div>`;
+  }
+  const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
+  if(gc.alt>8){
+    const p=pos(gc.az,gc.alt);
+    html+=`<div class="sky-mw" style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div><div class="sky-obj" style="left:${p.x.toFixed(1)}%;top:${Math.min(95,p.y+9).toFixed(1)}%"><span class="so-label" style="opacity:0.75;">Milky Way core</span></div>`;
+  }
+  for(const mc of MAGELLANIC){
+    const aa=altAz(mc.ra,mc.dec,lat,lng,date);
+    if(aa.alt<4)continue;
+    const p=pos(aa.az,aa.alt);
+    html+=`<div class="sky-mc" style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%;width:${mc.sz}px;height:${mc.sz}px;"></div><div class="sky-obj" style="left:${p.x.toFixed(1)}%;top:${Math.min(95,p.y+6).toFixed(1)}%"><span class="so-label" style="opacity:0.65;">${mc.n}</span></div>`;
+  }
+  const m=moonAltAz(lat,lng,date);
+  if(m.alt>0){
+    const mp=moonPhase(date), p=pos(m.az,m.alt);
+    html+=`<div class="sky-obj" style="left:${p.x.toFixed(1)}%;top:${p.y.toFixed(1)}%"><span class="so-icon">${mp.icon}</span><span class="so-label">Moon</span></div>`;
+  }
+  layer.innerHTML=html;
+}
+
+function fmtClock(d){ return minsToStr(d.getHours()*60+d.getMinutes()); }
+function now_mins_for_astro(d){ return d.getHours()*60+d.getMinutes(); }
+
+// ── Tonight's sky cards ──
+function astroCards(lat,lng){
+  const date=nowDate(); let html='';
+  const au=auroraStatus(lat);
+  if(au&&au.level){
+    const txt=au.level==='alert'
+      ?`Geomagnetic storm at Kp ${au.kp.toFixed(1)} — aurora australis may reach your latitude tonight. Find a dark southern horizon and look low.`
+      :au.level==='watch'
+      ?`Storm under way at Kp ${au.kp.toFixed(1)}. Aurora needs ~Kp ${au.need} to reach you — a notch stronger and it could. Worth checking the southern horizon.`
+      :`Kp ${au.kp.toFixed(1)} — aurora likely at Tasmania-grade latitudes tonight; needs ~Kp ${au.need} to reach yours.`;
+    html+=`<div class="acard${au.level==='alert'?' alert':''}"><div class="acard-head"><span class="acard-icon">🌌</span><span class="acard-name">Aurora Australis</span><span class="acard-pos">Kp ${au.kp.toFixed(1)} live</span></div><div class="acard-note">${txt} <span style="opacity:0.65">Rough estimate — NOAA SWPC data.</span></div></div>`;
+  }
+  const ss=showerStatus(date);
+  if(ss){
+    const rad=altAz(ss.sh.ra,ss.sh.dec,lat,lng,date);
+    const when=ss.active?(Math.abs(ss.daysToPeak)<=1?'peaking tonight':ss.daysToPeak>0?`peak in ${Math.round(ss.daysToPeak)}d`:'past peak'):`peak in ${Math.round(ss.daysToPeak)}d`;
+    const radTxt=rad.alt>5?`Radiant ${Math.round(rad.alt)}° up in the ${compass16(rad.az)} now.`:'Radiant below the horizon right now — best later tonight / pre-dawn.';
+    html+=`<div class="acard"><div class="acard-head"><span class="acard-icon">☄️</span><span class="acard-name">${ss.sh.n}</span><span class="acard-pos">${when}</span></div><div class="acard-note">Up to ~${ss.sh.zhr}/hr under dark skies. ${radTxt} ${ss.sh.note}.</div></div>`;
+  }
+  // Milky Way core — the southern winter showpiece
+  const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
+  if(gc.alt>15){
+    const il0=Math.round(moonIllum(date)*100);
+    const moonNote=il0>40?' Tonight\u2019s moonlight will dim it.':' Get away from streetlights and let your eyes adapt ~10 min.';
+    html+=`<div class="acard"><div class="acard-head"><span class="acard-icon">🌠</span><span class="acard-name">Milky Way core</span><span class="acard-pos">${Math.round(gc.alt)}° · ${compass16(gc.az)}</span></div><div class="acard-note">The galaxy\u2019s bright centre in Sagittarius. Winter (Jun–Aug) is prime season from Australia.${moonNote}</div></div>`;
+  }
+  // Planets: up now, or rising before dawn (an empty planet list is a missed answer)
+  let untilDawnM=(()=>{const n=now_mins_for_astro(date);return n>=lastLightMins?(1440-n)+firstLightMins:Math.max(0,firstLightMins-n);})();
+  for(const pl of planetPositions(lat,lng,date)){
+    if(pl.alt>=5){
+      html+=`<div class="acard"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot}"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">${Math.round(pl.alt)}° · ${compass16(pl.az)}</span></div><div class="acard-note">${pl.note}. ${pl.dist.toFixed(2)} au away tonight.</div></div>`;
+    } else if(untilDawnM>30){
+      const rise=nextRise(t=>planetPositions(lat,lng,t).find(q=>q.key===pl.key).alt, date, untilDawnM);
+      if(rise){
+        const az=planetPositions(lat,lng,rise).find(q=>q.key===pl.key).az;
+        html+=`<div class="acard"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot};opacity:0.6;"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">rises ~${fmtClock(rise)}</span></div><div class="acard-note">Up before dawn in the ${compass16(az)}. ${pl.note}.</div></div>`;
+      }
+    }
+  }
+  const m=moonAltAz(lat,lng,date), mp=moonPhase(date), il=Math.round(moonIllum(date)*100);
+  const ev=moonEvents(lat,lng,date);
+  const evTxt=m.alt>0?(ev.set?` Sets ${fmtClock(ev.set)}.`:''):(ev.rise?` Rises ${fmtClock(ev.rise)}.`:' Down for most of the night.');
+  const where=m.alt>0?`${Math.round(m.alt)}° · ${compass16(m.az)}`:'below horizon';
+  const darkNote=il<30?' Dark skies — a great night for faint stars and meteors.':il>85?' Bright moonlight will wash out faint stars and meteors.':'';
+  html+=`<div class="acard"><div class="acard-head"><span class="acard-icon">${mp.icon}</span><span class="acard-name">${mp.name}</span><span class="acard-pos">${where}</span></div><div class="acard-note">${il}% illuminated.${evTxt}${darkNote}</div></div>`;
+  ac_alt_card(lat,lng,date,h=>{html+=h;});
+  // Magellanic Clouds — naked-eye dwarf galaxies, circumpolar from SEQ
+  const lmc=altAz(MAGELLANIC[0].ra,MAGELLANIC[0].dec,lat,lng,date);
+  const smc=altAz(MAGELLANIC[1].ra,MAGELLANIC[1].dec,lat,lng,date);
+  if(Math.max(lmc.alt,smc.alt)>12){
+    html+=`<div class="acard"><div class="acard-head"><span class="acard-icon">☁️</span><span class="acard-name">Magellanic Clouds</span><span class="acard-pos">LMC ${Math.round(lmc.alt)}° ${compass16(lmc.az)} · SMC ${Math.round(smc.alt)}° ${compass16(smc.az)}</span></div><div class="acard-note">Two naked-eye companion galaxies circling the south celestial pole — look like detached wisps of Milky Way. Dark southern skies only.</div></div>`;
+  }
+  const el=issElevation(lat,lng);
+  if(el!==null&&el>10) html+=`<div class="acard"><div class="acard-head"><span class="acard-icon">🛰</span><span class="acard-name">ISS overhead</span><span class="acard-pos">~${Math.round(el)}° up</span></div><div class="acard-note">The Space Station is above your horizon right now — a bright steadily-moving star, but only visible while sunlit (typically within ~2h of dusk or dawn).</div></div>`;
+  return html;
+}
+function ac_alt_card(lat,lng,date,add){
+  const ac=altAz(186.65,-63.099,lat,lng,date);
+  if(ac.alt>8) add(`<div class="acard"><div class="acard-head"><span class="acard-icon" style="color:#9fd4ff;">✚</span><span class="acard-name">Southern Cross</span><span class="acard-pos">${Math.round(ac.alt)}° · ${compass16(ac.az)}</span></div><div class="acard-note">Crux, with the two Pointers (α and β Centauri) trailing nearby — the anchor of the southern sky.</div></div>`);
+  return false;
+}
+
+// ── Space weather: live Kp (NOAA SWPC) + ISS position — both keyless, both optional ──
+async function fetchSpaceWx(){
+  try{
+    const r=await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+    const d=await r.json();
+    const last=d[d.length-1];
+    window._kp={kp:parseFloat(last[1]),time:last[0]};
+  }catch(e){ window._kp=null; }
+  try{
+    const r=await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+    const d=await r.json();
+    window._iss={lat:d.latitude,lng:d.longitude,alt:d.altitude};
+  }catch(e){ window._iss=null; }
+}
+
 function render(){
   if(sunsetMins===null||lastLightMins===null)return;
   const now=nowMins();
@@ -1151,26 +1543,38 @@ function render(){
   const isNight = now>=lastLightMins || now<firstLightMins;
   document.getElementById('daybar-day').style.display   = isNight?'none':'block';
   document.getElementById('daybar-night').style.display = isNight?'block':'none';
+  const glat=window._gpsLat??-27.4698, glng=window._gpsLng??153.0251;
 
-  // Tonight vs early-morning: dawn is "tomorrow" only after last light
-  const dawnOffset = (isNight && now>=lastLightMins) ? 1 : 0;
+  // Identity swap: by night this is a sky-watch app (installed home-screen
+  // icons are cached by the OS at install time and can't change, but the
+  // tab favicon, titles and theme colour can)
+  if(window._uiNight!==isNight){
+    window._uiNight=isNight;
+    const titleEl=document.getElementById('app-title');
+    if(titleEl) titleEl.innerHTML = isNight?'SEQ <span>Night</span> Sky':'SEQ <span>Golf</span> Finder';
+    document.title = isNight?'SEQ Night Sky':'Golf Finder SEQ';
+    const tm=document.querySelector('meta[name="theme-color"]');
+    if(tm) tm.content = isNight?'#0a0e1f':'#0f1a0f';
+    const fav=document.getElementById('favicon');
+    if(fav){
+      fav.href='data:image/svg+xml,'+encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y="82" font-size="82">${isNight?'🌌':'⛳'}</text></svg>`);
+      fav.setAttribute('type','image/svg+xml');
+    }
+  }
 
   if(isNight){
-    // Minutes until first light (civil dawn)
-    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
-    const h=Math.floor(untilDawn/60), m=untilDawn%60;
-    document.getElementById('night-countdown').textContent = h>0?`${h}h ${m}m`:`${m}m`;
-    document.getElementById('night-resume').textContent = `First light ~${minsToStr(firstLightMins)} in`;
-    // Planning line: the coming day's window + dawn forecast (forecast_days=2)
-    const tmEl=document.getElementById('night-tomorrow');
-    if(tmEl){
-      const dayWord=dawnOffset?'Tomorrow':'Today';
-      const winH=((lastLightMins-firstLightMins)/60).toFixed(1);
-      const dawn=hourlyAt(gpsZone,dawnOffset,firstLightMins);
-      let line=`${dayWord} · first light ~${minsToStr(firstLightMins)} · last light ~${minsToStr(lastLightMins)} · ${winH}h of golf`;
-      if(dawn) line+=`<br>${dawn.desc.icon} ${dawn.desc.label}${dawn.temp!==null?`, ${dawn.temp}°`:''} at dawn`;
-      tmEl.innerHTML=line;
+    // One useful line each: the dark window worth planning around, and dawn
+    const bw=bestViewingWindow(glat,glng);
+    const bestEl=document.getElementById('night-best');
+    if(bestEl){
+      bestEl.innerHTML = bw
+        ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down${bw.cloud!==null?` · ~${bw.cloud}% cloud`:''}`
+        : `🔭 moonlight or cloud most of tonight — no standout dark window`;
     }
+    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
+    const fh=Math.floor(untilDawn/60), fm=untilDawn%60;
+    const firstEl=document.getElementById('night-first');
+    if(firstEl) firstEl.textContent=`🌄 first light ~${minsToStr(firstLightMins)} · in ${fh>0?fh+'h ':''}${fm}m · ⛳ ${((lastLightMins-firstLightMins)/60).toFixed(1)}h of golf tomorrow`;
     buildNightScene();
   }
 
@@ -1229,13 +1633,12 @@ function render(){
   const dlLabel=document.getElementById('daylight-card-label');
   const dlIcon=document.getElementById('daylight-icon');
   if(isNight){
-    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
-    const h=Math.floor(untilDawn/60), m=untilDawn%60;
-    dlLabel.textContent='First light';
-    dlIcon.textContent='🌙';
-    dlHrs.textContent=minsToStr(firstLightMins);
+    const hl=skyHeadline(glat,glng,nowDate());
+    dlLabel.textContent='Tonight';
+    dlIcon.textContent=hl.icon;
     dlHrs.style.color='#8da9d6';
-    dlSub.textContent=(h>0?`in ${h}h ${m}m`:`in ${m}m`);
+    dlHrs.innerHTML=`<span style="font-size:${hl.value.length>7?13:hl.value.length>4?17:22}px;">${hl.value}</span>`;
+    dlSub.textContent=hl.sub;
     dlCard.className='stat';
   } else {
     dlLabel.textContent='Daylight left';
@@ -1264,12 +1667,17 @@ function render(){
   const lbVal=document.getElementById('s-leaveby');
   const lbSub=document.getElementById('s-leaveby-sub');
   if(isNight){
-    // No departures at night — show the coming day's window instead
+    // Moon card: phase, illumination, next rise/set
+    const mp=moonPhase(nowDate()), il=Math.round(moonIllum(nowDate())*100);
+    const mev=moonEvents(glat,glng,nowDate());
+    const mAA=moonAltAz(glat,glng,nowDate());
     lbCard.className='stat stat-leaveby';
-    lbLabel.textContent='Daylight window';
-    lbIcon.textContent='🌄';
-    lbVal.textContent=((lastLightMins-firstLightMins)/60).toFixed(1)+'h';
-    lbSub.textContent=`${minsToStr(firstLightMins)} – ${minsToStr(lastLightMins)}`;
+    lbLabel.textContent='Moon';
+    lbIcon.textContent=mp.icon;
+    lbVal.textContent=il+'%';
+    lbSub.textContent = mAA.alt>0
+      ? `${mp.name}${mev.set?' · sets '+fmtClock(mev.set):''}`
+      : `${mp.name}${mev.rise?' · rises '+fmtClock(mev.rise):' · down'}`;
   } else if(anyPlayable&&nearest){
     const best=bestPlayableHoles(nearest,daylight);
     const lv=latestLeave(nearest,best);
@@ -1306,12 +1714,12 @@ function render(){
   const wxLbl2=document.getElementById('wx-card-label2');
   const wxLbl =document.getElementById('wx-card-label');
   wxCard.className='stat stat-wx-nearest';
-  if(nearest){
-    const wx=weatherCache[nearest.zone];
-    wxLbl.textContent=nearest.suburb;
+  if(nearest||isNight){
+    const wx=weatherCache[isNight?skyWxZone():nearest.zone];
+    wxLbl.textContent=isNight?'Sky viewing':nearest.suburb;
     if(wx&&wx.ok){
-      const fcMins = isNight ? firstLightMins : Math.min(lastLightMins, now+PREP+nearest.drive+BUFFER);
-      const fc = hourlyAt(nearest.zone, isNight?dawnOffset:0, fcMins);
+      const fcMins = isNight ? now : Math.min(lastLightMins, now+PREP+nearest.drive+BUFFER);
+      const fc = hourlyAt(isNight?skyWxZone():nearest.zone, 0, fcMins);
       const d  = fc ? fc.desc : {icon:wx.icon,label:wx.label,c:wx.color};
       const col=d.c||'var(--tx2)';
       // Tint the frame, icon and condition — temp & wind stay neutral so an
@@ -1325,7 +1733,13 @@ function render(){
       wxWind.textContent=(wx.gust&&wx.gust>wx.wind)?`${wx.wind}–${wx.gust} km/h`:`${wx.wind} km/h`;
       wxWind.style.color='';
       wxLbl2.className='stat-wx-detail';
-      wxLbl2.textContent = isNight ? `${d.label} @ first light` : `${d.label} @ ${minsToStr(fcMins)} tee`;
+      if(isNight){
+        const cl=fc&&fc.cloud!==null?fc.cloud:null;
+        const q=cl===null?d.label:cl<25?`${cl}% cloud · great viewing`:cl<55?`${cl}% cloud · fair viewing`:cl<85?`${cl}% cloud · poor viewing`:`${cl}% cloud · overcast`;
+        wxLbl2.textContent=q;
+      } else {
+        wxLbl2.textContent=`${d.label} @ ${minsToStr(fcMins)} tee`;
+      }
       wxLbl2.style.color=col;
     } else {
       wxCard.style.borderColor='';wxCard.style.background='';
@@ -1343,6 +1757,10 @@ function render(){
     wxWind.textContent='no course';wxWind.style.color='';
     wxLbl2.textContent='in filter';
   }
+
+  // Filters are a golf concept — hide the whole row at night
+  const filtEl=document.querySelector('.filters');
+  if(filtEl) filtEl.style.display=isNight?'none':'flex';
 
   // Restore active pill
   document.querySelectorAll('.fpill').forEach(b=>{
@@ -1362,6 +1780,12 @@ function render(){
   const notPlayable=activeFilter==='playable'?[]:allInFilter.filter(c=>!playableCheck(c));
 
   let html='';
+  if(isNight){
+    html+=`<div class="section-head"><span class="sdot" style="background:#8da9d6;box-shadow:0 0 6px rgba(141,169,214,0.8);"></span>Tonight's sky</div>`;
+    html+=astroCards(glat,glng);
+    document.getElementById('course-list').innerHTML=html;
+    return;
+  }
   if(playable.length){
     html+=`<div class="section-head"><span class="sdot sdot-g"></span>Enough daylight today &mdash; ${playable.length} course${playable.length!==1?'s':''} &middot; check tee sheet</div>`;
     playable.forEach(c=>{html+=courseCard(c,daylight,false);});
@@ -1384,68 +1808,88 @@ function courseCard(c,daylight,dimmed){
   // Closed at the time you'd arrive (handles partial closures like "Tue mornings")
   const isClosed=isClosedAt(c, now+PREP+c.drive);
 
-  // Latest departure that still finishes the best playable round before last light
+  // Playable: latest departure for the best round.
+  // Dimmed: say WHY it doesn't fit — what it needs vs what's left (planning info).
   let timeLine='';
-  let leaveLatest=null, arriveAt=null;
   if(!dimmed&&best){
-    leaveLatest=latestLeave(c,best);
-    arriveAt=leaveLatest+c.drive;
-    timeLine=`<div class="ccard-times"><span class="t-leave">leave by ${minsToStr(leaveLatest)}</span><span class="t-arrive">arrive ~${minsToStr(arriveAt)}</span></div>`;
+    const lv=latestLeave(c,best), arr=lv+c.drive;
+    timeLine=`<div class="ccard-times"><span class="t-leave">leave by ${minsToStr(lv)}</span><span class="t-arrive">arrive ~${minsToStr(arr)}</span></div>`;
+  } else if(dimmed&&!isClosed&&daylight>0){
+    const needHoles=activeFilter==='18'?18:activeFilter==='9'?9:(c.holes.includes(9)?9:18);
+    const need=PREP+c.drive+BUFFER+roundMins(c,needHoles);
+    timeLine=`<div class="ccard-times"><span class="t-need">needs ${(need/60).toFixed(1)}h &middot; ${(daylight/60).toFixed(1)}h left</span></div>`;
   }
 
+  // Round duration reflects what the course OFFERS (static info), not what fits
   const roundTime=c.par3
-    ?(best===18?'~2 hrs/18':'~1 hr/9')
-    :(can18?'~4.5 hrs/18':'~2.5 hrs/9');
-  const ratingStr=c.rating?`★ ${c.rating.toFixed(1)}`:'';
+    ?(c.holes.includes(18)?'~1–2 hrs par-3':'~1 hr par-3')
+    :(c.holes.includes(18)?'~4.5 hrs/18':'~2.5 hrs/9');
+  const ratingStr=c.rating?`<span class="ccard-rating">★ ${c.rating.toFixed(1)}</span> &middot; `:'';
 
   // Rain/storm forecast between earliest arrival and last light
   const risk=!dimmed?rainRiskDuring(c.zone, now+PREP+c.drive, lastLightMins):null;
   const bRisk=risk==='storm'?'<span class="badge bstorm">⛈ storms forecast</span>'
             :risk==='rain' ?'<span class="badge brain">🌧 rain likely</span>':'';
 
+  // Weather: one compact line, forecast at THIS course's tee-off time
+  // (zone-wide current conditions repeated 4 lines × 20 cards said nothing new)
   const wx=weatherCache[c.zone];
   let wxHtml='';
   if(wx&&wx.ok){
-    const col=wx.color||'var(--tx2)';
-    const windStr=(wx.gust&&wx.gust>wx.wind)?`${wx.wind}–${wx.gust} km/h`:`${wx.wind} km/h`;
-    wxHtml=`<div class="ccard-wx"><span class="wx-icon">${wx.icon}</span><span class="wx-temp" style="color:${col}">${wx.temp}°</span><span class="wx-wind" style="color:${col}">${windStr}</span><span class="wx-cond" style="color:${col};opacity:0.8">${wx.label}</span></div>`;
+    const teeM=Math.min(lastLightMins, now+PREP+c.drive+BUFFER);
+    const fc=!dimmed?hourlyAt(c.zone,0,teeM):null;
+    const icon=fc?fc.desc.icon:wx.icon;
+    const temp=(fc&&fc.temp!==null)?fc.temp:wx.temp;
+    const windStr=(wx.gust&&wx.gust>wx.wind)?`${wx.wind}–${wx.gust}`:`${wx.wind}`;
+    wxHtml=`<div class="ccard-wx"><span class="wx-icon">${icon}</span><span class="wx-temp">${temp}°</span><span class="wx-wind">${windStr} km/h</span>${fc?`<span class="wx-at">@tee</span>`:''}</div>`;
   }
 
   const noteHtml=c.note?`<div class="ccard-note">${c.note}</div>`:'';
   const visitorNoteHtml=c.visitorNote?`<div class="ccard-note" style="color:var(--al);">⚠ ${c.visitorNote}</div>`:'';
 
+  // Fee: label must match the fee actually shown (the old fallback could
+  // present an 18-hole price as "/9")
   let bFee='';
   if(c.type!=='private'){
-    const showNine=c.par3||(can9&&!can18);
-    const feeVal=showNine?(c.fee9||c.fee18):c.fee18;
-    if(feeVal) bFee=`<span class="badge bfee">Est. $${feeVal}/${showNine?'9':'18'}</span>`;
+    const preferNine=c.par3||(can9&&!can18);
+    let feeVal=null, feeFor=null;
+    if(preferNine && c.fee9){feeVal=c.fee9;feeFor=9;}
+    else if(c.fee18){feeVal=c.fee18;feeFor=18;}
+    else if(c.fee9){feeVal=c.fee9;feeFor=9;}
+    if(feeVal) bFee=`<span class="badge bfee">~$${feeVal}/${feeFor}</span>`;
   }
 
-  const b18=can18?'<span class="badge b18">18 holes</span>':'';
-  const b9=can9&&!can18?'<span class="badge b9">9 holes</span>':'';  // only show if 18 not available
+  // Hole badges show every format the course OFFERS, with ✓ when it still
+  // fits today (the old version hid the 9-hole option whenever 18 fit)
+  const tick=(fits)=>!dimmed&&fits?' ✓':'';
+  const b18=c.holes.includes(18)?`<span class="badge ${!dimmed&&can18?'b18':'bh-off'}">18${tick(can18)}</span>`:'';
+  const b9 =c.holes.includes(9) ?`<span class="badge ${!dimmed&&can9 ?'b9' :'bh-off'}">9${tick(can9)}</span>`:'';
   const bP3=c.par3?'<span class="badge bpar3">par 3</span>':'';
-  const bType=`<span class="badge btype">${c.type}</span>`;
+  // Type only when it changes what you can do — "public" on 50 cards is noise
+  const bType=c.type!=='public'?`<span class="badge btype">${c.type}</span>`:'';
   const bGN=c.golfnow?'<span class="badge bgn">GolfNow</span>':'';
   const bNB=c.noBooking?'<span class="badge bnobk">walk-up</span>':'';
   const bNo=dimmed?'<span class="badge bno">no time today</span>':'';
   const bClosed=isClosed?'<span class="badge bclosed">closed now</span>':'';
 
+  // Honest CTA: directory pages have no tee sheet
+  const isDirectory=c.url.includes('golf.com.au/venue');
+  const cta=isDirectory?'ℹ️ Info':'⛳ Tee times';
+  const ctaAria=isDirectory?`Open ${c.name} information page`:`Open ${c.name} tee times`;
+
   const safeName=c.name.replace(/'/g,"\\'");
   const safeSuburb=c.suburb.replace(/'/g,"\\'");
-  return `<div class="ccard${dimmed?' dimmed':''}${isClosed?' closed-today':''}">
+  return `<div class="ccard${dimmed?' dimmed':''}${isClosed?' closed-today':''}" role="listitem">
     <div class="ccard-left">
-      <div class="ccard-name-row">
-        <div class="ccard-name">${c.name}</div>
-        ${ratingStr?`<span class="ccard-rating">${ratingStr}</span>`:''}
-      </div>
-      <div class="ccard-meta">${c.suburb} &middot; ${c.drive} min drive &middot; ${roundTime}</div>
-      <div class="ccard-region">${REGION_LABELS[c.region]||c.region}</div>
+      <div class="ccard-name">${c.name}</div>
+      <div class="ccard-meta">${ratingStr}${c.suburb} &middot; ${REGION_LABELS[c.region]||c.region}</div>
+      <div class="ccard-meta">${c.drive} min drive &middot; ${roundTime}</div>
       ${noteHtml}${visitorNoteHtml}
       ${timeLine}
       <div class="badges">${b18}${b9}${bP3}${bFee}${bRisk}${bNo}${bClosed}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
-      <a class="visit-btn" href="${c.url}" target="_blank" aria-label="Open ${c.name} tee times">⛳ Tee times</a>
+      <a class="visit-btn" href="${c.url}" target="_blank" aria-label="${ctaAria}">${cta}</a>
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
         <button class="share-btn" onclick="shareCourse('${safeName}','${safeSuburb}',${c.drive})" aria-label="Share ${safeName}">↗️</button>
         <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
@@ -1454,9 +1898,6 @@ function courseCard(c,daylight,dimmed){
     </div>
   </div>`;
 }
-
-// ── Hole-in-one tracker ──────────────────────────────────────
-let hios = JSON.parse(localStorage.getItem('gf_hios')||'[]');
 
 function showHio(){
   document.getElementById('hio-panel').style.display='block';
@@ -1552,6 +1993,9 @@ async function init(){
   const loc=await getLocation();
   const lat=loc?.lat,lng=loc?.lng;
   const originEl=document.getElementById('drive-origin');
+  window._gpsLat = lat ?? -27.4698;
+  window._gpsLng = lng ?? 153.0251;
+  delete weatherCache['gps'];  // coords can change between refreshes — always refetch
   if(loc){
     document.getElementById('loc-status').textContent=`GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
     document.getElementById('loc-status').className='app-meta loc-ok';
@@ -1568,7 +2012,8 @@ async function init(){
 
   const [result] = await Promise.all([
     fetchSunset(lat, lng),
-    fetchAllWeather()
+    fetchAllWeather(),
+    fetchSpaceWx()   // live Kp + ISS — optional, fails silently
   ]);
   sunsetMins    = result.sunset;
   sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
@@ -1581,6 +2026,8 @@ async function init(){
   render();
   clearInterval(window._iv);
   window._iv=setInterval(()=>{
+    // keep live Kp / ISS fresh on an open tab (keyless, cheap)
+    if((window._tick=(window._tick||0)+1)%10===0) fetchSpaceWx();
     render();
     document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   },60000);
