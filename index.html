@@ -11,7 +11,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <meta name="theme-color" content="#0f1a0f">
-<!-- app version: 2026-06-12-v3 — last-light playability, true leave-by, rain risk, data fixes -->
+<!-- app version: 2026-06-12-v4 — hero last-call line, night planning mode, verdict/urgency widgets -->
 <title>Golf Finder</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" href="data:image/png;base64,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">
@@ -88,8 +88,11 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   100%{transform:translateX(420px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
-.day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
-.day-marker{display:flex;align-items:center;gap:5px;}
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:42px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
+.day-marker{display:flex;flex-direction:column;gap:1px;}
+.day-marker-left{align-items:flex-start;} .day-marker-right{align-items:flex-end;}
+.day-marker-row{display:flex;align-items:center;gap:5px;}
+.day-marker-cap{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.07em;text-shadow:0 1px 3px rgba(0,0,0,0.6);}
 .day-marker-icon{font-size:16px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));}
 .day-marker-time{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
 /* Floating Now tracker — sits just above the horizon */
@@ -99,6 +102,11 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day{margin:-2px;}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
+/* Last tee-off ticks on the horizon + the decision caption below the scene */
+.day-tick{position:absolute;bottom:0;width:2px;height:10px;background:rgba(255,255,255,0.7);z-index:7;transform:translateX(-50%);border-radius:1px;pointer-events:none;}
+.day-lastcall{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:10px;color:var(--tx3);padding-top:9px;}
+.day-lastcall b{color:var(--tx2);font-weight:500;}
+.day-lastcall .lc-past{opacity:0.45;text-decoration:line-through;}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
@@ -107,6 +115,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .night-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
 @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
 .night-moon{position:absolute;top:14px;right:22px;font-size:42px;line-height:1;filter:drop-shadow(0 0 8px rgba(220,230,255,0.4));z-index:2;}
+.night-moon-name{position:absolute;top:60px;right:14px;font-family:var(--mono);font-size:9px;color:rgba(200,215,255,0.7);z-index:2;}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift 14s linear infinite;}
 @keyframes cloudDrift{0%{transform:translateX(-40px);}100%{transform:translateX(340px);}}
@@ -117,6 +126,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .night-info{padding:0 2px;}
 .night-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:3px;}
 .night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;margin-bottom:12px;}
+.night-tomorrow{font-family:var(--mono);font-size:11px;color:var(--tx2);padding:0 2px 10px;line-height:1.7;}
 .night-countdown{display:flex;justify-content:flex-end;align-items:baseline;gap:8px;border-top:1px solid var(--bdr);padding-top:12px;}
 .night-countdown-label{font-family:var(--mono);font-size:11px;color:var(--tx2);letter-spacing:0.02em;}
 .night-countdown-val{font-family:var(--mono);font-size:21px;color:#8da9d6;font-weight:500;white-space:nowrap;}
@@ -127,7 +137,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
 .stat-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;white-space:nowrap;}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
-.viable-open{font-family:var(--mono);font-size:10px;color:var(--gb);margin-top:4px;}
 
 /* Daylight Remaining card — green default, amber/red as light runs out */
 .stat-icon{font-size:22px;line-height:1;margin:2px 0 3px;display:block;}
@@ -138,12 +147,15 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #stat-daylight-card.dl-danger{border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.05);}
 #stat-daylight-card.dl-danger #s-daylight-hrs{color:#f07060;}
 
-/* Leave By card — green accent */
-.stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35)!important;background:rgba(90,171,53,0.05)!important;}
-.stat-leaveby.dim{border-color:rgba(90,171,53,0.15)!important;background:rgba(90,171,53,0.02)!important;}
+/* Last Call card — green by default, escalates as the departure window closes */
+.stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35);background:rgba(90,171,53,0.05);}
 .stat-leaveby #s-leaveby{color:var(--gg);font-size:22px;white-space:nowrap;}
+.stat-leaveby.lb-warn{border-color:rgba(245,166,35,0.4);background:rgba(245,166,35,0.05);}
+.stat-leaveby.lb-warn #s-leaveby{color:var(--al);}
+.stat-leaveby.lb-danger{border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.05);}
+.stat-leaveby.lb-danger #s-leaveby{color:#f07060;}
+.stat-leaveby.dim{border-color:rgba(90,171,53,0.15);background:rgba(90,171,53,0.02);}
 .stat-leaveby.dim #s-leaveby{color:var(--tx3);}
-@keyframes dotpulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:0.4;transform:scale(0.7);}}
 
 /* ── Weather stat card — dynamic colour per condition ── */
 .stat-wx-nearest{text-align:center;border-color:var(--bdr2);}
@@ -159,15 +171,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Wind prominent (brighter), condition muted */
 .ccard-wx .wx-wind{font-family:var(--mono);font-size:11px;color:var(--tx2);font-weight:500;display:block;line-height:1.4;}
 .ccard-wx .wx-cond{font-family:var(--mono);font-size:11px;color:var(--tx3);display:block;line-height:1.4;}
-/* Warn state — drizzle/rain — amber */
-.ccard-wx.wx-warn .wx-icon{filter:sepia(1) saturate(3) hue-rotate(5deg);}
-.ccard-wx.wx-warn .wx-temp{color:var(--al)!important;}
-.ccard-wx.wx-warn .wx-wind{color:var(--al)!important;}
-.ccard-wx.wx-warn .wx-cond{color:rgba(245,166,35,0.7)!important;}
-/* Bad state — storm — red */
-.ccard-wx.wx-bad .wx-temp{color:#f07060!important;}
-.ccard-wx.wx-bad .wx-wind{color:#f07060!important;}
-.ccard-wx.wx-bad .wx-cond{color:rgba(240,112,96,0.7)!important;}
 
 .filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
 .filters::-webkit-scrollbar{display:none;}
@@ -252,6 +255,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .hio-entry-del{background:none;border:none;color:var(--tx3);font-size:13px;cursor:pointer;margin-left:auto;padding:2px 6px;flex-shrink:0;}
 .hio-entry-del:active{color:var(--rl);}
 .hio-empty{font-family:var(--mono);font-size:12px;color:var(--tx3);text-align:center;padding:20px;}
+
+/* Respect reduced-motion; pause weather animations when the tab is hidden */
+@media (prefers-reduced-motion: reduce){
+  .day-wx *,.night-wx *,.night-star,.day-cloud,.day-gust{animation:none!important;}
+}
+body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{animation-play-state:paused!important;}
 </style>
 </head>
 <body>
@@ -263,7 +272,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
-      <div class="app-meta">drive times est. from Toowong</div>
+      <div class="app-meta" id="drive-origin">drive times est. from Toowong</div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
       <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
@@ -324,28 +333,41 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
         <!-- Ground band at the bottom holds the horizon + edge markers -->
         <div class="day-ground">
           <div class="day-marker day-marker-left">
-            <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true">🌅</span>
-            <span class="day-marker-time" id="db-sunrise">--:--</span>
+            <div class="day-marker-row">
+              <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true">🌅</span>
+              <span class="day-marker-time" id="db-sunrise">--:--</span>
+            </div>
+            <span class="day-marker-cap">sunrise</span>
           </div>
           <div class="day-marker day-marker-right">
-            <span class="day-marker-time" id="db-sunset">--:--</span>
-            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true">🌇</span>
+            <div class="day-marker-row">
+              <span class="day-marker-time" id="db-sunset">--:--</span>
+              <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true">🌇</span>
+            </div>
+            <span class="day-marker-cap">last light</span>
           </div>
         </div>
+        <!-- Last tee-off ticks (positioned by render) -->
+        <div class="day-tick" id="tick-18" style="display:none;" aria-hidden="true"></div>
+        <div class="day-tick" id="tick-9" style="display:none;" aria-hidden="true"></div>
         <!-- Horizon line = progress bar, sits at very bottom of the sky -->
         <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--gb);"></div></div>
       </div>
+      <!-- The decision line: latest tee-off that still finishes before last light -->
+      <div class="day-lastcall" id="day-lastcall"></div>
     </div>
     <!-- NIGHT MODE -->
     <div id="daybar-night" style="display:none;">
       <div class="night-scene" id="night-scene">
         <div class="night-stars" id="night-stars"></div>
         <div class="night-moon" id="night-moon" aria-hidden="true">🌙</div>
+        <div class="night-moon-name" id="night-moon-name"></div>
         <div class="night-wx" id="night-wx" aria-hidden="true"></div>
       </div>
       <div class="night-info">
+        <div class="night-tomorrow" id="night-tomorrow"></div>
         <div class="night-countdown">
-          <span class="night-countdown-label" id="night-resume">Golf resumes ~5:30am in</span>
+          <span class="night-countdown-label" id="night-resume">First light ~5:05am in</span>
           <span class="night-countdown-val" id="night-countdown">-- hrs</span>
         </div>
       </div>
@@ -379,7 +401,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="stat-sub" id="s-daylight-sub">until last light</div>
     </div>
     <div class="stat stat-leaveby" id="stat-leaveby-card">
-      <div class="stat-label">Leave by</div>
+      <div class="stat-label" id="leaveby-card-label">Last call</div>
       <div class="stat-icon" id="leaveby-icon" aria-hidden="true">🚗</div>
       <div class="stat-value" id="s-leaveby">--:--</div>
       <div class="stat-sub" id="s-leaveby-sub">for nearest</div>
@@ -404,74 +426,72 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 // holes: array of available hole counts
 const COURSES = [
   // BRISBANE — par-3 / short courses
-  {name:"St Lucia Golf Links",suburb:"St Lucia",drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
-  {name:"Bulimba Golf Club",suburb:"Bulimba",drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulimbagolfclub.com.au/",fee18:15,fee9:null,rating:3.9,note:'Par-3 walk-up course. Casual and affordable, good for a quick hit.',zone:'brisbane_metro'},
+  {name:"St Lucia Golf Links",suburb:"St Lucia",lat:-27.5031,lng:152.9919,drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
+  {name:"Bulimba Golf Club",suburb:"Bulimba",lat:-27.4445,lng:153.0514,drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulimbagolfclub.com.au/",fee18:15,fee9:null,rating:3.9,note:'Par-3 walk-up course. Casual and affordable, good for a quick hit.',zone:'brisbane_metro'},
   
   // BRISBANE — full courses
-  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",drive:8,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/",fee18:null,fee9:null,rating:4.4,note:'36-hole championship club. Stunning river views, one of Brisbane\'s most prestigious.',zone:'brisbane_metro'},
-  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",drive:8,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/",fee18:null,fee9:null,rating:4.3,note:'Established 1890. Waitlist-only membership, private access only.',zone:'brisbane_metro'},
-  {name:"Ashgrove Golf Club",suburb:"The Gap",drive:10,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/",fee18:null,fee9:null,rating:4.2,note:'Private members club in The Gap. Challenging layout, friendly community.',zone:'brisbane_metro'},
-  {name:"Keperra Country Golf Club",suburb:"Keperra",drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperragolf.com.au/cms/",visitorNote:"Sat visitors after 3pm only",fee18:null,fee9:null,rating:4.2,note:'27-hole championship course. Hosts the prestigious Keperra Bowl annually.',zone:'brisbane_metro'},
-  {name:"Minnippi Golf & Range",suburb:"Cannon Hill",drive:15,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://minnippipublicgolfcourse.com.au/",fee18:45,fee9:28,rating:4.3,note:'Brisbane\'s newest public course (2023). Flood-resilient design, 6/9/18 hole options.',zone:'brisbane_metro'},
-  {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/",fee18:null,fee9:null,rating:4.1,note:'Scenic Mt Ommaney layout. Challenging hills, well-maintained greens.',zone:'brisbane_metro'},
-  {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mt-gravatt-golf-club",fee18:null,fee9:null,rating:3.8,note:'Public 9/18-hole course in Brisbane\'s south. No official website.',zone:'brisbane_metro'},
-  {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.virginiagolf.com.au/cms/",fee18:55,fee9:32,rating:3.9,note:'Public 9/18-hole course near the airport. Flat, beginner-friendly layout.',zone:'brisbane_metro'},
-  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Semi-private club in Carindale. 18-hole and par-3 course. Visitor access limited — check ahead.',zone:'brisbane_metro'},
-  {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null,rating:4.5,note:'One of Australia\'s top-ranked courses. Private, host of numerous national events.',zone:'brisbane_metro'},
-  {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null,rating:3.9,note:'Semi-private 18-hole. Undulating layout with good variety of holes.',zone:'ipswich'},
-  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedRules:[{dow:2,before:720}],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
-  {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
-  {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null,rating:3.8,note:'Driving range + 9-hole course + 18-hole pitch & putt. Walk-up, no booking needed.',zone:'brisbane_metro'},
-  {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null,rating:3.8,note:'Semi-private bayside course. Quiet, local club feel.',zone:'brisbane_metro'},
-  {name:"Wynnum Golf Club",suburb:"Wynnum",drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32,rating:4.0,note:'Semi-private bayside club. Pleasant layout with sea breezes.',zone:'bayside'},
-  {name:"Howeston Golf Course",suburb:"Birkdale",drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/",fee18:28,fee9:16,rating:4.0,note:'27-hole family-owned walk-up course. Best value in SEQ, sunrise to sunset.',zone:'bayside'},
-  {name:"Gailes Golf Club",suburb:"Gailes",drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",visitorNote:"Reduced hours Sundays — check ahead",fee18:45,fee9:27,rating:4.1,note:'Public 9/18-hole course. Well-maintained and one of Ipswich\'s most popular.',zone:'ipswich'},
-  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/",fee18:null,fee9:null,rating:4.6,note:'Greg Norman design. One of SEQ\'s best semi-private layouts.',zone:'ipswich'},
-  {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null,rating:4.0,note:'Public 18-hole south of Brisbane. Affordable and accessible.',zone:'ipswich'},
-  {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 9/18-hole north Brisbane. Local community club.',zone:'brisbane_metro'},
-  {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2514-carbrook-golf-club/search",fee18:55,fee9:null,rating:4.1,note:'Public 18-hole Logan. Competitive GolfNow pricing.',zone:'ipswich'},
-  {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redcliffe-golf-club",fee18:null,fee9:null,rating:4.0,note:'Bayside 9/18-hole par 71. Stunning Moreton Bay views.',zone:'bayside'},
-  {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole championship course. Ipswich\'s main course.',zone:'ipswich'},
-  {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/ipswich-par-3-golf-course",fee18:15,fee9:null,rating:3.6,note:'Walk-up par-3 course in Churchill. Beginner and family-friendly.',zone:'ipswich'},
-  {name:"Beenleigh Golf Club",suburb:"Beenleigh",drive:45,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/beenleigh-golf-club",fee18:null,fee9:null,rating:3.8,note:'Public 9/18-hole south of Brisbane. Affordable local course.',zone:'ipswich'},
-  {name:"Gainsborough Greens Golf Club",suburb:"Pimpama",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://gainsboroughgolf.com.au/",fee18:50,fee9:null,rating:4.3,note:'Championship layout hosted Queensland PGA three times. Surrounded by 230 hectares of wildlife sanctuary with Eastern Grey kangaroos on course.',zone:'gc_north'},
-  {name:"Hills International Golf Club",suburb:"Jimboomba",drive:40,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillsgolfclub.com.au/",fee18:35,fee9:null,rating:4.0,note:'One of SEQ\'s best kept secrets. Social play 7 days a week. Challenging par 72 at 6,906m from the tips.',zone:'ipswich'},
+  {name:"Indooroopilly Golf Club",suburb:"Indooroopilly",lat:-27.5179,lng:152.9983,drive:8,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.indooroopillygolf.com.au/cms/",fee18:null,fee9:null,rating:4.4,note:'36-hole championship club. Stunning river views, one of Brisbane\'s most prestigious.',zone:'brisbane_metro'},
+  {name:"Brisbane Golf Club",suburb:"Yeerongpilly",lat:-27.5278,lng:153.0086,drive:8,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://brisbanegolfclub.com.au/",fee18:null,fee9:null,rating:4.3,note:'Established 1890. Waitlist-only membership, private access only.',zone:'brisbane_metro'},
+  {name:"Ashgrove Golf Club",suburb:"The Gap",lat:-27.4459,lng:152.9599,drive:10,holes:[9,18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.ashgrovegolf.com.au/",fee18:null,fee9:null,rating:4.2,note:'Private members club in The Gap. Challenging layout, friendly community.',zone:'brisbane_metro'},
+  {name:"Keperra Country Golf Club",suburb:"Keperra",lat:-27.4105,lng:152.9528,drive:12,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.keperragolf.com.au/cms/",visitorNote:"Sat visitors after 3pm only",fee18:null,fee9:null,rating:4.2,note:'27-hole championship course. Hosts the prestigious Keperra Bowl annually.',zone:'brisbane_metro'},
+  {name:"Minnippi Golf & Range",suburb:"Cannon Hill",lat:-27.4786,lng:153.1031,drive:15,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://minnippipublicgolfcourse.com.au/",fee18:45,fee9:28,rating:4.3,note:'Brisbane\'s newest public course (2023). Flood-resilient design, 6/9/18 hole options.',zone:'brisbane_metro'},
+  {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",lat:-27.5505,lng:152.924,drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/",fee18:null,fee9:null,rating:4.1,note:'Scenic Mt Ommaney layout. Challenging hills, well-maintained greens.',zone:'brisbane_metro'},
+  {name:"Virginia Golf Club",suburb:"Virginia",lat:-27.3729,lng:153.0674,drive:18,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.virginiagolf.com.au/cms/",fee18:55,fee9:32,rating:3.9,note:'Public 9/18-hole course near the airport. Flat, beginner-friendly layout.',zone:'brisbane_metro'},
+  {name:"Pacific Golf Club",suburb:"Carindale",lat:-27.5157,lng:153.1027,drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Semi-private club in Carindale. 18-hole and par-3 course. Visitor access limited — check ahead.',zone:'brisbane_metro'},
+  {name:"Royal Queensland Golf Club",suburb:"Hamilton",lat:-27.4388,lng:153.0913,drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null,rating:4.5,note:'One of Australia\'s top-ranked courses. Private, host of numerous national events.',zone:'brisbane_metro'},
+  {name:"Jindalee Golf Club",suburb:"Jindalee",lat:-27.5361,lng:152.9433,drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null,rating:3.9,note:'Semi-private 18-hole. Undulating layout with good variety of holes.',zone:'ipswich'},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",lat:-27.3732,lng:153.0987,drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedRules:[{dow:2,before:720}],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
+  {name:"Oxley Golf Club",suburb:"Oxley",lat:-27.5715,lng:152.9771,drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
+  {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",lat:-27.5504,lng:152.9875,drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null,rating:3.8,note:'Driving range + 9-hole course + 18-hole pitch & putt. Walk-up, no booking needed.',zone:'brisbane_metro'},
+  {name:"Sandgate Golf Club",suburb:"Shorncliffe",lat:-27.3302,lng:153.0823,drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null,rating:3.8,note:'Semi-private bayside course. Quiet, local club feel.',zone:'brisbane_metro'},
+  {name:"Wynnum Golf Club",suburb:"Wynnum",lat:-27.4459,lng:153.1649,drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32,rating:4.0,note:'Semi-private bayside club. Pleasant layout with sea breezes.',zone:'bayside'},
+  {name:"Howeston Golf Course",suburb:"Birkdale",lat:-27.5003,lng:153.199,drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/",fee18:28,fee9:16,rating:4.0,note:'27-hole family-owned walk-up course. Best value in SEQ, sunrise to sunset.',zone:'bayside'},
+  {name:"Gailes Golf Club",suburb:"Gailes",lat:-27.6026,lng:152.918,drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",visitorNote:"Reduced hours Sundays — check ahead",fee18:45,fee9:27,rating:4.1,note:'Public 9/18-hole course. Well-maintained and one of Ipswich\'s most popular.',zone:'ipswich'},
+  {name:"Brookwater Golf & Country Club",suburb:"Brookwater",lat:-27.6625,lng:152.8942,drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/",fee18:null,fee9:null,rating:4.6,note:'Greg Norman design. One of SEQ\'s best semi-private layouts.',zone:'ipswich'},
+  {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",lat:-27.658,lng:153.1502,drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null,rating:4.0,note:'Public 18-hole south of Brisbane. Affordable and accessible.',zone:'ipswich'},
+  {name:"Pine Rivers Golf Club",suburb:"Bray Park",lat:-27.2309,lng:152.9746,drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 9/18-hole north Brisbane. Local community club.',zone:'brisbane_metro'},
+  {name:"Carbrook Golf Club",suburb:"Carbrook",lat:-27.6846,lng:153.2469,drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2514-carbrook-golf-club/search",fee18:55,fee9:null,rating:4.1,note:'Public 18-hole Logan. Competitive GolfNow pricing.',zone:'ipswich'},
+  {name:"Redcliffe Golf Club",suburb:"Redcliffe",lat:-27.2602,lng:153.0789,drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redcliffe-golf-club",fee18:null,fee9:null,rating:4.0,note:'Bayside 9/18-hole par 71. Stunning Moreton Bay views.',zone:'bayside'},
+  {name:"Ipswich Golf Club",suburb:"Ipswich",lat:-27.6277,lng:152.7327,drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole championship course. Ipswich\'s main course.',zone:'ipswich'},
+  {name:"Ipswich Par 3 Course",suburb:"Churchill",lat:-27.6363,lng:152.7566,drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/ipswich-par-3-golf-course",fee18:15,fee9:null,rating:3.6,note:'Walk-up par-3 course in Churchill. Beginner and family-friendly.',zone:'ipswich'},
+  {name:"Gainsborough Greens Golf Club",suburb:"Pimpama",lat:-27.8186,lng:153.3153,drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://gainsboroughgolf.com.au/",fee18:50,fee9:null,rating:4.3,note:'Championship layout hosted Queensland PGA three times. Surrounded by 230 hectares of wildlife sanctuary with Eastern Grey kangaroos on course.',zone:'gc_north'},
+  {name:"Hills International Golf Club",suburb:"Jimboomba",lat:-27.8165,lng:153.0165,drive:40,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillsgolfclub.com.au/",fee18:35,fee9:null,rating:4.0,note:'One of SEQ\'s best kept secrets. Social play 7 days a week. Challenging par 72 at 6,906m from the tips.',zone:'ipswich'},
   // GOLD COAST
-  {name:"Links Hope Island Golf Club",suburb:"Hope Island",drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/15324-links-hope-island-golf-club/search",fee18:158,fee9:80,rating:4.5,note:'Peter Thomson links design. One of Australia\'s top-ranked courses.',zone:'gc_north'},
-  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/",fee18:null,fee9:null,rating:4.3,note:'Two championship courses in resort setting. Members and resort guests.',zone:'gc_north'},
-  {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2529-parkwood-international-golf-club/search",fee18:54,fee9:null,rating:4.2,note:'Public 18-hole, visitor-friendly. Solid layout with good facilities.',zone:'gc_north'},
-  {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2518-emerald-lakes-golf-club/search",fee18:70,fee9:null,rating:4.1,note:'Graham Marsh design. Scenic lakes, one of GC\'s most affordable.',zone:'gc_south'},
-  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2530-palm-meadows-golf-course/search",fee18:80,fee9:null,rating:4.2,note:'350-hectare Graham Marsh resort course. Pristine condition.',zone:'gc_south'},
-  {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2524-lakelands-golf-club/search",fee18:145,fee9:85,rating:4.5,note:'Jack Nicklaus signature design. One of Australia\'s top public courses.',zone:'gc_south'},
-  {name:"RACV Royal Pines Resort",suburb:"Benowa",drive:63,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html",fee18:120,fee9:null,rating:4.3,note:'Resort course on Nerang River. Regular host of LPGA events.',zone:'gc_south'},
-  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2536-surfers-paradise-golf-club/search",fee18:58,fee9:null,rating:4.1,note:'Underrated 18-hole layout. Easy walk, excellent surfaces.',zone:'gc_south'},
-  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2534-robina-woods-golf-course/search",fee18:100,fee9:null,rating:4.0,note:'18-hole resort course. Water features throughout, mid-range GC option.',zone:'gc_south'},
-  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://golf.com.au/venue/coolangatta-tweed-heads-golf-club",fee18:null,fee9:null,rating:4.1,note:'Semi-private club on NSW border. Hilly layout with great views.',zone:'gc_south'},
+  {name:"Links Hope Island Golf Club",suburb:"Hope Island",lat:-27.8752,lng:153.3496,drive:52,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/15324-links-hope-island-golf-club/search",fee18:158,fee9:80,rating:4.5,note:'Peter Thomson links design. One of Australia\'s top-ranked courses.',zone:'gc_north'},
+  {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",lat:-27.864,lng:153.3635,drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/",fee18:null,fee9:null,rating:4.3,note:'Two championship courses in resort setting. Members and resort guests.',zone:'gc_north'},
+  {name:"Parkwood International Golf Club",suburb:"Parkwood",lat:-27.9509,lng:153.3765,drive:55,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2529-parkwood-international-golf-club/search",fee18:54,fee9:null,rating:4.2,note:'Public 18-hole, visitor-friendly. Solid layout with good facilities.',zone:'gc_north'},
+  {name:"Emerald Lakes Golf Club",suburb:"Carrara",lat:-28.0108,lng:153.3673,drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2518-emerald-lakes-golf-club/search",fee18:70,fee9:null,rating:4.1,note:'Graham Marsh design. Scenic lakes, one of GC\'s most affordable.',zone:'gc_south'},
+  {name:"Palm Meadows Golf Course",suburb:"Carrara",lat:-28.0276,lng:153.3779,drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2530-palm-meadows-golf-course/search",fee18:80,fee9:null,rating:4.2,note:'350-hectare Graham Marsh resort course. Pristine condition.',zone:'gc_south'},
+  {name:"Lakelands Golf Club",suburb:"Merrimac",lat:-28.04,lng:153.3818,drive:62,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2524-lakelands-golf-club/search",fee18:145,fee9:85,rating:4.5,note:'Jack Nicklaus signature design. One of Australia\'s top public courses.',zone:'gc_south'},
+  {name:"RACV Royal Pines Resort",suburb:"Benowa",lat:-28.0044,lng:153.3756,drive:63,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html",fee18:120,fee9:null,rating:4.3,note:'Resort course on Nerang River. Regular host of LPGA events.',zone:'gc_south'},
+  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",lat:-28.035,lng:153.4019,drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2536-surfers-paradise-golf-club/search",fee18:58,fee9:null,rating:4.1,note:'Underrated 18-hole layout. Easy walk, excellent surfaces.',zone:'gc_south'},
+  {name:"Robina Woods Golf Course",suburb:"Robina",lat:-28.0712,lng:153.4088,drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2534-robina-woods-golf-course/search",fee18:100,fee9:null,rating:4.0,note:'18-hole resort course. Water features throughout, mid-range GC option.',zone:'gc_south'},
+  {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",lat:-28.2085,lng:153.5607,drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://golf.com.au/venue/coolangatta-tweed-heads-golf-club",fee18:null,fee9:null,rating:4.1,note:'Semi-private club on NSW border. Hilly layout with great views.',zone:'gc_south'},
   // SUNSHINE COAST
-  {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole north of Brisbane. Flat, open layout.',zone:'sunshine'},
-  {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Public island course. Accessible via bridge, relaxed atmosphere.',zone:'sunshine'},
-  {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/beerwah-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 18-hole Sunshine Coast hinterland. Affordable local club.',zone:'sunshine'},
-  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2531-pelican-waters-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Public 18-hole Caloundra. Robert Trent Jones Jr design.',zone:'sunshine'},
-  {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2537-twin-waters-golf-club/search",fee18:null,fee9:null,rating:4.1,note:'Public 18-hole Mudjimba. Links-style layout near the coast.',zone:'sunshine'},
-  {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/maroochy-river-golf-club",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole Bli Bli. River valley setting, mature trees.',zone:'sunshine'},
-  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2532-peregian-springs-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Semi-private Noosa hinterland. Well-presented championship layout.',zone:'sunshine'},
-  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole resort Coolum Beach. Pete Dye design.',zone:'sunshine'},
-  {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/",fee18:null,fee9:null,rating:4.3,note:'Semi-private Noosa. Arguably Sunshine Coast\'s best course.',zone:'sunshine'},
+  {name:"Caboolture Golf Club",suburb:"Caboolture",lat:-27.0756,lng:152.9197,drive:50,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole north of Brisbane. Flat, open layout.',zone:'sunshine'},
+  {name:"Bribie Island Golf Club",suburb:"Bribie Island",lat:-27.0828,lng:153.2011,drive:58,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Public island course. Accessible via bridge, relaxed atmosphere.',zone:'sunshine'},
+  {name:"Beerwah Golf Club",suburb:"Beerwah",lat:-26.8589,lng:152.9653,drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/beerwah-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 18-hole Sunshine Coast hinterland. Affordable local club.',zone:'sunshine'},
+  {name:"Pelican Waters Golf Club",suburb:"Caloundra",lat:-26.837,lng:153.0904,drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2531-pelican-waters-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Public 18-hole Caloundra. Robert Trent Jones Jr design.',zone:'sunshine'},
+  {name:"Twin Waters Golf Club",suburb:"Mudjimba",lat:-26.6286,lng:153.0852,drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2537-twin-waters-golf-club/search",fee18:null,fee9:null,rating:4.1,note:'Public 18-hole Mudjimba. Links-style layout near the coast.',zone:'sunshine'},
+  {name:"Maroochy River Golf Club",suburb:"Bli Bli",lat:-26.6228,lng:153.0584,drive:88,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/maroochy-river-golf-club",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole Bli Bli. River valley setting, mature trees.',zone:'sunshine'},
+  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",lat:-26.4926,lng:153.0714,drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2532-peregian-springs-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Semi-private Noosa hinterland. Well-presented championship layout.',zone:'sunshine'},
+  {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",lat:-26.5527,lng:153.0921,drive:100,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole resort Coolum Beach. Pete Dye design.',zone:'sunshine'},
+  {name:"Noosa Springs Golf Club",suburb:"Noosa",lat:-26.4186,lng:153.0872,drive:105,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/",fee18:null,fee9:null,rating:4.3,note:'Semi-private Noosa. Arguably Sunshine Coast\'s best course.',zone:'sunshine'},
   // TOOWOOMBA / SCENIC RIM
-  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://golf.com.au/venue/scenic-rim-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 18-hole Beaudesert. Hinterland setting, affordable.',zone:'toowoomba'},
-  {name:"Boonah Golf Club",suburb:"Boonah",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/",fee18:null,fee9:null,rating:3.8,note:'Public 18-hole Scenic Rim. Quiet country club atmosphere.',zone:'toowoomba'},
-  {name:"Toowoomba Golf Club",suburb:"Toowoomba",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Semi-private 18-hole championship course. Garden City\'s premier club.',zone:'toowoomba'},
-  {name:"City Golf Club Toowoomba",suburb:"Toowoomba",drive:92,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole. Affordable Toowoomba option, open to all.',zone:'toowoomba'},
+  {name:"Scenic Rim Golf Club",suburb:"Beaudesert",lat:-27.9981,lng:153.0014,drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://golf.com.au/venue/scenic-rim-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 18-hole Beaudesert. Hinterland setting, affordable.',zone:'toowoomba'},
+  {name:"Boonah Golf Club",suburb:"Boonah",lat:-28.0064,lng:152.6941,drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.boonahgolfclub.com.au/",fee18:null,fee9:null,rating:3.8,note:'Public 18-hole Scenic Rim. Quiet country club atmosphere.',zone:'toowoomba'},
+  {name:"Toowoomba Golf Club",suburb:"Toowoomba",lat:-27.6022,lng:151.9771,drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://www.toowoombagolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Semi-private 18-hole championship course. Garden City\'s premier club.',zone:'toowoomba'},
+  {name:"City Golf Club Toowoomba",suburb:"Toowoomba",lat:-27.5787,lng:151.9465,drive:92,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"toowoomba",url:"https://citygolf.com.au/golf/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole. Affordable Toowoomba option, open to all.',zone:'toowoomba'},
   // BRISBANE MISSING
-  {name:"Wolston Park Golf Club",suburb:"Wacol",drive:20,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wpgc.com.au/",fee18:22,fee9:13,rating:4.2,note:'Hidden gem on Brisbane River bend. Kangaroo spectators, great value, WK Hynd design.',zone:'ipswich'},
-  {name:"Wantima Country Club",suburb:"Brendale",drive:32,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.wantimacountryclub.com.au/cms/",fee18:50,fee9:null,rating:4.3,note:'Cam Smith\'s home course. Tree-lined fairways, open 7 days, friendly club.',zone:'brisbane_metro'},
-  {name:"Riverlakes Golf Club",suburb:"Cornubia",drive:38,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://riverlakes.com.au/",fee18:55,fee9:null,rating:4.1,note:'Championship layout along Logan River. Maintained to Gold Coast resort standards.',zone:'ipswich'},
-  {name:"Windaroo Lakes Golf Club",suburb:"Windaroo",drive:45,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://windaroolakes.com.au/",fee18:55,fee9:null,rating:4.2,note:'Midway Brisbane and Gold Coast. Albert River setting, one of SEQ\'s toughest par 4s.',zone:'ipswich'},
-  {name:"Redland Bay Golf Club",suburb:"Redland Bay",drive:42,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redland-bay-golf-club",fee18:null,fee9:null,rating:4.0,note:'Scenic bayside location. Easy-walking layout with bay views.',zone:'bayside'},
-  {name:"Mount Warren Park Golf Club",suburb:"Mount Warren Park",drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mount-warren-park-golf-club",fee18:null,fee9:null,rating:3.9,note:'Affordable public 18-hole in Logan. Flat, accessible course for all levels.',zone:'ipswich'},
-  {name:"Sandy Gallop Golf Club",suburb:"Churchill, Ipswich",drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandygallop.com.au/",fee18:null,fee9:null,rating:3.9,note:'Historic 1922 course. Visitors welcome weekdays and Sundays. Site of Greg Norman\'s first pro win.',zone:'ipswich'},
-  {name:"Woodford Golf Club",suburb:"Woodford",drive:75,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://woodfordgolfclub.com.au/",fee18:48,fee9:32,rating:4.1,note:'Country 18-hole par 72 in Woodford township. Visitors welcome most days. Picturesque hinterland layout.',zone:'sunshine'},
-  {name:"Southport Golf Club",suburb:"Southport",drive:65,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://southportgolfclub.com.au/",fee18:null,fee9:null,rating:4.4,note:'Private members club. Visitors limited to interstate/international club members with current handicap.',zone:'gc_south'},
+  {name:"Wolston Park Golf Club",suburb:"Wacol",lat:-27.6037,lng:152.905,drive:20,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wpgc.com.au/",fee18:22,fee9:13,rating:4.2,note:'Hidden gem on Brisbane River bend. Kangaroo spectators, great value, WK Hynd design.',zone:'ipswich'},
+  {name:"Wantima Country Club",suburb:"Brendale",lat:-27.3303,lng:152.9626,drive:32,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.wantimacountryclub.com.au/cms/",fee18:50,fee9:null,rating:4.3,note:'Cam Smith\'s home course. Tree-lined fairways, open 7 days, friendly club.',zone:'brisbane_metro'},
+  {name:"Riverlakes Golf Club",suburb:"Cornubia",lat:-27.6745,lng:153.2144,drive:38,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://riverlakes.com.au/",fee18:55,fee9:null,rating:4.1,note:'Championship layout along Logan River. Maintained to Gold Coast resort standards.',zone:'ipswich'},
+  {name:"Windaroo Lakes Golf Club",suburb:"Windaroo",lat:-27.7431,lng:153.1978,drive:45,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://windaroolakes.com.au/",fee18:55,fee9:null,rating:4.2,note:'Midway Brisbane and Gold Coast. Albert River setting, one of SEQ\'s toughest par 4s.',zone:'ipswich'},
+  {name:"Redland Bay Golf Club",suburb:"Redland Bay",lat:-27.6032,lng:153.2979,drive:42,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redland-bay-golf-club",fee18:null,fee9:null,rating:4.0,note:'Scenic bayside location. Easy-walking layout with bay views.',zone:'bayside'},
+  {name:"Mount Warren Park Golf Club",suburb:"Mount Warren Park",lat:-27.7329,lng:153.2141,drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mount-warren-park-golf-club",fee18:null,fee9:null,rating:3.9,note:'Beenleigh RSL\'s course — affordable public 18-hole in Logan, flat and accessible for all levels.',zone:'ipswich'},
+  {name:"Sandy Gallop Golf Club",suburb:"Churchill, Ipswich",lat:-27.6314,lng:152.7483,drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandygallop.com.au/",fee18:null,fee9:null,rating:3.9,note:'Historic 1922 course. Visitors welcome weekdays and Sundays. Site of Greg Norman\'s first pro win.',zone:'ipswich'},
+  {name:"Woodford Golf Club",suburb:"Woodford",lat:-26.9486,lng:152.7884,drive:75,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://woodfordgolfclub.com.au/",fee18:48,fee9:32,rating:4.1,note:'Country 18-hole par 72 in Woodford township. Visitors welcome most days. Picturesque hinterland layout.',zone:'sunshine'},
+  {name:"Southport Golf Club",suburb:"Southport",lat:-27.9963,lng:153.4042,drive:65,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://southportgolfclub.com.au/",fee18:null,fee9:null,rating:4.4,note:'Private members club. Visitors limited to interstate/international club members with current handicap.',zone:'gc_south'},
 ];
 
 // ── Constants ────────────────────────────────────────────────
@@ -500,6 +520,42 @@ function getNearestZone(lat,lng){
     if(d<bestDist){bestDist=d;best=zone;}
   }
   return best;
+}
+
+// ── Drive-time estimation from actual GPS ────────────────────
+// Each course's hardcoded `drive` is calibrated from Toowong. With a GPS fix
+// we re-estimate every drive: haversine km × 1.3 road-winding factor, at an
+// average speed that scales with trip length (short suburban hops ~30km/h,
+// long highway runs capped at 85km/h). Validated within a few minutes of the
+// hand-tuned Toowong times across the dataset.
+function haversineKm(lat1,lng1,lat2,lng2){
+  const R=6371, toRad=d=>d*Math.PI/180;
+  const dLat=toRad(lat2-lat1), dLng=toRad(lng2-lng1);
+  const a=Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(a));
+}
+function estDriveMins(fromLat,fromLng,toLat,toLng){
+  const roadKm = haversineKm(fromLat,fromLng,toLat,toLng) * 1.3;
+  const speed  = Math.min(85, 30 + roadKm * 1.2); // km/h
+  return Math.max(5, Math.round(roadKm / speed * 60));
+}
+// Recompute all course drive times from a GPS fix (keeps Toowong values as fallback).
+// Each course's hand-tuned Toowong time encodes its real road conditions (e.g. slow
+// hinterland roads to Boonah/Woodford), so we use it to calibrate the raw estimate:
+// drive = est(gps→course) × clamp(handTuned ÷ est(Toowong→course), 0.7–1.6).
+const HOME_TOOWONG={lat:-27.4856,lng:152.9847};
+function applyGpsDrives(lat,lng){
+  let applied=false;
+  for(const c of COURSES){
+    if(c.lat===undefined) continue;
+    if(c.driveBase===undefined) c.driveBase=c.drive;
+    const raw=estDriveMins(lat,lng,c.lat,c.lng);
+    const estHome=estDriveMins(HOME_TOOWONG.lat,HOME_TOOWONG.lng,c.lat,c.lng);
+    const k=Math.min(1.6,Math.max(0.7,c.driveBase/estHome));
+    c.drive=Math.max(5,Math.round(raw*k));
+    applied=true;
+  }
+  return applied;
 }
 
 // ── State ────────────────────────────────────────────────────
@@ -542,15 +598,21 @@ function buildNightScene(){
     starsEl.innerHTML=html;
     _nightBuilt=true;
   }
-  // Moon phase
+  // Moon phase — name shown as a caption (title-tooltips don't exist on touch)
   const mp=moonPhase(new Date());
   const moonEl=document.getElementById('night-moon');
   if(moonEl){ moonEl.textContent=mp.icon; moonEl.title=mp.name; }
-  // Weather overlay based on GPS zone current conditions
+  const moonName=document.getElementById('night-moon-name');
+  if(moonName) moonName.textContent=mp.name;
+  // Weather overlay based on GPS zone current conditions.
+  // Cached on condition so the 60s re-render doesn't restart the rain animation
+  // (same fix the day scene already has).
   const gpsZone=window._gpsZone||'brisbane_metro';
   const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
+  const nightKey=(wx&&wx.ok)?wx.label:'none';
   const wxEl=document.getElementById('night-wx');
-  if(wxEl){
+  if(wxEl && window._nightWxKey!==nightKey){
+    window._nightWxKey=nightKey;
     let html='';
     if(wx&&wx.ok){
       const lbl=wx.label;
@@ -636,24 +698,34 @@ function buildDayScene(now){
   // Floating Now tracker rides the sun's arc, sitting just below it.
   // Clamps horizontally so the pill text stays readable near the edges,
   // and clamps vertically so it never dips into the ground band.
+  // Pill tracks the sun's full arc (tight clamp only stops edge clipping —
+  // a wide clamp made the pill visibly detach from the sun at dawn/dusk)
   const nowFloat=document.getElementById('day-now-float');
   if(nowFloat){
-    const clampedX=Math.min(82,Math.max(18,sx));
-    const belowSun=Math.min(70,sy+14); // 14% below the sun, capped above the ground
-    nowFloat.style.left=clampedX+'%';
-    nowFloat.style.top=belowSun+'%';
+    nowFloat.style.left=Math.min(91,Math.max(9,sx))+'%';
+    nowFloat.style.top=Math.min(66,sy+14)+'%';
   }
 
-  // Ambient glow halo around the sun — warm tint that follows it
-  const glow=document.getElementById('day-glow');
-  if(glow){
-    glow.style.background=`radial-gradient(circle at ${sx}% ${sy}%, rgba(255,238,180,0.35), transparent 38%)`;
-  }
-
-  // Sun icon = current GPS weather condition icon
+  // Weather for the scene (GPS zone)
   const gpsZone=window._gpsZone||'brisbane_metro';
   const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
-  sun.textContent=(wx&&wx.ok)?wx.icon:'☀️';
+  const lblNow=(wx&&wx.ok)?wx.label:'Clear';
+  const sunOut = lblNow.includes('Clear')||lblNow.includes('Mostly');
+  const partlyNow = lblNow.includes('Partly');
+
+  // The sun is always the sun — weather lives in the overlay. Under cloud or
+  // rain it dims rather than morphing into a glowing rain-cloud emoji.
+  sun.textContent='☀️';
+  sun.style.opacity = sunOut?'1' : partlyNow?'0.75' : '0.35';
+  sun.style.filter = (sunOut||partlyNow) ? 'drop-shadow(0 0 14px rgba(255,220,120,0.9))' : 'grayscale(0.4)';
+
+  // Ambient warm glow only when the sun is actually out
+  const glow=document.getElementById('day-glow');
+  if(glow){
+    glow.style.background=(sunOut||partlyNow)
+      ? `radial-gradient(circle at ${sx}% ${sy}%, rgba(255,238,180,0.35), transparent 38%)`
+      : 'none';
+  }
 
   // ── Weather overlay — reflects actual conditions with real intensity ──
   // Cached on (condition, wind bucket): rebuilding every minute resets the
@@ -814,7 +886,7 @@ async function fetchWeatherZone(zone){
   if(weatherCache[zone]) return weatherCache[zone];
   const {lat,lng} = ZONE_COORDS[zone];
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,weather_code&hourly=temperature_2m,wind_speed_10m,weather_code&timezone=auto&forecast_days=1`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,weather_code&timezone=auto&forecast_days=2`;
     const r = await fetch(url);
     const d = await r.json();
     const c = d.current;
@@ -822,6 +894,7 @@ async function fetchWeatherZone(zone){
     const result = {
       temp: Math.round(c.temperature_2m),
       wind: Math.round(c.wind_speed_10m),
+      gust: c.wind_gusts_10m!=null ? Math.round(c.wind_gusts_10m) : null,
       icon: desc.icon,
       label: desc.label,
       color: desc.c,
@@ -831,27 +904,40 @@ async function fetchWeatherZone(zone){
     weatherCache[zone] = result;
     return result;
   } catch(e) {
-    return {temp:null,wind:null,icon:'',label:'',ok:false,hourly:null};
+    return {temp:null,wind:null,gust:null,icon:'',label:'',ok:false,hourly:null};
   }
 }
 
-// Get weather icon for a specific hour-of-day today from a zone's hourly forecast
-function wxAtHour(zone, targetMins){
+// Local calendar date (Open-Meteo's hourly times are local; toISOString is UTC
+// and would point at yesterday until ~10am in Brisbane)
+function localDateStr(dayOffset=0){
+  const d=new Date(); d.setDate(d.getDate()+dayOffset);
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+// Hourly forecast at a given day offset (0=today, 1=tomorrow) and time-of-day
+function hourlyAt(zone, dayOffset, targetMins){
   const wx = weatherCache[zone];
   if(!wx || !wx.ok || !wx.hourly || !wx.hourly.time) return null;
-  const today = new Date().toISOString().slice(0,10);
+  const dateStr = localDateStr(dayOffset);
   const targetHour = Math.round(targetMins/60);
   let bestIdx = -1, bestDiff = Infinity;
   for(let i=0;i<wx.hourly.time.length;i++){
     const [date, hm] = wx.hourly.time[i].split('T');
-    if(date !== today) continue;
+    if(date !== dateStr) continue;
     const h = parseInt(hm.split(':')[0]);
     const diff = Math.abs(h - targetHour);
     if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
   }
   if(bestIdx === -1) return null;
-  const code = wx.hourly.weather_code[bestIdx];
-  return wxDesc(code);
+  return {
+    desc: wxDesc(wx.hourly.weather_code[bestIdx]),
+    temp: wx.hourly.temperature_2m ? Math.round(wx.hourly.temperature_2m[bestIdx]) : null
+  };
+}
+// Back-compat shim used by the day-scene markers
+function wxAtHour(zone, targetMins){
+  const h = hourlyAt(zone, 0, targetMins);
+  return h ? h.desc : null;
 }
 
 async function fetchAllWeather(){
@@ -955,7 +1041,7 @@ function isClosedAt(c, mins){
 function rainRiskDuring(zone, startMins, endMins){
   const wx = weatherCache[zone];
   if(!wx || !wx.ok || !wx.hourly || !wx.hourly.time) return null;
-  const today = new Date().toISOString().slice(0,10);
+  const today = localDateStr(0);
   let risk = null;
   for(let i=0;i<wx.hourly.time.length;i++){
     const [date, hm] = wx.hourly.time[i].split('T');
@@ -1058,28 +1144,38 @@ function render(){
   // The golf window runs to LAST LIGHT (end of civil twilight), not sunset
   const daylight=Math.max(0,lastLightMins-now);
   const dHrs=(daylight/60).toFixed(1);
+  const gpsZone=window._gpsZone||'brisbane_metro';
 
   // Day/night mode switch — night when past last light OR before first light
   const isNight = now>=lastLightMins || now<firstLightMins;
   document.getElementById('daybar-day').style.display   = isNight?'none':'block';
   document.getElementById('daybar-night').style.display = isNight?'block':'none';
 
+  // Tonight vs early-morning: dawn is "tomorrow" only after last light
+  const dawnOffset = (isNight && now>=lastLightMins) ? 1 : 0;
+
   if(isNight){
-    // Minutes until first light (civil dawn — earliest tee-off)
-    let untilDawn;
-    if(now>=lastLightMins){
-      untilDawn = (1440 - now) + firstLightMins;
-    } else {
-      untilDawn = firstLightMins - now;
-    }
+    // Minutes until first light (civil dawn)
+    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
     const h=Math.floor(untilDawn/60), m=untilDawn%60;
     document.getElementById('night-countdown').textContent = h>0?`${h}h ${m}m`:`${m}m`;
-    document.getElementById('night-resume').textContent = `Golf resumes ~${minsToStr(firstLightMins)} in`;
+    document.getElementById('night-resume').textContent = `First light ~${minsToStr(firstLightMins)} in`;
+    // Planning line: the coming day's window + dawn forecast (forecast_days=2)
+    const tmEl=document.getElementById('night-tomorrow');
+    if(tmEl){
+      const dayWord=dawnOffset?'Tomorrow':'Today';
+      const winH=((lastLightMins-firstLightMins)/60).toFixed(1);
+      const dawn=hourlyAt(gpsZone,dawnOffset,firstLightMins);
+      let line=`${dayWord} · first light ~${minsToStr(firstLightMins)} · last light ~${minsToStr(lastLightMins)} · ${winH}h of golf`;
+      if(dawn) line+=`<br>${dawn.desc.icon} ${dawn.desc.label}${dawn.temp!==null?`, ${dawn.temp}°`:''} at dawn`;
+      tmEl.innerHTML=line;
+    }
     buildNightScene();
   }
 
-  // Hero daylight bar — runs sunrise → last light
-  document.getElementById('db-now').textContent=minsToStr(now);
+  // Hero daylight bar — runs sunrise → last light.
+  // The pill shows time-to-last-light: the phone's status bar already has a clock.
+  document.getElementById('db-now').textContent = daylight>=60 ? dHrs+'h left' : daylight+'m left';
   document.getElementById('db-sunset').textContent=minsToStr(lastLightMins);
   document.getElementById('db-sunrise').textContent=minsToStr(sunriseMins);
 
@@ -1087,16 +1183,28 @@ function render(){
   const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
   const fill=document.getElementById('daybar-fill');
   fill.style.width=pct+'%';
-  fill.style.background=pct>85?'var(--rl)':pct>65?'var(--al)':'var(--gb)';
+  // Same absolute urgency thresholds as the daylight card — the bar and the
+  // card must never disagree (percent-of-day did on long summer days)
+  fill.style.background = daylight<120?'var(--rl)':daylight<240?'var(--al)':'var(--gb)';
 
-  // Sunrise & Last Light horizon icons — weather-aware from hourly forecast
-  const gpsZone=window._gpsZone||'brisbane_metro';
-  const sunriseWx=wxAtHour(gpsZone, sunriseMins);
-  const sunsetWx =wxAtHour(gpsZone, lastLightMins);
-  const srIcon=document.getElementById('db-sunrise-icon');
-  const slIcon=document.getElementById('db-lastlight-icon');
-  if(srIcon) srIcon.textContent = sunriseWx ? sunriseWx.icon : '🌅';
-  if(slIcon) slIcon.textContent = sunsetWx  ? sunsetWx.icon  : '🌇';
+  // Last tee-off deadlines — the decision line under the scene, with matching
+  // ticks on the horizon. Tee-off time = last light minus the round itself.
+  const t18=lastLightMins-270, t9=lastLightMins-150, tP3=lastLightMins-60;
+  const lcEl=document.getElementById('day-lastcall');
+  if(lcEl){
+    if(isNight){ lcEl.style.display='none'; }
+    else{
+      lcEl.style.display='flex';
+      const seg=(label,t)=> t>=now
+        ? `<span>${label} <b>${minsToStr(t)}</b></span>`
+        : `<span class="lc-past">${label} ${minsToStr(t)}</span>`;
+      lcEl.innerHTML=`<span>last tee-off</span>${seg('18h',t18)}${seg('9h',t9)}${seg('par-3',tP3)}`;
+    }
+  }
+  const tickPos=t=>Math.min(99,Math.max(1,((t-sunriseMins)/totalDay)*100))+'%';
+  const tick18=document.getElementById('tick-18'), tick9=document.getElementById('tick-9');
+  if(tick18){ tick18.style.display=(!isNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
+  if(tick9){  tick9.style.display =(!isNight&&t9>now) ?'block':'none'; tick9.style.left =tickPos(t9); }
 
   // Build the day sky scene (sky gradient, arcing sun, weather)
   if(!isNight) buildDayScene(now);
@@ -1111,10 +1219,10 @@ function render(){
   const anyPlayable=playableInFilter.length>0;
 
   // Pool for the widgets: playable courses if any, otherwise all filtered courses
-  // (so the widgets stay populated and good-looking even when nothing's playable today)
   const widgetPool=anyPlayable?playableInFilter:filtered;
+  const nearest=widgetPool.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
 
-  // Daylight stat card
+  // ── Card 1: Daylight / First light ──
   const dlCard=document.getElementById('stat-daylight-card');
   const dlHrs=document.getElementById('s-daylight-hrs');
   const dlSub=document.getElementById('s-daylight-sub');
@@ -1123,7 +1231,7 @@ function render(){
   if(isNight){
     let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
     const h=Math.floor(untilDawn/60), m=untilDawn%60;
-    dlLabel.textContent='Golf resumes';
+    dlLabel.textContent='First light';
     dlIcon.textContent='🌙';
     dlHrs.textContent=minsToStr(firstLightMins);
     dlHrs.style.color='#8da9d6';
@@ -1133,70 +1241,102 @@ function render(){
     dlLabel.textContent='Daylight left';
     dlHrs.style.color='';
     dlHrs.innerHTML=`${dHrs}<span style="font-size:13px;color:var(--tx3);margin-left:2px;">hrs</span>`;
-    dlSub.textContent=`last light ${minsToStr(lastLightMins)}`;
+    // The verdict, not just the quantity: which round still fits in this filter
+    const fits18=playableInFilter.some(c=>!c.par3&&canPlayHoles(c,18,daylight));
+    const fits9 =playableInFilter.some(c=>!c.par3&&canPlayHoles(c,9,daylight));
+    const fitsP3=playableInFilter.some(c=>c.par3&&canPlayAny(c,daylight));
+    let verdict,vcol;
+    if(fits18&&fits9){verdict='18 ✓ · 9 ✓';vcol='var(--gb)';}
+    else if(fits18){verdict='18 ✓';vcol='var(--gb)';}
+    else if(fits9){verdict='9 holes only';vcol='var(--al)';}
+    else if(fitsP3){verdict='par-3 only';vcol='var(--al)';}
+    else{verdict='no round fits';vcol='var(--rl)';}
+    dlSub.innerHTML=`last light ${minsToStr(lastLightMins)}<br><span style="color:${vcol};">${verdict}</span>`;
     const lvl=daylight<120?'danger':daylight<240?'warn':'ok';
     dlIcon.textContent = lvl==='danger'?'⏳':lvl==='warn'?'⌛':'☀️';
     dlCard.className='stat'+(lvl==='danger'?' dl-danger':lvl==='warn'?' dl-warn':'');
   }
 
-  // Leave-by stat — LATEST departure that still finishes the nearest playable
-  // course before last light (not "now + prep", which says nothing)
-  const nearest=widgetPool.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
+  // ── Card 2: Last call / Daylight window ──
   const lbCard=document.getElementById('stat-leaveby-card');
-
-  if(anyPlayable&&nearest){
+  const lbLabel=document.getElementById('leaveby-card-label');
+  const lbIcon=document.getElementById('leaveby-icon');
+  const lbVal=document.getElementById('s-leaveby');
+  const lbSub=document.getElementById('s-leaveby-sub');
+  if(isNight){
+    // No departures at night — show the coming day's window instead
+    lbCard.className='stat stat-leaveby';
+    lbLabel.textContent='Daylight window';
+    lbIcon.textContent='🌄';
+    lbVal.textContent=((lastLightMins-firstLightMins)/60).toFixed(1)+'h';
+    lbSub.textContent=`${minsToStr(firstLightMins)} – ${minsToStr(lastLightMins)}`;
+  } else if(anyPlayable&&nearest){
     const best=bestPlayableHoles(nearest,daylight);
-    const leaveBy=minsToStr(latestLeave(nearest,best));
-    lbCard.classList.remove('dim');
-    document.getElementById('s-leaveby').textContent=leaveBy;
-    document.getElementById('s-leaveby-sub').textContent=`latest for ${nearest.suburb} (${best})`;
+    const lv=latestLeave(nearest,best);
+    const until=lv-now;
+    // Escalate as the departure window closes — this card matters most
+    // precisely when it's about to stop mattering
+    lbCard.className='stat stat-leaveby'+(until<30?' lb-danger':until<90?' lb-warn':'');
+    lbLabel.textContent='Last call';
+    lbIcon.textContent=until<30?'🏃':'🚗';
+    lbVal.textContent=minsToStr(lv);
+    const rel=until>=60?`${Math.floor(until/60)}h ${until%60}m`:`${until}m`;
+    lbSub.textContent=`in ${rel} · ${nearest.suburb} · ${best}`;
   } else if(nearest){
-    lbCard.classList.add('dim');
-    document.getElementById('s-leaveby').textContent='—';
-    document.getElementById('s-leaveby-sub').textContent='none playable today';
+    lbCard.className='stat stat-leaveby dim';
+    lbLabel.textContent='Last call';
+    lbIcon.textContent='🚗';
+    lbVal.textContent='—';
+    lbSub.textContent='none playable today';
   } else {
-    lbCard.classList.add('dim');
-    document.getElementById('s-leaveby').textContent='--:--';
-    document.getElementById('s-leaveby-sub').textContent='no course in filter';
+    lbCard.className='stat stat-leaveby dim';
+    lbLabel.textContent='Last call';
+    lbIcon.textContent='🚗';
+    lbVal.textContent='--:--';
+    lbSub.textContent='no course in filter';
   }
 
-  // Weather stat card — shows weather for the relevant course's zone
+  // ── Card 3: Weather — forward-looking, not "now" ──
+  // Day: forecast at your estimated tee-off at the nearest course.
+  // Night: dawn forecast at the nearest course (planning mode).
   const wxCard=document.getElementById('stat-wx-card');
   const wxIcon=document.getElementById('wx-card-icon');
   const wxTemp=document.getElementById('wx-card-temp');
   const wxWind=document.getElementById('wx-card-wind');
   const wxLbl2=document.getElementById('wx-card-label2');
   const wxLbl =document.getElementById('wx-card-label');
+  wxCard.className='stat stat-wx-nearest';
   if(nearest){
     const wx=weatherCache[nearest.zone];
     wxLbl.textContent=nearest.suburb;
     if(wx&&wx.ok){
-      const col=wx.color||'var(--tx2)';
-      // Tint the whole card to match the condition colour
-      wxCard.className='stat stat-wx-nearest';
+      const fcMins = isNight ? firstLightMins : Math.min(lastLightMins, now+PREP+nearest.drive+BUFFER);
+      const fc = hourlyAt(nearest.zone, isNight?dawnOffset:0, fcMins);
+      const d  = fc ? fc.desc : {icon:wx.icon,label:wx.label,c:wx.color};
+      const col=d.c||'var(--tx2)';
+      // Tint the frame, icon and condition — temp & wind stay neutral so an
+      // amber temperature doesn't read as a heat warning
       wxCard.style.borderColor=col;
       wxCard.style.background=col.startsWith('#')?hexToRgba(col,0.07):'var(--sur)';
-      wxIcon.textContent=wx.icon;
-      wxTemp.textContent=wx.temp+'°';
-      wxTemp.style.color=col;
+      wxIcon.textContent=d.icon;
+      wxTemp.textContent=((fc&&fc.temp!==null)?fc.temp:wx.temp)+'°';
+      wxTemp.style.color='';
       wxWind.className='stat-wx-detail wind';
-      wxWind.textContent=wx.wind+' km/h';
-      wxWind.style.color=col;
+      wxWind.textContent=(wx.gust&&wx.gust>wx.wind)?`${wx.wind}–${wx.gust} km/h`:`${wx.wind} km/h`;
+      wxWind.style.color='';
       wxLbl2.className='stat-wx-detail';
-      wxLbl2.textContent=wx.label;
+      wxLbl2.textContent = isNight ? `${d.label} @ first light` : `${d.label} @ ${minsToStr(fcMins)} tee`;
       wxLbl2.style.color=col;
     } else {
-      wxCard.className='stat stat-wx-nearest';
       wxCard.style.borderColor='';wxCard.style.background='';
       wxIcon.textContent='🌡';
       wxTemp.textContent='--°';wxTemp.style.color='';
-      wxWind.textContent='loading...';wxWind.style.color='';
-      wxLbl2.textContent='';wxLbl2.style.color='';
+      wxWind.textContent='unavailable';wxWind.style.color='';
+      wxLbl2.textContent='tap ↻ to retry';wxLbl2.style.color='';
     }
   } else {
-    wxCard.className='stat stat-wx-nearest';
     wxCard.style.borderColor='';wxCard.style.background='';
-    wxLbl.textContent='Nearest weather';
+    wxLbl.textContent='Weather';
     wxIcon.textContent='⛅';
     wxTemp.textContent='--°';wxTemp.style.color='';
     wxWind.className='stat-wx-detail';
@@ -1212,8 +1352,6 @@ function render(){
 
   // Course list — show unavailable courses dimmed (except on the Playable filter)
   const allInFilter=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
-  // Playability check respects the active filter's hole requirement,
-  // and a course closed at your arrival time is not playable
   const playableCheck=(c)=>{
     if(isClosedAt(c, now+PREP+c.drive)) return false;
     if(activeFilter==='18') return canPlayHoles(c,18,daylight);
@@ -1269,7 +1407,8 @@ function courseCard(c,daylight,dimmed){
   let wxHtml='';
   if(wx&&wx.ok){
     const col=wx.color||'var(--tx2)';
-    wxHtml=`<div class="ccard-wx"><span class="wx-icon">${wx.icon}</span><span class="wx-temp" style="color:${col}">${wx.temp}°</span><span class="wx-wind" style="color:${col}">${wx.wind} km/h</span><span class="wx-cond" style="color:${col};opacity:0.8">${wx.label}</span></div>`;
+    const windStr=(wx.gust&&wx.gust>wx.wind)?`${wx.wind}–${wx.gust} km/h`:`${wx.wind} km/h`;
+    wxHtml=`<div class="ccard-wx"><span class="wx-icon">${wx.icon}</span><span class="wx-temp" style="color:${col}">${wx.temp}°</span><span class="wx-wind" style="color:${col}">${windStr}</span><span class="wx-cond" style="color:${col};opacity:0.8">${wx.label}</span></div>`;
   }
 
   const noteHtml=c.note?`<div class="ccard-note">${c.note}</div>`:'';
@@ -1412,15 +1551,19 @@ async function init(){
 
   const loc=await getLocation();
   const lat=loc?.lat,lng=loc?.lng;
+  const originEl=document.getElementById('drive-origin');
   if(loc){
     document.getElementById('loc-status').textContent=`GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`;
     document.getElementById('loc-status').className='app-meta loc-ok';
     // Detect nearest weather zone to GPS position
     window._gpsZone=getNearestZone(lat,lng);
+    // Re-estimate every drive time from where the user actually is
+    if(applyGpsDrives(lat,lng) && originEl) originEl.textContent='drive times est. from your location';
   }else{
     document.getElementById('loc-status').textContent='location unavailable — using Toowong';
     document.getElementById('loc-status').className='app-meta loc-est';
     window._gpsZone='brisbane_metro';
+    if(originEl) originEl.textContent='drive times est. from Toowong';
   }
 
   const [result] = await Promise.all([
@@ -1442,6 +1585,11 @@ async function init(){
     document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   },60000);
 }
+
+// Pause weather animations when the tab is backgrounded (battery)
+document.addEventListener('visibilitychange',()=>{
+  document.body.classList.toggle('wx-paused',document.hidden);
+});
 
 init();
 showTestBanner();
