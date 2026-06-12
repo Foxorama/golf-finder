@@ -77,13 +77,15 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-hail{position:absolute;width:3px;height:3px;background:#dde;border-radius:50%;animation:hailFall linear infinite;}
 @keyframes hailFall{0%{transform:translateY(-10px);opacity:0;}15%{opacity:1;}100%{transform:translateY(120px);opacity:0;}}
 /* Wind gust streaks drifting across */
-.day-gust{position:absolute;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),rgba(255,255,255,0.25),transparent);border-radius:2px;animation:gustBlow linear infinite;}
+.day-gust{position:absolute;left:0;animation:gustBlow linear infinite;pointer-events:none;}
+.day-gust svg{display:block;overflow:visible;}
+.day-gust path{fill:none;stroke:rgba(255,255,255,0.6);stroke-linecap:round;}
 @keyframes gustBlow{
-  0%{transform:translateX(-90px) translateY(0) scaleX(0.4);opacity:0;}
-  15%{opacity:0.7;transform:translateX(20px) translateY(-3px) scaleX(1);}
-  40%{transform:translateX(140px) translateY(2px) scaleX(1.15);opacity:0.8;}
-  65%{transform:translateX(240px) translateY(-2px) scaleX(1);opacity:0.6;}
-  100%{transform:translateX(380px) translateY(1px) scaleX(0.5);opacity:0;}
+  0%{transform:translateX(-70px);opacity:0;}
+  12%{opacity:0.75;}
+  50%{opacity:0.85;}
+  82%{opacity:0.6;}
+  100%{transform:translateX(400px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
 .day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
@@ -702,17 +704,27 @@ function buildDayScene(now){
     // Lightning for storms
     if(isStorm) html+=`<span class="day-bolt" style="top:14px;left:34%;">⚡</span>`;
 
-    // ── Wind gusts — count and speed scale with wind km/h ──
+    // ── Wind gusts — curved swooshes; count and speed scale with wind km/h ──
     if(wind>=3){
       const gustCount=wind>=25?5:wind>=15?4:wind>=8?3:2;
       const gustSpeed=wind>=25?1.6:wind>=15?2.2:wind>=8?2.8:3.6; // faster = stronger
+      // Wavy swoosh paths with a little curl at the end (wind-symbol style)
+      const swooshes=[
+        'M2 8 Q 22 2 42 8 T 78 7 q 8 -1 8 -6 t -7 -3',
+        'M2 7 Q 20 12 40 7 T 76 8 q 9 1 8 6 t -8 2',
+        'M2 6 Q 26 1 50 7 T 88 6',
+        'M2 9 Q 18 4 36 9 T 70 8 q 7 -1 6 -5'
+      ];
       for(let i=0;i<gustCount;i++){
-        const top=8+Math.random()*64;
-        const w=22+Math.random()*46;       // varied streak length
+        const top=8+Math.random()*62;
+        const scale=0.7+Math.random()*0.6;     // varied size
         const d=Math.random()*gustSpeed;
         const dur=gustSpeed+Math.random()*1.0;
-        const op=0.4+Math.random()*0.4;    // varied strength
-        html+=`<span class="day-gust" style="top:${top}%;left:0;width:${w}px;opacity:${op};animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        const sw=1+Math.random()*0.8;          // stroke width
+        const path=swooshes[Math.floor(Math.random()*swooshes.length)];
+        html+=`<span class="day-gust" style="top:${top}%;animation-delay:${d}s;animation-duration:${dur}s;">`
+            +`<svg width="${96*scale}" height="${20*scale}" viewBox="0 0 96 20">`
+            +`<path d="${path}" style="stroke-width:${sw}"/></svg></span>`;
       }
     }
   }
