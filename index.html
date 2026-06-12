@@ -63,7 +63,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
-.day-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
+.day-wx{position:absolute;inset:0;z-index:4;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
 .day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;}
 @keyframes dayRainFall{0%{transform:translate(0,-14px) rotate(var(--rang,0deg));opacity:0;}25%{opacity:0.85;}100%{transform:translate(var(--rdx,0px),130px) rotate(var(--rang,0deg));opacity:0;}}
@@ -89,16 +89,16 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   100%{transform:translateX(420px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
-.day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
 .day-marker{display:flex;align-items:center;gap:5px;}
 .day-marker-icon{font-size:16px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));}
 .day-marker-time{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
 /* Floating Now tracker — sits just above the horizon */
-.day-now-float{position:absolute;transform:translate(-50%,0);z-index:4;transition:left 1s ease,top 1s ease;pointer-events:none;}
+.day-now-float{position:absolute;transform:translate(-50%,0);z-index:6;transition:left 1s ease,top 1s ease;pointer-events:none;}
 .day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(20,30,40,0.72);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);}
 /* Horizon line = progress bar, pinned to the very bottom of the sky */
 #daybar-day{margin:-2px;}
-#daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:4;}
+#daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 
 /* ── Daybar night mode — starfield scene ── */
