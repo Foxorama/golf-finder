@@ -59,7 +59,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-remain-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:2px;}
 
 /* ── Daybar day mode — unified sky scene ── */
-.day-scene{position:relative;height:128px;border-radius:14px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;border:1px solid rgba(255,255,255,0.08);}
+.day-scene{position:relative;height:128px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
 .day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
@@ -77,8 +77,14 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-hail{position:absolute;width:3px;height:3px;background:#dde;border-radius:50%;animation:hailFall linear infinite;}
 @keyframes hailFall{0%{transform:translateY(-10px);opacity:0;}15%{opacity:1;}100%{transform:translateY(120px);opacity:0;}}
 /* Wind gust streaks drifting across */
-.day-gust{position:absolute;height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);border-radius:1px;animation:gustBlow linear infinite;}
-@keyframes gustBlow{0%{transform:translateX(-80px);opacity:0;}25%{opacity:0.7;}75%{opacity:0.7;}100%{transform:translateX(360px);opacity:0;}}
+.day-gust{position:absolute;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.55),rgba(255,255,255,0.25),transparent);border-radius:2px;animation:gustBlow linear infinite;}
+@keyframes gustBlow{
+  0%{transform:translateX(-90px) translateY(0) scaleX(0.4);opacity:0;}
+  15%{opacity:0.7;transform:translateX(20px) translateY(-3px) scaleX(1);}
+  40%{transform:translateX(140px) translateY(2px) scaleX(1.15);opacity:0.8;}
+  65%{transform:translateX(240px) translateY(-2px) scaleX(1);opacity:0.6;}
+  100%{transform:translateX(380px) translateY(1px) scaleX(0.5);opacity:0;}
+}
 /* Ground band — translucent strip at the bottom holding markers + horizon */
 .day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
 .day-marker{display:flex;align-items:center;gap:5px;}
@@ -88,6 +94,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-now-float{position:absolute;transform:translate(-50%,0);z-index:4;transition:left 1s ease,top 1s ease;pointer-events:none;}
 .day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(20,30,40,0.72);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);}
 /* Horizon line = progress bar, pinned to the very bottom of the sky */
+#daybar-day{margin:-2px;}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:4;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 
@@ -700,11 +707,12 @@ function buildDayScene(now){
       const gustCount=wind>=25?5:wind>=15?4:wind>=8?3:2;
       const gustSpeed=wind>=25?1.6:wind>=15?2.2:wind>=8?2.8:3.6; // faster = stronger
       for(let i=0;i<gustCount;i++){
-        const top=10+Math.random()*60;
-        const w=30+Math.random()*40;
+        const top=8+Math.random()*64;
+        const w=22+Math.random()*46;       // varied streak length
         const d=Math.random()*gustSpeed;
-        const dur=gustSpeed+Math.random()*0.8;
-        html+=`<span class="day-gust" style="top:${top}%;left:0;width:${w}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        const dur=gustSpeed+Math.random()*1.0;
+        const op=0.4+Math.random()*0.4;    // varied strength
+        html+=`<span class="day-gust" style="top:${top}%;left:0;width:${w}px;opacity:${op};animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
     }
   }
@@ -1165,7 +1173,7 @@ function courseCard(c,daylight,dimmed){
       <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bClosed}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
-      <a class="visit-btn" href="${c.url}" target="_blank" aria-label="Open ${c.name} website">⛳ tap to open</a>
+      <a class="visit-btn" href="${c.url}" target="_blank" aria-label="Open ${c.name} tee times">⛳ Tee times</a>
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:4px;">
         <button class="share-btn" onclick="shareCourse('${safeName}','${safeSuburb}',${c.drive})" aria-label="Share ${safeName}">↗️</button>
         <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
