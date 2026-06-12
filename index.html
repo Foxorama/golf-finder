@@ -65,17 +65,18 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
-.day-raindrop{position:absolute;width:1.5px;height:8px;background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;animation:rainFall 0.7s linear infinite;}
+.day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;}
+@keyframes dayRainFall{0%{transform:translate(0,-14px) rotate(var(--rang,0deg));opacity:0;}25%{opacity:0.85;}100%{transform:translate(var(--rdx,0px),130px) rotate(var(--rang,0deg));opacity:0;}}
 .day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
 .day-ray{position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,240,180,0.45),transparent 40%);z-index:1;pointer-events:none;}
 /* Overcast — grey wash over the sky that scales with cloud cover */
 .day-overcast{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(120,130,140,0.55),rgba(90,100,110,0.35));opacity:0;transition:opacity 1s ease;}
 /* Snow */
-.day-snow{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;opacity:0.9;animation:snowFall linear infinite;}
-@keyframes snowFall{0%{transform:translateY(-10px) translateX(0);opacity:0;}20%{opacity:0.9;}100%{transform:translateY(120px) translateX(12px);opacity:0;}}
+.day-snow{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;opacity:0.9;animation:daySnowFall linear infinite;}
+@keyframes daySnowFall{0%{transform:translate(0,-10px);opacity:0;}20%{opacity:0.9;}100%{transform:translate(var(--sdx,12px),120px);opacity:0;}}
 /* Hail — fast white pellets */
-.day-hail{position:absolute;width:3px;height:3px;background:#dde;border-radius:50%;animation:hailFall linear infinite;}
-@keyframes hailFall{0%{transform:translateY(-10px);opacity:0;}15%{opacity:1;}100%{transform:translateY(120px);opacity:0;}}
+.day-hail{position:absolute;width:3px;height:3px;background:#dde;border-radius:50%;animation:dayHailFall linear infinite;}
+@keyframes dayHailFall{0%{transform:translate(0,-10px);opacity:0;}15%{opacity:1;}100%{transform:translate(var(--hdx,0px),120px);opacity:0;}}
 /* Wind gust streaks drifting across */
 .day-gust{position:absolute;left:0;animation:gustBlow linear infinite;pointer-events:none;}
 .day-gust svg{display:block;overflow:visible;}
@@ -670,6 +671,13 @@ function buildDayScene(now){
     const isHail    = lbl.includes('hail');
     const anyRain   = isDrizzle||isRain||isShower||isStorm;
 
+    // Wind coupling: 0 (calm) → 1 (blustery 30km/h+). Drives cloud speed,
+    // rain/snow/hail slant, so the whole scene moves as one weather system.
+    const windF=Math.min(1,wind/30);
+    // Rain/precip slant angle in degrees (right-leaning), grows with wind
+    const slantDeg=windF*32;                 // up to 32° lean
+    const slantPx=windF*60;                  // horizontal drift over the fall
+
     // Clear → warm sun rays
     if(isClear) html+=`<div class="day-ray" style="--sx:${sx}%;--sy:${sy}%;"></div>`;
 
@@ -685,40 +693,52 @@ function buildDayScene(now){
     else if(isStorm)    { cloudCount=6; dimSky=0.65; }
     overcastOpacity=dimSky;
 
-    // Render clouds spread across at varied sizes/heights/speeds
+    // Render clouds — drift speed scales with wind (lazy when calm, scudding when blustery)
     const cloudSizes=[30,24,34,22,28,26];
     const cloudTops=[6,22,2,34,14,28];
+    // Base drift slow (~26s) when calm, fast (~7s) when blustery
+    const cloudBaseDur=26-windF*19;
     for(let i=0;i<cloudCount;i++){
       const sz=cloudSizes[i%cloudSizes.length];
       const top=cloudTops[i%cloudTops.length];
-      const delay=-(i*3.5);
-      const dur=14+(i%3)*4;
+      const dur=cloudBaseDur+(i%3)*2.5;       // slight per-cloud variation
+      const delay=-(i*(dur/cloudCount));      // evenly spread across the loop
       const op=isPartly?0.85:0.95;
       html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${op};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
     }
 
-    // Rain — drop count scales with intensity
+    // Rain — drop count scales with intensity; slant + drift scale with wind
     if(anyRain){
       const drops=isStorm?28:isRain?22:isShower?16:10; // drizzle lightest
+      const rLen=isStorm?11:isDrizzle?6:8;             // streak length
       for(let i=0;i<drops;i++){
-        const x=Math.random()*100, d=Math.random()*0.7, dur=Math.random()*0.3+(isDrizzle?0.7:0.45);
-        html+=`<span class="day-raindrop" style="left:${x}%;top:${Math.random()*40}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        const x=Math.random()*100, d=Math.random()*0.7;
+        // wind makes rain fall faster too
+        const dur=(Math.random()*0.3+(isDrizzle?0.7:0.45))*(1-windF*0.35);
+        html+=`<span class="day-raindrop" style="left:${x}%;top:${Math.random()*40}px;`
+            +`--rang:${slantDeg}deg;--rdx:${slantPx}px;--rh:${rLen}px;`
+            +`animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
     }
 
-    // Snow
+    // Snow — drifts sideways strongly with wind (snow is the most wind-affected)
     if(isSnow){
+      const snowDrift=12+windF*70;
       for(let i=0;i<20;i++){
-        const x=Math.random()*100, d=Math.random()*3, dur=Math.random()*2+2.5;
-        html+=`<span class="day-snow" style="left:${x}%;top:${Math.random()*20}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        const x=Math.random()*100, d=Math.random()*3, dur=(Math.random()*2+2.5)*(1-windF*0.4);
+        const dx=snowDrift*(0.7+Math.random()*0.6);
+        html+=`<span class="day-snow" style="left:${x}%;top:${Math.random()*20}px;`
+            +`--sdx:${dx}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
     }
 
-    // Hail — fast hard pellets
+    // Hail — fast hard pellets, slight slant in wind
     if(isHail){
+      const hailDrift=slantPx*0.5;
       for(let i=0;i<22;i++){
         const x=Math.random()*100, d=Math.random()*0.5, dur=Math.random()*0.15+0.35;
-        html+=`<span class="day-hail" style="left:${x}%;top:${Math.random()*20}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        html+=`<span class="day-hail" style="left:${x}%;top:${Math.random()*20}px;`
+            +`--hdx:${hailDrift}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
     }
 
