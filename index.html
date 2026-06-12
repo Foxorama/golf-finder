@@ -64,10 +64,21 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
-.day-cloud{position:absolute;font-size:28px;opacity:0.92;animation:cloudDrift 16s linear infinite;}
+.day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
 .day-raindrop{position:absolute;width:1.5px;height:8px;background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;animation:rainFall 0.7s linear infinite;}
 .day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
 .day-ray{position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,240,180,0.45),transparent 40%);z-index:1;pointer-events:none;}
+/* Overcast — grey wash over the sky that scales with cloud cover */
+.day-overcast{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(120,130,140,0.55),rgba(90,100,110,0.35));opacity:0;transition:opacity 1s ease;}
+/* Snow */
+.day-snow{position:absolute;width:4px;height:4px;background:#fff;border-radius:50%;opacity:0.9;animation:snowFall linear infinite;}
+@keyframes snowFall{0%{transform:translateY(-10px) translateX(0);opacity:0;}20%{opacity:0.9;}100%{transform:translateY(120px) translateX(12px);opacity:0;}}
+/* Hail — fast white pellets */
+.day-hail{position:absolute;width:3px;height:3px;background:#dde;border-radius:50%;animation:hailFall linear infinite;}
+@keyframes hailFall{0%{transform:translateY(-10px);opacity:0;}15%{opacity:1;}100%{transform:translateY(120px);opacity:0;}}
+/* Wind gust streaks drifting across */
+.day-gust{position:absolute;height:1.5px;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.5),transparent);border-radius:1px;animation:gustBlow linear infinite;}
+@keyframes gustBlow{0%{transform:translateX(-80px);opacity:0;}25%{opacity:0.7;}75%{opacity:0.7;}100%{transform:translateX(360px);opacity:0;}}
 /* Ground band — translucent strip at the bottom holding markers + horizon */
 .day-ground{position:absolute;left:0;right:0;bottom:0;height:34px;z-index:3;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
 .day-marker{display:flex;align-items:center;gap:5px;}
@@ -290,6 +301,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
     <div id="daybar-day">
       <div class="day-scene" id="day-scene">
         <div class="day-glow" id="day-glow" aria-hidden="true"></div>
+        <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
         <div class="day-sun" id="day-sun" aria-hidden="true">☀️</div>
@@ -609,27 +621,94 @@ function buildDayScene(now){
   const wx=weatherCache[gpsZone]||weatherCache['brisbane_metro'];
   sun.textContent=(wx&&wx.ok)?wx.icon:'☀️';
 
-  // Weather overlay
+  // ── Weather overlay — reflects actual conditions with real intensity ──
+  const overcastEl=document.getElementById('day-overcast');
   let html='';
+  let overcastOpacity=0;
   if(wx&&wx.ok){
     const lbl=wx.label;
-    const isStorm=lbl.includes('Storm')||lbl.includes('hail');
-    const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
-    const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
-    const isClear=lbl.includes('Clear');
+    const wind=wx.wind||0;
+    const isClear   = lbl.includes('Clear');
+    const isPartly  = lbl.includes('Partly');
+    const isOvercast= lbl.includes('Overcast');
+    const isFog     = lbl.includes('Foggy');
+    const isDrizzle = lbl.includes('Drizzle');
+    const isRain    = lbl.includes('Rain');
+    const isShower  = lbl.includes('Shower');
+    const isSnow    = lbl.includes('Snow');
+    const isStorm   = lbl.includes('Storm');
+    const isHail    = lbl.includes('hail');
+    const anyRain   = isDrizzle||isRain||isShower||isStorm;
+
+    // Clear → warm sun rays
     if(isClear) html+=`<div class="day-ray" style="--sx:${sx}%;--sy:${sy}%;"></div>`;
-    if(isStorm||isRain||isCloud){
-      html+=`<span class="day-cloud" style="top:8px;left:0;animation-delay:0s;">☁️</span>`;
-      html+=`<span class="day-cloud" style="top:30px;left:0;font-size:20px;animation-delay:-8s;opacity:0.7;">☁️</span>`;
+
+    // Cloud cover scales with condition
+    let cloudCount=0, dimSky=0;
+    if(isPartly)        { cloudCount=2; dimSky=0.0; }
+    else if(isFog)      { cloudCount=2; dimSky=0.55; }
+    else if(isDrizzle)  { cloudCount=4; dimSky=0.35; }
+    else if(isOvercast) { cloudCount=5; dimSky=0.5; }
+    else if(isShower)   { cloudCount=4; dimSky=0.4; }
+    else if(isRain)     { cloudCount=6; dimSky=0.55; }
+    else if(isSnow)     { cloudCount=4; dimSky=0.4; }
+    else if(isStorm)    { cloudCount=6; dimSky=0.65; }
+    overcastOpacity=dimSky;
+
+    // Render clouds spread across at varied sizes/heights/speeds
+    const cloudSizes=[30,24,34,22,28,26];
+    const cloudTops=[6,22,2,34,14,28];
+    for(let i=0;i<cloudCount;i++){
+      const sz=cloudSizes[i%cloudSizes.length];
+      const top=cloudTops[i%cloudTops.length];
+      const delay=-(i*3.5);
+      const dur=14+(i%3)*4;
+      const op=isPartly?0.85:0.95;
+      html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${op};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
     }
-    if(isStorm||isRain){
-      for(let i=0;i<14;i++){
-        const x=Math.random()*100, d=Math.random()*0.7, dur=Math.random()*0.3+0.5;
-        html+=`<span class="day-raindrop" style="left:${x}%;top:${Math.random()*30}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+
+    // Rain — drop count scales with intensity
+    if(anyRain){
+      const drops=isStorm?28:isRain?22:isShower?16:10; // drizzle lightest
+      for(let i=0;i<drops;i++){
+        const x=Math.random()*100, d=Math.random()*0.7, dur=Math.random()*0.3+(isDrizzle?0.7:0.45);
+        html+=`<span class="day-raindrop" style="left:${x}%;top:${Math.random()*40}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
     }
-    if(isStorm) html+=`<span class="day-bolt" style="top:16px;left:34%;">⚡</span>`;
+
+    // Snow
+    if(isSnow){
+      for(let i=0;i<20;i++){
+        const x=Math.random()*100, d=Math.random()*3, dur=Math.random()*2+2.5;
+        html+=`<span class="day-snow" style="left:${x}%;top:${Math.random()*20}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
+
+    // Hail — fast hard pellets
+    if(isHail){
+      for(let i=0;i<22;i++){
+        const x=Math.random()*100, d=Math.random()*0.5, dur=Math.random()*0.15+0.35;
+        html+=`<span class="day-hail" style="left:${x}%;top:${Math.random()*20}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
+
+    // Lightning for storms
+    if(isStorm) html+=`<span class="day-bolt" style="top:14px;left:34%;">⚡</span>`;
+
+    // ── Wind gusts — count and speed scale with wind km/h ──
+    if(wind>=15){
+      const gustCount=wind>=40?5:wind>=28?4:wind>=20?3:2;
+      const gustSpeed=wind>=40?1.6:wind>=28?2.2:wind>=20?2.8:3.6; // faster = stronger
+      for(let i=0;i<gustCount;i++){
+        const top=10+Math.random()*60;
+        const w=30+Math.random()*40;
+        const d=Math.random()*gustSpeed;
+        const dur=gustSpeed+Math.random()*0.8;
+        html+=`<span class="day-gust" style="top:${top}%;left:0;width:${w}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
   }
+  if(overcastEl) overcastEl.style.opacity=overcastOpacity;
   wxEl.innerHTML=html;
 }
 
