@@ -11,19 +11,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <meta name="theme-color" content="#0f1a0f">
-<!-- app version: 2026-06-10-v2 -->
+<!-- app version: 2026-06-12-v3 — last-light playability, true leave-by, rain risk, data fixes -->
 <title>Golf Finder</title>
 <link rel="icon" type="image/png" href="data:image/png;base64,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">
 <link rel="apple-touch-icon" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMAAAADACAYAAABS3GwHAAAGi0lEQVR4nO3dr25cRxiG8W+topItCrBUqSgwN1BcFKmgVxASFRYV9RKKAiuT8koFkYKMcwOFRZEiGRRlSagL3HFn1+fvnJkz8837/FCltvHKfp+dc9Yb+2CNOV4f72s/BpRzujsdaj+GWNUHw9hhVjeK3T8wo8eUvWPY7YMxfKyxVwjFPwjDxxalQyj2hzN85FQqhOx/KMNHSblDuMr5hzF+lJZ7Y1lqYvioIcdpsPkEYPyoJcf2NgXA+FHb1g0mB8D40YotW0wKgPGjNambXB0A40erUra5KgDGj9at3ejiABg/vFiz1UUBMH54s3SzswEwfni1ZLtZ3woBeDMZAM/+8G5uw6MBMH70YmrLXAJB2mAAPPujN2Ob5gSAtCcB8OyPXg1tmxMA0s4C4NkfvbvcOCcApD0GwLM/VMRb5wSANAKAtCszLn+gJ2z+i9oPRNlvf/5qbz/e2PdfvzYzsx9/+LnyI9JDAA14+/Gm9kOQxT1AQ16+eW4v3zyv/TCkcAI0KI7g3U9/V3wk/bviBrhtnArlHK+P91wCOUEIZRCAM4SQFwE4RQh5cBPsHDfM23ACdIRTYT0C6BAhLEcAHSOEedwDCOA+YRwngBhOhXMEIIoQHhCAOPUQCABmphsCN8E4o3bDzAmAUQqnAgFgVs8hcAmEWT1fChEARvU8/IAA8ITC8AMCwCOl4QcEIE5x9DECEKU+/IAAxDD8cwQgguEPI4DOMfxpBNAphr8MAXSG4a9DAJ1g+GkIwDmGvw0BOMXw8yAARxh9fgTgAMMvhwAaxvDLI4AGMfz9EEBDGP7+CKAB4dekvjN+Tere+EvxlYXxow4CgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDQCgDR+MFYBL149K/L//fX7P0l/LsYRwEqp497rYxPJOgQwIWXsnz58Tv54S/7fr775cvLfDz1mohhHAP9ZOvYtA89h7uMPBUIU46QDmBt97bGnGHrMc1EoxyAXwNjoPY59qbkolGOQCCD+Av/xy+3gf/Pd62/3ejhNiKNQjqHrAMIXc2z0sdub94//TAwPwuev5xC6C+DyEmfJ+C/d3ryXiyAYiqHnU6GrAJZc6iwVTgTVEMz+j+HyVOgpgi7eCvHi1bOs44/Fl0aqPn34fHYyXH6+PXN9Alx+EXp+JacFlydCD/cIbk+AePzxM1SJZ2xOgXNDJ4JXLgMIn/DLL0TJoRLBU/Hn32sE7gKIx482eI7AVQCMv11eI3ATwNz497hE4TJomscIXATAM78f3iJoPgDG74+nCJoOwMMnENNa/xo2HUDAs78/Xr5mLgIASmk2gLXX/nu8aU35jXEpPNwLNBsAsAcCgLTD8fp4X/tBDEl9+bPUN6u4/EkT3jna6jtGuzsBSgyV8feruwCANZoNIByZcz8JbUjOZ2ye/dO1fvlj5vxvhE0Jw029J2D4Gpo9AWIpp0CQMmTGv92Wr9memn0VKMj9ZrixE4HR5+Xh8sfMQQBmvCPUGy/jN3NyCbTlhhj78jR+MycBmBGBB97Gb+YoADMiaJnH8Zs5C8CMCFrkdfxmTm6Ch1z+YCzsL34S8jh+M8cBmPGjEWu5PH29jt/MeQABIeyjp+EHXQQQEEIZPQ4/6CoAs+G/fkcIaYZeaOhp/GYdBhAjhvUURh/rOoBA8TdDrjH2knLPww8kAogRwwPl0cfkAoj1+Iuyh8x901Bt9DHpAGJLf3ZN61Es/Q658uhjBDAh5Qc6lQ4k5S0gjH0cAazU8k85M2PsaxFAAaUiYdz5EQCkuXs7NJATAUAaAUAaAUAaAUAaAUAaAUAaAUAaAUDa1enudKj9IIAaTnenAycApBEApBEApBEApF2ZPdwM1H4gwJ7C5jkBII0AIO0xAC6DoCLeOicApJ0FwCmA3l1unBMA0p4EwCmAXg1tmxMA0gYD4BRAb8Y2zQkAaaMBcAqgF1NbnjwBiADezW2YSyBImw2AUwBeLdnuohOACODN0s0uvgQiAnixZqur7gGIAK1bu9HVN8FEgFalbDPpVSAiQGtSN5n8MigRoBVbtrjp+wBEgNq2bnDzN8KIALXk2F7W8fIbJ7GHnE+6Wd8KwWmA0nJvrNhgOQ2QU6kn1+LP2ISALUpfVex2yUIIWGOvy+ndr9kJAVP2vo+setNKDDCr++JJc6/aEEXfWnul8F/hRYR0b2V8PwAAAABJRU5ErkJggg==">
 <script>
-if('serviceWorker' in navigator){
+// Inject web app manifest (no service worker is registered — install/A2HS only,
+// no offline support). iOS relies on the apple-* meta tags above instead.
+{
   const M={name:'Golf Finder SEQ',short_name:'Golf Finder',display:'standalone',background_color:'#0a120a',theme_color:'#0f1a0f',orientation:'portrait',icons:[{src:'data:image/png;base64,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',sizes:'192x192',type:'image/png',purpose:'any maskable'},{src:'data:image/png;base64,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',sizes:'512x512',type:'image/png',purpose:'any maskable'}]};
   const b=new Blob([JSON.stringify(M)],{type:'application/manifest+json'});
   const l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(b);document.head.appendChild(l);
 }
 </script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap">
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap');
 :root{
   --green:#2d5a1b;--gl:#3d7a25;--gb:#5aab35;--gg:#7ed44f;
   --amber:#c47f17;--al:#f5a623;--red:#c0392b;--rl:#e74c3c;
@@ -52,11 +56,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;transition:background 1.2s ease;}
 .daybar-track{height:10px;background:var(--bg3);border-radius:0 0 6px 6px;overflow:hidden;position:relative;}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
-.daybar-bottom{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-.daybar-remain-label{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;flex-shrink:0;}
-.daybar-remain{font-family:var(--mono);font-size:19px;font-weight:500;color:var(--tx);line-height:1;text-align:right;}
-.daybar-remain.warn{color:var(--al);}.daybar-remain.danger{color:var(--rl);}
-.daybar-remain-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:2px;}
 
 /* ── Daybar day mode — unified sky scene ── */
 .day-scene{position:relative;height:128px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
@@ -132,7 +131,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* Daylight Remaining card — green default, amber/red as light runs out */
 .stat-icon{font-size:22px;line-height:1;margin:2px 0 3px;display:block;}
-/* Daylight Remaining card — green default, amber/red as light runs out */
 #stat-daylight-card{border-color:rgba(90,171,53,0.35);background:rgba(90,171,53,0.05);}
 #stat-daylight-card #s-daylight-hrs{color:var(--gg);}
 #stat-daylight-card.dl-warn{border-color:rgba(245,166,35,0.4);background:rgba(245,166,35,0.05);}
@@ -218,6 +216,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Closed today badge ── */
 .bclosed{background:rgba(192,57,43,0.12);color:#f07060;border:1px solid rgba(192,57,43,0.25);}
+/* ── Rain/storm forecast during round ── */
+.brain{background:rgba(109,179,242,0.12);color:#6db3f2;border:1px solid rgba(109,179,242,0.25);}
+.bstorm{background:rgba(240,112,96,0.12);color:#f07060;border:1px solid rgba(240,112,96,0.3);}
 .ccard.closed-today{border-color:rgba(192,57,43,0.2);}
 .ccard.closed-today .ccard-name{opacity:0.6;}
 
@@ -262,6 +263,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
       <div class="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
+      <div class="app-meta">drive times est. from Toowong</div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
       <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
@@ -391,7 +393,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
     </div>
   </div>
 
-  <div id="course-list" role="list" aria-live="polite" aria-label="Golf courses"></div>
+  <div id="course-list" role="list" aria-label="Golf courses"></div>
 </div>
 
 <script>
@@ -414,10 +416,10 @@ const COURSES = [
   {name:"McLeod Country Golf Club",suburb:"Mt Ommaney",drive:18,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.mcleodgolf.com.au/",fee18:null,fee9:null,rating:4.1,note:'Scenic Mt Ommaney layout. Challenging hills, well-maintained greens.',zone:'brisbane_metro'},
   {name:"Mt Gravatt Golf Club",suburb:"Mt Gravatt",drive:16,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/mt-gravatt-golf-club",fee18:null,fee9:null,rating:3.8,note:'Public 9/18-hole course in Brisbane\'s south. No official website.',zone:'brisbane_metro'},
   {name:"Virginia Golf Club",suburb:"Virginia",drive:18,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.virginiagolf.com.au/cms/",fee18:55,fee9:32,rating:3.9,note:'Public 9/18-hole course near the airport. Flat, beginner-friendly layout.',zone:'brisbane_metro'},
-  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Private club in Carindale. 18-hole and par-3 course. Members and guests only.',zone:'brisbane_metro'},
+  {name:"Pacific Golf Club",suburb:"Carindale",drive:18,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://pacificgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Semi-private club in Carindale. 18-hole and par-3 course. Visitor access limited — check ahead.',zone:'brisbane_metro'},
   {name:"Royal Queensland Golf Club",suburb:"Hamilton",drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null,rating:4.5,note:'One of Australia\'s top-ranked courses. Private, host of numerous national events.',zone:'brisbane_metro'},
   {name:"Jindalee Golf Club",suburb:"Jindalee",drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null,rating:3.9,note:'Semi-private 18-hole. Undulating layout with good variety of holes.',zone:'ipswich'},
-  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedDays:[],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
+  {name:"Nudgee Golf Club",suburb:"Nudgee",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedRules:[{dow:2,before:720}],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
   {name:"Oxley Golf Club",suburb:"Oxley",drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
   {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null,rating:3.8,note:'Driving range + 9-hole course + 18-hole pitch & putt. Walk-up, no booking needed.',zone:'brisbane_metro'},
   {name:"Sandgate Golf Club",suburb:"Shorncliffe",drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null,rating:3.8,note:'Semi-private bayside course. Quiet, local club feel.',zone:'brisbane_metro'},
@@ -428,7 +430,6 @@ const COURSES = [
   {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null,rating:4.0,note:'Public 18-hole south of Brisbane. Affordable and accessible.',zone:'ipswich'},
   {name:"Pine Rivers Golf Club",suburb:"Bray Park",drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 9/18-hole north Brisbane. Local community club.',zone:'brisbane_metro'},
   {name:"Carbrook Golf Club",suburb:"Carbrook",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2514-carbrook-golf-club/search",fee18:55,fee9:null,rating:4.1,note:'Public 18-hole Logan. Competitive GolfNow pricing.',zone:'ipswich'},
-  {name:"North Lakes Golf Club",suburb:"North Lakes",drive:38,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-north-lakes-golf-club/search",fee18:60,fee9:null,rating:4.2,note:'Public 18-hole resort course north of Brisbane. Well-presented layout.',zone:'brisbane_metro'},
   {name:"Redcliffe Golf Club",suburb:"Redcliffe",drive:42,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/redcliffe-golf-club",fee18:null,fee9:null,rating:4.0,note:'Bayside 9/18-hole par 71. Stunning Moreton Bay views.',zone:'bayside'},
   {name:"Ipswich Golf Club",suburb:"Ipswich",drive:45,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://ipswichgolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole championship course. Ipswich\'s main course.',zone:'ipswich'},
   {name:"Ipswich Par 3 Course",suburb:"Churchill",drive:47,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/ipswich-par-3-golf-course",fee18:15,fee9:null,rating:3.6,note:'Walk-up par-3 course in Churchill. Beginner and family-friendly.',zone:'ipswich'},
@@ -440,20 +441,20 @@ const COURSES = [
   {name:"Sanctuary Cove Golf & Country Club",suburb:"Sanctuary Cove",drive:55,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.sanctuarycove.com/golf/",fee18:null,fee9:null,rating:4.3,note:'Two championship courses in resort setting. Members and resort guests.',zone:'gc_north'},
   {name:"Parkwood International Golf Club",suburb:"Parkwood",drive:55,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2529-parkwood-international-golf-club/search",fee18:54,fee9:null,rating:4.2,note:'Public 18-hole, visitor-friendly. Solid layout with good facilities.',zone:'gc_north'},
   {name:"Emerald Lakes Golf Club",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2518-emerald-lakes-golf-club/search",fee18:70,fee9:null,rating:4.1,note:'Graham Marsh design. Scenic lakes, one of GC\'s most affordable.',zone:'gc_south'},
-  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2530-palm-meadows-golf-course/search",fee18:80,fee9:null,rating:4.2,note:'350-hectare Graham Marsh resort course. Pristine condition.',zone:'gc_south'},
+  {name:"Palm Meadows Golf Course",suburb:"Carrara",drive:60,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2530-palm-meadows-golf-course/search",fee18:80,fee9:null,rating:4.2,note:'350-hectare Graham Marsh resort course. Pristine condition.',zone:'gc_south'},
   {name:"Lakelands Golf Club",suburb:"Merrimac",drive:62,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2524-lakelands-golf-club/search",fee18:145,fee9:85,rating:4.5,note:'Jack Nicklaus signature design. One of Australia\'s top public courses.',zone:'gc_south'},
   {name:"RACV Royal Pines Resort",suburb:"Benowa",drive:63,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.racv.com.au/travel-leisure/racv-resorts/royal-pines/golf.html",fee18:120,fee9:null,rating:4.3,note:'Resort course on Nerang River. Regular host of LPGA events.',zone:'gc_south'},
-  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2536-surfers-paradise-golf-club/search",fee18:58,fee9:null,rating:4.1,note:'Underrated 18-hole layout. Easy walk, excellent surfaces.',zone:'gc_south'},
-  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2534-robina-woods-golf-course/search",fee18:100,fee9:null,rating:4.0,note:'18-hole resort course. Water features throughout, mid-range GC option.',zone:'gc_south'},
+  {name:"Surfers Paradise Golf Club",suburb:"Ashmore",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2536-surfers-paradise-golf-club/search",fee18:58,fee9:null,rating:4.1,note:'Underrated 18-hole layout. Easy walk, excellent surfaces.',zone:'gc_south'},
+  {name:"Robina Woods Golf Course",suburb:"Robina",drive:68,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"goldcoast",url:"https://www.golfnow.com.au/tee-times/facility/2534-robina-woods-golf-course/search",fee18:100,fee9:null,rating:4.0,note:'18-hole resort course. Water features throughout, mid-range GC option.',zone:'gc_south'},
   {name:"Coolangatta & Tweed Heads Golf Club",suburb:"Coolangatta",drive:90,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://golf.com.au/venue/coolangatta-tweed-heads-golf-club",fee18:null,fee9:null,rating:4.1,note:'Semi-private club on NSW border. Hilly layout with great views.',zone:'gc_south'},
   // SUNSHINE COAST
   {name:"Caboolture Golf Club",suburb:"Caboolture",drive:50,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.caboolturegolf.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole north of Brisbane. Flat, open layout.',zone:'sunshine'},
   {name:"Bribie Island Golf Club",suburb:"Bribie Island",drive:58,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.bribieislandgolfclub.com.au/",fee18:null,fee9:null,rating:4.1,note:'Public island course. Accessible via bridge, relaxed atmosphere.',zone:'sunshine'},
   {name:"Beerwah Golf Club",suburb:"Beerwah",drive:65,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/beerwah-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 18-hole Sunshine Coast hinterland. Affordable local club.',zone:'sunshine'},
-  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2531-pelican-waters-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Public 18-hole Caloundra. Robert Trent Jones Jr design.',zone:'sunshine'},
+  {name:"Pelican Waters Golf Club",suburb:"Caloundra",drive:75,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2531-pelican-waters-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Public 18-hole Caloundra. Robert Trent Jones Jr design.',zone:'sunshine'},
   {name:"Twin Waters Golf Club",suburb:"Mudjimba",drive:85,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2537-twin-waters-golf-club/search",fee18:null,fee9:null,rating:4.1,note:'Public 18-hole Mudjimba. Links-style layout near the coast.',zone:'sunshine'},
   {name:"Maroochy River Golf Club",suburb:"Bli Bli",drive:88,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://golf.com.au/venue/maroochy-river-golf-club",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole Bli Bli. River valley setting, mature trees.',zone:'sunshine'},
-  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2532-peregian-springs-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Semi-private Noosa hinterland. Well-presented championship layout.',zone:'sunshine'},
+  {name:"Peregian Springs Golf Club",suburb:"Peregian Springs",drive:95,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:true,region:"sunshine",url:"https://www.golfnow.com.au/tee-times/facility/2532-peregian-springs-golf-club/search",fee18:null,fee9:null,rating:4.2,note:'Semi-private Noosa hinterland. Well-presented championship layout.',zone:'sunshine'},
   {name:"Palmer Coolum Golf Club",suburb:"Coolum Beach",drive:100,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.palmercoolum.com.au/",fee18:null,fee9:null,rating:4.0,note:'Public 18-hole resort Coolum Beach. Pete Dye design.',zone:'sunshine'},
   {name:"Noosa Springs Golf Club",suburb:"Noosa",drive:105,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://www.noosasprings.com.au/golf/",fee18:null,fee9:null,rating:4.3,note:'Semi-private Noosa. Arguably Sunshine Coast\'s best course.',zone:'sunshine'},
   // TOOWOOMBA / SCENIC RIM
@@ -477,6 +478,7 @@ const COURSES = [
 const PREP   = 20;   // mins to get ready and leave house
 const BUFFER = 15;   // mins buffer before tee time
 const SUNRISE_DEFAULT = 5*60+30;
+const TWILIGHT_EST = 25; // mins of usable civil twilight if API estimate is used
 const REGION_LABELS = {brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim'};
 
 // ── Weather zone coordinates ──────────────────────────────────
@@ -501,12 +503,13 @@ function getNearestZone(lat,lng){
 }
 
 // ── State ────────────────────────────────────────────────────
-let sunsetMins   = null;
-let sunriseMins  = SUNRISE_DEFAULT;
+let sunsetMins    = null;                  // sun below horizon (display)
+let sunriseMins   = SUNRISE_DEFAULT;
+let lastLightMins = null;                  // end of civil twilight — the real golf cutoff
+let firstLightMins= SUNRISE_DEFAULT - TWILIGHT_EST; // civil dawn — earliest tee-off
 let activeFilter = localStorage.getItem('gf_filter') || 'all';
 let favourites   = JSON.parse(localStorage.getItem('gf_favs') || '[]');
 let weatherCache = {};  // zone -> {temp, wind, code, label}
-let drawerOpen=false; // unused, kept for safety
 
 // ── Weather helpers ───────────────────────────────────────────
 // Moon phase — calculated from synodic cycle, no API needed
@@ -601,7 +604,7 @@ function buildDayScene(now){
   const sun=document.getElementById('day-sun');
   const wxEl=document.getElementById('day-wx');
   if(!scene||!sun)return;
-  const totalDay=sunsetMins-sunriseMins;
+  const totalDay=lastLightMins-sunriseMins;
   const frac=Math.min(1,Math.max(0,(now-sunriseMins)/totalDay));
 
   // Sky gradient shifts through the day
@@ -653,6 +656,16 @@ function buildDayScene(now){
   sun.textContent=(wx&&wx.ok)?wx.icon:'☀️';
 
   // ── Weather overlay — reflects actual conditions with real intensity ──
+  // Cached on (condition, wind bucket): rebuilding every minute resets the
+  // CSS animations, making rain/clouds visibly jump. Only the sun-ray
+  // position is updated on cached ticks.
+  const sceneKey=(wx&&wx.ok)?`${wx.label}|${Math.round((wx.wind||0)/5)}`:'none';
+  if(window._wxSceneKey===sceneKey){
+    const ray=wxEl.querySelector('.day-ray');
+    if(ray){ ray.style.setProperty('--sx',sx+'%'); ray.style.setProperty('--sy',sy+'%'); }
+    return;
+  }
+  window._wxSceneKey=sceneKey;
   const overcastEl=document.getElementById('day-overcast');
   let html='';
   let overcastOpacity=0;
@@ -822,18 +835,21 @@ async function fetchWeatherZone(zone){
   }
 }
 
-// Get weather icon for a specific hour-of-day from a zone's hourly forecast
+// Get weather icon for a specific hour-of-day today from a zone's hourly forecast
 function wxAtHour(zone, targetMins){
   const wx = weatherCache[zone];
   if(!wx || !wx.ok || !wx.hourly || !wx.hourly.time) return null;
+  const today = new Date().toISOString().slice(0,10);
   const targetHour = Math.round(targetMins/60);
-  // hourly.time is array of ISO strings like "2026-06-10T05:00"
-  let bestIdx = 0, bestDiff = Infinity;
+  let bestIdx = -1, bestDiff = Infinity;
   for(let i=0;i<wx.hourly.time.length;i++){
-    const h = parseInt(wx.hourly.time[i].split('T')[1].split(':')[0]);
+    const [date, hm] = wx.hourly.time[i].split('T');
+    if(date !== today) continue;
+    const h = parseInt(hm.split(':')[0]);
     const diff = Math.abs(h - targetHour);
     if(diff < bestDiff){ bestDiff = diff; bestIdx = i; }
   }
+  if(bestIdx === -1) return null;
   const code = wx.hourly.weather_code[bestIdx];
   return wxDesc(code);
 }
@@ -894,17 +910,63 @@ function minsToStr(m){
 }
 
 // ── Playability ───────────────────────────────────────────────
-// Par-3: 9 holes ~60 min; Full: 9 holes ~150 min, 18 holes ~270 min
+// Par-3: 9 holes ~60 min, 18 holes ~120 min. Full: 9 ~150 min, 18 ~270 min.
 function roundMins(c, holeCount){
-  if(c.par3) return 60;
+  if(c.par3) return holeCount === 18 ? 120 : 60;
   return holeCount === 18 ? 270 : 150;
 }
+// Playable = prep + drive + pre-tee buffer + the round itself all fit before last light
 function canPlayHoles(c, holeCount, daylight){
   if(!c.holes.includes(holeCount)) return false;
-  return daylight >= c.drive + roundMins(c, holeCount) + BUFFER;
+  return daylight >= PREP + c.drive + BUFFER + roundMins(c, holeCount);
 }
 function canPlayAny(c, daylight){
   return c.holes.some(h => canPlayHoles(c, h, daylight));
+}
+// Most holes you could still finish today (18 beats 9), or null
+function bestPlayableHoles(c, daylight){
+  if(canPlayHoles(c, 18, daylight)) return 18;
+  if(canPlayHoles(c, 9, daylight))  return 9;
+  return null;
+}
+// Latest departure that still finishes holeCount before last light
+function latestLeave(c, holeCount){
+  return lastLightMins - (c.drive + BUFFER + roundMins(c, holeCount));
+}
+// Course closed at a given time today? Supports closedDays:[dow] and
+// closedRules:[{dow, before?, after?}] (e.g. {dow:2, before:720} = Tue before noon)
+function isClosedAt(c, mins){
+  const dow = new Date().getDay();
+  if(c.closedDays && c.closedDays.includes(dow)) return true;
+  if(c.closedRules){
+    for(const r of c.closedRules){
+      if(r.dow !== dow) continue;
+      if(r.before !== undefined && mins < r.before) return true;
+      if(r.after  !== undefined && mins > r.after)  return true;
+      if(r.before === undefined && r.after === undefined) return true;
+    }
+  }
+  return false;
+}
+
+// ── Weather during the round ─────────────────────────────────
+// Scan the hourly forecast between arrival and last light.
+// Returns 'storm' | 'rain' | null. Codes: 95+ storm; 51–67 & 80–82 rain/drizzle.
+function rainRiskDuring(zone, startMins, endMins){
+  const wx = weatherCache[zone];
+  if(!wx || !wx.ok || !wx.hourly || !wx.hourly.time) return null;
+  const today = new Date().toISOString().slice(0,10);
+  let risk = null;
+  for(let i=0;i<wx.hourly.time.length;i++){
+    const [date, hm] = wx.hourly.time[i].split('T');
+    if(date !== today) continue;
+    const h = parseInt(hm.split(':')[0]) * 60;
+    if(h < startMins - 30 || h > endMins) continue;
+    const code = wx.hourly.weather_code[i];
+    if(code >= 95) return 'storm';
+    if((code >= 51 && code <= 67) || (code >= 80 && code <= 82)) risk = 'rain';
+  }
+  return risk;
 }
 
 // ── Location + sunset ────────────────────────────────────────
@@ -926,6 +988,7 @@ async function fetchSunset(lat,lng){
     const d=await r.json();
     if(d.status==='OK'){
       const parse=str=>{
+        if(!str) return null;
         const[time,ap]=str.split(' ');
         const[hh,mm]=time.split(':').map(Number);
         let h=hh;
@@ -933,11 +996,16 @@ async function fetchSunset(lat,lng){
         if(ap==='AM'&&hh===12)h=0;
         return h*60+mm;
       };
-      return{sunset:parse(d.results.sunset),sunrise:parse(d.results.sunrise),live:true};
+      const sunset=parse(d.results.sunset), sunrise=parse(d.results.sunrise);
+      // dawn/dusk = civil twilight bounds — the real "can see a golf ball" window
+      const lastLight =parse(d.results.dusk) ?? (sunset +TWILIGHT_EST);
+      const firstLight=parse(d.results.dawn) ?? (sunrise-TWILIGHT_EST);
+      return{sunset,sunrise,lastLight,firstLight,live:true};
     }
   }catch(e){}
   const mo=new Date().getMonth();
-  return{sunset:(mo>=4&&mo<=8)?17*60+10:18*60+25,sunrise:5*60+30,live:false};
+  const estSunset=(mo>=4&&mo<=8)?17*60+10:18*60+25;
+  return{sunset:estSunset,sunrise:SUNRISE_DEFAULT,lastLight:estSunset+TWILIGHT_EST,firstLight:SUNRISE_DEFAULT-TWILIGHT_EST,live:false};
 }
 
 // ── Filter ───────────────────────────────────────────────────
@@ -957,9 +1025,9 @@ function getFiltered(daylight){
   return COURSES.filter(c=>{
     switch(activeFilter){
       case 'favs':      return favourites.includes(c.name);
-      case 'playable':  return true;  // all courses; render splits playable/dimmed
+      case 'playable':  return true;  // render hides the not-playable section for this filter
       case '18':        return c.holes.includes(18);
-      case '9':         return c.holes.includes(9)||c.holes.includes(18);
+      case '9':         return c.holes.includes(9);  // strict — many 18-only clubs don't sell 9-hole rounds
       case 'par3':      return c.par3;
       case 'close':     return c.drive<=30;
       case 'visitor':   return c.type!=='private';
@@ -985,36 +1053,37 @@ function toggleFav(name,btn){
 
 // ── Render ───────────────────────────────────────────────────
 function render(){
-  if(sunsetMins===null)return;
+  if(sunsetMins===null||lastLightMins===null)return;
   const now=nowMins();
-  const daylight=Math.max(0,sunsetMins-now);
+  // The golf window runs to LAST LIGHT (end of civil twilight), not sunset
+  const daylight=Math.max(0,lastLightMins-now);
   const dHrs=(daylight/60).toFixed(1);
 
-  // Day/night mode switch — night when past last light OR before sunrise
-  const isNight = now>=sunsetMins || now<sunriseMins;
+  // Day/night mode switch — night when past last light OR before first light
+  const isNight = now>=lastLightMins || now<firstLightMins;
   document.getElementById('daybar-day').style.display   = isNight?'none':'block';
   document.getElementById('daybar-night').style.display = isNight?'block':'none';
 
   if(isNight){
-    // Minutes until next sunrise
-    let untilSunrise;
-    if(now>=sunsetMins){
-      untilSunrise = (1440 - now) + sunriseMins;
+    // Minutes until first light (civil dawn — earliest tee-off)
+    let untilDawn;
+    if(now>=lastLightMins){
+      untilDawn = (1440 - now) + firstLightMins;
     } else {
-      untilSunrise = sunriseMins - now;
+      untilDawn = firstLightMins - now;
     }
-    const h=Math.floor(untilSunrise/60), m=untilSunrise%60;
+    const h=Math.floor(untilDawn/60), m=untilDawn%60;
     document.getElementById('night-countdown').textContent = h>0?`${h}h ${m}m`:`${m}m`;
-    document.getElementById('night-resume').textContent = `Golf resumes ~${minsToStr(sunriseMins)} in`;
+    document.getElementById('night-resume').textContent = `Golf resumes ~${minsToStr(firstLightMins)} in`;
     buildNightScene();
   }
 
-  // Hero daylight bar — progress only (hours now shown in stat card)
+  // Hero daylight bar — runs sunrise → last light
   document.getElementById('db-now').textContent=minsToStr(now);
-  document.getElementById('db-sunset').textContent=minsToStr(sunsetMins);
+  document.getElementById('db-sunset').textContent=minsToStr(lastLightMins);
   document.getElementById('db-sunrise').textContent=minsToStr(sunriseMins);
 
-  const totalDay=sunsetMins-sunriseMins;
+  const totalDay=lastLightMins-sunriseMins;
   const pct=Math.min(100,Math.max(0,Math.round(((now-sunriseMins)/totalDay)*100)));
   const fill=document.getElementById('daybar-fill');
   fill.style.width=pct+'%';
@@ -1023,7 +1092,7 @@ function render(){
   // Sunrise & Last Light horizon icons — weather-aware from hourly forecast
   const gpsZone=window._gpsZone||'brisbane_metro';
   const sunriseWx=wxAtHour(gpsZone, sunriseMins);
-  const sunsetWx =wxAtHour(gpsZone, sunsetMins);
+  const sunsetWx =wxAtHour(gpsZone, lastLightMins);
   const srIcon=document.getElementById('db-sunrise-icon');
   const slIcon=document.getElementById('db-lastlight-icon');
   if(srIcon) srIcon.textContent = sunriseWx ? sunriseWx.icon : '🌅';
@@ -1038,7 +1107,7 @@ function render(){
 
   // Stats — all respond to active filter
   const filtered=getFiltered(daylight);
-  const playableInFilter=filtered.filter(c=>canPlayAny(c,daylight));
+  const playableInFilter=filtered.filter(c=>canPlayAny(c,daylight)&&!isClosedAt(c,now+PREP+c.drive));
   const anyPlayable=playableInFilter.length>0;
 
   // Pool for the widgets: playable courses if any, otherwise all filtered courses
@@ -1052,11 +1121,11 @@ function render(){
   const dlLabel=document.getElementById('daylight-card-label');
   const dlIcon=document.getElementById('daylight-icon');
   if(isNight){
-    let untilSunrise = now>=sunsetMins ? (1440-now)+sunriseMins : sunriseMins-now;
-    const h=Math.floor(untilSunrise/60), m=untilSunrise%60;
+    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
+    const h=Math.floor(untilDawn/60), m=untilDawn%60;
     dlLabel.textContent='Golf resumes';
     dlIcon.textContent='🌙';
-    dlHrs.textContent=minsToStr(sunriseMins);
+    dlHrs.textContent=minsToStr(firstLightMins);
     dlHrs.style.color='#8da9d6';
     dlSub.textContent=(h>0?`in ${h}h ${m}m`:`in ${m}m`);
     dlCard.className='stat';
@@ -1064,21 +1133,23 @@ function render(){
     dlLabel.textContent='Daylight left';
     dlHrs.style.color='';
     dlHrs.innerHTML=`${dHrs}<span style="font-size:13px;color:var(--tx3);margin-left:2px;">hrs</span>`;
-    dlSub.textContent='until last light';
+    dlSub.textContent=`last light ${minsToStr(lastLightMins)}`;
     const lvl=daylight<120?'danger':daylight<240?'warn':'ok';
     dlIcon.textContent = lvl==='danger'?'⏳':lvl==='warn'?'⌛':'☀️';
     dlCard.className='stat'+(lvl==='danger'?' dl-danger':lvl==='warn'?' dl-warn':'');
   }
 
-  // Nearest — from widget pool
+  // Leave-by stat — LATEST departure that still finishes the nearest playable
+  // course before last light (not "now + prep", which says nothing)
   const nearest=widgetPool.slice().sort((a,b)=>a.drive-b.drive)[0]||null;
-  const leaveBy=anyPlayable&&nearest?minsToStr(now+PREP):null;
   const lbCard=document.getElementById('stat-leaveby-card');
 
   if(anyPlayable&&nearest){
+    const best=bestPlayableHoles(nearest,daylight);
+    const leaveBy=minsToStr(latestLeave(nearest,best));
     lbCard.classList.remove('dim');
     document.getElementById('s-leaveby').textContent=leaveBy;
-    document.getElementById('s-leaveby-sub').textContent=`for ${nearest.suburb}`;
+    document.getElementById('s-leaveby-sub').textContent=`latest for ${nearest.suburb} (${best})`;
   } else if(nearest){
     lbCard.classList.add('dim');
     document.getElementById('s-leaveby').textContent='—';
@@ -1133,33 +1204,32 @@ function render(){
     wxLbl2.textContent='in filter';
   }
 
-  // Open-all button
-  const openable=playableInFilter;
-
   // Restore active pill
   document.querySelectorAll('.fpill').forEach(b=>{
     const f=b.getAttribute('onclick').match(/setFilter\('([^']+)'/)?.[1];
     if(f)b.classList.toggle('on',f===activeFilter);
   });
 
-  // Course list — always show unavailable courses dimmed, regardless of filter
+  // Course list — show unavailable courses dimmed (except on the Playable filter)
   const allInFilter=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
-  // Playability check respects the active filter's hole requirement
+  // Playability check respects the active filter's hole requirement,
+  // and a course closed at your arrival time is not playable
   const playableCheck=(c)=>{
+    if(isClosedAt(c, now+PREP+c.drive)) return false;
     if(activeFilter==='18') return canPlayHoles(c,18,daylight);
-    if(activeFilter==='9')  return canPlayHoles(c,9,daylight)||canPlayHoles(c,18,daylight);
+    if(activeFilter==='9')  return canPlayHoles(c,9,daylight);
     return canPlayAny(c,daylight);
   };
   const playable=allInFilter.filter(playableCheck);
-  const notPlayable=allInFilter.filter(c=>!playableCheck(c));
+  const notPlayable=activeFilter==='playable'?[]:allInFilter.filter(c=>!playableCheck(c));
 
   let html='';
   if(playable.length){
-    html+=`<div class="section-head"><span class="sdot sdot-g"></span>Playable today &mdash; ${playable.length} course${playable.length!==1?'s':''}</div>`;
+    html+=`<div class="section-head"><span class="sdot sdot-g"></span>Enough daylight today &mdash; ${playable.length} course${playable.length!==1?'s':''} &middot; check tee sheet</div>`;
     playable.forEach(c=>{html+=courseCard(c,daylight,false);});
   }
   if(notPlayable.length){
-    html+=`<div class="section-head" style="margin-top:20px;"><span class="sdot sdot-r"></span>Not enough daylight &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
+    html+=`<div class="section-head" style="margin-top:20px;"><span class="sdot sdot-r"></span>Not playable today &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
     notPlayable.forEach(c=>{html+=courseCard(c,daylight,true);});
   }
   if(!playable.length&&!notPlayable.length)html='<div class="no-results">No courses match this filter.</div>';
@@ -1169,20 +1239,31 @@ function render(){
 function courseCard(c,daylight,dimmed){
   const can9 =canPlayHoles(c,9,daylight);
   const can18=canPlayHoles(c,18,daylight);
+  const best =bestPlayableHoles(c,daylight);
   const isFav=favourites.includes(c.name);
+  const now=nowMins();
 
-  // Closed today
-  const todayDay=new Date().getDay();
-  const isClosed=c.closedDays&&c.closedDays.includes(todayDay);
+  // Closed at the time you'd arrive (handles partial closures like "Tue mornings")
+  const isClosed=isClosedAt(c, now+PREP+c.drive);
 
-  const leaveBy =nowMins()+PREP;
-  const arriveAt=nowMins()+PREP+c.drive;
-  const timeLine=!dimmed
-    ?`<div class="ccard-times"><span class="t-leave">leave ${minsToStr(leaveBy)}</span><span class="t-arrive">arrive ~${minsToStr(arriveAt)}</span></div>`
-    :'';
+  // Latest departure that still finishes the best playable round before last light
+  let timeLine='';
+  let leaveLatest=null, arriveAt=null;
+  if(!dimmed&&best){
+    leaveLatest=latestLeave(c,best);
+    arriveAt=leaveLatest+c.drive;
+    timeLine=`<div class="ccard-times"><span class="t-leave">leave by ${minsToStr(leaveLatest)}</span><span class="t-arrive">arrive ~${minsToStr(arriveAt)}</span></div>`;
+  }
 
-  const roundTime=c.par3?'~1 hr/9':can18?'~4.5 hrs/18':'~2.5 hrs/9';
+  const roundTime=c.par3
+    ?(best===18?'~2 hrs/18':'~1 hr/9')
+    :(can18?'~4.5 hrs/18':'~2.5 hrs/9');
   const ratingStr=c.rating?`★ ${c.rating.toFixed(1)}`:'';
+
+  // Rain/storm forecast between earliest arrival and last light
+  const risk=!dimmed?rainRiskDuring(c.zone, now+PREP+c.drive, lastLightMins):null;
+  const bRisk=risk==='storm'?'<span class="badge bstorm">⛈ storms forecast</span>'
+            :risk==='rain' ?'<span class="badge brain">🌧 rain likely</span>':'';
 
   const wx=weatherCache[c.zone];
   let wxHtml='';
@@ -1208,7 +1289,7 @@ function courseCard(c,daylight,dimmed){
   const bGN=c.golfnow?'<span class="badge bgn">GolfNow</span>':'';
   const bNB=c.noBooking?'<span class="badge bnobk">walk-up</span>':'';
   const bNo=dimmed?'<span class="badge bno">no time today</span>':'';
-  const bClosed=isClosed?'<span class="badge bclosed">closed today</span>':'';
+  const bClosed=isClosed?'<span class="badge bclosed">closed now</span>':'';
 
   const safeName=c.name.replace(/'/g,"\\'");
   const safeSuburb=c.suburb.replace(/'/g,"\\'");
@@ -1222,7 +1303,7 @@ function courseCard(c,daylight,dimmed){
       <div class="ccard-region">${REGION_LABELS[c.region]||c.region}</div>
       ${noteHtml}${visitorNoteHtml}
       ${timeLine}
-      <div class="badges">${b18}${b9}${bP3}${bFee}${bNo}${bClosed}${bType}${bGN}${bNB}</div>
+      <div class="badges">${b18}${b9}${bP3}${bFee}${bRisk}${bNo}${bClosed}${bType}${bGN}${bNB}</div>
     </div>
     <div class="ccard-right">
       <a class="visit-btn" href="${c.url}" target="_blank" aria-label="Open ${c.name} tee times">⛳ Tee times</a>
@@ -1325,7 +1406,7 @@ function shareCourse(name, suburb, drive){
 async function init(){
   const icon=document.getElementById('refresh-icon');
   icon.className='spin';
-  document.querySelectorAll('.stat-value,.daybar-remain').forEach(el=>el.classList.add('pulse'));
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('pulse'));
   document.getElementById('loc-status').textContent='getting location...';
   document.getElementById('loc-status').className='app-meta loc-est';
 
@@ -1346,11 +1427,13 @@ async function init(){
     fetchSunset(lat, lng),
     fetchAllWeather()
   ]);
-  sunsetMins=result.sunset;
-  sunriseMins=result.sunrise||SUNRISE_DEFAULT;
-  document.getElementById('loc-status').textContent += result.live?' · sunset live':' · sunset est.';
+  sunsetMins    = result.sunset;
+  sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
+  lastLightMins = result.lastLight ?? (sunsetMins + TWILIGHT_EST);
+  firstLightMins= result.firstLight ?? (sunriseMins - TWILIGHT_EST);
+  document.getElementById('loc-status').textContent += result.live?' · last light live':' · last light est.';
   document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
-  document.querySelectorAll('.stat-value,.daybar-remain').forEach(el=>el.classList.remove('pulse'));
+  document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
   icon.className='';
   render();
   clearInterval(window._iv);
