@@ -805,12 +805,14 @@ function buildNightScene(){
         const nm=new Date().getHours()*60+new Date().getMinutes();
         const ch=hourlyAt(skyWxZone(),0,nm);
         const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
-        const SKY_H=186, cf=[0.26,0.54,0.78], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line
+        const SKY_H=182, bands=[[0.08,0.32],[0.38,0.60],[0.64,0.86]], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line (4px buffer)
         for(let ci=0;ci<cp.count;ci++){
           const w=Math.max(16,Math.round(SKY_H*cp.frac*nmul[ci]*1.5));
           const chh=Math.round(w*16/24);
-          const top=Math.round(Math.min(Math.max(cf[ci]*SKY_H-chh/2,0),SKY_H-chh));
-          html+=cloudSVG('night-cloud',w,top,cp.opacity,nds[ci],ndl[ci],'#c4cee0');
+          const cfr=bands[ci][0]+Math.random()*(bands[ci][1]-bands[ci][0]);   // random drift height within the cloud's band
+          const top=Math.round(Math.min(Math.max(cfr*SKY_H-chh/2,0),SKY_H-chh));
+          const dur=nds[ci]+Math.round(Math.random()*8-4);
+          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,ndl[ci],'#c4cee0');
         }
       }
       if(isStorm||isRain){
@@ -971,12 +973,13 @@ function buildDayScene(now){
     // Clouds: size scales with cover; the 3 clouds are spread down the scene
     // (top/middle/lower) so they fill the sky at high cover, not just a top band.
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
-    const SCENE_H=128, cf=[0.28,0.55,0.78], sizeMul=[1,0.78,0.9], cloudBaseDur=26-windF*19;
+    const SCENE_H=128, bands=[[0.10,0.34],[0.40,0.60],[0.62,0.85]], sizeMul=[1,0.78,0.9], cloudBaseDur=26-windF*19;
     for(let i=0;i<cp.count;i++){
       const w=Math.max(16,Math.round(SCENE_H*cp.frac*sizeMul[i]*1.5));
       const ch=Math.round(w*16/24);
-      const top=Math.round(Math.min(Math.max(cf[i]*SCENE_H-ch/2,0),SCENE_H-ch));
-      const dur=cloudBaseDur+(i%3)*2.5, delay=-(i*(dur/cp.count));
+      const cfr=bands[i][0]+Math.random()*(bands[i][1]-bands[i][0]);   // random drift height within the cloud's band
+      const top=Math.round(Math.min(Math.max(cfr*SCENE_H-ch/2,0),SCENE_H-ch));
+      const dur=cloudBaseDur+(i%3)*2.5+Math.round(Math.random()*4-2), delay=-(i*(dur/cp.count));
       html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
     }
 
