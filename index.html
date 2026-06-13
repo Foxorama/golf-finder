@@ -171,6 +171,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
+#night-scene{margin-top:14px;}
 .night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:12px;}
 /* ── Sky panorama: real positions, az 0–360 left→right (N E S W N), alt 0–90 bottom→top ── */
 .night-sky{position:absolute;inset:0;z-index:2;pointer-events:none;}
@@ -730,13 +731,12 @@ function toggleForecast(){
   if(btn) btn.innerHTML=forecastMode?'← Now':'⛳ Fore\'cast';
   render();
 }
-// Maps cloud_cover % (0-100) to { count, opacity } for proportional cloud rendering
+// cloud_cover % -> cloud sprites. Fixed count; SIZE and OPACITY grow with cover
+// so a 72%-cloud sky shows big, ~0.72-opaque clouds (not just more of them).
 function cloudParams(pct){
-  if(pct==null||pct<5) return{count:0,opacity:0};
-  if(pct<20) return{count:1,                          opacity:+(0.30+pct*0.010).toFixed(2)};
-  if(pct<45) return{count:2+Math.round((pct-20)/12),  opacity:+(0.50+pct*0.008).toFixed(2)};
-  if(pct<75) return{count:4+Math.round((pct-45)/15),  opacity:+(0.70+pct*0.004).toFixed(2)};
-  return            {count:6,                          opacity:+Math.min(1,0.85+(pct-75)*0.006).toFixed(2)};
+  if(pct==null||pct<5) return{count:0,opacity:0,size:0};
+  const c=Math.min(100,pct);
+  return{count:3, opacity:+Math.max(0.12,Math.min(1,c/100)).toFixed(2), size:Math.round(20+c/100*72)};
 }
 // Build the night scene: stars, accurate moon phase, weather overlay
 let _nightBuilt=false;
@@ -771,14 +771,14 @@ function buildNightScene(){
       const isStorm=lbl.includes('Storm')||lbl.includes('hail');
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
-      if(isStorm||isRain||isCloud){
-        // Cloud count/opacity from actual cloud_cover %
+      {
+        // Clouds track actual cloud_cover %: bigger + more opaque with cover
         const nm=new Date().getHours()*60+new Date().getMinutes();
         const ch=hourlyAt(skyWxZone(),0,nm);
-        const cp=cloudParams(ch?ch.cloud:80);
-        const nts=[8,28,14,4,22], nfs=[34,22,28,24,30], nds=[22,16,19,25,18], ndl=[0,-7,-3,-11,-5];
-        for(let ci=0;ci<Math.min(cp.count,3);ci++){
-          html+=`<span class="night-cloud" style="top:${nts[ci]}px;left:0;font-size:${nfs[ci]}px;opacity:${cp.opacity};--cd:${nds[ci]}s;animation-delay:${ndl[ci]}s;">☁️</span>`;
+        const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
+        const nts=[8,28,16], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.82,1.12];
+        for(let ci=0;ci<cp.count;ci++){
+          html+=`<span class="night-cloud" style="top:${nts[ci]}px;left:0;font-size:${Math.round(cp.size*nmul[ci])}px;opacity:${cp.opacity};--cd:${nds[ci]}s;animation-delay:${ndl[ci]}s;">☁️</span>`;
         }
       }
       if(isStorm||isRain){
@@ -936,13 +936,13 @@ function buildDayScene(now){
     else if(isStorm)    dimSky=0.65;
     overcastOpacity=dimSky;
 
-    // Clouds: count + opacity from real cloud_cover %; drift speed from wind
+    // Clouds track actual cloud_cover %: fixed count, SIZE + opacity scale with cover
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
-    const cloudSizes=[30,24,34,22,28,26];
-    const cloudTops=[6,22,2,34,14,28];
+    const cloudTops=[6,22,2];
     const cloudBaseDur=26-windF*19;
+    const sizeMul=[1,0.82,1.12];
     for(let i=0;i<cp.count;i++){
-      const sz=cloudSizes[i%cloudSizes.length];
+      const sz=Math.round(cp.size*sizeMul[i%sizeMul.length]);
       const top=cloudTops[i%cloudTops.length];
       const dur=cloudBaseDur+(i%3)*2.5;
       const delay=-(i*(dur/Math.max(1,cp.count)));
@@ -1847,6 +1847,7 @@ function render(){
   const forecastDaylight = (forecastMode && !renderNight) ? (lastLightMins-firstLightMins) : daylight;
   document.getElementById('daybar-day').style.display   = renderNight?'none':'block';
   document.getElementById('daybar-night').style.display = renderNight?'block':'none';
+  { const _o=document.getElementById('drive-origin'); if(_o) _o.style.display=renderNight?'none':''; }
   const glat=window._gpsLat??-27.4698, glng=window._gpsLng??153.0251;
 
   // Identity swap: by night this is a sky-watch app (installed home-screen
@@ -1864,20 +1865,16 @@ function render(){
   }
 
   if(renderNight){
-    // One useful line each: the dark window worth planning around, and dawn
+    // Just the dark window worth planning around — no fallback clutter, no
+    // cloud% (the weather widget covers that). First-light removed for night.
     const bw=bestViewingWindow(glat,glng);
     const bestEl=document.getElementById('night-best');
-    if(bestEl){
-      bestEl.innerHTML = bw
-        ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down${bw.cloud!==null?` · ~${bw.cloud}% cloud`:''}`
-        : `🔭 moonlight or cloud most of tonight — no standout dark window`;
-    }
-    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
-    const fh=Math.floor(untilDawn/60), fm=untilDawn%60;
+    if(bestEl) bestEl.innerHTML = bw
+      ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down`
+      : '';
     const firstEl=document.getElementById('night-first');
-    if(firstEl) firstEl.textContent=`🌄 first light ~${minsToStr(firstLightMins)} · in ${fh>0?fh+'h ':''}${fm}m · ⛳ ${((lastLightMins-firstLightMins)/60).toFixed(1)}h of golf tomorrow`;
+    if(firstEl) firstEl.style.display='none';
     buildNightScene();
-
   }
 
   // Hero daylight bar — runs sunrise → last light
