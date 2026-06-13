@@ -121,6 +121,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:4;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
+.wind-compass{position:absolute;top:7px;left:7px;width:54px;height:58px;z-index:6;pointer-events:none;}
+#wc-arrow{transform-box:view-box;transition:transform 0.6s ease;}
 .day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;animation-fill-mode:backwards;}
 @keyframes dayRainFall{0%{transform:translate(0,-14px) rotate(var(--rang,0deg));opacity:0;}25%{opacity:0.85;}100%{transform:translate(var(--rdx,0px),130px) rotate(var(--rang,0deg));opacity:0;}}
 .day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
@@ -478,6 +480,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div id="daybar-day">
       <div class="day-scene" id="day-scene">
         <div class="day-glow" id="day-glow" aria-hidden="true"></div>
+        <svg class="wind-compass" id="wind-compass" viewBox="0 0 60 64" aria-hidden="true"><circle cx="30" cy="30" r="21" fill="rgba(8,18,30,0.32)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/><g font-family="var(--mono)" font-size="7" fill="rgba(255,255,255,0.75)" text-anchor="middle"><text x="30" y="13">N</text><text x="30" y="51">S</text><text x="49" y="32.5">E</text><text x="11" y="32.5">W</text></g><g id="wc-arrow"><path d="M30,14 L34.5,31 L30,27.5 L25.5,31 Z" fill="#ffd24a"/></g><text id="wc-spd" x="30" y="40" text-anchor="middle" font-family="var(--mono)" font-size="9" fill="#e8f5e0">--</text><text id="wc-from" x="30" y="61" text-anchor="middle" font-family="var(--mono)" font-size="7.5" fill="#cfe0ee">from --</text></svg>
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
@@ -1161,6 +1164,7 @@ function parseWx(d){
     temp: Math.round(c.temperature_2m),
     wind: Math.round(c.wind_speed_10m),
     gust: c.wind_gusts_10m!=null ? Math.round(c.wind_gusts_10m) : null,
+    windDir: c.wind_direction_10m!=null ? Math.round(c.wind_direction_10m) : null,
     icon: desc.icon, label: desc.label, color: desc.c, ok: true,
     hourly: d.hourly || null
   };
@@ -1171,7 +1175,7 @@ async function fetchWeatherZone(zone, coords){
   if(weatherCache[zone] && weatherCache[zone].ok) return weatherCache[zone];
   const {lat,lng} = coords || ZONE_COORDS[zone];
   try {
-    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
     const r = await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);   // never cache a 429/5xx as success
     const result = parseWx(await r.json());
@@ -1210,6 +1214,7 @@ function hourlyAt(zone, dayOffset, targetMins){
     cloud: hv(wx.hourly.cloud_cover),
     wind: hv(wx.hourly.wind_speed_10m),
     gust: hv(wx.hourly.wind_gusts_10m),
+    dir: hv(wx.hourly.wind_direction_10m),
     rain: hv(wx.hourly.precipitation_probability)
   };
 }
@@ -1238,7 +1243,7 @@ async function fetchAllWeather(){
   }
   const lats = slots.map(s=>s.lat).join(',');
   const lngs = slots.map(s=>s.lng).join(',');
-  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
   try {
     const r = await fetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
@@ -1935,6 +1940,7 @@ async function fetchSpaceWx(){
   }catch(e){ window._iss=null; }
 }
 
+function cardinal8(deg){ const d=['N','NE','E','SE','S','SW','W','NW']; return d[Math.round(((deg%360)+360)%360/45)%8]; }
 function render(){
   if(sunsetMins===null||lastLightMins===null)return;
   if(!window._firstRender){ window._firstRender=true; tryHideLoader(); }
@@ -2016,6 +2022,30 @@ function render(){
 
   // Build the day sky scene (sky gradient, arcing sun, weather)
   if(!renderNight) buildDayScene(now);
+  // Day wind compass: arrow points downwind (where the wind blows TO), labelled with the cardinal it comes FROM
+  const wcEl=document.getElementById('wind-compass');
+  if(wcEl){
+    if(renderNight){ wcEl.style.display='none'; }
+    else{
+      wcEl.style.display='';
+      const wz=window._gpsFar?skyWxZone():(window._gpsZone||'brisbane_metro');
+      const wxd=weatherCache[wz]||weatherCache['brisbane_metro'];
+      const fch=hourlyAt(wz,window._fcOffset||0,now);
+      const dir=(fch&&fch.dir!=null)?fch.dir:((wxd&&wxd.windDir!=null)?wxd.windDir:null);
+      const spd=(fch&&fch.wind!=null)?fch.wind:(wxd?wxd.wind:null);
+      const arrow=document.getElementById('wc-arrow'), spdEl=document.getElementById('wc-spd'), fromEl=document.getElementById('wc-from');
+      if(dir!=null){
+        arrow.setAttribute('transform','rotate('+((dir+180)%360)+' 30 30)');
+        arrow.style.opacity='1';
+        if(spdEl) spdEl.textContent=(spd!=null?spd:'--');
+        if(fromEl) fromEl.textContent='from '+cardinal8(dir);
+      } else {
+        arrow.style.opacity='0.25';
+        if(spdEl) spdEl.textContent='--';
+        if(fromEl) fromEl.textContent='no wind';
+      }
+    }
+  }
 
   // Reset daybar background (scenes handle their own backgrounds)
   const daybarEl=document.querySelector('.daybar');
