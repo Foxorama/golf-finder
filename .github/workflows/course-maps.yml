@@ -1,14 +1,16 @@
 name: Build course maps
 
 # Regenerates course-maps.json from OpenStreetMap (Overpass) for every course
-# in index.html. Run manually after adding/moving courses, or monthly to pick
-# up fresh OSM edits. Direct pushes to main are blocked by branch protection,
-# so the result is delivered as a pull request (and an artifact).
+# in index.html. Run manually after adding/moving courses. Direct pushes to
+# main are blocked by branch protection, so the result is delivered as a pull
+# request (and an artifact).
+#
+# Manual-only: Overpass throttles cloud/CI IPs, so an unattended schedule just
+# grinds through retries and fails. Run it deliberately (and expect it may need
+# a residential-connection fallback to actually fetch).
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: '17 3 1 * *' # 03:17 UTC on the 1st of each month
 
 permissions:
   contents: write
