@@ -103,6 +103,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
 .hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;width:42px;height:38px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;}
 .hdr-btn:active{transform:scale(0.95);background:var(--sur2);}
+.hdr-btn.fc-day{background:rgba(90,171,53,0.18);border-color:rgba(90,171,53,0.5);color:#bfe8a8;}
+.hdr-btn.fc-night{background:rgba(124,148,210,0.18);border-color:rgba(143,184,232,0.55);color:#cdd9f5;}
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -727,9 +729,27 @@ function moonPhase(date){
 let forecastMode=false;
 function toggleForecast(){
   forecastMode=!forecastMode;
-  const btn=document.getElementById('btn-forecast');
-  if(btn) btn.innerHTML=forecastMode?'← Now':'⛳ Fore\'cast';
+  if(forecastMode){
+    const live=liveNowMins();
+    const nightNow = live>=lastLightMins || live<firstLightMins;
+    if(nightNow){ _fcTime=600;  window._fcOffset=(live>=lastLightMins)?1:0; } // Fore'cast: upcoming day 10am
+    else        { _fcTime=1260; window._fcOffset=0; }                         // Night Y'orb: tonight 9pm
+  } else { _fcTime=null; window._fcOffset=0; }
+  updateForecastBtn();
   render();
+}
+// Label + colour: shows the mode you'll SEE (Night Y'orb=night, Fore'cast=day);
+// in forecast it's "Now", coloured for the mode you'll RETURN to.
+function updateForecastBtn(){
+  const btn=document.getElementById('btn-forecast'); if(!btn) return;
+  const live=liveNowMins();
+  const nightNow = live>=lastLightMins || live<firstLightMins;
+  let label, cls;
+  if(forecastMode){ label='← Now'; cls = nightNow?'fc-night':'fc-day'; }
+  else if(nightNow){ label="⛳ Fore'cast"; cls='fc-day'; }
+  else { label="🌙 Night Y'orb"; cls='fc-night'; }
+  btn.innerHTML=label;
+  btn.className='hdr-btn '+cls;
 }
 // cloud_cover % -> cloud sprites. Fixed count; clouds scale as a fraction of the
 // scene height and opacity tracks cover, so a 72%-cloud sky shows big ~0.72 clouds.
@@ -802,8 +822,8 @@ function buildNightScene(){
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
       {
         // Clouds: width = (scene height * cover * per-cloud), thin non-scaling outline
-        const nm=new Date().getHours()*60+new Date().getMinutes();
-        const ch=hourlyAt(skyWxZone(),0,nm);
+        const nm=nowMins();
+        const ch=hourlyAt(skyWxZone(),window._fcOffset||0,nm);
         const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
         const SKY_H=182, bands=[[0.08,0.32],[0.38,0.60],[0.64,0.86]], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line (4px buffer)
         for(let ci=0;ci<cp.count;ci++){
@@ -923,7 +943,7 @@ function buildDayScene(now){
   // Cached on (condition, wind bucket): rebuilding every minute resets the
   // CSS animations, making rain/clouds visibly jump. Only the sun-ray
   // position is updated on cached ticks.
-  const cloudPct=(()=>{const h=hourlyAt(sceneZone,0,nowMins());return h?h.cloud:null;})();
+  const cloudPct=(()=>{const h=hourlyAt(sceneZone,window._fcOffset||0,nowMins());return h?h.cloud:null;})();
   const sceneKey=(wx&&wx.ok)?`${wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${cloudPct==null?'?':cloudPct}`:'none';
   if(window._wxSceneKey===sceneKey){
     const ray=wxEl.querySelector('.day-ray');
@@ -1211,6 +1231,7 @@ function pad(n){ return String(n).padStart(2,'0'); }
 // Test mode: override "now" via ?time=HH:MM (e.g. ?time=10:00 or ?time=20:30)
 // or set window._testTime in minutes. Lets you demo any time of day.
 let _testTime = null;
+let _fcTime = null; window._fcOffset = 0; // forecast anchor: Night Y'orb=9pm tonight, Fore'cast=10am upcoming day
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
   if(p){
@@ -1219,6 +1240,11 @@ let _testTime = null;
   }
 })();
 function nowMins(){
+  if(_fcTime!==null) return _fcTime;
+  if(_testTime!==null) return _testTime;
+  const d=new Date(); return d.getHours()*60+d.getMinutes();
+}
+function liveNowMins(){
   if(_testTime!==null) return _testTime;
   const d=new Date(); return d.getHours()*60+d.getMinutes();
 }
@@ -1412,6 +1438,7 @@ function toggleFav(name,btn){
 const RAD=Math.PI/180, DEG=180/Math.PI, OBLIQ=23.4393*Math.PI/180;
 // Date honouring ?t= test-time override so the sky matches the simulated clock
 function nowDate(){
+  if(_fcTime!==null){const d=new Date();d.setHours(0,0,0,0);return new Date(d.getTime()+((window._fcOffset||0)*1440+_fcTime)*60000);}
   if(_testTime!==null){const d=new Date();d.setHours(0,0,0,0);return new Date(d.getTime()+_testTime*60000);}
   return new Date();
 }
@@ -1877,8 +1904,9 @@ function render(){
 
   // Day/night mode switch — night when past last light OR before first light
   const isNight = now>=lastLightMins || now<firstLightMins;
-  const renderNight = forecastMode ? !isNight : isNight;
-  const forecastDaylight = (forecastMode && !renderNight) ? (lastLightMins-firstLightMins) : daylight;
+  const renderNight = isNight;          // forecast anchor is baked into nowMins()
+  const forecastDaylight = daylight;
+  updateForecastBtn();
   document.getElementById('daybar-day').style.display   = renderNight?'none':'block';
   document.getElementById('daybar-night').style.display = renderNight?'block':'none';
   { const _o=document.getElementById('drive-origin'); if(_o) _o.style.display=renderNight?'none':''; }
@@ -2053,7 +2081,7 @@ function render(){
     wxLbl.textContent=renderNight?'Sky viewing':nearest.suburb;
     if(wx&&wx.ok){
       const fcMins = renderNight ? now : Math.min(lastLightMins, now+PREP+driveMins(nearest)+BUFFER);
-      const fc = hourlyAt(renderNight?skyWxZone():nearest.zone, 0, fcMins);
+      const fc = hourlyAt(renderNight?skyWxZone():nearest.zone, window._fcOffset||0, fcMins);
       const d  = fc ? fc.desc : {icon:wx.icon,label:wx.label,c:wx.color};
       const col=d.c||'var(--tx2)';
       // Tint the frame, icon and condition — temp & wind stay neutral so an
