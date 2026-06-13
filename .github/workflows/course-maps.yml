@@ -1,0 +1,42 @@
+name: Build course maps
+
+# Regenerates course-maps.json from OpenStreetMap (Overpass) for every course
+# in index.html. Run manually after adding/moving courses, or monthly to pick
+# up fresh OSM edits.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 1 * *' # 03:17 UTC on the 1st of each month
+
+permissions:
+  contents: write
+
+concurrency:
+  group: course-maps
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate course-maps.json
+        run: node scripts/build-course-maps.mjs
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet -- course-maps.json; then
+            echo "No changes to course-maps.json"
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add course-maps.json
+            git commit -m "Update course-maps.json from OpenStreetMap"
+            git push
+          fi
