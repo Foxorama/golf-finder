@@ -10,8 +10,8 @@
  *
  * Bump CACHE when index.html changes so clients pick up the new version.
  */
-const CACHE = 'golf-finder-v18';
-const SHELL = ['./', './index.html'];
+const CACHE = 'golf-finder-v19';
+const SHELL = ['/golf-finder/', '/golf-finder/index.html'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
