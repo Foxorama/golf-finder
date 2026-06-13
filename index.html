@@ -1894,7 +1894,7 @@ function render(){
     const bestEl=document.getElementById('night-best');
     if(bestEl) bestEl.innerHTML = bw
       ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down`
-      : '';
+      : `🔭 bright moon most of tonight — no dark window`;
     const firstEl=document.getElementById('night-first');
     if(firstEl) firstEl.style.display='none';
     buildNightScene();
