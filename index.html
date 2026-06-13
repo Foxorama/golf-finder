@@ -731,12 +731,19 @@ function toggleForecast(){
   if(btn) btn.innerHTML=forecastMode?'← Now':'⛳ Fore\'cast';
   render();
 }
-// cloud_cover % -> cloud sprites. Fixed count; SIZE and OPACITY grow with cover
-// so a 72%-cloud sky shows big, ~0.72-opaque clouds (not just more of them).
+// cloud_cover % -> cloud sprites. Fixed count; clouds scale as a fraction of the
+// scene height and opacity tracks cover, so a 72%-cloud sky shows big ~0.72 clouds.
 function cloudParams(pct){
-  if(pct==null||pct<5) return{count:0,opacity:0,size:0};
+  if(pct==null||pct<5) return{count:0,opacity:0,frac:0};
   const c=Math.min(100,pct);
-  return{count:3, opacity:+Math.max(0.12,Math.min(1,c/100)).toFixed(2), size:Math.round(20+c/100*72)};
+  return{count:3, opacity:+Math.max(0.12,Math.min(1,c/100)).toFixed(2), frac:c/100};
+}
+// Cloud drawn as SVG so the outline stays hairline at any size (non-scaling
+// stroke) and the cloud is sized as a % of the scene, not a fixed font px.
+const CLOUD_PATH="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14a6 6 0 0 0 6 6h13a5 5 0 0 0 5-5c0-2.64-2.05-4.78-4.65-4.96z";
+function cloudSVG(cls,w,top,opacity,cd,delay,fill){
+  const h=Math.round(w*16/24);
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${CLOUD_PATH}" fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
@@ -794,13 +801,14 @@ function buildNightScene(){
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
       {
-        // Clouds track actual cloud_cover %: bigger + more opaque with cover
+        // Clouds: width = (scene height * cover * per-cloud), thin non-scaling outline
         const nm=new Date().getHours()*60+new Date().getMinutes();
         const ch=hourlyAt(skyWxZone(),0,nm);
         const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
-        const nts=[8,28,16], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.82,1.12];
+        const SCENE_H=200, nts=[12,46,2], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.72,0.88];
         for(let ci=0;ci<cp.count;ci++){
-          html+=`<span class="night-cloud" style="top:${nts[ci]}px;left:0;font-size:${Math.round(cp.size*nmul[ci])}px;opacity:${cp.opacity};--cd:${nds[ci]}s;animation-delay:${ndl[ci]}s;">☁️</span>`;
+          const w=Math.max(16,Math.round(SCENE_H*cp.frac*nmul[ci]*1.3));
+          html+=cloudSVG('night-cloud',w,nts[ci],cp.opacity,nds[ci],ndl[ci],'#c4cee0');
         }
       }
       if(isStorm||isRain){
@@ -958,17 +966,13 @@ function buildDayScene(now){
     else if(isStorm)    dimSky=0.65;
     overcastOpacity=dimSky;
 
-    // Clouds track actual cloud_cover %: fixed count, SIZE + opacity scale with cover
+    // Clouds: width = (scene height * cover * per-cloud), thin non-scaling outline
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
-    const cloudTops=[6,22,2];
-    const cloudBaseDur=26-windF*19;
-    const sizeMul=[1,0.82,1.12];
+    const SCENE_H=128, cloudTops=[8,18,2], sizeMul=[1,0.7,0.85], cloudBaseDur=26-windF*19;
     for(let i=0;i<cp.count;i++){
-      const sz=Math.round(cp.size*sizeMul[i%sizeMul.length]);
-      const top=cloudTops[i%cloudTops.length];
-      const dur=cloudBaseDur+(i%3)*2.5;
-      const delay=-(i*(dur/Math.max(1,cp.count)));
-      html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${cp.opacity};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
+      const w=Math.max(16,Math.round(SCENE_H*cp.frac*sizeMul[i]*1.3));
+      const dur=cloudBaseDur+(i%3)*2.5, delay=-(i*(dur/cp.count));
+      html+=cloudSVG('day-cloud',w,cloudTops[i],cp.opacity,dur,delay,'#eef4fb');
     }
 
     // Rain — drop count scales with intensity; slant + drift scale with wind
