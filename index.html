@@ -301,8 +301,9 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 body.night .drive-chip{border-color:rgba(141,169,214,0.3);}
 body.night .drive-chip .drive-num{color:#aec6f0;}
 
-.filter-select{position:absolute;top:8px;right:8px;z-index:7;background:rgba(8,18,30,0.72);color:#eaf4ff;border:1px solid rgba(255,255,255,0.28);border-radius:9px;font-family:var(--mono);font-size:10.5px;font-weight:500;padding:5px 8px;max-width:140px;cursor:pointer;-webkit-appearance:none;appearance:none;backdrop-filter:blur(2px);box-shadow:0 1px 5px rgba(0,0,0,0.3);}
-.filter-select:focus{outline:none;border-color:#7ed4ff;}
+.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 10px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
+.filter-select:focus{outline:none;border-color:var(--gb);}
+body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doesn't shift when flicking modes */
 .filters::-webkit-scrollbar{display:none;}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
 .fpill.on{background:var(--bg3);border-color:var(--gb);color:var(--gg);}
@@ -436,10 +437,13 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
     </div>
-    <div style="display:flex;gap:8px;align-items:flex-start;">
-      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
-      <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
-      <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
+    <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;flex-shrink:0;">
+      <div style="display:flex;gap:8px;">
+        <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
+        <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
+        <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
+      </div>
+      <select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select>
     </div>
   </div>
 
@@ -486,7 +490,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div id="daybar-day">
       <div class="day-scene" id="day-scene">
         <div class="day-glow" id="day-glow" aria-hidden="true"></div>
-        <select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select>
         <svg class="wind-compass" id="wind-compass" viewBox="0 0 84 96" onclick="toggleWindCompass()" role="button" tabindex="0" aria-label="Wind direction. Tap to align the compass to your phone heading."><defs><radialGradient id="wcg" cx="50%" cy="38%" r="70%"><stop offset="0%" stop-color="#22374f"/><stop offset="100%" stop-color="#091320"/></radialGradient></defs><circle cx="42" cy="30" r="27" fill="rgba(0,0,0,0.4)"/><circle cx="42" cy="30" r="26" fill="url(#wcg)" stroke="#9fc6e8" stroke-width="1.5"/><g id="wc-rotor"><g stroke="rgba(255,255,255,0.32)" stroke-width="1" stroke-linecap="round"><line x1="42" y1="6" x2="42" y2="10.5"/><line x1="42" y1="49.5" x2="42" y2="54"/><line x1="66" y1="30" x2="61.5" y2="30"/><line x1="18" y1="30" x2="22.5" y2="30"/><line x1="59" y1="13" x2="56" y2="16"/><line x1="25" y1="47" x2="28" y2="44"/><line x1="59" y1="47" x2="56" y2="44"/><line x1="25" y1="13" x2="28" y2="16"/></g><g font-family="var(--mono)" font-size="8" font-weight="bold" text-anchor="middle"><text x="42" y="16" fill="#ff8a8a">N</text><text x="42" y="48" fill="rgba(255,255,255,0.82)">S</text><text x="58" y="33" fill="rgba(255,255,255,0.82)">E</text><text x="26" y="33" fill="rgba(255,255,255,0.82)">W</text></g><g id="wc-arrow"><path d="M42,10 L48.5,31 L42,25.5 L35.5,31 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="0.5"/></g></g><circle cx="42" cy="30" r="2.1" fill="#cfe0ee"/><rect id="wc-frombg" x="4" y="64" width="76" height="28" rx="7" fill="rgba(8,18,30,0.9)" stroke="rgba(159,198,232,0.5)" stroke-width="0.7"/><text id="wc-spd2" x="42" y="76.5" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="bold" fill="#fff">-- km/h</text><text id="wc-dir" x="42" y="88" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="bold" fill="#9fc6e8">--</text></svg>
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
