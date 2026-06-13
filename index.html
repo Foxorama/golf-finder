@@ -41,11 +41,21 @@
     background_color:'#0c1124',
     theme_color:'#0f1a0f',
     orientation:'portrait',
+    // Screenshots only enrich the install dialog UI — they do NOT gate
+    // installability. Resolved against dir so they point at the files sitting
+    // beside index.html on the GitHub host.
+    screenshots:[
+      {src:dir+'screenshot-mobile.png',sizes:'1080x1920',type:'image/png',form_factor:'narrow',label:'Golf Finder SEQ on mobile'},
+      {src:dir+'screenshot-desktop.png',sizes:'1920x1080',type:'image/png',form_factor:'wide',label:'Golf Finder SEQ on desktop'}
+    ],
+    // Real PNG files fetched by URL — Android's WebAPK minting service fetches
+    // icons over the network and is unreliable with inline data: URIs, which is
+    // the most likely reason install handed off to Play Services then failed.
     icons:[
-      {src:I192,sizes:'192x192',type:'image/png',purpose:'any'},
-      {src:I512,sizes:'512x512',type:'image/png',purpose:'any'},
-      {src:K192,sizes:'192x192',type:'image/png',purpose:'maskable'},
-      {src:K512,sizes:'512x512',type:'image/png',purpose:'maskable'}
+      {src:dir+'icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+      {src:dir+'icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+      {src:dir+'icon-maskable-192.png',sizes:'192x192',type:'image/png',purpose:'maskable'},
+      {src:dir+'icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}
     ]
   };
   const bl=new Blob([JSON.stringify(M)],{type:'application/manifest+json'});
