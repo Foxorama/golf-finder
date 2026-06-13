@@ -115,7 +115,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
 
 /* ── Daybar day mode — unified sky scene ── */
-.day-scene{position:relative;height:128px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
+.day-scene{position:relative;height:180px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
 .day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
@@ -228,6 +228,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
 .stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;transition:border-color 0.3s,background 0.3s;}
+body:not(.night) .stat{padding:9px 8px 8px;}
+body:not(.night) .stat-value{font-size:24px;}
+body:not(.night) .stat-icon{font-size:19px;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
 .stat-value{font-family:var(--mono);font-size:28px;font-weight:500;color:var(--tx);line-height:1;white-space:nowrap;}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
@@ -2122,12 +2125,19 @@ function render(){
       const fcMins = renderNight ? now : Math.min(lastLightMins, now+PREP+driveMins(nearest)+BUFFER);
       const fc = hourlyAt(renderNight?skyWxZone():nearest.zone, window._fcOffset||0, fcMins);
       const d  = fc ? fc.desc : {icon:wx.icon,label:wx.label,c:wx.color};
-      const col=d.c||'var(--tx2)';
+      let col=d.c||'var(--tx2)';
+      let icon=d.icon;
+      if(renderNight){
+        // Night: colour + icon by sky-viewing quality (cool tones), not the day weather colour
+        const cl0=(fc&&fc.cloud!==null)?fc.cloud:null;
+        col  = cl0===null?'#8fb8e8' : cl0<25?'#6cc0f0' : cl0<55?'#8fb1e6' : cl0<85?'#7c86a8' : '#646c88';
+        icon = cl0===null?'🌙' : cl0<25?'✨' : cl0<55?'🌙' : '☁️';
+      }
       // Tint the frame, icon and condition — temp & wind stay neutral so an
       // amber temperature doesn't read as a heat warning
       wxCard.style.borderColor=col;
       wxCard.style.background=col.startsWith('#')?hexToRgba(col,0.07):'var(--sur)';
-      wxIcon.textContent=d.icon;
+      wxIcon.textContent=icon;
       wxTemp.textContent=((fc&&fc.temp!==null)?fc.temp:wx.temp)+'°';
       wxTemp.style.color='';
       // Wind from the same hour as the temp — at-tee forecast when we have it
