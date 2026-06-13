@@ -2467,8 +2467,8 @@ function renderCourseMapSVG(data){
       // open ">" chevron at the tee (start), filled arrowhead at the green (end)
       const q0=proj(line[0][0],line[0][1]), q1=proj(line[1][0],line[1][1]);
       const sl=Math.hypot(q1.x-q0.x,q1.y-q0.y)||1, sx=(q1.x-q0.x)/sl, sy=(q1.y-q0.y)/sl, cs=9, cw=4.2;
-      const tx=q0.x+sx*cs, ty=q0.y+sy*cs;
-      b+=`<polyline points="${(q0.x-sy*cw).toFixed(1)},${(q0.y+sx*cw).toFixed(1)} ${tx.toFixed(1)},${ty.toFixed(1)} ${(q0.x+sy*cw).toFixed(1)},${(q0.y-sx*cw).toFixed(1)}" fill="none" stroke="#ffd24a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+      const bx0=q0.x-sx*cs, by0=q0.y-sy*cs;
+      b+=`<polyline points="${(bx0-sy*cw).toFixed(1)},${(by0+sx*cw).toFixed(1)} ${q0.x.toFixed(1)},${q0.y.toFixed(1)} ${(bx0+sy*cw).toFixed(1)},${(by0-sx*cw).toFixed(1)}" fill="none" stroke="#ffd24a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
       const g1=proj(line[line.length-2][0],line[line.length-2][1]), g0=proj(line[line.length-1][0],line[line.length-1][1]);
       const gl=Math.hypot(g0.x-g1.x,g0.y-g1.y)||1, gx=(g0.x-g1.x)/gl, gy=(g0.y-g1.y)/gl, gs=7, gw=3.5;
       const bx=g0.x-gx*gs, by=g0.y-gy*gs;
