@@ -97,7 +97,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Header ── */
 .header{padding:18px 0 12px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
-.app-title{font-size:26px;font-weight:800;color:var(--tx);line-height:1;letter-spacing:-0.5px;}
+.header>div:first-child{min-width:0;flex:1;}
+.app-title{font-size:26px;font-weight:800;color:var(--tx);line-height:1.05;letter-spacing:-0.5px;overflow-wrap:break-word;}
 .app-title span{color:var(--gg);}
 .app-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
@@ -121,7 +122,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:4;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
-.wind-compass{position:absolute;top:7px;right:7px;width:58px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.wind-compass{position:absolute;top:7px;right:7px;width:66px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .wind-compass:active{transform:scale(0.94);}
 .wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2;}
 #wc-rotor{transition:transform 0.18s linear;}
@@ -291,7 +292,7 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 /* ── Drive-time chip — the #1 decision number, big in the right column ── */
 .ccard-right{display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0;min-width:0;}
 .drive-chip{background:var(--bg3);border:1px solid rgba(90,171,53,0.3);border-radius:11px;padding:8px 11px 7px;text-align:center;min-width:66px;}
-.drive-chip .drive-num{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--gg);line-height:1;display:block;}
+.drive-chip .drive-num{font-family:var(--mono);font-size:20px;font-weight:500;color:var(--gg);line-height:1;display:block;}
 .drive-chip .drive-unit{font-family:var(--mono);font-size:8px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.07em;display:block;margin-top:3px;}
 .drive-chip.dim{border-color:var(--bdr);}
 .drive-chip.dim .drive-num{color:var(--tx3);}
@@ -318,7 +319,7 @@ body.night .drive-chip .drive-num{color:#aec6f0;}
 .ccard-meta{font-family:var(--mono);font-size:11px;color:var(--tx3);}
 .ccard-times{font-family:var(--mono);font-size:12px;display:flex;gap:6px 12px;flex-wrap:wrap;align-items:baseline;}
 .t-leave{color:var(--gg);font-weight:500;} .t-arrive{color:var(--tx2);}
-.t-lastcall{color:var(--tx3);font-size:10.5px;} .t-need{color:var(--tx3);}
+.t-lastcall{color:#d9921a;font-size:10.5px;} .t-need{color:var(--tx3);}
 .badges{display:flex;gap:5px;flex-wrap:wrap;margin-top:auto;padding-top:3px;}
 .badge{font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:5px;font-weight:500;}
 .b18{background:rgba(90,171,53,0.15);color:var(--gg);border:1px solid rgba(90,171,53,0.25);}
@@ -484,11 +485,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div id="daybar-day">
       <div class="day-scene" id="day-scene">
         <div class="day-glow" id="day-glow" aria-hidden="true"></div>
-        <svg class="wind-compass" id="wind-compass" viewBox="0 0 60 72" onclick="toggleWindCompass()" role="button" tabindex="0" aria-label="Wind direction. Tap to align the compass to your phone heading."><circle cx="30" cy="30" r="22.5" fill="rgba(8,18,30,0.5)" stroke="rgba(0,0,0,0.35)" stroke-width="3.5"/><circle cx="30" cy="30" r="22.5" fill="none" stroke="#bcd9ec" stroke-width="1.4"/><g id="wc-rotor"><g font-family="var(--mono)" font-size="7.5" font-weight="bold" text-anchor="middle"><text x="30" y="13" fill="#ff8a8a">N</text><text x="30" y="52" fill="rgba(255,255,255,0.85)">S</text><text x="50" y="32.8" fill="rgba(255,255,255,0.85)">E</text><text x="10" y="32.8" fill="rgba(255,255,255,0.85)">W</text></g><g id="wc-arrow"><path d="M30,13 L35,31 L30,26.5 L25,31 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="0.4"/></g></g><text id="wc-spd" x="30" y="39.5" text-anchor="middle" font-family="var(--mono)" font-size="10.5" font-weight="bold" fill="#fff">--</text><rect id="wc-frombg" x="6" y="60" width="48" height="12" rx="6" fill="rgba(8,18,30,0.82)" stroke="rgba(188,217,236,0.4)" stroke-width="0.5"/><text id="wc-from" x="30" y="68.5" text-anchor="middle" font-family="var(--mono)" font-size="8.5" font-weight="bold" fill="#eaf4ff">from --</text></svg>
+        <svg class="wind-compass" id="wind-compass" viewBox="0 0 78 78" onclick="toggleWindCompass()" role="button" tabindex="0" aria-label="Wind direction. Tap to align the compass to your phone heading."><circle cx="39" cy="28" r="24" fill="rgba(8,18,30,0.5)" stroke="rgba(0,0,0,0.35)" stroke-width="3.5"/><circle cx="39" cy="28" r="24" fill="none" stroke="#bcd9ec" stroke-width="1.5"/><g id="wc-rotor"><g font-family="var(--mono)" font-size="8" font-weight="bold" text-anchor="middle"><text x="39" y="11" fill="#ff8a8a">N</text><text x="39" y="51.5" fill="rgba(255,255,255,0.85)">S</text><text x="60" y="31" fill="rgba(255,255,255,0.85)">E</text><text x="18" y="31" fill="rgba(255,255,255,0.85)">W</text></g><g id="wc-arrow"><path d="M39,9 L46.5,30 L39,24 L31.5,30 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="0.5"/></g></g><rect id="wc-frombg" x="4" y="62" width="70" height="14.5" rx="7.25" fill="rgba(8,18,30,0.88)" stroke="rgba(188,217,236,0.5)" stroke-width="0.6"/><text id="wc-from" x="39" y="72.5" text-anchor="middle" font-family="var(--mono)" font-size="9.5" font-weight="bold" fill="#eaf4ff">-- km/h</text></svg>
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
-        <div class="day-sun" id="day-sun" aria-hidden="true">☀️</div>
+        <div class="day-sun" id="day-sun" aria-hidden="true"><svg viewBox="0 0 44 44" width="34" height="34" style="display:block"><circle cx="22" cy="22" r="8.5" fill="#ffd84a"/><g stroke="#ffd84a" stroke-width="2.6" stroke-linecap="round"><line x1="22" y1="2.5" x2="22" y2="8"/><line x1="22" y1="36" x2="22" y2="41.5"/><line x1="2.5" y1="22" x2="8" y2="22"/><line x1="36" y1="22" x2="41.5" y2="22"/><line x1="8" y1="8" x2="11.9" y2="11.9"/><line x1="32.1" y1="32.1" x2="36" y2="36"/><line x1="8" y1="36" x2="11.9" y2="32.1"/><line x1="32.1" y1="11.9" x2="36" y2="8"/></g></svg></div>
         <!-- Floating Now label tracks the sun horizontally -->
         <div class="day-now-float" id="day-now-float">
           <span class="day-now-time" id="db-now">--:--</span>
@@ -497,7 +498,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="day-ground">
           <div class="day-marker day-marker-left">
             <div class="day-marker-row">
-              <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true">🌅</span>
+              <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="17" height="12" style="display:block"><g stroke="#ffd24a" stroke-width="1.3" stroke-linecap="round"><line x1="13" y1="2" x2="13" y2="4.5"/><line x1="5" y1="5" x2="6.8" y2="6.8"/><line x1="21" y1="5" x2="19.2" y2="6.8"/></g><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#ffd24a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/></svg></span>
               <span class="day-marker-time" id="db-sunrise">--:--</span>
             </div>
             <span class="day-marker-cap">sunrise</span>
@@ -505,7 +506,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
           <div class="day-marker day-marker-right">
             <div class="day-marker-row">
               <span class="day-marker-time" id="db-sunset">--:--</span>
-              <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true">🌇</span>
+              <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="17" height="12" style="display:block"><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#e0843a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/><line x1="13" y1="5" x2="13" y2="2.5" stroke="#e0843a" stroke-width="1.3" stroke-linecap="round"/></svg></span>
             </div>
             <span class="day-marker-cap">last light</span>
           </div>
@@ -975,7 +976,6 @@ function buildDayScene(now){
 
   // The sun is always the sun — weather lives in the overlay. Under cloud or
   // rain it dims rather than morphing into a glowing rain-cloud emoji.
-  sun.textContent='☀️';
   sun.style.opacity = sunOut?'1' : partlyNow?'0.75' : '0.35';
   sun.style.filter = (sunOut||partlyNow) ? 'drop-shadow(0 0 14px rgba(255,220,120,0.9))' : 'grayscale(0.4)';
 
@@ -1877,14 +1877,14 @@ function _dayOnOrient(e){
   h=((h%360)+360)%360;
   if(_dayHead==null)_dayHead=h; else{ const diff=((h-_dayHead+540)%360)-180; _dayHead=((_dayHead+diff*0.25)%360+360)%360; }
   const rotor=document.getElementById('wc-rotor');
-  if(rotor) rotor.setAttribute('transform','rotate('+(-_dayHead).toFixed(1)+' 30 30)');
+  if(rotor) rotor.setAttribute('transform','rotate('+(-_dayHead).toFixed(1)+' 39 28)');
 }
 async function toggleWindCompass(){
   const svg=document.getElementById('wind-compass'), rotor=document.getElementById('wc-rotor');
   if(_dayCompassOn){
     if(_dayOrientH) window.removeEventListener(_dayOrientEv,_dayOrientH,true);
     _dayCompassOn=false;_dayOrientH=null;_dayHead=null;
-    if(rotor) rotor.setAttribute('transform','rotate(0 30 30)');
+    if(rotor) rotor.setAttribute('transform','rotate(0 39 28)');
     if(svg) svg.classList.remove('wc-active');
     return;
   }
@@ -2005,8 +2005,8 @@ function render(){
     window._uiNight=renderNight;
     const titleEl=document.getElementById('app-title');
     const rc=skyRegionCode(glat,glng);
-    if(titleEl) titleEl.innerHTML = renderNight?`${rc} <span>Night</span> Sky`:'SEQ <span>Golf</span> Finder';
-    document.title = renderNight?`${rc} Night Sky`:'Golf Finder SEQ';
+    if(titleEl) titleEl.innerHTML = renderNight?`${rc} <span>Night</span> Sky`:`${rc} <span>Golf</span> Finder`;
+    document.title = renderNight?`${rc} Night Sky`:`${rc} Golf Finder`;
     const tm=document.querySelector('meta[name="theme-color"]');
     if(tm) tm.content = renderNight?'#0a0e1f':'#0f1a0f';
     // (favicon stays the were-fox in both modes — the icon embodies the shift)
@@ -2068,15 +2068,13 @@ function render(){
       const fch=hourlyAt(wz,window._fcOffset||0,now);
       const dir=(fch&&fch.dir!=null)?fch.dir:((wxd&&wxd.windDir!=null)?wxd.windDir:null);
       const spd=(fch&&fch.wind!=null)?fch.wind:(wxd?wxd.wind:null);
-      const arrow=document.getElementById('wc-arrow'), spdEl=document.getElementById('wc-spd'), fromEl=document.getElementById('wc-from');
+      const arrow=document.getElementById('wc-arrow'), fromEl=document.getElementById('wc-from');
       if(dir!=null){
-        arrow.setAttribute('transform','rotate('+((dir+180)%360)+' 30 30)');
+        arrow.setAttribute('transform','rotate('+((dir+180)%360)+' 39 28)');
         arrow.style.opacity='1';
-        if(spdEl) spdEl.textContent=(spd!=null?spd:'--');
-        if(fromEl) fromEl.textContent='from '+cardinal8(dir);
+        if(fromEl) fromEl.textContent=cardinal8(dir)+(spd!=null?' '+spd+' km/h':'');
       } else {
         arrow.style.opacity='0.25';
-        if(spdEl) spdEl.textContent='--';
         if(fromEl) fromEl.textContent='no wind';
       }
     }
@@ -2158,7 +2156,7 @@ function render(){
     lbIcon.textContent=until<30?'🏃':'🚗';
     lbVal.textContent=minsToStr(lv);
     const rel=until>=60?`${Math.floor(until/60)}h ${until%60}m`:`${until}m`;
-    lbSub.textContent=`in ${rel} · ${nearest.suburb} · ${best}`;
+    lbSub.textContent=`in ${rel} · ${nearest.suburb} · ${best} holes`;
   } else if(nearest){
     lbCard.className='stat stat-leaveby dim';
     lbLabel.textContent='Last call';
@@ -2516,7 +2514,6 @@ async function init(){
   sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
   lastLightMins = result.lastLight ?? (sunsetMins + TWILIGHT_EST);
   firstLightMins= result.firstLight ?? (sunriseMins - TWILIGHT_EST);
-  document.getElementById('loc-status').textContent += result.live?' · last light live':' · last light est.';
   document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
   icon.className='';
