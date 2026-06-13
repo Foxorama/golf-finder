@@ -2,7 +2,8 @@ name: Build course maps
 
 # Regenerates course-maps.json from OpenStreetMap (Overpass) for every course
 # in index.html. Run manually after adding/moving courses, or monthly to pick
-# up fresh OSM edits.
+# up fresh OSM edits. Direct pushes to main are blocked by branch protection,
+# so the result is delivered as a pull request (and an artifact).
 
 on:
   workflow_dispatch:
@@ -11,6 +12,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 concurrency:
   group: course-maps
@@ -29,14 +31,29 @@ jobs:
       - name: Generate course-maps.json
         run: node scripts/build-course-maps.mjs
 
-      - name: Commit if changed
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: course-maps
+          path: course-maps.json
+
+      - name: Open PR if changed
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           if git diff --quiet -- course-maps.json; then
             echo "No changes to course-maps.json"
-          else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add course-maps.json
-            git commit -m "Update course-maps.json from OpenStreetMap"
-            git push
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B bot/course-maps
+          git add course-maps.json
+          git commit -m "Update course-maps.json from OpenStreetMap"
+          git push -f origin bot/course-maps
+          if [ -z "$(gh pr list --head bot/course-maps --state open --json number -q '.[0].number')" ]; then
+            gh pr create --base main --head bot/course-maps \
+              --title "Update course-maps.json from OpenStreetMap" \
+              --body "Automated OSM course-map refresh. Data © OpenStreetMap contributors (ODbL)."
           fi

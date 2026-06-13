@@ -11,8 +11,15 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const OVERPASS = 'https://overpass-api.de/api/interpreter';
-const SLEEP_MS = 1600; // be polite to Overpass
+// Multiple Overpass endpoints — the main instance often blocks datacenter IPs
+// (CI runners) with 406/429, so we fail over to mirrors that tolerate them.
+const ENDPOINTS = [
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+];
+const UA = 'golf-finder-map-baker/1.0 (+https://github.com/Foxorama/golf-finder)';
+const SLEEP_MS = 2500; // be polite to Overpass
 
 const slugify = (s) =>
   s.toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
@@ -31,9 +38,32 @@ function readCourses() {
 }
 
 async function overpass(q) {
-  const r = await fetch(OVERPASS, { method: 'POST', body: q });
-  if (!r.ok) throw new Error('overpass ' + r.status);
-  return (await r.json()).elements || [];
+  let lastErr;
+  for (let attempt = 0; attempt < ENDPOINTS.length * 2; attempt++) {
+    const url = ENDPOINTS[attempt % ENDPOINTS.length];
+    try {
+      const r = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+          'User-Agent': UA,
+        },
+        body: 'data=' + encodeURIComponent(q),
+      });
+      if (r.status === 406 || r.status === 429 || r.status === 504 || r.status >= 500) {
+        lastErr = new Error(`overpass ${r.status} @ ${url}`);
+        await sleep(5000 + attempt * 3000);
+        continue;
+      }
+      if (!r.ok) throw new Error(`overpass ${r.status} @ ${url}`);
+      return (await r.json()).elements || [];
+    } catch (e) {
+      lastErr = e;
+      await sleep(4000 + attempt * 2000);
+    }
+  }
+  throw lastErr || new Error('overpass failed');
 }
 
 async function fetchCourseOSM(lat, lng) {
@@ -97,23 +127,44 @@ function osmToData(els) {
 async function main() {
   const courses = readCourses();
   console.log(`Found ${courses.length} courses in index.html`);
+  // Keep any previously-baked geometry so a transient fetch failure this run
+  // doesn't wipe a course that was fine last time.
+  let existing = {};
+  try {
+    existing = JSON.parse(readFileSync(join(ROOT, 'course-maps.json'), 'utf8'));
+  } catch {
+    /* first run / placeholder */
+  }
+  const keepPrev = (slug) => (existing[slug] && existing[slug].hasGeom ? existing[slug] : { hasGeom: false });
   const result = {};
+  let fetched = 0;
   for (const c of courses) {
     const slug = slugify(c.name);
     if (result[slug]) continue; // de-dupe
     try {
       const data = await fetchCourseOSM(c.lat, c.lng);
-      result[slug] = data;
-      const n = data.hasGeom ? `${data.features.length} features, ${data.holes.length} holes` : 'no geometry';
-      console.log(`  ${data.hasGeom ? 'OK ' : '-- '} ${c.name} (${slug}): ${n}`);
+      if (data.hasGeom) {
+        result[slug] = data;
+        fetched++;
+        console.log(`  OK ${c.name} (${slug}): ${data.features.length} features, ${data.holes.length} holes`);
+      } else {
+        result[slug] = keepPrev(slug);
+        console.log(`  -- ${c.name} (${slug}): no geometry${result[slug].hasGeom ? ' (kept previous)' : ''}`);
+      }
     } catch (err) {
-      result[slug] = { hasGeom: false };
-      console.log(`  !! ${c.name} (${slug}): ${err.message}`);
+      result[slug] = keepPrev(slug);
+      console.log(`  !! ${c.name} (${slug}): ${err.message}${result[slug].hasGeom ? ' (kept previous)' : ''}`);
     }
     await sleep(SLEEP_MS);
   }
   const have = Object.values(result).filter((v) => v.hasGeom).length;
-  console.log(`\nGeometry for ${have}/${Object.keys(result).length} courses.`);
+  console.log(`\nFreshly fetched ${fetched}; geometry for ${have}/${Object.keys(result).length} courses.`);
+  // Never overwrite with an empty manifest (e.g. Overpass blocked the runner) —
+  // that would grey out every map button.
+  if (have === 0) {
+    console.error('No geometry fetched — refusing to overwrite course-maps.json.');
+    process.exit(1);
+  }
   writeFileSync(join(ROOT, 'course-maps.json'), JSON.stringify(result) + '\n');
   console.log('Wrote course-maps.json');
 }
