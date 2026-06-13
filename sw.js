@@ -10,7 +10,7 @@
  *
  * Bump CACHE when index.html changes so clients pick up the new version.
  */
-const CACHE = 'golf-finder-v18';
+const CACHE = 'golf-finder-v19';
 const SHELL = ['./', './index.html'];
 
 self.addEventListener('install', (e) => {
@@ -54,12 +54,21 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cross-origin live data (APIs, fonts): network-first, cache as a fallback so
-  // a brief drop still renders fonts / the last successful API payload.
+  // Live data APIs (weather, sunset, space-weather): always go to the network,
+  // never cache. Caching a forecast — or worse, a 429 error — would serve
+  // stale/broken data later. A failed live call just means that datum is
+  // unavailable; the app already handles ok:false gracefully.
+  const LIVE_HOSTS = ['api.open-meteo.com', 'api.sunrisesunset.io', 'services.swpc.noaa.gov', 'api.wheretheiss.at'];
+  if (LIVE_HOSTS.some((h) => url.hostname.endsWith(h))) {
+    e.respondWith(fetch(req));
+    return;
+  }
+
+  // Cross-origin static assets (fonts): network-first, cache only real successes
   e.respondWith(
     fetch(req)
       .then((res) => {
-        if (res && (res.ok || res.type === 'opaque')) {
+        if (res && res.ok) {
           const copy = res.clone();
           caches.open(CACHE).then((c) => c.put(req, copy));
         }
