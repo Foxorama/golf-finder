@@ -738,6 +738,28 @@ function cloudParams(pct){
   const c=Math.min(100,pct);
   return{count:3, opacity:+Math.max(0.12,Math.min(1,c/100)).toFixed(2), size:Math.round(20+c/100*72)};
 }
+// Nearest curated Australian region code for the night-sky title (GPS-based).
+// Codes are informal; nearest-centroid picks the region for any AU location.
+const SKY_REGIONS=[
+ ['FNQ',-16.92,145.77],['NQ',-19.26,146.82],['NWQ',-20.73,139.49],['MKY',-21.14,149.19],
+ ['CQ',-23.38,150.51],['WBB',-24.87,152.35],['DD',-27.56,151.95],['SEQ',-27.47,153.03],
+ ['NRV',-28.81,153.28],['NE',-30.51,151.67],['MNC',-31.43,152.91],['HUN',-32.93,151.78],
+ ['CWN',-32.25,148.60],['FWN',-31.95,141.45],['CC',-33.43,151.34],['SYD',-33.87,151.21],
+ ['ILL',-34.42,150.89],['CBR',-35.28,149.13],['SCN',-35.70,150.18],['RIV',-35.11,147.37],
+ ['MEL',-37.81,144.96],['GEE',-38.15,144.36],['BAL',-37.56,143.85],['BEN',-36.76,144.28],
+ ['GIP',-38.20,146.54],['NEV',-36.12,146.89],['WIM',-36.71,142.20],
+ ['HOB',-42.88,147.33],['LAU',-41.43,147.14],['NWT',-41.05,145.91],
+ ['ADL',-34.93,138.60],['SES',-37.83,140.78],['EYP',-34.73,135.86],['FNS',-29.01,134.75],['RVS',-34.18,140.74],
+ ['PER',-31.95,115.86],['SWW',-33.64,115.35],['GSW',-35.02,117.88],['GLD',-30.75,121.47],
+ ['MWA',-28.77,114.61],['PIL',-20.74,116.85],['KIM',-17.96,122.24],['GAS',-24.88,113.66],
+ ['DRW',-12.46,130.84],['KAT',-14.46,132.26],['ASP',-23.70,133.88],['TNC',-19.65,134.19]
+];
+function skyRegionCode(lat,lng){
+  if(lat==null||lng==null) return 'SEQ';
+  let best='SEQ',bd=Infinity;
+  for(const z of SKY_REGIONS){ const d=haversineKm(lat,lng,z[1],z[2]); if(d<bd){ bd=d; best=z[0]; } }
+  return best;
+}
 // Build the night scene: stars, accurate moon phase, weather overlay
 let _nightBuilt=false;
 function buildNightScene(){
@@ -1856,8 +1878,9 @@ function render(){
   if(window._uiNight!==renderNight){
     window._uiNight=renderNight;
     const titleEl=document.getElementById('app-title');
-    if(titleEl) titleEl.innerHTML = renderNight?'SEQ <span>Night</span> Sky':'SEQ <span>Golf</span> Finder';
-    document.title = renderNight?'SEQ Night Sky':'Golf Finder SEQ';
+    const rc=skyRegionCode(glat,glng);
+    if(titleEl) titleEl.innerHTML = renderNight?`${rc} <span>Night</span> Sky`:'SEQ <span>Golf</span> Finder';
+    document.title = renderNight?`${rc} Night Sky`:'Golf Finder SEQ';
     const tm=document.querySelector('meta[name="theme-color"]');
     if(tm) tm.content = renderNight?'#0a0e1f':'#0f1a0f';
     // (favicon stays the were-fox in both modes — the icon embodies the shift)
