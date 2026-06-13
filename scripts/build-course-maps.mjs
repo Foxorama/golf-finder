@@ -42,12 +42,12 @@ async function fetchCourseOSM(lat, lng) {
   // radius (for stored coords that sit just outside their course).
   const isIn =
     `[out:json][timeout:60];is_in(${lat},${lng})->.a;area.a["leisure"="golf_course"]->.g;` +
-    `(way["golf"](area.g);relation["golf"](area.g);way(pivot.g););out geom;`;
+    `(way["golf"](area.g);relation["golf"](area.g);node["golf"](area.g);way(pivot.g););out geom;`;
   let data = osmToData(await overpass(isIn));
   if (data.hasGeom) return data;
   const around =
     `[out:json][timeout:60];(way["leisure"="golf_course"](around:1000,${lat},${lng});relation["leisure"="golf_course"](around:1000,${lat},${lng});)->.c;` +
-    `.c map_to_area->.a;(way["golf"](area.a);relation["golf"](area.a);.c;);out geom;`;
+    `.c map_to_area->.a;(way["golf"](area.a);relation["golf"](area.a);node["golf"](area.a);.c;);out geom;`;
   return osmToData(await overpass(around));
 }
 
@@ -69,6 +69,10 @@ function osmToData(els) {
     const g = e.tags && e.tags.golf;
     const lt = e.tags && e.tags.leisure;
     const geo = e.geometry;
+    if (e.type === 'node') {
+      if (g && (g === 'bunker' || g === 'tee')) features.push({ t: g, pts: [[+e.lat.toFixed(6), +e.lon.toFixed(6)]] });
+      continue;
+    }
     if (!geo || !geo.length) continue;
     const pts = geo.map((p) => [+p.lat.toFixed(6), +p.lon.toFixed(6)]);
     if (g === 'hole') {

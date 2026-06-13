@@ -2385,10 +2385,10 @@ async function fetchCourseOSM(lat,lng){
   // Primary: features of the golf_course polygon that CONTAINS the point —
   // exact, never grabs a neighbouring course. Fallback: nearest polygon by
   // radius (for stored coords that sit just outside their course).
-  const isIn=`[out:json][timeout:40];is_in(${lat},${lng})->.a;area.a["leisure"="golf_course"]->.g;(way["golf"](area.g);relation["golf"](area.g);way(pivot.g););out geom;`;
+  const isIn=`[out:json][timeout:40];is_in(${lat},${lng})->.a;area.a["leisure"="golf_course"]->.g;(way["golf"](area.g);relation["golf"](area.g);node["golf"](area.g);way(pivot.g););out geom;`;
   let data=osmToData(await overpass(isIn));
   if(data.hasGeom) return data;
-  const around=`[out:json][timeout:40];(way["leisure"="golf_course"](around:1000,${lat},${lng});relation["leisure"="golf_course"](around:1000,${lat},${lng});)->.c;.c map_to_area->.a;(way["golf"](area.a);relation["golf"](area.a);.c;);out geom;`;
+  const around=`[out:json][timeout:40];(way["leisure"="golf_course"](around:1000,${lat},${lng});relation["leisure"="golf_course"](around:1000,${lat},${lng});)->.c;.c map_to_area->.a;(way["golf"](area.a);relation["golf"](area.a);node["golf"](area.a);.c;);out geom;`;
   return osmToData(await overpass(around));
 }
 
@@ -2400,6 +2400,7 @@ function osmToData(els){
   const acc=(pts)=>{for(const p of pts){if(p[0]<latMin)latMin=p[0];if(p[0]>latMax)latMax=p[0];if(p[1]<lngMin)lngMin=p[1];if(p[1]>lngMax)lngMax=p[1];}};
   for(const e of els){
     const g=e.tags&&e.tags.golf, lt=e.tags&&e.tags.leisure, geo=e.geometry;
+    if(e.type==='node'){ if(g&&(g==='bunker'||g==='tee')) features.push({t:g,pts:[[+e.lat.toFixed(6),+e.lon.toFixed(6)]]}); continue; }
     if(!geo||!geo.length) continue;
     const pts=geo.map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]);
     if(g==='hole'){ holes.push({ref:e.tags.ref||'',par:e.tags.par||'',pts}); acc(pts); }
@@ -2425,6 +2426,15 @@ function projectGeo(bbox,W,H,pad){
 }
 function ptsToPath(pts,proj){ let d=''; for(let i=0;i<pts.length;i++){const p=proj(pts[i][0],pts[i][1]); d+=(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1);} return d; }
 
+// midpoint along a polyline by arc length (lands the hole number in the fairway)
+function polyMid(pts){
+  if(pts.length<2) return pts[0];
+  const seg=[]; let total=0;
+  for(let i=1;i<pts.length;i++){ const d=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]); seg.push(d); total+=d; }
+  let half=total/2;
+  for(let i=1;i<pts.length;i++){ if(half<=seg[i-1]){ const t=seg[i-1]?half/seg[i-1]:0; return [pts[i-1][0]+(pts[i][0]-pts[i-1][0])*t, pts[i-1][1]+(pts[i][1]-pts[i-1][1])*t]; } half-=seg[i-1]; }
+  return pts[pts.length-1];
+}
 // intermediate data -> SVG string (full detail)
 function renderCourseMapSVG(data){
   const W=1000, pad=24;
@@ -2438,12 +2448,13 @@ function renderCourseMapSVG(data){
   let b=`<rect width="${W}" height="${H}" fill="#16300f"/>`;
   for(const layer of order) for(const f of data.features){ if(f.t!==layer||f.pts.length<2) continue;
     b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="${fill[layer]}" stroke="#16300f" stroke-width="0.5" opacity="${layer==='rough'?0.92:1}"/>`; }
+  for(const f of data.features){ if(f.t==='bunker'&&f.pts.length===1){ const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#ddc89a"/>`; } }
   for(const f of data.features){ if(f.t!=='cartpath'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}" fill="none" stroke="#e8e2d2" stroke-width="1.4" opacity="0.4"/>`; }
   for(const f of data.features){ if(f.t!=='green'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="#86d84f" stroke="#2d5a1b" stroke-width="0.6"/>`; }
   for(const f of data.features){ if(f.t!=='tee') continue; const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#7ed44f"/>`; }
   for(const h of data.holes){
     if(h.pts.length>=2) b+=`<path d="${ptsToPath(h.pts,proj)}" fill="none" stroke="#fff" stroke-width="1" opacity="0.3" stroke-dasharray="4 4"/>`;
-    const e=h.pts[h.pts.length-1]||h.pts[0]; if(!e) continue; const p=proj(e[0],e[1]);
+    const e=polyMid(h.pts); if(!e) continue; const p=proj(e[0],e[1]);
     b+=`<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="13" fill="rgba(20,40,15,0.72)" stroke="#fff" stroke-width="1.5"/><text x="${p.x.toFixed(1)}" y="${(p.y+5).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="15" fill="#fff">${h.ref}</text></g>`;
     if(h.par) b+=`<text x="${p.x.toFixed(1)}" y="${(p.y+26).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" fill="#cfe8b0">par ${h.par}</text>`;
   }
