@@ -156,7 +156,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   100%{transform:translate(420px,-3px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
-.day-ground{position:absolute;left:0;right:0;bottom:0;height:42px;z-index:5;background:linear-gradient(180deg,transparent,rgba(10,18,10,0.35));display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 8px;}
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:54px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.18) 45%,rgba(8,14,8,0.55) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 9px;}
 .day-marker{display:flex;flex-direction:column;gap:1px;}
 .day-marker-left{align-items:flex-start;} .day-marker-right{align-items:flex-end;}
 .day-marker-row{display:flex;align-items:center;gap:5px;}
@@ -165,16 +165,19 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-marker-time{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
 /* Floating Now tracker — sits just above the horizon */
 .day-now-float{position:absolute;transform:translate(-50%,0);z-index:6;transition:left 1s ease,top 1s ease;pointer-events:none;}
-.day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(20,30,40,0.72);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,0.4);border:1px solid rgba(255,255,255,0.12);}
+.day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(18,26,34,0.5);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(2px);}
 /* Horizon line = progress bar, pinned to the very bottom of the sky */
 #daybar-day{margin:-2px;}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
 .day-tick{position:absolute;bottom:0;width:2px;height:10px;background:rgba(255,255,255,0.7);z-index:7;transform:translateX(-50%);border-radius:1px;pointer-events:none;}
-.day-lastcall{display:flex;justify-content:center;flex-wrap:wrap;gap:4px 14px;font-family:var(--mono);font-size:10px;color:var(--tx3);padding-top:9px;}
+.day-lastcall{position:relative;height:22px;font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:3px;}
+.day-lastcall .lc-cap{position:absolute;left:2px;top:5px;opacity:0.6;}
+.day-lastcall .lc-seg{position:absolute;top:5px;transform:translateX(-50%);white-space:nowrap;}
+#loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .day-lastcall b{color:var(--tx2);font-weight:500;}
-.day-lastcall .lc-past{opacity:0.45;text-decoration:line-through;}
+.day-lastcall .lc-past{opacity:0.4;text-decoration:line-through;}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
@@ -254,7 +257,7 @@ body.night #stat-daylight-card #s-daylight-hrs{color:#aec6f0;}
 
 /* Last Call card — green by default, escalates as the departure window closes */
 .stat-leaveby{cursor:default;border-color:rgba(90,171,53,0.35);background:rgba(90,171,53,0.05);}
-.stat-leaveby #s-leaveby{color:var(--gg);font-size:22px;white-space:nowrap;}
+.stat-leaveby #s-leaveby{color:#d9921a;font-size:22px;white-space:nowrap;}
 .stat-leaveby.lb-warn{border-color:rgba(245,166,35,0.4);background:rgba(245,166,35,0.05);}
 .stat-leaveby.lb-warn #s-leaveby{color:var(--al);}
 .stat-leaveby.lb-danger{border-color:rgba(231,76,60,0.4);background:rgba(231,76,60,0.05);}
@@ -430,7 +433,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <div class="app-title" id="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
       <div class="app-meta" id="loc-status"></div>
-      <div class="app-meta" id="drive-origin">drives est. from Toowong + typical traffic</div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
@@ -2037,24 +2039,21 @@ function render(){
   // card must never disagree (percent-of-day did on long summer days)
   fill.style.background = daylight<120?'var(--rl)':daylight<240?'var(--al)':'var(--gb)';
 
-  // Last tee-off deadlines — the decision line under the scene, with matching
-  // ticks on the horizon. Tee-off time = last light minus the round itself.
-  const t18=lastLightMins-240, t9=lastLightMins-120, tP3=lastLightMins-60;
+  // Last tee-off deadlines — 18h/9h aligned under their matching horizon ticks.
+  const t18=lastLightMins-240, t9=lastLightMins-120;
+  const tickPos=t=>Math.min(95,Math.max(5,((t-sunriseMins)/totalDay)*100))+'%';
+  const tick18=document.getElementById('tick-18'), tick9=document.getElementById('tick-9');
+  if(tick18){ tick18.style.display=(!renderNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
+  if(tick9){  tick9.style.display =(!renderNight&&t9>now) ?'block':'none'; tick9.style.left =tickPos(t9); }
   const lcEl=document.getElementById('day-lastcall');
   if(lcEl){
     if(renderNight){ lcEl.style.display='none'; }
     else{
-      lcEl.style.display='flex';
-      const seg=(label,t)=> t>=now
-        ? `<span>${label} <b>${minsToStr(t)}</b></span>`
-        : `<span class="lc-past">${label} ${minsToStr(t)}</span>`;
-      lcEl.innerHTML=`<span>last tee-off</span>${seg('18h',t18)}${seg('9h',t9)}${seg('par-3',tP3)}`;
+      lcEl.style.display='block';
+      const seg=(label,t)=> `<span class="lc-seg${t<now?' lc-past':''}" style="left:${tickPos(t)};">${label} ${t<now?minsToStr(t):'<b>'+minsToStr(t)+'</b>'}</span>`;
+      lcEl.innerHTML=`<span class="lc-cap">last tee-off</span>${seg('18h',t18)}${seg('9h',t9)}`;
     }
   }
-  const tickPos=t=>Math.min(99,Math.max(1,((t-sunriseMins)/totalDay)*100))+'%';
-  const tick18=document.getElementById('tick-18'), tick9=document.getElementById('tick-9');
-  if(tick18){ tick18.style.display=(!renderNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
-  if(tick9){  tick9.style.display =(!renderNight&&t9>now) ?'block':'none'; tick9.style.left =tickPos(t9); }
 
   // Build the day sky scene (sky gradient, arcing sun, weather)
   if(!renderNight) buildDayScene(now);
@@ -2384,7 +2383,7 @@ function courseCard(c,daylight,dimmed){
     <div class="ccard-right">
       <div class="drive-chip${dimmed?' dim':''}${(!dimmed&&trafficFactor().k>=1.5)?' peak':''}" title="${roundTime} · free-flow ~${c.drive} min">
         <span class="drive-num">${driveMins(c)}</span>
-        <span class="drive-unit">${trafficFactor().k>=1.5?'min · peak hr':trafficFactor().k>=1.2?'min + traffic':'min drive'}</span>
+        <span class="drive-unit">${trafficFactor().k>=1.5?'min · peak · est':trafficFactor().k>=1.2?'min + traffic est':'min drive est'}</span>
       </div>
       <a class="visit-btn" href="${c.url}" target="_blank" aria-label="${ctaAria}">${cta}</a>
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:auto;">
