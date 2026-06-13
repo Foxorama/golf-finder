@@ -2457,17 +2457,12 @@ function renderCourseMapSVG(data){
   for(const f of data.features){ if(f.t!=='green'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="#86d84f" stroke="#2d5a1b" stroke-width="0.6"/>`; }
   for(const f of data.features){ if(f.t!=='tee') continue; const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#7ed44f"/>`; }
   const greenC=data.features.filter(f=>f.t==='green'&&f.pts.length).map(f=>_centroid(f.pts));
-  const teeC=data.features.filter(f=>f.t==='tee'&&f.pts.length).map(f=>_centroid(f.pts));
   for(const h of data.holes){
     let line=h.pts;
     if(line.length>=2){
-      // orient tee->green (green end = endpoint nearest a green), then start at the furthest tee
+      // orient tee->green so the number lands consistently; draw the OSM line as-is
       const a=line[0], z=line[line.length-1];
-      if(_minDist(a,greenC)>=_minDist(z,greenC)) line=line.slice(); else line=line.slice().reverse();
-      const teeEnd=line[0], greenEnd=line[line.length-1];
-      let best=null,bestD=-1;
-      for(const t of teeC){ if(_distM(t,teeEnd)<70){ const d=_distM(t,greenEnd); if(d>bestD){ bestD=d; best=t; } } }
-      if(best) line=[best,...line];
+      if(_minDist(a,greenC)<_minDist(z,greenC)) line=line.slice().reverse();
       b+=`<path d="${ptsToPath(line,proj)}" fill="none" stroke="#ffd24a" stroke-width="1.3" opacity="0.92" stroke-linecap="round" stroke-linejoin="round"/>`;
     }
     const e=polyMid(line); if(!e) continue; const p=proj(e[0],e[1]);
