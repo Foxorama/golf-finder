@@ -738,6 +738,8 @@ function toggleForecast(){
   updateForecastBtn();
   render();
 }
+// Simplified SVG of the Night Y'orb (cosmic winged creature, nebula + pink eyes)
+const NIGHT_ORB_SVG='<svg width="22" height="14" viewBox="0 0 48 30" style="vertical-align:-3px;margin-right:5px;"><defs><radialGradient id="orbg" cx="50%" cy="62%" r="72%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M24,26 C12,25 3,16 6,9 C11,13 17,15 22,16 C19,10 21,5 24,3 C27,5 29,10 26,16 C33,14 40,12 43,8 C46,16 36,26 24,26 Z" fill="url(#orbg)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="20.5" cy="20" r="2.1" fill="#ff5a8a"/><circle cx="20.5" cy="20" r="0.9" fill="#ffd6e4"/><circle cx="27.5" cy="20" r="2.1" fill="#ff5a8a"/><circle cx="27.5" cy="20" r="0.9" fill="#ffd6e4"/><g fill="#fff"><circle cx="14" cy="12" r="0.7"/><circle cx="31" cy="9" r="0.7"/><circle cx="24" cy="13" r="0.6"/><circle cx="37" cy="13" r="0.55"/><circle cx="10" cy="14" r="0.5"/></g></svg>';
 // Label + colour: shows the mode you'll SEE (Night Y'orb=night, Fore'cast=day);
 // in forecast it's "Now", coloured for the mode you'll RETURN to.
 function updateForecastBtn(){
@@ -747,7 +749,7 @@ function updateForecastBtn(){
   let label, cls;
   if(forecastMode){ label='← Now'; cls = nightNow?'fc-night':'fc-day'; }
   else if(nightNow){ label="⛳ Fore'cast"; cls='fc-day'; }
-  else { label="🌙 Night Y'orb"; cls='fc-night'; }
+  else { label=NIGHT_ORB_SVG+"Night Y'orb"; cls='fc-night'; }
   btn.innerHTML=label;
   btn.className='hdr-btn '+cls;
 }
