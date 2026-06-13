@@ -171,6 +171,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
+#night-scene{margin-top:14px;}
 .night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:12px;}
 /* ── Sky panorama: real positions, az 0–360 left→right (N E S W N), alt 0–90 bottom→top ── */
 .night-sky{position:absolute;inset:0;z-index:2;pointer-events:none;}
@@ -730,13 +731,41 @@ function toggleForecast(){
   if(btn) btn.innerHTML=forecastMode?'← Now':'⛳ Fore\'cast';
   render();
 }
-// Maps cloud_cover % (0-100) to { count, opacity } for proportional cloud rendering
+// cloud_cover % -> cloud sprites. Fixed count; clouds scale as a fraction of the
+// scene height and opacity tracks cover, so a 72%-cloud sky shows big ~0.72 clouds.
 function cloudParams(pct){
-  if(pct==null||pct<5) return{count:0,opacity:0};
-  if(pct<20) return{count:1,                          opacity:+(0.30+pct*0.010).toFixed(2)};
-  if(pct<45) return{count:2+Math.round((pct-20)/12),  opacity:+(0.50+pct*0.008).toFixed(2)};
-  if(pct<75) return{count:4+Math.round((pct-45)/15),  opacity:+(0.70+pct*0.004).toFixed(2)};
-  return            {count:6,                          opacity:+Math.min(1,0.85+(pct-75)*0.006).toFixed(2)};
+  if(pct==null||pct<5) return{count:0,opacity:0,frac:0};
+  const c=Math.min(100,pct);
+  return{count:3, opacity:+Math.max(0.12,Math.min(1,c/100)).toFixed(2), frac:c/100};
+}
+// Cloud drawn as SVG so the outline stays hairline at any size (non-scaling
+// stroke) and the cloud is sized as a % of the scene, not a fixed font px.
+const CLOUD_PATH="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14a6 6 0 0 0 6 6h13a5 5 0 0 0 5-5c0-2.64-2.05-4.78-4.65-4.96z";
+function cloudSVG(cls,w,top,opacity,cd,delay,fill){
+  const h=Math.round(w*16/24);
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${CLOUD_PATH}" fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
+}
+// Nearest curated Australian region code for the night-sky title (GPS-based).
+// Codes are informal; nearest-centroid picks the region for any AU location.
+const SKY_REGIONS=[
+ ['FNQ',-16.92,145.77],['NQ',-19.26,146.82],['NWQ',-20.73,139.49],['MKY',-21.14,149.19],
+ ['CQ',-23.38,150.51],['WBB',-24.87,152.35],['DD',-27.56,151.95],['SEQ',-27.47,153.03],
+ ['NRV',-28.81,153.28],['NE',-30.51,151.67],['MNC',-31.43,152.91],['HUN',-32.93,151.78],
+ ['CWN',-32.25,148.60],['FWN',-31.95,141.45],['CC',-33.43,151.34],['SYD',-33.87,151.21],
+ ['ILL',-34.42,150.89],['CBR',-35.28,149.13],['SCN',-35.70,150.18],['RIV',-35.11,147.37],
+ ['MEL',-37.81,144.96],['GEE',-38.15,144.36],['BAL',-37.56,143.85],['BEN',-36.76,144.28],
+ ['GIP',-38.20,146.54],['NEV',-36.12,146.89],['WIM',-36.71,142.20],
+ ['HOB',-42.88,147.33],['LAU',-41.43,147.14],['NWT',-41.05,145.91],
+ ['ADL',-34.93,138.60],['SES',-37.83,140.78],['EYP',-34.73,135.86],['FNS',-29.01,134.75],['RVS',-34.18,140.74],
+ ['PER',-31.95,115.86],['SWW',-33.64,115.35],['GSW',-35.02,117.88],['GLD',-30.75,121.47],
+ ['MWA',-28.77,114.61],['PIL',-20.74,116.85],['KIM',-17.96,122.24],['GAS',-24.88,113.66],
+ ['DRW',-12.46,130.84],['KAT',-14.46,132.26],['ASP',-23.70,133.88],['TNC',-19.65,134.19]
+];
+function skyRegionCode(lat,lng){
+  if(lat==null||lng==null) return 'SEQ';
+  let best='SEQ',bd=Infinity;
+  for(const z of SKY_REGIONS){ const d=haversineKm(lat,lng,z[1],z[2]); if(d<bd){ bd=d; best=z[0]; } }
+  return best;
 }
 // Build the night scene: stars, accurate moon phase, weather overlay
 let _nightBuilt=false;
@@ -771,14 +800,19 @@ function buildNightScene(){
       const isStorm=lbl.includes('Storm')||lbl.includes('hail');
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
-      if(isStorm||isRain||isCloud){
-        // Cloud count/opacity from actual cloud_cover %
+      {
+        // Clouds: width = (scene height * cover * per-cloud), thin non-scaling outline
         const nm=new Date().getHours()*60+new Date().getMinutes();
         const ch=hourlyAt(skyWxZone(),0,nm);
-        const cp=cloudParams(ch?ch.cloud:80);
-        const nts=[8,28,14,4,22], nfs=[34,22,28,24,30], nds=[22,16,19,25,18], ndl=[0,-7,-3,-11,-5];
-        for(let ci=0;ci<Math.min(cp.count,3);ci++){
-          html+=`<span class="night-cloud" style="top:${nts[ci]}px;left:0;font-size:${nfs[ci]}px;opacity:${cp.opacity};--cd:${nds[ci]}s;animation-delay:${ndl[ci]}s;">☁️</span>`;
+        const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
+        const SKY_H=182, bands=[[0.08,0.32],[0.38,0.60],[0.64,0.86]], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line (4px buffer)
+        for(let ci=0;ci<cp.count;ci++){
+          const w=Math.max(16,Math.round(SKY_H*cp.frac*nmul[ci]*1.5));
+          const chh=Math.round(w*16/24);
+          const cfr=bands[ci][0]+Math.random()*(bands[ci][1]-bands[ci][0]);   // random drift height within the cloud's band
+          const top=Math.round(Math.min(Math.max(cfr*SKY_H-chh/2,0),SKY_H-chh));
+          const dur=nds[ci]+Math.round(Math.random()*8-4);
+          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,ndl[ci],'#c4cee0');
         }
       }
       if(isStorm||isRain){
@@ -936,17 +970,17 @@ function buildDayScene(now){
     else if(isStorm)    dimSky=0.65;
     overcastOpacity=dimSky;
 
-    // Clouds: count + opacity from real cloud_cover %; drift speed from wind
+    // Clouds: size scales with cover; the 3 clouds are spread down the scene
+    // (top/middle/lower) so they fill the sky at high cover, not just a top band.
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
-    const cloudSizes=[30,24,34,22,28,26];
-    const cloudTops=[6,22,2,34,14,28];
-    const cloudBaseDur=26-windF*19;
+    const SCENE_H=128, bands=[[0.10,0.34],[0.40,0.60],[0.62,0.85]], sizeMul=[1,0.78,0.9], cloudBaseDur=26-windF*19;
     for(let i=0;i<cp.count;i++){
-      const sz=cloudSizes[i%cloudSizes.length];
-      const top=cloudTops[i%cloudTops.length];
-      const dur=cloudBaseDur+(i%3)*2.5;
-      const delay=-(i*(dur/Math.max(1,cp.count)));
-      html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${cp.opacity};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
+      const w=Math.max(16,Math.round(SCENE_H*cp.frac*sizeMul[i]*1.5));
+      const ch=Math.round(w*16/24);
+      const cfr=bands[i][0]+Math.random()*(bands[i][1]-bands[i][0]);   // random drift height within the cloud's band
+      const top=Math.round(Math.min(Math.max(cfr*SCENE_H-ch/2,0),SCENE_H-ch));
+      const dur=cloudBaseDur+(i%3)*2.5+Math.round(Math.random()*4-2), delay=-(i*(dur/cp.count));
+      html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
     }
 
     // Rain — drop count scales with intensity; slant + drift scale with wind
@@ -1847,6 +1881,7 @@ function render(){
   const forecastDaylight = (forecastMode && !renderNight) ? (lastLightMins-firstLightMins) : daylight;
   document.getElementById('daybar-day').style.display   = renderNight?'none':'block';
   document.getElementById('daybar-night').style.display = renderNight?'block':'none';
+  { const _o=document.getElementById('drive-origin'); if(_o) _o.style.display=renderNight?'none':''; }
   const glat=window._gpsLat??-27.4698, glng=window._gpsLng??153.0251;
 
   // Identity swap: by night this is a sky-watch app (installed home-screen
@@ -1855,8 +1890,9 @@ function render(){
   if(window._uiNight!==renderNight){
     window._uiNight=renderNight;
     const titleEl=document.getElementById('app-title');
-    if(titleEl) titleEl.innerHTML = renderNight?'SEQ <span>Night</span> Sky':'SEQ <span>Golf</span> Finder';
-    document.title = renderNight?'SEQ Night Sky':'Golf Finder SEQ';
+    const rc=skyRegionCode(glat,glng);
+    if(titleEl) titleEl.innerHTML = renderNight?`${rc} <span>Night</span> Sky`:'SEQ <span>Golf</span> Finder';
+    document.title = renderNight?`${rc} Night Sky`:'Golf Finder SEQ';
     const tm=document.querySelector('meta[name="theme-color"]');
     if(tm) tm.content = renderNight?'#0a0e1f':'#0f1a0f';
     // (favicon stays the were-fox in both modes — the icon embodies the shift)
@@ -1864,20 +1900,16 @@ function render(){
   }
 
   if(renderNight){
-    // One useful line each: the dark window worth planning around, and dawn
+    // Just the dark window worth planning around — no fallback clutter, no
+    // cloud% (the weather widget covers that). First-light removed for night.
     const bw=bestViewingWindow(glat,glng);
     const bestEl=document.getElementById('night-best');
-    if(bestEl){
-      bestEl.innerHTML = bw
-        ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down${bw.cloud!==null?` · ~${bw.cloud}% cloud`:''}`
-        : `🔭 moonlight or cloud most of tonight — no standout dark window`;
-    }
-    let untilDawn = now>=lastLightMins ? (1440-now)+firstLightMins : firstLightMins-now;
-    const fh=Math.floor(untilDawn/60), fm=untilDawn%60;
+    if(bestEl) bestEl.innerHTML = bw
+      ? `🔭 best viewing <b style="color:#aec6f0;font-weight:500;">${minsToStr(bw.from)} – ${minsToStr(bw.to)}</b> · moon down`
+      : `🔭 bright moon most of tonight — no dark window`;
     const firstEl=document.getElementById('night-first');
-    if(firstEl) firstEl.textContent=`🌄 first light ~${minsToStr(firstLightMins)} · in ${fh>0?fh+'h ':''}${fm}m · ⛳ ${((lastLightMins-firstLightMins)/60).toFixed(1)}h of golf tomorrow`;
+    if(firstEl) firstEl.style.display='none';
     buildNightScene();
-
   }
 
   // Hero daylight bar — runs sunrise → last light
