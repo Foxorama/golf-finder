@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
 <meta name="theme-color" content="#0f1a0f">
-<!-- app version: 2026-06-13-v18 — proportional cloud cover (day+night), Fore'cast button (flip to upcoming night/day), St Lucia tap-to-view course map, Oxley URL fixed, cache bumped v22 -->
+<!-- app version: 2026-06-13-v19 — course maps now rendered from OpenStreetMap (Overpass) via a generic renderer for every course; prebake in CI + runtime fallback; replaces the hand-drawn St Lucia SVG; cache bumped v23 -->
 <title>Golf Finder</title>
 <link rel="icon" id="favicon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -542,7 +542,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 // holes: array of available hole counts
 const COURSES = [
   // BRISBANE — par-3 / short courses
-  {name:"St Lucia Golf Links",suburb:"St Lucia",lat:-27.5031,lng:152.9919,drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",layout:'st-lucia',url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
+  {name:"St Lucia Golf Links",suburb:"St Lucia",lat:-27.5031,lng:152.9919,drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
   {name:"Bulimba Golf Club",suburb:"Bulimba",lat:-27.4445,lng:153.0514,drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulimbagolfclub.com.au/",fee18:15,fee9:null,rating:3.9,note:'Par-3 walk-up course. Casual and affordable, good for a quick hit.',zone:'brisbane_metro'},
   
   // BRISBANE — full courses
@@ -2213,7 +2213,7 @@ function courseCard(c,daylight,dimmed){
       </div>
       <a class="visit-btn" href="${c.url}" target="_blank" aria-label="${ctaAria}">${cta}</a>
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:auto;">
-        ${c.layout?`<button class="share-btn" onclick="showLayout('${c.layout}')" aria-label="View ${safeName} course map" title="Course layout">🗺</button>`:''}
+        ${(()=>{const ms=slugify(c.name),mi=COURSE_MAPS[ms],dis=mi&&mi.hasGeom===false;return `<button class="share-btn" ${dis?`aria-disabled="true" style="opacity:0.32;pointer-events:none;"`:`onclick="showLayout(&quot;${safeName}&quot;)"`} aria-label="View ${safeName} course map" title="${dis?'Course map not available':'Course layout'}">🗺</button>`;})()}
         <button class="share-btn" onclick="shareCourse('${safeName}','${safeSuburb}',${driveMins(c)})" aria-label="Share ${safeName}">↗️</button>
         <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
       </div>
@@ -2335,7 +2335,8 @@ async function init(){
   const [result] = await Promise.all([
     fetchSunset(lat, lng),
     fetchAllWeather(),
-    fetchSpaceWx()   // live Kp + ISS — optional, fails silently
+    fetchSpaceWx(),  // live Kp + ISS — optional, fails silently
+    loadCourseMaps() // OSM course-map coverage manifest — optional, fails silently
   ]);
   sunsetMins    = result.sunset;
   sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
@@ -2362,94 +2363,128 @@ document.addEventListener('visibilitychange',()=>{
 
 
 // ── Course layout modal ──────────────────────────────────────────────────────
-const LAYOUTS={
-'st-lucia':{
-  title:'St Lucia Golf Links',
-  svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" style="width:100%;display:block;border-radius:8px;background:#0e1a0c;">
-  <defs>
-    <radialGradient id="turf" cx="48%" cy="42%" r="62%"><stop offset="0%" stop-color="#3a6b2c"/><stop offset="100%" stop-color="#234a1a"/></radialGradient>
-    <radialGradient id="wat" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#2a6aaa"/><stop offset="100%" stop-color="#163f78"/></radialGradient>
-  </defs>
-  <path d="M250,95 C360,68 560,72 690,100 C790,122 862,150 892,232 C912,292 905,344 880,392 C861,432 900,470 946,516 C880,470 836,506 792,544 C698,584 600,592 520,576 C462,560 422,548 380,548 C300,548 232,562 162,612 C112,648 80,692 96,712 C112,728 142,690 178,650 C232,580 292,520 332,470 C302,440 272,430 252,400 C220,350 214,270 220,200 C225,140 235,110 250,95 Z" fill="url(#turf)" stroke="#16300f" stroke-width="3"/>
-  <path d="M905,452 C965,500 1030,540 1055,610 C1070,668 1050,712 1010,742 L1100,780 L1100,440 Z" fill="url(#wat)" opacity="0.95"/>
-  <path d="M918,470 C972,512 1028,548 1050,608" stroke="#4a86c4" stroke-width="2" fill="none" opacity="0.5"/>
-  <ellipse cx="332" cy="368" rx="52" ry="34" fill="url(#wat)" transform="rotate(-18 332 368)"/>
-  <path d="M430,250 C500,272 560,262 612,286 C662,308 690,300 724,322" stroke="#2f6fae" stroke-width="6" fill="none" opacity="0.85" stroke-linecap="round"/>
-  <g fill="#173310" opacity="0.92">
-    <circle cx="690" cy="150" r="26"/><circle cx="740" cy="175" r="22"/><circle cx="820" cy="210" r="30"/><circle cx="860" cy="270" r="26"/><circle cx="850" cy="340" r="30"/>
-    <circle cx="600" cy="520" r="34"/><circle cx="520" cy="500" r="28"/><circle cx="690" cy="540" r="30"/><circle cx="780" cy="500" r="26"/><circle cx="830" cy="440" r="24"/>
-    <circle cx="440" cy="520" r="26"/><circle cx="300" cy="500" r="30"/><circle cx="220" cy="470" r="26"/><circle cx="200" cy="560" r="30"/><circle cx="150" cy="600" r="24"/>
-    <circle cx="250" cy="160" r="24"/><circle cx="230" cy="240" r="22"/><circle cx="240" cy="330" r="22"/><circle cx="430" cy="120" r="22"/><circle cx="560" cy="110" r="22"/>
-    <circle cx="470" cy="430" r="24"/><circle cx="600" cy="450" r="22"/><circle cx="100" cy="660" r="22"/><circle cx="180" cy="660" r="20"/>
-  </g>
-  <g fill="#4f9434" opacity="0.95">
-    <ellipse cx="510" cy="180" rx="34" ry="70" transform="rotate(20 510 180)"/><ellipse cx="745" cy="300" rx="30" ry="64" transform="rotate(70 745 300)"/>
-    <ellipse cx="862" cy="510" rx="26" ry="70" transform="rotate(15 862 510)"/><ellipse cx="770" cy="540" rx="30" ry="72" transform="rotate(80 770 540)"/>
-    <ellipse cx="545" cy="430" rx="30" ry="78" transform="rotate(35 545 430)"/><ellipse cx="705" cy="475" rx="30" ry="70" transform="rotate(60 705 475)"/>
-    <ellipse cx="712" cy="290" rx="28" ry="60" transform="rotate(55 712 290)"/><ellipse cx="662" cy="320" rx="26" ry="56" transform="rotate(40 662 320)"/>
-    <ellipse cx="500" cy="215" rx="28" ry="60" transform="rotate(25 500 215)"/><ellipse cx="520" cy="290" rx="30" ry="66" transform="rotate(15 520 290)"/>
-    <ellipse cx="735" cy="400" rx="26" ry="58" transform="rotate(75 735 400)"/><ellipse cx="635" cy="405" rx="30" ry="72" transform="rotate(50 635 405)"/>
-    <ellipse cx="430" cy="245" rx="28" ry="62" transform="rotate(35 430 245)"/><ellipse cx="300" cy="320" rx="30" ry="66" transform="rotate(-30 300 320)"/>
-    <ellipse cx="135" cy="540" rx="30" ry="86" transform="rotate(28 135 540)"/><ellipse cx="150" cy="640" rx="26" ry="60" transform="rotate(60 150 640)"/>
-    <ellipse cx="345" cy="415" rx="30" ry="78" transform="rotate(20 345 415)"/><ellipse cx="390" cy="260" rx="28" ry="64" transform="rotate(10 390 260)"/>
-  </g>
-  <g fill="#ddc89a" opacity="0.9">
-    <ellipse cx="575" cy="190" rx="16" ry="9"/><ellipse cx="600" cy="240" rx="12" ry="8"/><ellipse cx="615" cy="335" rx="13" ry="8"/><ellipse cx="820" cy="520" rx="11" ry="7"/>
-    <ellipse cx="180" cy="500" rx="14" ry="8"/><ellipse cx="120" cy="600" rx="12" ry="8"/><ellipse cx="470" cy="350" rx="12" ry="7"/><ellipse cx="700" cy="430" rx="11" ry="7"/><ellipse cx="380" cy="320" rx="11" ry="7"/>
-  </g>
-  <g transform="translate(248,96)"><rect x="-26" y="-18" width="52" height="40" rx="4" fill="#cfcabb" stroke="#16300f" stroke-width="1.5"/><rect x="-14" y="-30" width="34" height="16" rx="3" fill="#b8b2a2"/></g>
-  <g stroke="#e8e2d2" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round">
-    <path d="M270,110 C380,120 520,120 690,110 C780,104 840,128 880,180"/><path d="M300,150 C360,200 420,260 470,330 C500,380 470,450 430,520"/>
-  </g>
-  <g fill="#86d84f" stroke="#2d5a1b" stroke-width="1.5">
-    <circle cx="525" cy="172" r="9"/><circle cx="755" cy="288" r="9"/><circle cx="872" cy="500" r="8"/><circle cx="763" cy="528" r="9"/><circle cx="543" cy="418" r="9"/><circle cx="705" cy="466" r="9"/>
-    <circle cx="712" cy="283" r="8"/><circle cx="662" cy="313" r="8"/><circle cx="490" cy="207" r="9"/><circle cx="515" cy="287" r="9"/><circle cx="733" cy="402" r="8"/><circle cx="635" cy="403" r="9"/>
-    <circle cx="427" cy="240" r="9"/><circle cx="300" cy="312" r="9"/><circle cx="120" cy="518" r="9"/><circle cx="133" cy="640" r="8"/><circle cx="343" cy="410" r="9"/><circle cx="388" cy="256" r="9"/>
-  </g>
-  <g font-family="sans-serif" font-weight="bold" text-anchor="middle" font-size="20">
-    <g><circle cx="525" cy="172" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="525" y="179" fill="#fff">1</text></g>
-    <g><circle cx="755" cy="288" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="755" y="295" fill="#fff">2</text></g>
-    <g><circle cx="872" cy="500" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="872" y="507" fill="#fff">3</text></g>
-    <g><circle cx="763" cy="528" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="763" y="535" fill="#fff">4</text></g>
-    <g><circle cx="543" cy="418" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="543" y="425" fill="#fff">5</text></g>
-    <g><circle cx="705" cy="466" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="705" y="473" fill="#fff">6</text></g>
-    <g><circle cx="712" cy="283" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="712" y="290" fill="#fff">7</text></g>
-    <g><circle cx="662" cy="313" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="662" y="320" fill="#fff">8</text></g>
-    <g><circle cx="490" cy="207" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="490" y="214" fill="#fff">9</text></g>
-    <g><circle cx="515" cy="287" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="515" y="294" fill="#fff">10</text></g>
-    <g><circle cx="733" cy="402" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="733" y="409" fill="#fff">11</text></g>
-    <g><circle cx="635" cy="403" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="635" y="410" fill="#fff">12</text></g>
-    <g><circle cx="427" cy="240" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="427" y="247" fill="#fff">13</text></g>
-    <g><circle cx="300" cy="312" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="300" y="319" fill="#fff">14</text></g>
-    <g><circle cx="120" cy="518" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="120" y="525" fill="#fff">15</text></g>
-    <g><circle cx="133" cy="640" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="133" y="647" fill="#fff">16</text></g>
-    <g><circle cx="343" cy="410" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="343" y="417" fill="#fff">17</text></g>
-    <g><circle cx="388" cy="256" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="388" y="263" fill="#fff">18</text></g>
-  </g>
-  <g transform="translate(880,650)">
-    <ellipse cx="60" cy="0" rx="62" ry="34" fill="none" stroke="#16300f" stroke-width="2"/><circle cx="60" cy="-4" r="22" fill="#16300f"/><rect x="56" y="-4" width="8" height="20" fill="#16300f"/>
-    <text x="60" y="24" text-anchor="middle" font-family="serif" font-size="11" fill="#16300f" letter-spacing="2">1926</text>
-    <text x="60" y="50" text-anchor="middle" font-family="serif" font-size="15" fill="#234a1a" letter-spacing="3" font-weight="bold">ST LUCIA</text>
-    <text x="60" y="70" text-anchor="middle" font-family="serif" font-size="18" fill="#234a1a" letter-spacing="3" font-weight="bold">GOLF LINKS</text>
-  </g>
-  <g transform="translate(60,80)"><circle r="18" fill="rgba(20,40,15,0.5)" stroke="#7ed44f" stroke-width="1.5"/><text y="-6" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#e8f5e0" font-weight="bold">N</text><path d="M0,-13 L3,-4 L0,-6 L-3,-4 Z" fill="#e74c3c"/></g>
-  <rect x="0" y="746" width="1100" height="34" fill="rgba(0,0,0,0.45)"/>
-  <text x="20" y="769" font-family="sans-serif" font-size="14" fill="#7ed44f" font-weight="bold">18 holes · Par 69 · 5,411m · Est. 1926 · Alister MacKenzie design</text>
-</svg>`
+const COURSE_MAPS={};   // slug -> {hasGeom,bbox,features,holes} | {hasGeom:false}  (from course-maps.json)
+const mapCache={};      // slug -> intermediate data, in-memory (mirrors weatherCache pattern)
+let _courseMapsLoaded=false;
+
+function slugify(s){ return s.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,''); }
+
+async function loadCourseMaps(){
+  if(_courseMapsLoaded) return;
+  try{ const r=await fetch('course-maps.json'); if(r.ok) Object.assign(COURSE_MAPS, await r.json()); }
+  catch(e){ /* manifest optional — runtime fallback still works */ }
+  _courseMapsLoaded=true;
 }
-};
-function showLayout(id){
-  const L=LAYOUTS[id]; if(!L) return;
-  document.getElementById('layout-title').textContent=L.title;
-  document.getElementById('layout-svg-wrap').innerHTML=L.svg;
+
+async function overpass(q){
+  const r=await fetch('https://overpass-api.de/api/interpreter',{method:'POST',body:q});
+  if(!r.ok) throw new Error('overpass '+r.status);
+  return (await r.json()).elements||[];
+}
+async function fetchCourseOSM(lat,lng){
+  // Primary: features of the golf_course polygon that CONTAINS the point —
+  // exact, never grabs a neighbouring course. Fallback: nearest polygon by
+  // radius (for stored coords that sit just outside their course).
+  const isIn=`[out:json][timeout:40];is_in(${lat},${lng})->.a;area.a["leisure"="golf_course"]->.g;(way["golf"](area.g);relation["golf"](area.g);way(pivot.g););out geom;`;
+  let data=osmToData(await overpass(isIn));
+  if(data.hasGeom) return data;
+  const around=`[out:json][timeout:40];(way["leisure"="golf_course"](around:1000,${lat},${lng});relation["leisure"="golf_course"](around:1000,${lat},${lng});)->.c;.c map_to_area->.a;(way["golf"](area.a);relation["golf"](area.a);.c;);out geom;`;
+  return osmToData(await overpass(around));
+}
+
+// Overpass elements -> compact intermediate format (shared shape with the CI prebake)
+function osmToData(els){
+  if(!els||!els.length) return {hasGeom:false};
+  const features=[],holes=[];
+  let latMin=Infinity,latMax=-Infinity,lngMin=Infinity,lngMax=-Infinity;
+  const acc=(pts)=>{for(const p of pts){if(p[0]<latMin)latMin=p[0];if(p[0]>latMax)latMax=p[0];if(p[1]<lngMin)lngMin=p[1];if(p[1]>lngMax)lngMax=p[1];}};
+  for(const e of els){
+    const g=e.tags&&e.tags.golf, lt=e.tags&&e.tags.leisure, geo=e.geometry;
+    if(!geo||!geo.length) continue;
+    const pts=geo.map(p=>[+p.lat.toFixed(6),+p.lon.toFixed(6)]);
+    if(g==='hole'){ holes.push({ref:e.tags.ref||'',par:e.tags.par||'',pts}); acc(pts); }
+    else if(['fairway','green','tee','bunker','water_hazard','lateral_water_hazard','rough','cartpath','path','driving_range'].includes(g)){
+      const t=(g==='lateral_water_hazard')?'water_hazard':(g==='path')?'cartpath':g;
+      features.push({t,pts});
+      if(t!=='cartpath') acc(pts);   // long paths shouldn't blow out the bbox
+    } else if(lt==='golf_course'){ features.push({t:'rough',pts}); acc(pts); }
+  }
+  const hasGeom=features.some(f=>f.t==='fairway'||f.t==='green')||holes.length>0;
+  if(!hasGeom||!isFinite(latMin)) return {hasGeom:false};
+  return {hasGeom:true,bbox:[latMin,lngMin,latMax,lngMax],features,holes};
+}
+
+// geo -> SVG projector: equirectangular, cos(lat) corrected, y-flipped (north up), aspect-fit
+function projectGeo(bbox,W,H,pad){
+  const [latMin,lngMin,latMax,lngMax]=bbox;
+  const k=Math.cos((latMin+latMax)/2*Math.PI/180);
+  const gw=Math.max(1e-9,(lngMax-lngMin)*k), gh=Math.max(1e-9,(latMax-latMin));
+  const innerW=W-2*pad, innerH=H-2*pad, s=Math.min(innerW/gw,innerH/gh);
+  const offX=pad+(innerW-gw*s)/2, offY=pad+(innerH-gh*s)/2;
+  return (lat,lng)=>({x:offX+(lng-lngMin)*k*s, y:offY+(latMax-lat)*s});
+}
+function ptsToPath(pts,proj){ let d=''; for(let i=0;i<pts.length;i++){const p=proj(pts[i][0],pts[i][1]); d+=(i?'L':'M')+p.x.toFixed(1)+' '+p.y.toFixed(1);} return d; }
+
+// intermediate data -> SVG string (full detail)
+function renderCourseMapSVG(data){
+  const W=1000, pad=24;
+  const [latMin,lngMin,latMax,lngMax]=data.bbox;
+  const k=Math.cos((latMin+latMax)/2*Math.PI/180);
+  const gw=Math.max(1e-9,(lngMax-lngMin)*k), gh=Math.max(1e-9,(latMax-latMin));
+  const H=Math.max(360,Math.min(1200,Math.round((W-2*pad)*(gh/gw))+2*pad));
+  const proj=projectGeo(data.bbox,W,H,pad);
+  const fill={rough:'#2f5a24',fairway:'#4f9434',green:'#86d84f',bunker:'#ddc89a',water_hazard:'#1a4a8a',driving_range:'#3d7a25'};
+  const order=['rough','driving_range','water_hazard','fairway','bunker'];
+  let b=`<rect width="${W}" height="${H}" fill="#16300f"/>`;
+  for(const layer of order) for(const f of data.features){ if(f.t!==layer||f.pts.length<2) continue;
+    b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="${fill[layer]}" stroke="#16300f" stroke-width="0.5" opacity="${layer==='rough'?0.92:1}"/>`; }
+  for(const f of data.features){ if(f.t!=='cartpath'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}" fill="none" stroke="#e8e2d2" stroke-width="1.4" opacity="0.4"/>`; }
+  for(const f of data.features){ if(f.t!=='green'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="#86d84f" stroke="#2d5a1b" stroke-width="0.6"/>`; }
+  for(const f of data.features){ if(f.t!=='tee') continue; const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#7ed44f"/>`; }
+  for(const h of data.holes){
+    if(h.pts.length>=2) b+=`<path d="${ptsToPath(h.pts,proj)}" fill="none" stroke="#fff" stroke-width="1" opacity="0.3" stroke-dasharray="4 4"/>`;
+    const e=h.pts[h.pts.length-1]||h.pts[0]; if(!e) continue; const p=proj(e[0],e[1]);
+    b+=`<g><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="13" fill="rgba(20,40,15,0.72)" stroke="#fff" stroke-width="1.5"/><text x="${p.x.toFixed(1)}" y="${(p.y+5).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-weight="bold" font-size="15" fill="#fff">${h.ref}</text></g>`;
+    if(h.par) b+=`<text x="${p.x.toFixed(1)}" y="${(p.y+26).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" fill="#cfe8b0">par ${h.par}</text>`;
+  }
+  b+=`<rect x="0" y="${H-22}" width="${W}" height="22" fill="rgba(0,0,0,0.45)"/><text x="${W-8}" y="${H-7}" text-anchor="end" font-family="sans-serif" font-size="11" fill="#9fc98a">© OpenStreetMap contributors</text>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;border-radius:8px;background:#16300f;">${b}</svg>`;
+}
+
+function mapFallback(c,err){
+  const gm=`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.name+' '+c.suburb)}`;
+  return `<div style="padding:36px 16px;text-align:center;color:var(--tx2);font-family:var(--sans);">
+    <div style="font-size:30px;margin-bottom:8px;">🗺</div>
+    <div style="font-weight:600;margin-bottom:4px;color:var(--tx);">${err?"Couldn't load the map":"Detailed map not available yet"}</div>
+    <div style="font-size:12px;color:var(--tx3);margin-bottom:14px;">${err?"OpenStreetMap request failed — try again later.":"This course isn't in OpenStreetMap yet."}</div>
+    <a href="${gm}" target="_blank" style="display:inline-block;background:var(--sur2);color:var(--gg);padding:8px 14px;border-radius:8px;text-decoration:none;font-size:13px;">Open in Google Maps ↗</a>
+  </div>`;
+}
+
+async function showLayout(courseName){
+  const c=COURSES.find(x=>x.name===courseName); if(!c) return;
+  const slug=slugify(courseName);
+  document.getElementById('layout-title').textContent=courseName;
   document.getElementById('layout-modal').style.display='block';
   document.body.style.overflow='hidden';
+  const wrap=document.getElementById('layout-svg-wrap');
+  let data=mapCache[slug] || (COURSE_MAPS[slug]&&COURSE_MAPS[slug].hasGeom?COURSE_MAPS[slug]:null);
+  if(!data){
+    if(COURSE_MAPS[slug]&&COURSE_MAPS[slug].hasGeom===false){ wrap.innerHTML=mapFallback(c); return; }
+    try{ const ls=localStorage.getItem('gf_map_'+slug); if(ls) data=JSON.parse(ls); }catch(e){}
+  }
+  if(data&&data.hasGeom){ mapCache[slug]=data; wrap.innerHTML=renderCourseMapSVG(data); return; }
+  wrap.innerHTML=`<div style="padding:44px 12px;text-align:center;color:var(--tx2);font-family:var(--mono);font-size:13px;">Loading course map…<br><span style="font-size:11px;color:var(--tx3);">fetching from OpenStreetMap</span></div>`;
+  try{
+    const d=await fetchCourseOSM(c.lat,c.lng);
+    if(d.hasGeom){ mapCache[slug]=d; try{localStorage.setItem('gf_map_'+slug,JSON.stringify(d));}catch(e){} wrap.innerHTML=renderCourseMapSVG(d); }
+    else wrap.innerHTML=mapFallback(c);
+  }catch(e){ wrap.innerHTML=mapFallback(c,true); }
 }
 function closeLayout(){
   document.getElementById('layout-modal').style.display='none';
   document.body.style.overflow='';
 }
-
 init();
 showTestBanner();
 </script>
