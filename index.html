@@ -106,7 +106,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .hdr-btn:active{transform:scale(0.95);background:var(--sur2);}
 .hdr-btn.fc-day{background:rgba(90,171,53,0.18);border-color:rgba(90,171,53,0.5);color:#bfe8a8;}
 .hdr-btn.fc-night{background:rgba(124,148,210,0.18);border-color:rgba(143,184,232,0.55);color:#cdd9f5;}
-.hero-zone{min-height:250px;}  /* day (scene+filters) matches night (sky) so the stats row doesn't shift when flicking modes */
+.hero-zone{min-height:0;}  /* hero card height now matches in both modes; filters moved into the day hero */
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
 
@@ -116,13 +116,13 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
 
 /* ── Daybar day mode — unified sky scene ── */
-.day-scene{position:relative;height:180px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
+.day-scene{position:relative;height:200px;margin-bottom:12px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
 .day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:4;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
-.wind-compass{position:absolute;top:7px;right:7px;width:66px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+.wind-compass{position:absolute;top:7px;left:7px;width:60px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .wind-compass:active{transform:scale(0.94);}
 .wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2;}
 #wc-rotor{transition:transform 0.18s linear;}
@@ -166,14 +166,14 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-marker-time{font-family:var(--mono);font-size:12px;font-weight:500;color:#fff;text-shadow:0 1px 4px rgba(0,0,0,0.6);}
 /* Floating Now tracker — sits just above the horizon */
 .day-now-float{position:absolute;transform:translate(-50%,0);z-index:6;transition:left 1s ease,top 1s ease;pointer-events:none;}
-.day-now-time{font-family:var(--mono);font-size:12px;font-weight:600;color:#fff;background:rgba(18,26,34,0.5);padding:3px 8px;border-radius:8px;white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(2px);}
+.day-now-time{font-family:var(--mono);font-size:10px;font-weight:600;color:#fff;background:rgba(18,26,34,0.5);padding:2px 7px;border-radius:7px;white-space:nowrap;box-shadow:0 1px 6px rgba(0,0,0,0.3);border:1px solid rgba(255,255,255,0.08);backdrop-filter:blur(2px);}
 /* Horizon line = progress bar, pinned to the very bottom of the sky */
 #daybar-day{margin:-2px;}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
 .day-tick{position:absolute;bottom:0;width:2px;height:10px;background:rgba(255,255,255,0.7);z-index:7;transform:translateX(-50%);border-radius:1px;pointer-events:none;}
-.day-lastcall{position:relative;height:22px;font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:3px;}
+.day-lastcall{position:relative;height:24px;font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:0;}
 .day-lastcall .lc-cap{position:absolute;left:2px;top:5px;opacity:0.6;}
 .day-lastcall .lc-seg{position:absolute;top:5px;transform:translateX(-50%);white-space:nowrap;}
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
@@ -227,7 +227,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 @keyframes rainFall{0%{transform:translateY(-12px);opacity:0;}30%{opacity:0.8;}100%{transform:translateY(70px);opacity:0;}}
 .night-bolt{position:absolute;font-size:26px;animation:flash 4s ease-in-out infinite;}
 @keyframes flash{0%,92%,100%{opacity:0;}94%,97%{opacity:1;}}
-.night-info{padding:0 2px;}
+.night-info{padding:0 2px;min-height:24px;}
 .night-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:3px;}
 .night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;margin-bottom:12px;}
 .night-line{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1.7;padding:0 2px;}
@@ -301,7 +301,8 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 body.night .drive-chip{border-color:rgba(141,169,214,0.3);}
 body.night .drive-chip .drive-num{color:#aec6f0;}
 
-.filters{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px;margin-bottom:14px;scrollbar-width:none;}
+.filter-select{position:absolute;top:8px;right:8px;z-index:7;background:rgba(8,18,30,0.72);color:#eaf4ff;border:1px solid rgba(255,255,255,0.28);border-radius:9px;font-family:var(--mono);font-size:10.5px;font-weight:500;padding:5px 8px;max-width:140px;cursor:pointer;-webkit-appearance:none;appearance:none;backdrop-filter:blur(2px);box-shadow:0 1px 5px rgba(0,0,0,0.3);}
+.filter-select:focus{outline:none;border-color:#7ed4ff;}
 .filters::-webkit-scrollbar{display:none;}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
 .fpill.on{background:var(--bg3);border-color:var(--gb);color:var(--gg);}
@@ -485,7 +486,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div id="daybar-day">
       <div class="day-scene" id="day-scene">
         <div class="day-glow" id="day-glow" aria-hidden="true"></div>
-        <svg class="wind-compass" id="wind-compass" viewBox="0 0 78 78" onclick="toggleWindCompass()" role="button" tabindex="0" aria-label="Wind direction. Tap to align the compass to your phone heading."><circle cx="39" cy="28" r="24" fill="rgba(8,18,30,0.5)" stroke="rgba(0,0,0,0.35)" stroke-width="3.5"/><circle cx="39" cy="28" r="24" fill="none" stroke="#bcd9ec" stroke-width="1.5"/><g id="wc-rotor"><g font-family="var(--mono)" font-size="8" font-weight="bold" text-anchor="middle"><text x="39" y="11" fill="#ff8a8a">N</text><text x="39" y="51.5" fill="rgba(255,255,255,0.85)">S</text><text x="60" y="31" fill="rgba(255,255,255,0.85)">E</text><text x="18" y="31" fill="rgba(255,255,255,0.85)">W</text></g><g id="wc-arrow"><path d="M39,9 L46.5,30 L39,24 L31.5,30 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="0.5"/></g></g><rect id="wc-frombg" x="4" y="62" width="70" height="14.5" rx="7.25" fill="rgba(8,18,30,0.88)" stroke="rgba(188,217,236,0.5)" stroke-width="0.6"/><text id="wc-from" x="39" y="72.5" text-anchor="middle" font-family="var(--mono)" font-size="9.5" font-weight="bold" fill="#eaf4ff">-- km/h</text></svg>
+        <select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select>
+        <svg class="wind-compass" id="wind-compass" viewBox="0 0 84 96" onclick="toggleWindCompass()" role="button" tabindex="0" aria-label="Wind direction. Tap to align the compass to your phone heading."><defs><radialGradient id="wcg" cx="50%" cy="38%" r="70%"><stop offset="0%" stop-color="#22374f"/><stop offset="100%" stop-color="#091320"/></radialGradient></defs><circle cx="42" cy="30" r="27" fill="rgba(0,0,0,0.4)"/><circle cx="42" cy="30" r="26" fill="url(#wcg)" stroke="#9fc6e8" stroke-width="1.5"/><g id="wc-rotor"><g stroke="rgba(255,255,255,0.32)" stroke-width="1" stroke-linecap="round"><line x1="42" y1="6" x2="42" y2="10.5"/><line x1="42" y1="49.5" x2="42" y2="54"/><line x1="66" y1="30" x2="61.5" y2="30"/><line x1="18" y1="30" x2="22.5" y2="30"/><line x1="59" y1="13" x2="56" y2="16"/><line x1="25" y1="47" x2="28" y2="44"/><line x1="59" y1="47" x2="56" y2="44"/><line x1="25" y1="13" x2="28" y2="16"/></g><g font-family="var(--mono)" font-size="8" font-weight="bold" text-anchor="middle"><text x="42" y="16" fill="#ff8a8a">N</text><text x="42" y="48" fill="rgba(255,255,255,0.82)">S</text><text x="58" y="33" fill="rgba(255,255,255,0.82)">E</text><text x="26" y="33" fill="rgba(255,255,255,0.82)">W</text></g><g id="wc-arrow"><path d="M42,10 L48.5,31 L42,25.5 L35.5,31 Z" fill="#ffd24a" stroke="#b8860b" stroke-width="0.5"/></g></g><circle cx="42" cy="30" r="2.1" fill="#cfe0ee"/><rect id="wc-frombg" x="4" y="64" width="76" height="28" rx="7" fill="rgba(8,18,30,0.9)" stroke="rgba(159,198,232,0.5)" stroke-width="0.7"/><text id="wc-spd2" x="42" y="76.5" text-anchor="middle" font-family="var(--mono)" font-size="11" font-weight="bold" fill="#fff">-- km/h</text><text id="wc-dir" x="42" y="88" text-anchor="middle" font-family="var(--mono)" font-size="10" font-weight="bold" fill="#9fc6e8">--</text></svg>
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
@@ -498,7 +500,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="day-ground">
           <div class="day-marker day-marker-left">
             <div class="day-marker-row">
-              <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="17" height="12" style="display:block"><g stroke="#ffd24a" stroke-width="1.3" stroke-linecap="round"><line x1="13" y1="2" x2="13" y2="4.5"/><line x1="5" y1="5" x2="6.8" y2="6.8"/><line x1="21" y1="5" x2="19.2" y2="6.8"/></g><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#ffd24a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+              <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="23" height="16" style="display:block"><g stroke="#ffd24a" stroke-width="1.3" stroke-linecap="round"><line x1="13" y1="2" x2="13" y2="4.5"/><line x1="5" y1="5" x2="6.8" y2="6.8"/><line x1="21" y1="5" x2="19.2" y2="6.8"/></g><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#ffd24a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/></svg></span>
               <span class="day-marker-time" id="db-sunrise">--:--</span>
             </div>
             <span class="day-marker-cap">sunrise</span>
@@ -506,7 +508,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
           <div class="day-marker day-marker-right">
             <div class="day-marker-row">
               <span class="day-marker-time" id="db-sunset">--:--</span>
-              <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="17" height="12" style="display:block"><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#e0843a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/><line x1="13" y1="5" x2="13" y2="2.5" stroke="#e0843a" stroke-width="1.3" stroke-linecap="round"/></svg></span>
+              <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 26 18" width="23" height="16" style="display:block"><path d="M6,14 a7,7 0 0,1 14,0 Z" fill="#e0843a"/><line x1="1.5" y1="14.5" x2="24.5" y2="14.5" stroke="#cfe0ee" stroke-width="1.3" stroke-linecap="round"/><line x1="13" y1="5" x2="13" y2="2.5" stroke="#e0843a" stroke-width="1.3" stroke-linecap="round"/></svg></span>
             </div>
             <span class="day-marker-cap">last light</span>
           </div>
@@ -539,23 +541,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     </div>
   </div>
 
-  <!-- Filters -->
-  <div class="filters" role="group" aria-label="Filter courses">
-    <button class="fpill fav-pill" onclick="setFilter('favs',this)" aria-label="Show favourites">⭐ Favs</button>
-    <button class="fpill on" onclick="setFilter('all',this)" aria-pressed="true">All</button>
-    <button class="fpill" onclick="setFilter('playable',this)" aria-pressed="false">Playable</button>
-    <button class="fpill" onclick="setFilter('18',this)" aria-pressed="false">18 holes</button>
-    <button class="fpill" onclick="setFilter('9',this)" aria-pressed="false">9 holes</button>
-    <button class="fpill" onclick="setFilter('par3',this)" aria-pressed="false">Par 3</button>
-    <button class="fpill" onclick="setFilter('close',this)" aria-pressed="false">≤30 min</button>
-    <button class="fpill" onclick="setFilter('visitor',this)" aria-pressed="false">Visitor-friendly</button>
-    <button class="fpill" onclick="setFilter('golfnow',this)" aria-pressed="false">GolfNow</button>
-    <button class="fpill" onclick="setFilter('nobooking',this)" aria-pressed="false">No booking</button>
-    <button class="fpill" onclick="setFilter('brisbane',this)" aria-pressed="false">Brisbane</button>
-    <button class="fpill" onclick="setFilter('goldcoast',this)" aria-pressed="false">Gold Coast</button>
-    <button class="fpill" onclick="setFilter('sunshine',this)" aria-pressed="false">Sunshine Coast</button>
-    <button class="fpill" onclick="setFilter('toowoomba',this)" aria-pressed="false">Toowoomba</button>
-  </div>
   </div><!-- /hero-zone -->
 
   <!-- Stats row -->
@@ -1441,12 +1426,9 @@ async function fetchSunset(lat,lng){
 function setFilter(f,btn){
   activeFilter=f;
   localStorage.setItem('gf_filter',f);
-  document.querySelectorAll('.fpill').forEach(b=>{
-    b.classList.remove('on');
-    b.setAttribute('aria-pressed','false');
-  });
-  btn.classList.add('on');
-  btn.setAttribute('aria-pressed','true');
+  document.querySelectorAll('.fpill').forEach(b=>{ b.classList.remove('on'); b.setAttribute('aria-pressed','false'); });
+  if(btn){ btn.classList.add('on'); btn.setAttribute('aria-pressed','true'); }
+  const sel=document.getElementById('filter-select'); if(sel) sel.value=f;
   render();
 }
 
@@ -1877,14 +1859,14 @@ function _dayOnOrient(e){
   h=((h%360)+360)%360;
   if(_dayHead==null)_dayHead=h; else{ const diff=((h-_dayHead+540)%360)-180; _dayHead=((_dayHead+diff*0.25)%360+360)%360; }
   const rotor=document.getElementById('wc-rotor');
-  if(rotor) rotor.setAttribute('transform','rotate('+(-_dayHead).toFixed(1)+' 39 28)');
+  if(rotor) rotor.setAttribute('transform','rotate('+(-_dayHead).toFixed(1)+' 42 30)');
 }
 async function toggleWindCompass(){
   const svg=document.getElementById('wind-compass'), rotor=document.getElementById('wc-rotor');
   if(_dayCompassOn){
     if(_dayOrientH) window.removeEventListener(_dayOrientEv,_dayOrientH,true);
     _dayCompassOn=false;_dayOrientH=null;_dayHead=null;
-    if(rotor) rotor.setAttribute('transform','rotate(0 39 28)');
+    if(rotor) rotor.setAttribute('transform','rotate(0 42 30)');
     if(svg) svg.classList.remove('wc-active');
     return;
   }
@@ -2068,14 +2050,16 @@ function render(){
       const fch=hourlyAt(wz,window._fcOffset||0,now);
       const dir=(fch&&fch.dir!=null)?fch.dir:((wxd&&wxd.windDir!=null)?wxd.windDir:null);
       const spd=(fch&&fch.wind!=null)?fch.wind:(wxd?wxd.wind:null);
-      const arrow=document.getElementById('wc-arrow'), fromEl=document.getElementById('wc-from');
+      const arrow=document.getElementById('wc-arrow'), spdEl=document.getElementById('wc-spd2'), dirEl=document.getElementById('wc-dir');
       if(dir!=null){
-        arrow.setAttribute('transform','rotate('+((dir+180)%360)+' 39 28)');
+        arrow.setAttribute('transform','rotate('+((dir+180)%360)+' 42 30)');
         arrow.style.opacity='1';
-        if(fromEl) fromEl.textContent=cardinal8(dir)+(spd!=null?' '+spd+' km/h':'');
+        if(spdEl) spdEl.textContent=(spd!=null?spd:'--')+' km/h';
+        if(dirEl) dirEl.textContent=compass16(dir);
       } else {
         arrow.style.opacity='0.25';
-        if(fromEl) fromEl.textContent='no wind';
+        if(spdEl) spdEl.textContent='-- km/h';
+        if(dirEl) dirEl.textContent='—';
       }
     }
   }
@@ -2240,11 +2224,8 @@ function render(){
   const filtEl=document.querySelector('.filters');
   if(filtEl) filtEl.style.display=renderNight?'none':'flex';
 
-  // Restore active pill
-  document.querySelectorAll('.fpill').forEach(b=>{
-    const f=b.getAttribute('onclick').match(/setFilter\('([^']+)'/)?.[1];
-    if(f)b.classList.toggle('on',f===activeFilter);
-  });
+  // Keep the filter dropdown in sync with the active filter
+  const fsel=document.getElementById('filter-select'); if(fsel) fsel.value=activeFilter;
 
   // Course list — show unavailable courses dimmed (except on the Playable filter)
   const allInFilter=activeFilter==='all'?[...COURSES].sort((a,b)=>a.drive-b.drive):filtered;
