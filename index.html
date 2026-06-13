@@ -805,11 +805,11 @@ function buildNightScene(){
         const nm=new Date().getHours()*60+new Date().getMinutes();
         const ch=hourlyAt(skyWxZone(),0,nm);
         const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
-        const SCENE_H=200, cf=[0.26,0.54,0.78], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9];
+        const SKY_H=186, cf=[0.26,0.54,0.78], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line
         for(let ci=0;ci<cp.count;ci++){
-          const w=Math.max(16,Math.round(SCENE_H*cp.frac*nmul[ci]*1.5));
+          const w=Math.max(16,Math.round(SKY_H*cp.frac*nmul[ci]*1.5));
           const chh=Math.round(w*16/24);
-          const top=Math.round(Math.min(Math.max(cf[ci]*SCENE_H-chh/2,0),SCENE_H-chh));
+          const top=Math.round(Math.min(Math.max(cf[ci]*SKY_H-chh/2,0),SKY_H-chh));
           html+=cloudSVG('night-cloud',w,top,cp.opacity,nds[ci],ndl[ci],'#c4cee0');
         }
       }
