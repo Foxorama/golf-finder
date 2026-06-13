@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Golf Finder">
 <link rel="apple-touch-icon" sizes="180x180" href="icon-192.png">
 <meta name="theme-color" content="#0f1a0f">
-<!-- app version: 2026-06-13-v17c — batched single weather request (kills 429 storm), SW never caches live/error responses, cache bumped v18 -->
+<!-- app version: 2026-06-13-v18 — proportional cloud cover (day+night), Fore'cast button (flip to upcoming night/day), St Lucia tap-to-view course map, Oxley URL fixed, cache bumped v22 -->
 <title>Golf Finder</title>
 <link rel="icon" id="favicon" type="image/png" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
@@ -389,6 +389,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <div class="app-meta" id="drive-origin">drives est. from Toowong + typical traffic</div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
+      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
       <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
       <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
     </div>
@@ -541,7 +542,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 // holes: array of available hole counts
 const COURSES = [
   // BRISBANE — par-3 / short courses
-  {name:"St Lucia Golf Links",suburb:"St Lucia",lat:-27.5031,lng:152.9919,drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
+  {name:"St Lucia Golf Links",suburb:"St Lucia",lat:-27.5031,lng:152.9919,drive:5,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",layout:'st-lucia',url:"https://www.hillstonestlucia.com.au/golf/",fee18:42,fee9:28,rating:4.1,note:'Brisbane\'s oldest public course. River views, PGA history, relaxed pace.',zone:'brisbane_metro'},
   {name:"Bulimba Golf Club",suburb:"Bulimba",lat:-27.4445,lng:153.0514,drive:14,holes:[9],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.bulimbagolfclub.com.au/",fee18:15,fee9:null,rating:3.9,note:'Par-3 walk-up course. Casual and affordable, good for a quick hit.',zone:'brisbane_metro'},
   
   // BRISBANE — full courses
@@ -556,7 +557,7 @@ const COURSES = [
   {name:"Royal Queensland Golf Club",suburb:"Hamilton",lat:-27.4388,lng:153.0913,drive:18,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.rqgolf.com.au/",fee18:null,fee9:null,rating:4.5,note:'One of Australia\'s top-ranked courses. Private, host of numerous national events.',zone:'brisbane_metro'},
   {name:"Jindalee Golf Club",suburb:"Jindalee",lat:-27.5361,lng:152.9433,drive:22,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/jindalee-golf-club",fee18:null,fee9:null,rating:3.9,note:'Semi-private 18-hole. Undulating layout with good variety of holes.',zone:'ipswich'},
   {name:"Nudgee Golf Club",suburb:"Nudgee",lat:-27.3732,lng:153.0987,drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2527-nudgee-golf-club/search",closedRules:[{dow:2,before:720}],visitorNote:"Closed Tue mornings for maintenance",fee18:95,fee9:null,rating:4.4,note:'36-hole complex (Bulka + Kurrai). Hosts Queensland PGA Championship.',zone:'brisbane_metro'},
-  {name:"Oxley Golf Club",suburb:"Oxley",lat:-27.5715,lng:152.9771,drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2528-oxley-golf-club/search",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
+  {name:"Oxley Golf Club",suburb:"Oxley",lat:-27.5715,lng:152.9771,drive:20,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.oxleygolfclub.com.au",fee18:50,fee9:30,rating:4.1,note:'Public 18-hole, par 71. Wide fairways, fast greens, visitor-friendly.',zone:'ipswich'},
   {name:"Oxley Golf Complex & Corinda Pitch & Putt",suburb:"Corinda",lat:-27.5504,lng:152.9875,drive:18,holes:[9,18],type:"public",par3:true,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.oxleygolfcomplex.com.au/",fee18:12,fee9:null,rating:3.8,note:'Driving range + 9-hole course + 18-hole pitch & putt. Walk-up, no booking needed.',zone:'brisbane_metro'},
   {name:"Sandgate Golf Club",suburb:"Shorncliffe",lat:-27.3302,lng:153.0823,drive:28,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/sandgate-golf-club",fee18:null,fee9:null,rating:3.8,note:'Semi-private bayside course. Quiet, local club feel.',zone:'brisbane_metro'},
   {name:"Wynnum Golf Club",suburb:"Wynnum",lat:-27.4459,lng:153.1649,drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32,rating:4.0,note:'Semi-private bayside club. Pleasant layout with sea breezes.',zone:'bayside'},
@@ -722,6 +723,21 @@ function moonPhase(date){
   return {icon:emojis[idx], name:names[idx], age};
 }
 
+let forecastMode=false;
+function toggleForecast(){
+  forecastMode=!forecastMode;
+  const btn=document.getElementById('btn-forecast');
+  if(btn) btn.innerHTML=forecastMode?'← Now':'⛳ Fore\'cast';
+  render();
+}
+// Maps cloud_cover % (0-100) to { count, opacity } for proportional cloud rendering
+function cloudParams(pct){
+  if(pct==null||pct<5) return{count:0,opacity:0};
+  if(pct<20) return{count:1,                          opacity:+(0.30+pct*0.010).toFixed(2)};
+  if(pct<45) return{count:2+Math.round((pct-20)/12),  opacity:+(0.50+pct*0.008).toFixed(2)};
+  if(pct<75) return{count:4+Math.round((pct-45)/15),  opacity:+(0.70+pct*0.004).toFixed(2)};
+  return            {count:6,                          opacity:+Math.min(1,0.85+(pct-75)*0.006).toFixed(2)};
+}
 // Build the night scene: stars, accurate moon phase, weather overlay
 let _nightBuilt=false;
 function buildNightScene(){
@@ -756,9 +772,14 @@ function buildNightScene(){
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
       if(isStorm||isRain||isCloud){
-        // Drifting clouds
-        html+=`<span class="night-cloud" style="top:8px;left:0;animation-delay:0s;">☁️</span>`;
-        html+=`<span class="night-cloud" style="top:30px;left:0;font-size:22px;animation-delay:-7s;opacity:0.6;">☁️</span>`;
+        // Cloud count/opacity from actual cloud_cover %
+        const nm=new Date().getHours()*60+new Date().getMinutes();
+        const ch=hourlyAt(skyWxZone(),0,nm);
+        const cp=cloudParams(ch?ch.cloud:80);
+        const nts=[8,28,14,4,22], nfs=[34,22,28,24,30], nds=[22,16,19,25,18], ndl=[0,-7,-3,-11,-5];
+        for(let ci=0;ci<Math.min(cp.count,3);ci++){
+          html+=`<span class="night-cloud" style="top:${nts[ci]}px;left:0;font-size:${nfs[ci]}px;opacity:${cp.opacity};--cd:${nds[ci]}s;animation-delay:${ndl[ci]}s;">☁️</span>`;
+        }
       }
       if(isStorm||isRain){
         // Raindrops
@@ -868,7 +889,8 @@ function buildDayScene(now){
   // Cached on (condition, wind bucket): rebuilding every minute resets the
   // CSS animations, making rain/clouds visibly jump. Only the sun-ray
   // position is updated on cached ticks.
-  const sceneKey=(wx&&wx.ok)?`${wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}`:'none';
+  const cloudPct=(()=>{const h=hourlyAt(sceneZone,0,nowMins());return h?h.cloud:null;})();
+  const sceneKey=(wx&&wx.ok)?`${wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${cloudPct==null?'?':cloudPct}`:'none';
   if(window._wxSceneKey===sceneKey){
     const ray=wxEl.querySelector('.day-ray');
     if(ray){ ray.style.setProperty('--sx',sx+'%'); ray.style.setProperty('--sy',sy+'%'); }
@@ -903,30 +925,28 @@ function buildDayScene(now){
     // Clear → warm sun rays
     if(isClear) html+=`<div class="day-ray" style="--sx:${sx}%;--sy:${sy}%;"></div>`;
 
-    // Cloud cover scales with condition
-    let cloudCount=0, dimSky=0;
-    if(isPartly)        { cloudCount=2; dimSky=0.0; }
-    else if(isFog)      { cloudCount=2; dimSky=0.55; }
-    else if(isDrizzle)  { cloudCount=4; dimSky=0.35; }
-    else if(isOvercast) { cloudCount=5; dimSky=0.5; }
-    else if(isShower)   { cloudCount=4; dimSky=0.4; }
-    else if(isRain)     { cloudCount=6; dimSky=0.55; }
-    else if(isSnow)     { cloudCount=4; dimSky=0.4; }
-    else if(isStorm)    { cloudCount=6; dimSky=0.65; }
+    // dimSky from weather type; cloud count+opacity from actual cloud_cover %
+    let dimSky=0;
+    if(isFog)           dimSky=0.55;
+    else if(isDrizzle)  dimSky=0.35;
+    else if(isOvercast) dimSky=0.5;
+    else if(isShower)   dimSky=0.4;
+    else if(isRain)     dimSky=0.55;
+    else if(isSnow)     dimSky=0.4;
+    else if(isStorm)    dimSky=0.65;
     overcastOpacity=dimSky;
 
-    // Render clouds — drift speed scales with wind (lazy when calm, scudding when blustery)
+    // Clouds: count + opacity from real cloud_cover %; drift speed from wind
+    const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
     const cloudSizes=[30,24,34,22,28,26];
     const cloudTops=[6,22,2,34,14,28];
-    // Base drift slow (~26s) when calm, fast (~7s) when blustery
     const cloudBaseDur=26-windF*19;
-    for(let i=0;i<cloudCount;i++){
+    for(let i=0;i<cp.count;i++){
       const sz=cloudSizes[i%cloudSizes.length];
       const top=cloudTops[i%cloudTops.length];
-      const dur=cloudBaseDur+(i%3)*2.5;       // slight per-cloud variation
-      const delay=-(i*(dur/cloudCount));      // evenly spread across the loop
-      const op=isPartly?0.85:0.95;
-      html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${op};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
+      const dur=cloudBaseDur+(i%3)*2.5;
+      const delay=-(i*(dur/Math.max(1,cp.count)));
+      html+=`<span class="day-cloud" style="top:${top}px;left:0;font-size:${sz}px;opacity:${cp.opacity};--cd:${dur}s;animation-delay:${delay}s;">☁️</span>`;
     }
 
     // Rain — drop count scales with intensity; slant + drift scale with wind
@@ -1823,25 +1843,27 @@ function render(){
 
   // Day/night mode switch — night when past last light OR before first light
   const isNight = now>=lastLightMins || now<firstLightMins;
-  document.getElementById('daybar-day').style.display   = isNight?'none':'block';
-  document.getElementById('daybar-night').style.display = isNight?'block':'none';
+  const renderNight = forecastMode ? !isNight : isNight;
+  const forecastDaylight = (forecastMode && !renderNight) ? (lastLightMins-firstLightMins) : daylight;
+  document.getElementById('daybar-day').style.display   = renderNight?'none':'block';
+  document.getElementById('daybar-night').style.display = renderNight?'block':'none';
   const glat=window._gpsLat??-27.4698, glng=window._gpsLng??153.0251;
 
   // Identity swap: by night this is a sky-watch app (installed home-screen
   // icons are cached by the OS at install time and can't change, but the
   // tab favicon, titles and theme colour can)
-  if(window._uiNight!==isNight){
-    window._uiNight=isNight;
+  if(window._uiNight!==renderNight){
+    window._uiNight=renderNight;
     const titleEl=document.getElementById('app-title');
-    if(titleEl) titleEl.innerHTML = isNight?'SEQ <span>Night</span> Sky':'SEQ <span>Golf</span> Finder';
-    document.title = isNight?'SEQ Night Sky':'Golf Finder SEQ';
+    if(titleEl) titleEl.innerHTML = renderNight?'SEQ <span>Night</span> Sky':'SEQ <span>Golf</span> Finder';
+    document.title = renderNight?'SEQ Night Sky':'Golf Finder SEQ';
     const tm=document.querySelector('meta[name="theme-color"]');
-    if(tm) tm.content = isNight?'#0a0e1f':'#0f1a0f';
+    if(tm) tm.content = renderNight?'#0a0e1f':'#0f1a0f';
     // (favicon stays the were-fox in both modes — the icon embodies the shift)
-    document.body.classList.toggle('night',isNight);
+    document.body.classList.toggle('night',renderNight);
   }
 
-  if(isNight){
+  if(renderNight){
     // One useful line each: the dark window worth planning around, and dawn
     const bw=bestViewingWindow(glat,glng);
     const bestEl=document.getElementById('night-best');
@@ -1855,6 +1877,7 @@ function render(){
     const firstEl=document.getElementById('night-first');
     if(firstEl) firstEl.textContent=`🌄 first light ~${minsToStr(firstLightMins)} · in ${fh>0?fh+'h ':''}${fm}m · ⛳ ${((lastLightMins-firstLightMins)/60).toFixed(1)}h of golf tomorrow`;
     buildNightScene();
+
   }
 
   // Hero daylight bar — runs sunrise → last light
@@ -1875,7 +1898,7 @@ function render(){
   const t18=lastLightMins-240, t9=lastLightMins-120, tP3=lastLightMins-60;
   const lcEl=document.getElementById('day-lastcall');
   if(lcEl){
-    if(isNight){ lcEl.style.display='none'; }
+    if(renderNight){ lcEl.style.display='none'; }
     else{
       lcEl.style.display='flex';
       const seg=(label,t)=> t>=now
@@ -1886,11 +1909,11 @@ function render(){
   }
   const tickPos=t=>Math.min(99,Math.max(1,((t-sunriseMins)/totalDay)*100))+'%';
   const tick18=document.getElementById('tick-18'), tick9=document.getElementById('tick-9');
-  if(tick18){ tick18.style.display=(!isNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
-  if(tick9){  tick9.style.display =(!isNight&&t9>now) ?'block':'none'; tick9.style.left =tickPos(t9); }
+  if(tick18){ tick18.style.display=(!renderNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
+  if(tick9){  tick9.style.display =(!renderNight&&t9>now) ?'block':'none'; tick9.style.left =tickPos(t9); }
 
   // Build the day sky scene (sky gradient, arcing sun, weather)
-  if(!isNight) buildDayScene(now);
+  if(!renderNight) buildDayScene(now);
 
   // Reset daybar background (scenes handle their own backgrounds)
   const daybarEl=document.querySelector('.daybar');
@@ -1911,7 +1934,7 @@ function render(){
   const dlSub=document.getElementById('s-daylight-sub');
   const dlLabel=document.getElementById('daylight-card-label');
   const dlIcon=document.getElementById('daylight-icon');
-  if(isNight){
+  if(renderNight){
     const hl=skyHeadline(glat,glng,nowDate());
     dlLabel.textContent='Tonight';
     dlIcon.textContent=hl.icon;
@@ -1945,7 +1968,7 @@ function render(){
   const lbIcon=document.getElementById('leaveby-icon');
   const lbVal=document.getElementById('s-leaveby');
   const lbSub=document.getElementById('s-leaveby-sub');
-  if(isNight){
+  if(renderNight){
     // Moon card: phase, illumination, next rise/set
     const mp=moonPhase(nowDate()), il=Math.round(moonIllum(nowDate())*100);
     const mev=moonEvents(glat,glng,nowDate());
@@ -1993,12 +2016,12 @@ function render(){
   const wxLbl2=document.getElementById('wx-card-label2');
   const wxLbl =document.getElementById('wx-card-label');
   wxCard.className='stat stat-wx-nearest';
-  if(nearest||isNight){
-    const wx=weatherCache[isNight?skyWxZone():nearest.zone];
-    wxLbl.textContent=isNight?'Sky viewing':nearest.suburb;
+  if(nearest||renderNight){
+    const wx=weatherCache[renderNight?skyWxZone():nearest.zone];
+    wxLbl.textContent=renderNight?'Sky viewing':nearest.suburb;
     if(wx&&wx.ok){
-      const fcMins = isNight ? now : Math.min(lastLightMins, now+PREP+driveMins(nearest)+BUFFER);
-      const fc = hourlyAt(isNight?skyWxZone():nearest.zone, 0, fcMins);
+      const fcMins = renderNight ? now : Math.min(lastLightMins, now+PREP+driveMins(nearest)+BUFFER);
+      const fc = hourlyAt(renderNight?skyWxZone():nearest.zone, 0, fcMins);
       const d  = fc ? fc.desc : {icon:wx.icon,label:wx.label,c:wx.color};
       const col=d.c||'var(--tx2)';
       // Tint the frame, icon and condition — temp & wind stay neutral so an
@@ -2015,7 +2038,7 @@ function render(){
       wxWind.textContent=(sg&&sg>sw)?`${sw}–${sg} km/h`:`${sw} km/h`;
       wxWind.style.color='';
       wxLbl2.className='stat-wx-detail';
-      if(isNight){
+      if(renderNight){
         const cl=fc&&fc.cloud!==null?fc.cloud:null;
         const q=cl===null?d.label:cl<25?`${cl}% cloud · great viewing`:cl<55?`${cl}% cloud · fair viewing`:cl<85?`${cl}% cloud · poor viewing`:`${cl}% cloud · overcast`;
         wxLbl2.textContent=q;
@@ -2043,7 +2066,7 @@ function render(){
 
   // Filters are a golf concept — hide the whole row at night
   const filtEl=document.querySelector('.filters');
-  if(filtEl) filtEl.style.display=isNight?'none':'flex';
+  if(filtEl) filtEl.style.display=renderNight?'none':'flex';
 
   // Restore active pill
   document.querySelectorAll('.fpill').forEach(b=>{
@@ -2063,7 +2086,7 @@ function render(){
   const notPlayable=activeFilter==='playable'?[]:allInFilter.filter(c=>!playableCheck(c));
 
   let html='';
-  if(isNight){
+  if(renderNight){
     html+=`<div class="section-head"><span class="sdot" style="background:#8da9d6;box-shadow:0 0 6px rgba(141,169,214,0.8);"></span>Tonight's sky</div>`;
     html+=astroCards(glat,glng);
     document.getElementById('course-list').innerHTML=html;
@@ -2071,11 +2094,11 @@ function render(){
   }
   if(playable.length){
     html+=`<div class="section-head"><span class="sdot sdot-g"></span>Enough daylight today &mdash; ${playable.length} course${playable.length!==1?'s':''} &middot; check tee sheet</div>`;
-    playable.forEach(c=>{html+=courseCard(c,daylight,false);});
+    playable.forEach(c=>{html+=courseCard(c,forecastDaylight,false);});
   }
   if(notPlayable.length){
     html+=`<div class="section-head" style="margin-top:20px;"><span class="sdot sdot-r"></span>Not playable today &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
-    notPlayable.forEach(c=>{html+=courseCard(c,daylight,true);});
+    notPlayable.forEach(c=>{html+=courseCard(c,forecastDaylight,true);});
   }
   if(!playable.length&&!notPlayable.length)html='<div class="no-results">No courses match this filter.</div>';
   document.getElementById('course-list').innerHTML=html;
@@ -2190,6 +2213,7 @@ function courseCard(c,daylight,dimmed){
       </div>
       <a class="visit-btn" href="${c.url}" target="_blank" aria-label="${ctaAria}">${cta}</a>
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:auto;">
+        ${c.layout?`<button class="share-btn" onclick="showLayout('${c.layout}')" aria-label="View ${safeName} course map" title="Course layout">🗺</button>`:''}
         <button class="share-btn" onclick="shareCourse('${safeName}','${safeSuburb}',${driveMins(c)})" aria-label="Share ${safeName}">↗️</button>
         <button class="fav-btn${isFav?' on':''}" onclick="toggleFav('${safeName}',this)" aria-label="${isFav?'Remove':'Add'} ${safeName} ${isFav?'from':'to'} favourites" aria-pressed="${isFav}">${isFav?'⭐':'☆'}</button>
       </div>
@@ -2336,8 +2360,109 @@ document.addEventListener('visibilitychange',()=>{
   document.body.classList.toggle('wx-paused',document.hidden);
 });
 
+
+// ── Course layout modal ──────────────────────────────────────────────────────
+const LAYOUTS={
+'st-lucia':{
+  title:'St Lucia Golf Links',
+  svg:`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 780" style="width:100%;display:block;border-radius:8px;background:#0e1a0c;">
+  <defs>
+    <radialGradient id="turf" cx="48%" cy="42%" r="62%"><stop offset="0%" stop-color="#3a6b2c"/><stop offset="100%" stop-color="#234a1a"/></radialGradient>
+    <radialGradient id="wat" cx="50%" cy="40%" r="70%"><stop offset="0%" stop-color="#2a6aaa"/><stop offset="100%" stop-color="#163f78"/></radialGradient>
+  </defs>
+  <path d="M250,95 C360,68 560,72 690,100 C790,122 862,150 892,232 C912,292 905,344 880,392 C861,432 900,470 946,516 C880,470 836,506 792,544 C698,584 600,592 520,576 C462,560 422,548 380,548 C300,548 232,562 162,612 C112,648 80,692 96,712 C112,728 142,690 178,650 C232,580 292,520 332,470 C302,440 272,430 252,400 C220,350 214,270 220,200 C225,140 235,110 250,95 Z" fill="url(#turf)" stroke="#16300f" stroke-width="3"/>
+  <path d="M905,452 C965,500 1030,540 1055,610 C1070,668 1050,712 1010,742 L1100,780 L1100,440 Z" fill="url(#wat)" opacity="0.95"/>
+  <path d="M918,470 C972,512 1028,548 1050,608" stroke="#4a86c4" stroke-width="2" fill="none" opacity="0.5"/>
+  <ellipse cx="332" cy="368" rx="52" ry="34" fill="url(#wat)" transform="rotate(-18 332 368)"/>
+  <path d="M430,250 C500,272 560,262 612,286 C662,308 690,300 724,322" stroke="#2f6fae" stroke-width="6" fill="none" opacity="0.85" stroke-linecap="round"/>
+  <g fill="#173310" opacity="0.92">
+    <circle cx="690" cy="150" r="26"/><circle cx="740" cy="175" r="22"/><circle cx="820" cy="210" r="30"/><circle cx="860" cy="270" r="26"/><circle cx="850" cy="340" r="30"/>
+    <circle cx="600" cy="520" r="34"/><circle cx="520" cy="500" r="28"/><circle cx="690" cy="540" r="30"/><circle cx="780" cy="500" r="26"/><circle cx="830" cy="440" r="24"/>
+    <circle cx="440" cy="520" r="26"/><circle cx="300" cy="500" r="30"/><circle cx="220" cy="470" r="26"/><circle cx="200" cy="560" r="30"/><circle cx="150" cy="600" r="24"/>
+    <circle cx="250" cy="160" r="24"/><circle cx="230" cy="240" r="22"/><circle cx="240" cy="330" r="22"/><circle cx="430" cy="120" r="22"/><circle cx="560" cy="110" r="22"/>
+    <circle cx="470" cy="430" r="24"/><circle cx="600" cy="450" r="22"/><circle cx="100" cy="660" r="22"/><circle cx="180" cy="660" r="20"/>
+  </g>
+  <g fill="#4f9434" opacity="0.95">
+    <ellipse cx="510" cy="180" rx="34" ry="70" transform="rotate(20 510 180)"/><ellipse cx="745" cy="300" rx="30" ry="64" transform="rotate(70 745 300)"/>
+    <ellipse cx="862" cy="510" rx="26" ry="70" transform="rotate(15 862 510)"/><ellipse cx="770" cy="540" rx="30" ry="72" transform="rotate(80 770 540)"/>
+    <ellipse cx="545" cy="430" rx="30" ry="78" transform="rotate(35 545 430)"/><ellipse cx="705" cy="475" rx="30" ry="70" transform="rotate(60 705 475)"/>
+    <ellipse cx="712" cy="290" rx="28" ry="60" transform="rotate(55 712 290)"/><ellipse cx="662" cy="320" rx="26" ry="56" transform="rotate(40 662 320)"/>
+    <ellipse cx="500" cy="215" rx="28" ry="60" transform="rotate(25 500 215)"/><ellipse cx="520" cy="290" rx="30" ry="66" transform="rotate(15 520 290)"/>
+    <ellipse cx="735" cy="400" rx="26" ry="58" transform="rotate(75 735 400)"/><ellipse cx="635" cy="405" rx="30" ry="72" transform="rotate(50 635 405)"/>
+    <ellipse cx="430" cy="245" rx="28" ry="62" transform="rotate(35 430 245)"/><ellipse cx="300" cy="320" rx="30" ry="66" transform="rotate(-30 300 320)"/>
+    <ellipse cx="135" cy="540" rx="30" ry="86" transform="rotate(28 135 540)"/><ellipse cx="150" cy="640" rx="26" ry="60" transform="rotate(60 150 640)"/>
+    <ellipse cx="345" cy="415" rx="30" ry="78" transform="rotate(20 345 415)"/><ellipse cx="390" cy="260" rx="28" ry="64" transform="rotate(10 390 260)"/>
+  </g>
+  <g fill="#ddc89a" opacity="0.9">
+    <ellipse cx="575" cy="190" rx="16" ry="9"/><ellipse cx="600" cy="240" rx="12" ry="8"/><ellipse cx="615" cy="335" rx="13" ry="8"/><ellipse cx="820" cy="520" rx="11" ry="7"/>
+    <ellipse cx="180" cy="500" rx="14" ry="8"/><ellipse cx="120" cy="600" rx="12" ry="8"/><ellipse cx="470" cy="350" rx="12" ry="7"/><ellipse cx="700" cy="430" rx="11" ry="7"/><ellipse cx="380" cy="320" rx="11" ry="7"/>
+  </g>
+  <g transform="translate(248,96)"><rect x="-26" y="-18" width="52" height="40" rx="4" fill="#cfcabb" stroke="#16300f" stroke-width="1.5"/><rect x="-14" y="-30" width="34" height="16" rx="3" fill="#b8b2a2"/></g>
+  <g stroke="#e8e2d2" stroke-width="2.5" fill="none" opacity="0.6" stroke-linecap="round">
+    <path d="M270,110 C380,120 520,120 690,110 C780,104 840,128 880,180"/><path d="M300,150 C360,200 420,260 470,330 C500,380 470,450 430,520"/>
+  </g>
+  <g fill="#86d84f" stroke="#2d5a1b" stroke-width="1.5">
+    <circle cx="525" cy="172" r="9"/><circle cx="755" cy="288" r="9"/><circle cx="872" cy="500" r="8"/><circle cx="763" cy="528" r="9"/><circle cx="543" cy="418" r="9"/><circle cx="705" cy="466" r="9"/>
+    <circle cx="712" cy="283" r="8"/><circle cx="662" cy="313" r="8"/><circle cx="490" cy="207" r="9"/><circle cx="515" cy="287" r="9"/><circle cx="733" cy="402" r="8"/><circle cx="635" cy="403" r="9"/>
+    <circle cx="427" cy="240" r="9"/><circle cx="300" cy="312" r="9"/><circle cx="120" cy="518" r="9"/><circle cx="133" cy="640" r="8"/><circle cx="343" cy="410" r="9"/><circle cx="388" cy="256" r="9"/>
+  </g>
+  <g font-family="sans-serif" font-weight="bold" text-anchor="middle" font-size="20">
+    <g><circle cx="525" cy="172" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="525" y="179" fill="#fff">1</text></g>
+    <g><circle cx="755" cy="288" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="755" y="295" fill="#fff">2</text></g>
+    <g><circle cx="872" cy="500" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="872" y="507" fill="#fff">3</text></g>
+    <g><circle cx="763" cy="528" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="763" y="535" fill="#fff">4</text></g>
+    <g><circle cx="543" cy="418" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="543" y="425" fill="#fff">5</text></g>
+    <g><circle cx="705" cy="466" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="705" y="473" fill="#fff">6</text></g>
+    <g><circle cx="712" cy="283" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="712" y="290" fill="#fff">7</text></g>
+    <g><circle cx="662" cy="313" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="662" y="320" fill="#fff">8</text></g>
+    <g><circle cx="490" cy="207" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="490" y="214" fill="#fff">9</text></g>
+    <g><circle cx="515" cy="287" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="515" y="294" fill="#fff">10</text></g>
+    <g><circle cx="733" cy="402" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="733" y="409" fill="#fff">11</text></g>
+    <g><circle cx="635" cy="403" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="635" y="410" fill="#fff">12</text></g>
+    <g><circle cx="427" cy="240" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="427" y="247" fill="#fff">13</text></g>
+    <g><circle cx="300" cy="312" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="300" y="319" fill="#fff">14</text></g>
+    <g><circle cx="120" cy="518" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="120" y="525" fill="#fff">15</text></g>
+    <g><circle cx="133" cy="640" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="133" y="647" fill="#fff">16</text></g>
+    <g><circle cx="343" cy="410" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="343" y="417" fill="#fff">17</text></g>
+    <g><circle cx="388" cy="256" r="17" fill="rgba(20,40,15,0.6)" stroke="#fff" stroke-width="2"/><text x="388" y="263" fill="#fff">18</text></g>
+  </g>
+  <g transform="translate(880,650)">
+    <ellipse cx="60" cy="0" rx="62" ry="34" fill="none" stroke="#16300f" stroke-width="2"/><circle cx="60" cy="-4" r="22" fill="#16300f"/><rect x="56" y="-4" width="8" height="20" fill="#16300f"/>
+    <text x="60" y="24" text-anchor="middle" font-family="serif" font-size="11" fill="#16300f" letter-spacing="2">1926</text>
+    <text x="60" y="50" text-anchor="middle" font-family="serif" font-size="15" fill="#234a1a" letter-spacing="3" font-weight="bold">ST LUCIA</text>
+    <text x="60" y="70" text-anchor="middle" font-family="serif" font-size="18" fill="#234a1a" letter-spacing="3" font-weight="bold">GOLF LINKS</text>
+  </g>
+  <g transform="translate(60,80)"><circle r="18" fill="rgba(20,40,15,0.5)" stroke="#7ed44f" stroke-width="1.5"/><text y="-6" text-anchor="middle" font-family="sans-serif" font-size="13" fill="#e8f5e0" font-weight="bold">N</text><path d="M0,-13 L3,-4 L0,-6 L-3,-4 Z" fill="#e74c3c"/></g>
+  <rect x="0" y="746" width="1100" height="34" fill="rgba(0,0,0,0.45)"/>
+  <text x="20" y="769" font-family="sans-serif" font-size="14" fill="#7ed44f" font-weight="bold">18 holes · Par 69 · 5,411m · Est. 1926 · Alister MacKenzie design</text>
+</svg>`
+}
+};
+function showLayout(id){
+  const L=LAYOUTS[id]; if(!L) return;
+  document.getElementById('layout-title').textContent=L.title;
+  document.getElementById('layout-svg-wrap').innerHTML=L.svg;
+  document.getElementById('layout-modal').style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeLayout(){
+  document.getElementById('layout-modal').style.display='none';
+  document.body.style.overflow='';
+}
+
 init();
 showTestBanner();
 </script>
-</body>
+
+<!-- Course layout modal -->
+<div id="layout-modal" onclick="closeLayout()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;">
+  <div onclick="event.stopPropagation()" style="max-width:420px;margin:0 auto;padding:12px 12px 24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0 12px;">
+      <span id="layout-title" style="color:#e8f5e0;font-family:var(--sans);font-weight:700;font-size:1.1rem;"></span>
+      <button onclick="closeLayout()" style="background:rgba(255,255,255,0.1);border:none;color:#e8f5e0;font-size:1.3rem;width:32px;height:32px;border-radius:8px;cursor:pointer;line-height:1;">✕</button>
+    </div>
+    <div id="layout-svg-wrap" style="border-radius:12px;overflow:hidden;"></div>
+    <p style="color:var(--tx3);font-size:11px;text-align:center;margin:10px 0 0;font-family:var(--mono);">Tap outside to close · Scroll to zoom on mobile</p>
+  </div>
+</div></body>
 </html>
