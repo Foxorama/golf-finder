@@ -110,6 +110,13 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .app-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
 .hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;width:42px;height:38px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;}
+.hdr-actions{display:flex;gap:8px;align-items:flex-start;}
+.hdr-icons{display:flex;gap:8px;}
+@media(max-width:480px){
+  .hdr-actions{flex-direction:column;align-items:flex-end;}
+  .hdr-actions .hdr-icons{order:1;}
+  .hdr-actions #btn-forecast{order:2;height:32px;font-size:11px;}
+}
 .hdr-btn:active{transform:scale(0.95);background:var(--sur2);}
 .hdr-btn.fc-day{background:rgba(90,171,53,0.18);border-color:rgba(90,171,53,0.5);color:#bfe8a8;}
 .hdr-btn.fc-night{background:rgba(124,148,210,0.18);border-color:rgba(143,184,232,0.55);color:#cdd9f5;}
@@ -138,13 +145,16 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 @keyframes hazeShimmer{0%,100%{opacity:0.45;transform:scaleY(1);}50%{opacity:0.8;transform:scaleY(1.06);}}
 .wind-compass{position:absolute;top:7px;right:7px;width:60px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .wind-compass:active{transform:scale(0.94);}
-.wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2;}
+.wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2.4;}
+.wind-compass{transition:filter .2s ease;} .wind-compass.wc-active{filter:drop-shadow(0 0 7px rgba(126,212,255,0.95));}
 #wc-rotor{transition:transform 0.18s linear;}
 .day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(120,180,240,0.95));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;animation-fill-mode:backwards;}
 @keyframes dayRainFall{0%{transform:translate(0,-14px) rotate(var(--rang,0deg));opacity:0;}25%{opacity:0.85;}100%{transform:translate(var(--rdx,0px),var(--rf,130px)) rotate(var(--rang,0deg));opacity:0;}}
 .day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
 .day-flash{position:absolute;inset:0;background:radial-gradient(circle at 42% 26%,rgba(225,238,255,0.92),rgba(170,195,255,0.32) 42%,transparent 72%);opacity:0;pointer-events:none;mix-blend-mode:screen;animation:dayFlash 6s ease-out infinite;}
 @keyframes dayFlash{0%,7%,100%{opacity:0;}2%{opacity:0.95;}3.5%{opacity:0.15;}5%{opacity:0.85;}}
+.wx-bolt{position:absolute;z-index:7;pointer-events:none;opacity:0;filter:drop-shadow(0 0 4px rgba(160,205,255,0.95));animation:wxBolt 5.5s ease-out infinite;}
+@keyframes wxBolt{0%,9%,100%{opacity:0;}1.5%{opacity:1;}3%{opacity:0.12;}4.5%{opacity:0.92;}6.5%{opacity:0;}}
 .day-ray{position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,240,180,0.45),transparent 40%);z-index:1;pointer-events:none;}
 /* Overcast — grey wash over the sky that scales with cloud cover */
 .day-overcast{position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,rgba(120,130,140,0.55),rgba(90,100,110,0.35));opacity:0;transition:opacity 1s ease;}
@@ -189,9 +199,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
 .day-tick{position:absolute;bottom:0;z-index:8;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55));}
-.day-lastcall{position:relative;height:34px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0 8px;}
+.day-lastcall{position:relative;height:34px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0;}
 .day-lastcall .lc-side{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;color:#9cc8f0;}
-.day-lastcall .lc-rise{left:8px;} .day-lastcall .lc-set{right:8px;}
+.day-lastcall .lc-rise{left:0;} .day-lastcall .lc-set{right:0;}
 .day-lastcall .lc-cap{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;color:var(--tx2);}
 .day-lastcall .lc-h{position:absolute;top:50%;transform:translate(-50%,-50%);color:#d9921a;font-weight:600;}
 
@@ -452,10 +462,12 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <div class="app-title" id="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
     </div>
-    <div style="display:flex;gap:8px;align-items:flex-start;">
-      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
-      <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
-      <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
+    <div class="hdr-actions">
+      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 10px;white-space:nowrap;">⛳ Fore'cast</button>
+      <div class="hdr-icons">
+        <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
+        <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
+      </div>
     </div>
   </div>
 
@@ -810,7 +822,12 @@ const CLOUD_SHAPES=[
 const MAT_CLOUD="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14a6 6 0 0 0 6 6h13a5 5 0 0 0 5-5c0-2.64-2.05-4.78-4.65-4.96z";
 // Cloud drift duration from wind: ~38s at a dead calm down to ~5s in a gale,
 // randomised per cloud.
-function cloudDur(wind){ const base=5+(1-Math.min(1,(wind||0)/40))*33; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
+function cloudDur(wind){ const base=9+(1-Math.min(1,(wind||0)/40))*52; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
+// Jagged SVG lightning bolt that flashes; originates from a cloud underside.
+function lightningSVG(xPct,topPx,h,delay){
+  const w=Math.round(h*0.34);
+  return `<svg class="wx-bolt" style="left:${xPct}%;top:${topPx}px;animation-delay:${delay}s" width="${w}" height="${h}" viewBox="0 0 24 60" preserveAspectRatio="none"><polygon points="14,0 5,30 12,30 3,60 21,22 13,22 19,0" fill="#fdf7b5" stroke="#fffbe0" stroke-width="0.7"/></svg>`;
+}
 let _cgid=0;
 const _mix=(a,b,t)=>Math.round(a+(b-a)*t);
 const _lerpHex=(a,b,t)=>`rgb(${_mix(parseInt(a.slice(1,3),16),parseInt(b.slice(1,3),16),t)},${_mix(parseInt(a.slice(3,5),16),parseInt(b.slice(3,5),16),t)},${_mix(parseInt(a.slice(5,7),16),parseInt(b.slice(5,7),16),t)})`;
@@ -879,41 +896,65 @@ function buildNightScene(){
   // Cached on condition so the 60s re-render doesn't restart the rain animation
   // (same fix the day scene already has).
   const wx=weatherCache[skyWxZone()]||weatherCache['brisbane_metro'];
-  const nightKey=(wx&&wx.ok)?wx.label:'none';
+  const nightKey=(wx&&wx.ok)?(window._wxForce||wx.label):'none';
   const wxEl=document.getElementById('night-wx');
   if(wxEl && window._nightWxKey!==nightKey){
     window._nightWxKey=nightKey;
     let html='';
     if(wx&&wx.ok){
+      // Night weather mirrors day: same conditions, cloud cover, precip and lightning.
       const lbl=window._wxForce||wx.label;
-      const isStorm=/storm|hail/i.test(lbl);
-      const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
-      const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
-      {
-        // Clouds: width = (scene height * cover * per-cloud), thin non-scaling outline
-        const nm=nowMins();
-        const ch=hourlyAt(skyWxZone(),window._fcOffset||0,nm);
-        const cp=cloudParams(ch?ch.cloud:(isStorm?90:isRain?80:isCloud?75:8));
-        const SKY_H=182, bands=[[0.08,0.32],[0.38,0.60],[0.64,0.86]], nds=[22,16,19], ndl=[0,-7,-3], nmul=[1,0.78,0.9]; // SKY_H = sky above the compass/horizon line (4px buffer)
-        for(let ci=0;ci<cp.count;ci++){
-          const w=Math.max(16,Math.round(SKY_H*cp.frac*nmul[ci]*1.5));
-          const chh=Math.round(w*16/24);
-          const cfr=bands[ci][0]+Math.random()*(bands[ci][1]-bands[ci][0]);   // random drift height within the cloud's band
-          const top=Math.round(Math.min(Math.max(cfr*SKY_H-chh/2,0),SKY_H-chh));
-          const dur=nds[ci]+Math.round(Math.random()*8-4);
-          const nt=cloudTones((isStorm?0.82:isRain?0.55:0.28)+(Math.random()-0.5)*0.14);
-          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,ndl[ci],nt[0],nt[1]);
+      const isStorm=/storm|hail/i.test(lbl), isHail=/hail/i.test(lbl);
+      const isRain=lbl.includes('Rain'), isDrizzle=lbl.includes('Drizzle'), isShower=lbl.includes('Shower');
+      const isSnow=lbl.includes('Snow'), isFog=lbl.includes('Foggy'), isOvercast=lbl.includes('Overcast');
+      const isPartly=lbl.includes('Partly'), isClear=/clear/i.test(lbl);
+      const anyRain=isDrizzle||isRain||isShower||isStorm;
+      const wind=wx.wind||0, windF=Math.min(1,wind/30), slantDeg=windF*32, slantPx=windF*60;
+      const SKY_H=182, GY=SKY_H-12;
+      const nm=nowMins(), hc=hourlyAt(skyWxZone(),window._fcOffset||0,nm), cloudPct=hc?hc.cloud:null;
+      const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
+      const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
+      const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
+      const cp=cloudParams(cover);
+      const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));
+      const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.34:0.22;
+      const sizes=[0.3,0.44,0.6,0.82], emitYs=[];
+      for(let i=0;i<nC;i++){
+        const w=Math.max(20,Math.round(SKY_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.8+Math.random()*0.35)));
+        const chh=Math.round(w*0.6);
+        const top=Math.round(-chh*0.4 + Math.pow(Math.random(),1.3)*(SKY_H*0.72));   // bias high, may clip top
+        const dur=cloudDur(wind), delay=-Math.random()*dur;
+        const nt=cloudTones(baseTone+(Math.random()-0.5)*0.16);
+        html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,delay,nt[0],nt[1]);
+        emitYs.push(Math.min(SKY_H-20,top+Math.round(chh*0.62)));
+      }
+      const emitAt=()=> emitYs.length?emitYs[Math.floor(Math.random()*emitYs.length)]:24;
+      if(anyRain){
+        const drops=isStorm?34:isRain?24:isShower?16:10, rLen=isStorm?12:isDrizzle?6:8;
+        for(let i=0;i<drops;i++){
+          const x=Math.random()*100, d=Math.random()*0.7, sy=emitAt()+Math.random()*8;
+          const dur=(Math.random()*0.3+(isDrizzle?0.7:0.45))*(1-windF*0.35);
+          html+=`<span class="day-raindrop" style="left:${x}%;top:${sy}px;--rang:${slantDeg}deg;--rdx:${slantPx}px;--rh:${rLen}px;--rf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
         }
       }
-      if(isStorm||isRain){
-        // Raindrops
-        for(let i=0;i<18;i++){
-          const x=Math.random()*100, d=Math.random()*0.8, dur=Math.random()*0.3+0.6;
-          html+=`<span class="night-raindrop" style="left:${x}%;top:${Math.random()*30}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      if(isSnow){
+        const snowDrift=12+windF*70;
+        for(let i=0;i<26;i++){
+          const x=Math.random()*100, d=Math.random()*3, dur=(Math.random()*2+2.5)*(1-windF*0.4), dx=snowDrift*(0.7+Math.random()*0.6), sy=emitAt()+Math.random()*6;
+          html+=`<span class="day-snow" style="left:${x}%;top:${sy}px;--sdx:${dx}px;--sf:${Math.max(40,GY-sy+8)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+        }
+      }
+      if(isHail){
+        const hailDrift=slantPx*0.5;
+        for(let i=0;i<24;i++){
+          const x=Math.random()*100, d=Math.random()*0.5, dur=Math.random()*0.15+0.35, sy=emitAt()+Math.random()*6;
+          html+=`<span class="day-hail" style="left:${x}%;top:${sy}px;--hdx:${hailDrift}px;--hf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
         }
       }
       if(isStorm){
-        html+=`<span class="night-bolt" style="top:18px;left:30%;">⚡</span>`;
+        html+=`<div class="day-flash"></div>`;
+        const nb=1+Math.round(Math.random());
+        for(let i=0;i<nb;i++){ const bx=22+Math.random()*56, by=Math.max(10,emitAt()-12), bh=44+Math.random()*24; html+=lightningSVG(bx,by,bh,(i*2.4+Math.random()*0.6).toFixed(1)); }
       }
     }
     wxEl.innerHTML=html;
@@ -994,15 +1035,15 @@ function buildDayScene(now){
   // Weather for the scene: zone forecast in SEQ, true GPS forecast when outside
   const sceneZone = window._gpsFar ? skyWxZone() : (window._gpsZone||'brisbane_metro');
   const wx=weatherCache[sceneZone]||weatherCache['brisbane_metro'];
-  const lblNow=(wx&&wx.ok)?wx.label:'Clear';
-  const sunOut = lblNow.includes('Clear')||lblNow.includes('Mostly');
+  const lblNow=(wx&&wx.ok)?(window._wxForce||wx.label):'Clear';
+  const sunOut = /clear|mostly/i.test(lblNow);
   const partlyNow = lblNow.includes('Partly');
 
   // The sun is always the sun — weather lives in the overlay. Under cloud or
   // rain it dims rather than morphing into a glowing rain-cloud emoji.
   const elev=Math.sin(Math.max(0,Math.min(1,frac))*Math.PI);     // 0 at sunrise/last light, 1 at midday
-  const wxDim=sunOut?1:partlyNow?0.72:0.5;                        // cloud knocks the sun back
-  sun.style.opacity=(0.55+0.45*elev*wxDim).toFixed(2);           // brightens as it climbs
+  const wxMul=sunOut?1:partlyNow?0.75:(/storm|rain|hail|shower|drizzle/i.test(lblNow)?0.25:0.5); // heavy weather hides the sun
+  sun.style.opacity=Math.max(0.12,(0.5+0.5*elev)*wxMul).toFixed(2);  // brightens as it climbs, dim under cloud
   sun.style.filter=(sunOut||partlyNow)
     ? `drop-shadow(0 0 ${Math.round(8+15*elev)}px rgba(255,222,130,${(0.5+0.45*elev).toFixed(2)}))`
     : 'grayscale(0.4)';
@@ -1083,7 +1124,7 @@ function buildDayScene(now){
     for(let i=0;i<nC;i++){
       const w=Math.max(22,Math.round(SCENE_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.85+Math.random()*0.35)));
       const ch=Math.round(w*0.6);
-      const top=Math.round(Math.random()*(SCENE_H-ch));               // anywhere in the sky
+      const top=Math.round(-ch*0.4 + Math.pow(Math.random(),1.3)*(SCENE_H*0.78));  // bias high, may clip the top
       const dur=cloudDur(wind), delay=-Math.random()*dur;             // speed from wind, random per cloud
       if(Math.random()<0.0001){
         // ~1:10000 a cloud is replaced by a flyer: an alien saucer (straight)
@@ -1141,7 +1182,7 @@ function buildDayScene(now){
     }
 
     // Lightning for storms
-    if(isStorm) html+=`<div class="day-flash"></div><span class="day-bolt" style="top:12px;left:34%;">⚡</span>`;
+    if(isStorm){ html+=`<div class="day-flash"></div>`; const nb=1+Math.round(Math.random()); for(let i=0;i<nb;i++){ const bx=22+Math.random()*56, by=Math.max(12,emitAt()-12), bh=46+Math.random()*26; html+=lightningSVG(bx,by,bh,(i*2.4+Math.random()*0.6).toFixed(1)); } }
 
     // ── Wind gusts — flowing line clusters with curl ends ──
     // Continuous scaling (no buckets): count, drift speed, stroke weight and
@@ -1160,7 +1201,7 @@ function buildDayScene(now){
           +`<stop offset="1" stop-color="#f5f8fa" stop-opacity="0"/>`
           +`</linearGradient></defs></svg>`;
       const gustCount=Math.max(1,Math.min(6,Math.round(wind/6)+1));
-      const baseDur=Math.max(3.2,Math.min(11.5,13-wind*0.32));
+      const baseDur=Math.max(5,Math.min(17,18-wind*0.45));
       const sw=1.0+windF*0.8;
       for(let i=0;i<gustCount;i++){
         const top=6+Math.random()*62;
@@ -1343,7 +1384,7 @@ window._wxForce=(()=>{const p=new URLSearchParams(location.search).get('wx');if(
   return m[p.toLowerCase().trim()]||null;})();
 // Console helper: setWx('storm'|'rain'|'snow'|...) forces the scene instantly
 // (no reload, so it can't be defeated by caching). setWx() restores live weather.
-window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};window._wxForce=v?(m[(''+v).toLowerCase().trim()]||v):null;window._wxSceneKey=null;render();return window._wxForce||'(live weather)';};
+window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};window._wxForce=v?(m[(''+v).toLowerCase().trim()]||v):null;window._wxSceneKey=null;window._nightWxKey=null;render();return window._wxForce||'(live weather)';};
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
   if(p){
@@ -2104,7 +2145,7 @@ function render(){
   const _blbl=window._wxForce||(_bwx&&_bwx.ok?_bwx.label:'');
   const _lateF=Math.min(1,Math.max(0,(300-daylight)/300));   // 0 = lots of light, 1 = day done
   if(!renderNight && _blbl.includes('Snow'))                fill.style.background=_lerpHex('#eef3f8','#474c54',_lateF);
-  else if(!renderNight && /Rain|Drizzle|Shower|Storm/.test(_blbl)) fill.style.background=_lerpHex('#5aa6e6','#0a1c38',_lateF);
+  else if(!renderNight && /rain|drizzle|shower|storm/i.test(_blbl)) fill.style.background=_lerpHex('#5aa6e6','#0a1c38',_lateF);
   else fill.style.background = daylight<120?'var(--rl)':daylight<240?'var(--al)':'var(--gb)';
 
   // Last tee-off deadlines — 18h/9h aligned under their matching horizon ticks.
