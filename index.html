@@ -96,7 +96,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .app{max-width:480px;margin:0 auto;padding:0 16px 32px;}
 
 /* ── Header ── */
-.header{padding:18px 0 4px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.header{padding:18px 0 2px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
 .header>div:first-child{min-width:0;flex:1;}
 .app-title{font-size:26px;font-weight:800;color:var(--tx);line-height:1.05;letter-spacing:-0.5px;overflow-wrap:break-word;}
 .app-title span{color:var(--gg);}
@@ -234,7 +234,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;min-height:120px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;justify-content:flex-start;transition:border-color 0.3s,background 0.3s;}
+.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;min-height:132px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;justify-content:flex-start;transition:border-color 0.3s,background 0.3s;}
 .stat-label{font-family:var(--mono);font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:5px;}
 .stat-value{font-family:var(--mono);font-size:24px;font-weight:500;color:var(--tx);line-height:1;white-space:nowrap;}
 .stat-sub{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:5px;line-height:1.3;}
@@ -297,9 +297,9 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 body.night .drive-chip{border-color:rgba(141,169,214,0.3);}
 body.night .drive-chip .drive-num{color:#aec6f0;}
 
-.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:500;padding:5px 9px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
+.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:8px;font-family:var(--mono);font-size:10.5px;font-weight:500;padding:3px 8px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
 .filter-select:focus{outline:none;border-color:var(--gb);}
-.loc-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;height:32px;margin:2px 0 8px;}
+.loc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:24px;margin:0 0 8px;}
 .loc-row #loc-status{flex:1;min-width:0;}
 body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doesn't shift when flicking modes */
 .filters::-webkit-scrollbar{display:none;}
