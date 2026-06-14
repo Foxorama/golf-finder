@@ -122,6 +122,13 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
 .day-wx{position:absolute;inset:0;z-index:4;pointer-events:none;}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
+.sun-rays{transform-box:fill-box;transform-origin:center;animation:sunSpin 70s linear infinite;}
+@keyframes sunSpin{to{transform:rotate(360deg);}}
+.day-bird,.day-flyer{position:absolute;left:0;z-index:5;pointer-events:none;animation:birdFly var(--bd,18s) linear infinite;}
+.day-flyer{z-index:6;}
+@keyframes birdFly{0%{transform:translate(-44px,0);}50%{transform:translate(180px,-9px);}100%{transform:translate(420px,5px);}}
+.day-haze{position:absolute;left:0;right:0;bottom:6px;height:28px;z-index:4;pointer-events:none;background:linear-gradient(transparent,rgba(255,248,225,0.14));animation:hazeShimmer 3.2s ease-in-out infinite;}
+@keyframes hazeShimmer{0%,100%{opacity:0.45;transform:scaleY(1);}50%{opacity:0.8;transform:scaleY(1.06);}}
 .wind-compass{position:absolute;top:7px;right:7px;width:60px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
 .wind-compass:active{transform:scale(0.94);}
 .wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2;}
@@ -487,7 +494,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
-        <div class="day-sun" id="day-sun" aria-hidden="true"><svg viewBox="0 0 44 44" width="34" height="34" style="display:block"><circle cx="22" cy="22" r="8.5" fill="#ffd84a"/><g stroke="#ffd84a" stroke-width="2.6" stroke-linecap="round"><line x1="22" y1="2.5" x2="22" y2="8"/><line x1="22" y1="36" x2="22" y2="41.5"/><line x1="2.5" y1="22" x2="8" y2="22"/><line x1="36" y1="22" x2="41.5" y2="22"/><line x1="8" y1="8" x2="11.9" y2="11.9"/><line x1="32.1" y1="32.1" x2="36" y2="36"/><line x1="8" y1="36" x2="11.9" y2="32.1"/><line x1="32.1" y1="11.9" x2="36" y2="8"/></g></svg></div>
+        <div class="day-sun" id="day-sun" aria-hidden="true"><svg viewBox="0 0 44 44" width="34" height="34" style="display:block"><circle cx="22" cy="22" r="8.5" fill="#ffd84a"/><g class="sun-rays" stroke="#ffd84a" stroke-width="2.6" stroke-linecap="round"><line x1="22" y1="2.5" x2="22" y2="8"/><line x1="22" y1="36" x2="22" y2="41.5"/><line x1="2.5" y1="22" x2="8" y2="22"/><line x1="36" y1="22" x2="41.5" y2="22"/><line x1="8" y1="8" x2="11.9" y2="11.9"/><line x1="32.1" y1="32.1" x2="36" y2="36"/><line x1="8" y1="36" x2="11.9" y2="32.1"/><line x1="32.1" y1="11.9" x2="36" y2="8"/></g></svg></div>
         <!-- Floating Now label tracks the sun horizontally -->
         <div class="day-now-float" id="day-now-float">
           <span class="day-now-time" id="db-now">--:--</span>
@@ -1035,6 +1042,25 @@ function buildDayScene(now){
       const dur=cloudDur(wind), delay=-Math.random()*dur;             // speed from wind, random per cloud
       html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
     }
+
+    // Birds drift across on fine days — and ~1:10000, something else entirely
+    if(isClear||isPartly){
+      const nB=1+Math.floor(Math.random()*2);
+      for(let b=0;b<nB;b++){
+        const bt=Math.round(18+Math.random()*70), bdur=+(14+Math.random()*10).toFixed(1), bdl=-(Math.random()*bdur).toFixed(1);
+        if(Math.random()<0.0001){
+          const orb=Math.random()<0.5;
+          const art=orb
+            ? '<defs><radialGradient id="ofly" cx="50%" cy="60%" r="70%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M30,33 C16,32 6,22 9,13 C14,18 21,20 27,21 C24,13 26,7 30,4 C34,7 36,13 33,21 C41,18 49,16 53,11 C57,22 45,33 30,33 Z" fill="url(#ofly)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="25.5" cy="26" r="2.3" fill="#ff5a8a"/><circle cx="34.5" cy="26" r="2.3" fill="#ff5a8a"/>'
+            : '<ellipse cx="30" cy="22" rx="22" ry="7" fill="#9fb3c8" stroke="#6f8398" stroke-width="0.8"/><ellipse cx="30" cy="15" rx="11" ry="8" fill="#bfeefb" opacity="0.92"/><circle cx="18" cy="22" r="1.6" fill="#ff5a8a"/><circle cx="30" cy="23.5" r="1.6" fill="#7ed4ff"/><circle cx="42" cy="22" r="1.6" fill="#ffd24a"/>';
+          html+=`<svg class="day-flyer" style="top:${bt}px;--bd:${(bdur*1.5).toFixed(1)}s;animation-delay:${bdl}s" width="48" height="29" viewBox="0 0 60 36">${art}</svg>`;
+        } else {
+          html+=`<svg class="day-bird" style="top:${bt}px;--bd:${bdur}s;animation-delay:${bdl}s" width="22" height="9" viewBox="0 0 22 9"><path d="M1,6 Q5.5,1 11,6 Q16.5,1 21,6" stroke="rgba(40,46,58,0.62)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
+        }
+      }
+    }
+    // Heat shimmer near the horizon on a hot clear day
+    if(isClear && wx.temp!=null && wx.temp>=30) html+=`<div class="day-haze"></div>`;
 
     // Rain — drop count scales with intensity; slant + drift scale with wind
     if(anyRain){
