@@ -182,7 +182,6 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
-#night-scene{margin-top:14px;}
 .night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:12px;}
 /* ── Sky panorama: real positions, az 0–360 left→right (N E S W N), alt 0–90 bottom→top ── */
 .night-sky{position:absolute;inset:0;z-index:2;pointer-events:none;}
@@ -303,7 +302,8 @@ body.night .drive-chip .drive-num{color:#aec6f0;}
 
 .filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 10px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
 .filter-select:focus{outline:none;border-color:var(--gb);}
-.filter-bar{display:flex;align-items:center;justify-content:flex-end;height:34px;margin-bottom:8px;}
+.loc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:30px;margin:2px 0 10px;}
+.loc-row #loc-status{flex:1;min-width:0;}
 body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doesn't shift when flicking modes */
 .filters::-webkit-scrollbar{display:none;}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
@@ -435,7 +435,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div>
       <div class="app-title" id="app-title">SEQ <span>Golf</span> Finder</div>
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
-      <div class="app-meta" id="loc-status"></div>
     </div>
     <div style="display:flex;gap:8px;align-items:flex-start;">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 8px;white-space:nowrap;">⛳ Fore'cast</button>
@@ -480,7 +479,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <span style="opacity:0.7;">· tap to cycle · </span><span onclick="event.stopPropagation();clearTime();hideTestBanner();" style="text-decoration:underline;">exit</span>
   </div>
 
-  <div class="filter-bar"><select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select></div>
+  <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select></div>
   <div class="hero-zone">
   <!-- HERO: Daylight bar -->
   <div class="daybar">
