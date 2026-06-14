@@ -157,7 +157,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   100%{transform:translate(420px,-3px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
-.day-ground{position:absolute;left:0;right:0;bottom:0;height:54px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.18) 45%,rgba(8,14,8,0.55) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 12px 9px;}
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:46px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.16) 45%,rgba(8,14,8,0.5) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 5px 3px;}
 .day-marker{display:flex;flex-direction:column;gap:1px;}
 .day-marker-left{align-items:flex-start;} .day-marker-right{align-items:flex-end;}
 .day-marker-row{display:flex;align-items:center;gap:5px;}
@@ -172,12 +172,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
-.day-tick{position:absolute;bottom:0;width:2px;height:10px;background:rgba(255,255,255,0.7);z-index:7;transform:translateX(-50%);border-radius:1px;pointer-events:none;}
-.day-lastcall{display:flex;align-items:center;justify-content:space-between;gap:10px;height:30px;font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:0;padding:0 2px;}
-.day-lastcall .lc-rise,.day-lastcall .lc-set{color:var(--tx2);white-space:nowrap;}
-.day-lastcall .lc-tee{white-space:nowrap;}
+.day-tick{position:absolute;bottom:2px;z-index:7;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));}
+.day-lastcall{position:relative;height:28px;font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1.7;margin-top:0;padding:0 2px;}
+.day-lastcall .lc-cap{position:absolute;left:2px;top:4px;}
+.day-lastcall .lc-seg{position:absolute;top:4px;transform:translateX(-50%);white-space:nowrap;}
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
-.day-lastcall b{color:var(--tx2);font-weight:500;}
+.day-lastcall b{color:var(--gb);font-weight:500;}
 .day-lastcall .lc-past{opacity:0.4;text-decoration:line-through;}
 
 /* ── Daybar night mode — starfield scene ── */
@@ -497,16 +497,14 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="day-ground">
           <div class="day-marker day-marker-left">
             <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 60 34" width="58" height="33" style="display:block;overflow:visible"><defs><radialGradient id="srg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffe79a"/><stop offset="55%" stop-color="#ffbe54"/><stop offset="100%" stop-color="#ff8f3c"/></radialGradient></defs><g stroke="#ffd56a" stroke-width="1.7" stroke-linecap="round" opacity="0.8"><line x1="30" y1="1" x2="30" y2="8"/><line x1="13" y1="7" x2="17.5" y2="12"/><line x1="47" y1="7" x2="42.5" y2="12"/><line x1="4" y1="19" x2="10.5" y2="21"/><line x1="56" y1="19" x2="49.5" y2="21"/></g><path d="M14,27 a16,16 0 0,1 32,0 Z" fill="url(#srg)"/><line x1="1" y1="27.5" x2="59" y2="27.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-            <span class="day-marker-cap">sunrise</span>
           </div>
           <div class="day-marker day-marker-right">
             <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 60 34" width="58" height="33" style="display:block;overflow:visible"><defs><radialGradient id="ssg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffbf70"/><stop offset="55%" stop-color="#ff823c"/><stop offset="100%" stop-color="#d94e28"/></radialGradient></defs><g stroke="#ff9a52" stroke-width="1.6" stroke-linecap="round" opacity="0.55"><line x1="6" y1="20" x2="12" y2="22"/><line x1="54" y1="20" x2="48" y2="22"/></g><path d="M17,29 a13,13 0 0,1 26,0 Z" fill="url(#ssg)"/><line x1="1" y1="29.5" x2="59" y2="29.5" stroke="rgba(255,255,255,0.45)" stroke-width="1.6" stroke-linecap="round"/></svg></span>
-            <span class="day-marker-cap">last light</span>
           </div>
         </div>
         <!-- Last tee-off ticks (positioned by render) -->
-        <div class="day-tick" id="tick-18" style="display:none;" aria-hidden="true"></div>
-        <div class="day-tick" id="tick-9" style="display:none;" aria-hidden="true"></div>
+        <div class="day-tick" id="tick-18" style="display:none;" aria-hidden="true"><svg viewBox="0 0 10 14" width="9" height="13"><polygon points="1,2 9,2 6.3,5 3.7,5" fill="#f0e0b8"/><rect x="4.1" y="4.3" width="1.8" height="9" rx="0.7" fill="#e6d2a0"/></svg></div>
+        <div class="day-tick" id="tick-9" style="display:none;" aria-hidden="true"><svg viewBox="0 0 10 14" width="9" height="13"><polygon points="1,2 9,2 6.3,5 3.7,5" fill="#f0e0b8"/><rect x="4.1" y="4.3" width="1.8" height="9" rx="0.7" fill="#e6d2a0"/></svg></div>
         <!-- Horizon line = progress bar, sits at very bottom of the sky -->
         <div class="daybar-track"><div class="daybar-fill" id="daybar-fill" style="width:50%;background:var(--gb);"></div></div>
       </div>
@@ -787,8 +785,10 @@ function cloudParams(pct){
 // stroke) and the cloud is sized as a % of the scene, not a fixed font px.
 const CLOUD_PATH="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14a6 6 0 0 0 6 6h13a5 5 0 0 0 5-5c0-2.64-2.05-4.78-4.65-4.96z";
 function cloudSVG(cls,w,top,opacity,cd,delay,fill){
-  const h=Math.round(w*16/24);
-  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${CLOUD_PATH}" fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
+  const ar=0.5+Math.random()*0.26;                       // random proportions
+  const h=Math.round(w*ar);
+  const fx=Math.random()<0.5?' transform="translate(24,0) scale(-1,1)"':''; // random mirror
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${CLOUD_PATH}"${fx} fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
@@ -1017,13 +1017,15 @@ function buildDayScene(now){
     // Clouds: size scales with cover; the 3 clouds are spread down the scene
     // (top/middle/lower) so they fill the sky at high cover, not just a top band.
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
-    const SCENE_H=128, bands=[[0.10,0.34],[0.40,0.60],[0.62,0.85]], sizeMul=[1,0.78,0.9], cloudBaseDur=26-windF*19;
-    for(let i=0;i<cp.count;i++){
-      const w=Math.max(16,Math.round(SCENE_H*cp.frac*sizeMul[i]*1.5));
-      const ch=Math.round(w*16/24);
-      const cfr=bands[i][0]+Math.random()*(bands[i][1]-bands[i][0]);   // random drift height within the cloud's band
-      const top=Math.round(Math.min(Math.max(cfr*SCENE_H-ch/2,0),SCENE_H-ch));
-      const dur=cloudBaseDur+(i%3)*2.5+Math.round(Math.random()*4-2), delay=-(i*(dur/cp.count));
+    const SCENE_H=200, cloudBaseDur=26-windF*19;
+    const nC=cp.count===0?0:cp.count+(cp.frac>0.45?2:1);   // a few extra clouds, more when overcast
+    const bandsY=[0.08,0.2,0.34,0.5,0.66,0.8];
+    for(let i=0;i<nC;i++){
+      const w=Math.max(18,Math.round(SCENE_H*cp.frac*(0.7+Math.random()*0.6)*1.15));  // random sizes
+      const ch=Math.round(w*0.62);
+      const band=bandsY[i%bandsY.length]+(Math.random()*0.08-0.04);   // spread across the sky, jittered
+      const top=Math.round(Math.min(Math.max(band*SCENE_H-ch/2,0),SCENE_H-ch));
+      const dur=cloudBaseDur+Math.round(Math.random()*10-3), delay=-Math.random()*dur;
       html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
     }
 
@@ -2020,9 +2022,9 @@ function render(){
   if(lcEl){
     if(renderNight){ lcEl.style.display='none'; }
     else{
-      lcEl.style.display='flex';
-      const tee=(label,t)=> t<now ? `<span class="lc-past">${label} ${minsToStr(t)}</span>` : `<span>${label} <b>${minsToStr(t)}</b></span>`;
-      lcEl.innerHTML=`<span class="lc-rise">${minsToStr(sunriseMins)}</span><span class="lc-tee">last tee-off &middot; ${tee('18h',t18)} &middot; ${tee('9h',t9)}</span><span class="lc-set">${minsToStr(lastLightMins)}</span>`;
+      lcEl.style.display='block';
+      const seg=(label,t)=> `<span class="lc-seg${t<now?' lc-past':''}" style="left:${tickPos(t)};">${label} ${t<now?minsToStr(t):'<b>'+minsToStr(t)+'</b>'}</span>`;
+      lcEl.innerHTML=`<span class="lc-cap">⛳ Last Tee</span>${seg('18h',t18)}${seg('9h',t9)}`;
     }
   }
 
