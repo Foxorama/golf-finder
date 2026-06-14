@@ -10,7 +10,7 @@
  *
  * Bump CACHE when index.html changes so clients pick up the new version.
  */
-const CACHE = 'golf-finder-v23';
+const CACHE = 'golf-finder-v24';
 const SHELL = ['./', './index.html', './course-maps.json'];
 
 self.addEventListener('install', (e) => {
@@ -52,22 +52,25 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // App shell / same-origin: cache-first, fall back to network, then to the
-  // cached index for navigations (so a deep refresh offline still works).
+  // App shell / same-origin: NETWORK-FIRST so a fresh deploy always lands when
+  // online (cache-first used to pin a stale index.html until CACHE was bumped,
+  // which silently hid new builds from returning users). Falls back to cache,
+  // then to the cached index for navigations, so offline still works.
   if (sameOrigin) {
     e.respondWith(
-      caches.match(req).then((hit) =>
-        hit ||
-        fetch(req)
-          .then((res) => {
-            if (res && res.ok) {
-              const copy = res.clone();
-              caches.open(CACHE).then((c) => c.put(req, copy));
-            }
-            return res;
-          })
-          .catch(() => (req.mode === 'navigate' ? caches.match('./index.html') : Response.error()))
-      )
+      fetch(req)
+        .then((res) => {
+          if (res && res.ok) {
+            const copy = res.clone();
+            caches.open(CACHE).then((c) => c.put(req, copy));
+          }
+          return res;
+        })
+        .catch(() =>
+          caches.match(req).then((hit) =>
+            hit || (req.mode === 'navigate' ? caches.match('./index.html') : Response.error())
+          )
+        )
     );
     return;
   }
