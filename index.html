@@ -234,7 +234,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 
 /* ── Stat row — spiffy pass: tinted borders, subtle bg, accent glow ── */
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;}
-.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;transition:border-color 0.3s,background 0.3s;}
+.stat{background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:12px 9px 10px;min-height:120px;position:relative;overflow:hidden;text-align:center;display:flex;flex-direction:column;justify-content:center;transition:border-color 0.3s,background 0.3s;}
 body:not(.night) .stat{padding:9px 8px 8px;}
 body:not(.night) .stat-value{font-size:24px;}
 body:not(.night) .stat-icon{font-size:19px;}
@@ -300,9 +300,9 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 body.night .drive-chip{border-color:rgba(141,169,214,0.3);}
 body.night .drive-chip .drive-num{color:#aec6f0;}
 
-.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:500;padding:6px 10px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
+.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:9px;font-family:var(--mono);font-size:11px;font-weight:500;padding:5px 9px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
 .filter-select:focus{outline:none;border-color:var(--gb);}
-.loc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:30px;margin:2px 0 10px;}
+.loc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:34px;margin:2px 0 10px;}
 .loc-row #loc-status{flex:1;min-width:0;}
 body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doesn't shift when flicking modes */
 .filters::-webkit-scrollbar{display:none;}
