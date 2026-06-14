@@ -124,9 +124,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-cloud{position:absolute;opacity:0.95;animation:cloudDrift var(--cd,16s) linear infinite;}
 .sun-rays{transform-box:fill-box;transform-origin:center;animation:sunSpin 70s linear infinite;}
 @keyframes sunSpin{to{transform:rotate(360deg);}}
-.day-bird,.day-flyer{position:absolute;left:0;z-index:5;pointer-events:none;animation:birdFly var(--bd,18s) linear infinite;}
-.day-flyer{z-index:6;}
-@keyframes birdFly{0%{transform:translate(-44px,0);}50%{transform:translate(180px,-9px);}100%{transform:translate(420px,5px);}}
+.orb-fly{z-index:6;}
+.orb-bob{display:block;animation:orbBob 3.4s ease-in-out infinite;}
+@keyframes orbBob{0%,100%{transform:translateY(0) rotate(-4deg);}50%{transform:translateY(-8px) rotate(4deg);}}
 .day-haze{position:absolute;left:0;right:0;bottom:6px;height:28px;z-index:4;pointer-events:none;background:linear-gradient(transparent,rgba(255,248,225,0.14));animation:hazeShimmer 3.2s ease-in-out infinite;}
 @keyframes hazeShimmer{0%,100%{opacity:0.45;transform:scaleY(1);}50%{opacity:0.8;transform:scaleY(1.06);}}
 .wind-compass{position:absolute;top:7px;right:7px;width:60px;height:auto;z-index:6;cursor:pointer;-webkit-tap-highlight-color:transparent;}
@@ -164,7 +164,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
   100%{transform:translate(420px,-3px);opacity:0;}
 }
 /* Ground band — translucent strip at the bottom holding markers + horizon */
-.day-ground{position:absolute;left:0;right:0;bottom:0;height:46px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.16) 45%,rgba(8,14,8,0.5) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 5px 0;}
+.day-ground{position:absolute;left:0;right:0;bottom:0;height:46px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.16) 45%,rgba(8,14,8,0.5) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 8px 5px;}
 .day-marker{display:flex;flex-direction:column;gap:1px;}
 .day-marker-left{align-items:flex-start;} .day-marker-right{align-items:flex-end;}
 .day-marker-row{display:flex;align-items:center;gap:5px;}
@@ -179,9 +179,11 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day .daybar-track{position:absolute;left:0;right:0;bottom:0;height:5px;background:rgba(0,0,0,0.25);border-radius:0;z-index:6;}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
-.day-tick{position:absolute;bottom:1px;z-index:7;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.5));}
-.day-lastcall{display:flex;align-items:center;justify-content:flex-end;gap:16px;height:28px;font-family:var(--mono);font-size:12px;color:var(--tx2);margin-top:0;padding:0 6px;}
-.day-lastcall .lc-cap{color:var(--tx2);}
+.day-tick{position:absolute;bottom:0;z-index:8;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55));}
+.day-lastcall{position:relative;height:30px;font-family:var(--mono);font-size:12px;color:var(--tx2);margin-top:0;padding:0 4px;}
+.day-lastcall .lc-cap{position:absolute;left:4px;top:8px;}
+.day-lastcall .lc-seg{position:absolute;top:1px;transform:translateX(-50%);text-align:center;line-height:1.2;white-space:nowrap;}
+.day-lastcall .lc-lbl{display:block;font-size:9px;color:var(--tx3);line-height:1.1;}
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .day-lastcall b{color:var(--gb);font-weight:500;}
 .day-lastcall .lc-past{opacity:0.4;text-decoration:line-through;}
@@ -227,7 +229,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift 14s linear infinite;}
-@keyframes cloudDrift{0%{transform:translateX(-40px);}100%{transform:translateX(340px);}}
+@keyframes cloudDrift{0%{transform:translateX(-220px);}100%{transform:translateX(660px);}}
 .night-raindrop{position:absolute;width:1.5px;height:9px;background:linear-gradient(transparent,#6db3f2);border-radius:1px;animation:rainFall 0.8s linear infinite;animation-fill-mode:backwards;}
 @keyframes rainFall{0%{transform:translateY(-12px);opacity:0;}30%{opacity:0.8;}100%{transform:translateY(70px);opacity:0;}}
 .night-bolt{position:absolute;font-size:26px;animation:flash 4s ease-in-out infinite;}
@@ -494,7 +496,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="day-overcast" id="day-overcast" aria-hidden="true"></div>
         <div class="day-dim" id="day-dim" aria-hidden="true"></div>
         <div class="day-wx" id="day-wx" aria-hidden="true"></div>
-        <div class="day-sun" id="day-sun" aria-hidden="true"><svg viewBox="0 0 44 44" width="34" height="34" style="display:block"><circle cx="22" cy="22" r="8.5" fill="#ffd84a"/><g class="sun-rays" stroke="#ffd84a" stroke-width="2.6" stroke-linecap="round"><line x1="22" y1="2.5" x2="22" y2="8"/><line x1="22" y1="36" x2="22" y2="41.5"/><line x1="2.5" y1="22" x2="8" y2="22"/><line x1="36" y1="22" x2="41.5" y2="22"/><line x1="8" y1="8" x2="11.9" y2="11.9"/><line x1="32.1" y1="32.1" x2="36" y2="36"/><line x1="8" y1="36" x2="11.9" y2="32.1"/><line x1="32.1" y1="11.9" x2="36" y2="8"/></g></svg></div>
+        <div class="day-sun" id="day-sun" aria-hidden="true"><svg viewBox="0 0 44 44" width="42" height="42" style="display:block"><circle cx="22" cy="22" r="8.5" fill="#ffd84a"/><g class="sun-rays" stroke="#ffd84a" stroke-width="2.6" stroke-linecap="round"><line x1="22" y1="2.5" x2="22" y2="8"/><line x1="22" y1="36" x2="22" y2="41.5"/><line x1="2.5" y1="22" x2="8" y2="22"/><line x1="36" y1="22" x2="41.5" y2="22"/><line x1="8" y1="8" x2="11.9" y2="11.9"/><line x1="32.1" y1="32.1" x2="36" y2="36"/><line x1="8" y1="36" x2="11.9" y2="32.1"/><line x1="32.1" y1="11.9" x2="36" y2="8"/></g></svg></div>
         <!-- Floating Now label tracks the sun horizontally -->
         <div class="day-now-float" id="day-now-float">
           <span class="day-now-time" id="db-now">--:--</span>
@@ -502,10 +504,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <!-- Ground band at the bottom holds the horizon + edge markers -->
         <div class="day-ground">
           <div class="day-marker day-marker-left">
-            <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="srg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffe79a"/><stop offset="55%" stop-color="#ffbe54"/><stop offset="100%" stop-color="#ff8f3c"/></radialGradient></defs><g stroke="#ffd56a" stroke-width="1.7" stroke-linecap="round" opacity="0.8"><line x1="30" y1="1" x2="30" y2="8"/><line x1="13" y1="7" x2="17.5" y2="12"/><line x1="47" y1="7" x2="42.5" y2="12"/><line x1="4" y1="19" x2="10.5" y2="21"/><line x1="56" y1="19" x2="49.5" y2="21"/></g><path d="M14,27 a16,16 0 0,1 32,0 Z" fill="url(#srg)"/><line x1="1" y1="27.5" x2="59" y2="27.5" stroke="rgba(255,255,255,0.5)" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+            <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="srg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffe79a"/><stop offset="55%" stop-color="#ffbe54"/><stop offset="100%" stop-color="#ff8f3c"/></radialGradient></defs><g stroke="#ffd56a" stroke-width="1.7" stroke-linecap="round" opacity="0.8"><line x1="30" y1="1" x2="30" y2="8"/><line x1="13" y1="7" x2="17.5" y2="12"/><line x1="47" y1="7" x2="42.5" y2="12"/><line x1="4" y1="19" x2="10.5" y2="21"/><line x1="56" y1="19" x2="49.5" y2="21"/></g><path d="M14,30 a16,16 0 0,1 32,0 Z" fill="url(#srg)"/></svg></span>
           </div>
           <div class="day-marker day-marker-right">
-            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="ssg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffbf70"/><stop offset="55%" stop-color="#ff823c"/><stop offset="100%" stop-color="#d94e28"/></radialGradient></defs><g stroke="#ff9a52" stroke-width="1.6" stroke-linecap="round" opacity="0.55"><line x1="6" y1="20" x2="12" y2="22"/><line x1="54" y1="20" x2="48" y2="22"/></g><path d="M17,29 a13,13 0 0,1 26,0 Z" fill="url(#ssg)"/><line x1="1" y1="29.5" x2="59" y2="29.5" stroke="rgba(255,255,255,0.45)" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="ssg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffbf70"/><stop offset="55%" stop-color="#ff823c"/><stop offset="100%" stop-color="#d94e28"/></radialGradient></defs><g stroke="#ff9a52" stroke-width="1.6" stroke-linecap="round" opacity="0.55"><line x1="6" y1="20" x2="12" y2="22"/><line x1="54" y1="20" x2="48" y2="22"/></g><path d="M14,30 a16,16 0 0,1 32,0 Z" fill="url(#ssg)"/></svg></span>
           </div>
         </div>
         <!-- Last tee-off ticks (positioned by render) -->
@@ -790,18 +792,18 @@ function cloudParams(pct){
 // Cloud drawn as SVG so the outline stays hairline at any size (non-scaling
 // stroke) and the cloud is sized as a % of the scene, not a fixed font px.
 const CLOUD_PATHS=[
-  "M8,50 a14,14 0 0,1 2,-20 a16,16 0 0,1 30,-6 a15,15 0 0,1 28,2 a14,14 0 0,1 26,-2 a13,13 0 0,1 8,26 z",
-  "M10,50 a18,18 0 0,1 3,-26 a22,22 0 0,1 42,-4 a20,20 0 0,1 38,8 a14,14 0 0,1 -3,22 z",
-  "M6,44 a12,12 0 0,1 6,-22 a20,20 0 0,1 40,-3 a16,16 0 0,1 34,6 a12,12 0 0,1 12,19 z"
+  "M12,46 a13,13 0 0,1 1,-19 a16,16 0 0,1 29,-7 a15,15 0 0,1 28,3 a13,13 0 0,1 8,23 a11,11 0 0,1 -22,3 a12,12 0 0,1 -25,-2 a11,11 0 0,1 -19,3 z",
+  "M14,46 a16,16 0 0,1 2,-23 a19,19 0 0,1 36,-5 a17,17 0 0,1 32,6 a13,13 0 0,1 4,20 a12,12 0 0,1 -24,2 a13,13 0 0,1 -27,-1 a12,12 0 0,1 -23,2 z",
+  "M10,44 a12,12 0 0,1 5,-20 a18,18 0 0,1 36,-4 a15,15 0 0,1 33,5 a11,11 0 0,1 6,18 a10,10 0 0,1 -20,3 a11,11 0 0,1 -23,-1 a10,10 0 0,1 -20,2 a9,9 0 0,1 -17,2 z"
 ];
 // Cloud drift duration from wind: ~38s at a dead calm down to ~5s in a gale,
-// randomised per cloud (re-rolled each run via the animationiteration listener).
+// randomised per cloud.
 function cloudDur(wind){ const base=5+(1-Math.min(1,(wind||0)/40))*33; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
 function cloudSVG(cls,w,top,opacity,cd,delay,fill){
-  const h=Math.round(w*0.54);
+  const h=Math.round(w*0.53);
   const p=CLOUD_PATHS[Math.floor(Math.random()*CLOUD_PATHS.length)];   // pick a silhouette
-  const fx=Math.random()<0.5?' transform="translate(112,0) scale(-1,1)"':''; // random mirror
-  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 112 60" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${p}"${fx} fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
+  const fx=Math.random()<0.5?' transform="translate(105,0) scale(-1,1)"':''; // random mirror
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 105 56" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;"><path d="${p}"${fx} fill="${fill}" stroke="#0a1020" stroke-width="0.8" vector-effect="non-scaling-stroke"/></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
@@ -915,7 +917,6 @@ function buildDayScene(now){
   const scene=document.getElementById('day-scene');
   const sun=document.getElementById('day-sun');
   const wxEl=document.getElementById('day-wx');
-  if(wxEl && !wxEl._reseed){ wxEl._reseed=true; wxEl.addEventListener('animationiteration',(e)=>{ const el=e.target; if(el.classList && el.classList.contains('day-cloud')) el.style.setProperty('--cd', cloudDur(window._dayWind)+'s'); }); }
   if(!scene||!sun)return;
   const totalDay=lastLightMins-sunriseMins;
   const frac=Math.min(1,Math.max(0,(now-sunriseMins)/totalDay));
@@ -1040,25 +1041,20 @@ function buildDayScene(now){
       const band=bandsY[i%bandsY.length]+(Math.random()*0.1-0.05);    // spread across the sky, jittered
       const top=Math.round(Math.min(Math.max(band*SCENE_H-ch/2,0),SCENE_H-ch));
       const dur=cloudDur(wind), delay=-Math.random()*dur;             // speed from wind, random per cloud
-      html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
-    }
-
-    // Birds drift across on fine days — and ~1:10000, something else entirely
-    if(isClear||isPartly){
-      const nB=1+Math.floor(Math.random()*2);
-      for(let b=0;b<nB;b++){
-        const bt=Math.round(18+Math.random()*70), bdur=+(14+Math.random()*10).toFixed(1), bdl=-(Math.random()*bdur).toFixed(1);
-        if(Math.random()<0.0001){
-          const orb=Math.random()<0.5;
-          const art=orb
-            ? '<defs><radialGradient id="ofly" cx="50%" cy="60%" r="70%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M30,33 C16,32 6,22 9,13 C14,18 21,20 27,21 C24,13 26,7 30,4 C34,7 36,13 33,21 C41,18 49,16 53,11 C57,22 45,33 30,33 Z" fill="url(#ofly)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="25.5" cy="26" r="2.3" fill="#ff5a8a"/><circle cx="34.5" cy="26" r="2.3" fill="#ff5a8a"/>'
-            : '<ellipse cx="30" cy="22" rx="22" ry="7" fill="#9fb3c8" stroke="#6f8398" stroke-width="0.8"/><ellipse cx="30" cy="15" rx="11" ry="8" fill="#bfeefb" opacity="0.92"/><circle cx="18" cy="22" r="1.6" fill="#ff5a8a"/><circle cx="30" cy="23.5" r="1.6" fill="#7ed4ff"/><circle cx="42" cy="22" r="1.6" fill="#ffd24a"/>';
-          html+=`<svg class="day-flyer" style="top:${bt}px;--bd:${(bdur*1.5).toFixed(1)}s;animation-delay:${bdl}s" width="48" height="29" viewBox="0 0 60 36">${art}</svg>`;
-        } else {
-          html+=`<svg class="day-bird" style="top:${bt}px;--bd:${bdur}s;animation-delay:${bdl}s" width="22" height="9" viewBox="0 0 22 9"><path d="M1,6 Q5.5,1 11,6 Q16.5,1 21,6" stroke="rgba(40,46,58,0.62)" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`;
-        }
+      if(Math.random()<0.0001){
+        // ~1:10000 a cloud is replaced by a flyer: an alien saucer (straight)
+        // or the Night Y'orb (a gentle bob so it looks like it's flying).
+        const orb=Math.random()<0.5, fdur=(dur*1.4).toFixed(1);
+        const art=orb
+          ? '<defs><radialGradient id="ofly" cx="50%" cy="60%" r="70%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M30,33 C16,32 6,22 9,13 C14,18 21,20 27,21 C24,13 26,7 30,4 C34,7 36,13 33,21 C41,18 49,16 53,11 C57,22 45,33 30,33 Z" fill="url(#ofly)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="25.5" cy="26" r="2.3" fill="#ff5a8a"/><circle cx="34.5" cy="26" r="2.3" fill="#ff5a8a"/>'
+          : '<ellipse cx="30" cy="22" rx="22" ry="7" fill="#9fb3c8" stroke="#6f8398" stroke-width="0.8"/><ellipse cx="30" cy="15" rx="11" ry="8" fill="#bfeefb" opacity="0.92"/><circle cx="18" cy="22" r="1.6" fill="#ff5a8a"/><circle cx="30" cy="23.5" r="1.6" fill="#7ed4ff"/><circle cx="42" cy="22" r="1.6" fill="#ffd24a"/>';
+        if(orb) html+=`<div class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s;"><div class="orb-bob"><svg width="52" height="31" viewBox="0 0 60 36">${art}</svg></div></div>`;
+        else    html+=`<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
+      } else {
+        html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
       }
     }
+
     // Heat shimmer near the horizon on a hot clear day
     if(isClear && wx.temp!=null && wx.temp>=30) html+=`<div class="day-haze"></div>`;
 
@@ -2055,9 +2051,9 @@ function render(){
   if(lcEl){
     if(renderNight){ lcEl.style.display='none'; }
     else{
-      lcEl.style.display='flex';
-      const tee=(label,t)=> t<now ? `<span class="lc-past">${label} ${minsToStr(t)}</span>` : `<span>${label} <b>${minsToStr(t)}</b></span>`;
-      lcEl.innerHTML=`<span class="lc-cap">⛳ Last Tee</span>${tee('18h',t18)}${tee('9h',t9)}`;
+      lcEl.style.display='block';
+      const seg=(label,t)=> `<span class="lc-seg${t<now?' lc-past':''}" style="left:${tickPos(t)};"><span class="lc-lbl">${label}</span>${t<now?minsToStr(t):'<b>'+minsToStr(t)+'</b>'}</span>`;
+      lcEl.innerHTML=`<span class="lc-cap">⛳ Last Tee</span>${seg('18h',t18)}${seg('9h',t9)}`;
     }
   }
 
