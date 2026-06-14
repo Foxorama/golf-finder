@@ -63,8 +63,15 @@
   // blob URL and can't control the page), so it lives beside this HTML as
   // sw.js. If sw.js is missing the app still runs — it just isn't installable.
   if('serviceWorker' in navigator){
+    // Auto-reload once when a new service worker takes control, so a fresh
+    // deploy lands automatically instead of replaying a stale cached page.
+    let _swRefreshing=false;
+    navigator.serviceWorker.addEventListener('controllerchange',()=>{
+      if(_swRefreshing)return; _swRefreshing=true; location.reload();
+    });
     window.addEventListener('load',()=>{
       navigator.serviceWorker.register(dir+'sw.js',{scope:dir})
+        .then(reg=>{ if(reg.update) reg.update(); })
         .catch(e=>console.warn('SW registration failed (app still works, just not installable):',e));
     });
   }
@@ -1483,9 +1490,13 @@ async function fetchSunset(lat,lng){
       return{sunset,sunrise,lastLight,firstLight,live:true};
     }
   }catch(e){}
+  // Fallback: month-based SEQ sunrise/sunset estimates (QLD has no DST), so a
+  // failed API call still shows realistic seasonal times, not one fixed default.
   const mo=new Date().getMonth();
-  const estSunset=(mo>=4&&mo<=8)?17*60+10:18*60+25;
-  return{sunset:estSunset,sunrise:SUNRISE_DEFAULT,lastLight:estSunset+TWILIGHT_EST,firstLight:SUNRISE_DEFAULT-TWILIGHT_EST,live:false};
+  const SR=[305,330,350,365,385,395,395,375,345,315,295,290];            // Brisbane sunrise by month (mins)
+  const SS=[1125,1110,1080,1045,1020,1020,1030,1045,1055,1070,1095,1115]; // sunset by month (mins)
+  const estSunrise=SR[mo], estSunset=SS[mo];
+  return{sunset:estSunset,sunrise:estSunrise,lastLight:estSunset+TWILIGHT_EST,firstLight:estSunrise-TWILIGHT_EST,live:false};
 }
 
 // ── Filter ───────────────────────────────────────────────────
@@ -2093,7 +2104,7 @@ function render(){
   else fill.style.background = daylight<120?'var(--rl)':daylight<240?'var(--al)':'var(--gb)';
 
   // Last tee-off deadlines — 18h/9h aligned under their matching horizon ticks.
-  const t18=lastLightMins-240, t9=lastLightMins-120;
+  const t18=lastLightMins-270, t9=lastLightMins-150;  // 18h needs ~4.5h, 9h ~2.5h before dark
   const tickPos=t=>Math.min(95,Math.max(5,((t-sunriseMins)/totalDay)*100))+'%';
   const tick18=document.getElementById('tick-18'), tick9=document.getElementById('tick-9');
   if(tick18){ tick18.style.display=(!renderNight&&t18>now)?'block':'none'; tick18.style.left=tickPos(t18); }
