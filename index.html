@@ -2239,7 +2239,7 @@ function render(){
     playable.forEach(c=>{html+=courseCard(c,forecastDaylight,false);});
   }
   if(notPlayable.length){
-    html+=`<div class="section-head" style="margin-top:20px;"><span class="sdot sdot-r"></span>Not playable today &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
+    html+=`<div class="section-head"${playable.length?' style="margin-top:20px;"':''}><span class="sdot sdot-r"></span>Not playable today &mdash; ${notPlayable.length} course${notPlayable.length!==1?'s':''}</div>`;
     notPlayable.forEach(c=>{html+=courseCard(c,forecastDaylight,true);});
   }
   if(!playable.length&&!notPlayable.length)html='<div class="no-results">No courses match this filter.</div>';
