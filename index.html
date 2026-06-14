@@ -133,7 +133,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .wind-compass:active{transform:scale(0.94);}
 .wind-compass.wc-active circle:nth-of-type(2){stroke:#7ed4ff;stroke-width:2;}
 #wc-rotor{transition:transform 0.18s linear;}
-.day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(255,255,255,0.85));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;animation-fill-mode:backwards;}
+.day-raindrop{position:absolute;width:1.5px;height:var(--rh,8px);background:linear-gradient(transparent,rgba(120,180,240,0.95));border-radius:1px;transform:rotate(var(--rang,0deg));animation:dayRainFall var(--rdur,0.7s) linear infinite;animation-fill-mode:backwards;}
 @keyframes dayRainFall{0%{transform:translate(0,-14px) rotate(var(--rang,0deg));opacity:0;}25%{opacity:0.85;}100%{transform:translate(var(--rdx,0px),var(--rf,130px)) rotate(var(--rang,0deg));opacity:0;}}
 .day-bolt{position:absolute;font-size:24px;animation:flash 4s ease-in-out infinite;}
 .day-flash{position:absolute;inset:0;background:radial-gradient(circle at 42% 26%,rgba(225,238,255,0.92),rgba(170,195,255,0.32) 42%,transparent 72%);opacity:0;pointer-events:none;mix-blend-mode:screen;animation:dayFlash 6s ease-out infinite;}
@@ -946,12 +946,15 @@ function buildDayScene(now){
 
   // Sky gradient shifts through the day
   let sky;
-  if(frac<0.1)       sky='linear-gradient(180deg,#e89a6b 0%,#e8b888 50%,#d8cba0 100%)';   // dawn
+  if(frac<0.04)      sky='linear-gradient(180deg,#141f33 0%,#243150 55%,#48415f 100%)';   // night's end
+  else if(frac<0.1)  sky='linear-gradient(180deg,#2b3b5e 0%,#5a5878 45%,#b07a63 100%)';   // dawn: blue sky, warm horizon
+  else if(frac<0.2)  sky='linear-gradient(180deg,#4f7bb0 0%,#7ba6cf 55%,#cdb89a 100%)';   // early morning
   else if(frac<0.3)  sky='linear-gradient(180deg,#5a8fc0 0%,#84b3d8 55%,#bcdcef 100%)';   // morning
   else if(frac<0.55) sky='linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 60%,#a9d0e8 100%)';   // midday
   else if(frac<0.78) sky='linear-gradient(180deg,#4a82b0 0%,#8ab0cc 50%,#e0c89a 100%)';   // afternoon
-  else if(frac<0.92) sky='linear-gradient(180deg,#c98a5a 0%,#e0a868 50%,#f0c878 100%)';   // golden
-  else               sky='linear-gradient(180deg,#a85a4a 0%,#d4825a 45%,#e8a868 100%)';   // dusk
+  else if(frac<0.88) sky='linear-gradient(180deg,#c98a5a 0%,#e0a868 50%,#f0c878 100%)';   // golden
+  else if(frac<0.95) sky='linear-gradient(180deg,#a85a4a 0%,#d4825a 45%,#e8a868 100%)';   // dusk
+  else               sky='linear-gradient(180deg,#1d2a45 0%,#3c3a5e 50%,#7a5560 100%)';   // post-sunset twilight
   scene.style.background=sky;
 
   // Dusk dimming — scene darkens as last light approaches (final ~18% of day)
@@ -1054,9 +1057,14 @@ function buildDayScene(now){
 
     // Clouds: size scales with cover; the 3 clouds are spread down the scene
     // (top/middle/lower) so they fill the sky at high cover, not just a top band.
-    const cp=cloudParams((window._wxForce==null&&cloudPct!=null)?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
+    // Cloud cover %: reported value when available, but precip/overcast always
+    // imply a heavy sky, so floor it by condition (a rainy sky is fully clouded).
+    const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
+    const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
+    const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
+    const cp=cloudParams(cover);
     const SCENE_H=200; window._dayWind=wind;
-    const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));        // count tracks cover %, not size
+    const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*14));        // count tracks cover %, not size
     const cOpacity=+(0.8+0.18*cp.frac).toFixed(2);                    // clouds stay opaque white
     const sizes=[0.3,0.44,0.6,0.82];                                  // small / medium / large mix
     const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.3:0.1; // darker with worse weather
@@ -1322,6 +1330,9 @@ let _fcTime = null; window._fcOffset = 0; // forecast anchor: Night Y'orb=9pm to
 window._wxForce=(()=>{const p=new URLSearchParams(location.search).get('wx');if(!p)return null;
   const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};
   return m[p.toLowerCase().trim()]||null;})();
+// Console helper: setWx('storm'|'rain'|'snow'|...) forces the scene instantly
+// (no reload, so it can't be defeated by caching). setWx() restores live weather.
+window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};window._wxForce=v?(m[(''+v).toLowerCase().trim()]||v):null;window._wxSceneKey=null;render();return window._wxForce||'(live weather)';};
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
   if(p){
