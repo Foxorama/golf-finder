@@ -180,10 +180,11 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
 .day-tick{position:absolute;bottom:0;z-index:8;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55));}
-.day-lastcall{display:flex;align-items:center;justify-content:space-between;gap:8px;height:34px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0 8px;}
-.day-lastcall .lc-side{white-space:nowrap;color:#9cc8f0;}
-.day-lastcall .lc-mid{white-space:nowrap;}
-.day-lastcall .lc-h{color:#d9921a;font-weight:600;}
+.day-lastcall{position:relative;height:34px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0 8px;}
+.day-lastcall .lc-side{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;color:#9cc8f0;}
+.day-lastcall .lc-rise{left:8px;} .day-lastcall .lc-set{right:8px;}
+.day-lastcall .lc-cap{position:absolute;top:50%;transform:translateY(-50%);white-space:nowrap;color:var(--tx2);}
+.day-lastcall .lc-h{position:absolute;top:50%;transform:translate(-50%,-50%);color:#d9921a;font-weight:600;}
 
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .day-lastcall b{color:var(--gb);font-weight:500;}
@@ -508,7 +509,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
             <span class="day-marker-icon" id="db-sunrise-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="srg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffe79a"/><stop offset="55%" stop-color="#ffbe54"/><stop offset="100%" stop-color="#ff8f3c"/></radialGradient></defs><g stroke="#ffd56a" stroke-width="1.7" stroke-linecap="round" opacity="0.8"><line x1="30" y1="1" x2="30" y2="8"/><line x1="13" y1="7" x2="17.5" y2="12"/><line x1="47" y1="7" x2="42.5" y2="12"/><line x1="4" y1="19" x2="10.5" y2="21"/><line x1="56" y1="19" x2="49.5" y2="21"/></g><path d="M14,30 a16,16 0 0,1 32,0 Z" fill="url(#srg)"/></svg></span>
           </div>
           <div class="day-marker day-marker-right">
-            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="ssg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffbf70"/><stop offset="55%" stop-color="#ff823c"/><stop offset="100%" stop-color="#d94e28"/></radialGradient></defs><g stroke="#ff9a52" stroke-width="1.6" stroke-linecap="round" opacity="0.55"><line x1="6" y1="20" x2="12" y2="22"/><line x1="54" y1="20" x2="48" y2="22"/></g><path d="M14,30 a16,16 0 0,1 32,0 Z" fill="url(#ssg)"/></svg></span>
+            <span class="day-marker-icon" id="db-lastlight-icon" aria-hidden="true"><svg viewBox="0 0 60 30" width="58" height="29" style="display:block;overflow:visible"><defs><radialGradient id="ssg" cx="50%" cy="100%" r="85%"><stop offset="0%" stop-color="#ffbf70"/><stop offset="55%" stop-color="#ff823c"/><stop offset="100%" stop-color="#d94e28"/></radialGradient></defs><path d="M14,30 a16,16 0 0,1 32,0 Z" fill="url(#ssg)"/></svg></span>
           </div>
         </div>
         <!-- Last tee-off ticks (positioned by render) -->
@@ -1038,13 +1039,13 @@ function buildDayScene(now){
     // (top/middle/lower) so they fill the sky at high cover, not just a top band.
     const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
     const SCENE_H=200; window._dayWind=wind;
-    const nC=cp.count===0?0:cp.count+(cp.frac>0.45?2:1);   // a few extra clouds, more when overcast
-    const bandsY=[0.08,0.2,0.34,0.5,0.66,0.8];
+    const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));        // count tracks cover %, not size
+    const cOpacity=+(0.8+0.18*cp.frac).toFixed(2);                    // clouds stay opaque white
+    const sizes=[0.3,0.44,0.6,0.82];                                  // small / medium / large mix
     for(let i=0;i<nC;i++){
-      const w=Math.max(18,Math.round(SCENE_H*cp.frac*(0.7+Math.random()*0.6)*1.15));  // random sizes
-      const ch=Math.round(w*0.54);
-      const band=bandsY[i%bandsY.length]+(Math.random()*0.1-0.05);    // spread across the sky, jittered
-      const top=Math.round(Math.min(Math.max(band*SCENE_H-ch/2,0),SCENE_H-ch));
+      const w=Math.max(22,Math.round(SCENE_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.85+Math.random()*0.35)));
+      const ch=Math.round(w*0.6);
+      const top=Math.round(Math.random()*(SCENE_H-ch));               // anywhere in the sky
       const dur=cloudDur(wind), delay=-Math.random()*dur;             // speed from wind, random per cloud
       if(Math.random()<0.0001){
         // ~1:10000 a cloud is replaced by a flyer: an alien saucer (straight)
@@ -1056,7 +1057,7 @@ function buildDayScene(now){
         if(orb) html+=`<div class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s;"><div class="orb-bob"><svg width="52" height="31" viewBox="0 0 60 36">${art}</svg></div></div>`;
         else    html+=`<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
       } else {
-        html+=cloudSVG('day-cloud',w,top,cp.opacity,dur,delay,'#eef4fb');
+        html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,'#eef4fb');
       }
     }
 
@@ -2056,9 +2057,10 @@ function render(){
   if(lcEl){
     if(renderNight){ lcEl.style.display='none'; }
     else{
-      lcEl.style.display='flex';
-      const teeLbl=(label,t)=> `<span class="lc-h${t<now?' lc-past':''}">${label}</span>`;
-      lcEl.innerHTML=`<span class="lc-side">${minsToStr(sunriseMins)}</span><span class="lc-mid">⛳ Last Tee ${teeLbl('18h',t18)} ${teeLbl('9h',t9)}</span><span class="lc-side">${minsToStr(lastLightMins)}</span>`;
+      lcEl.style.display='block';
+      const lt=parseFloat(tickPos(t18));
+      const teeLbl=(label,t)=> `<span class="lc-h${t<now?' lc-past':''}" style="left:${tickPos(t)};">${label}</span>`;
+      lcEl.innerHTML=`<span class="lc-side lc-rise">${minsToStr(sunriseMins)}</span><span class="lc-cap" style="right:${(100-lt+5).toFixed(1)}%">⛳ Last Tee</span>${teeLbl('18h',t18)}${teeLbl('9h',t9)}<span class="lc-side lc-set">${minsToStr(lastLightMins)}</span>`;
     }
   }
 
