@@ -116,7 +116,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .daybar-fill{height:100%;border-radius:6px;transition:width 0.8s ease,background 0.8s ease;}
 
 /* ── Daybar day mode — unified sky scene ── */
-.day-scene{position:relative;height:200px;margin-bottom:12px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
+.day-scene{position:relative;height:200px;margin-bottom:6px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#3a6ea5 0%,#6ba3d0 55%,#a9d0e8 100%);transition:background 1.2s ease;}
 .day-glow{position:absolute;inset:0;z-index:0;transition:background 1.2s ease;}
 .day-dim{position:absolute;inset:0;z-index:3;pointer-events:none;background:#0a1020;opacity:0;transition:opacity 1.2s ease;}
 .day-sun{position:absolute;font-size:30px;line-height:1;z-index:2;transform:translate(-50%,-50%);transition:left 1s ease,top 1s ease;filter:drop-shadow(0 0 14px rgba(255,220,120,0.9));}
@@ -166,7 +166,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Ground band — translucent strip at the bottom holding markers + horizon */
 .day-ground{position:absolute;left:0;right:0;bottom:0;height:46px;z-index:5;background:linear-gradient(180deg,transparent 0%,rgba(8,14,8,0.16) 45%,rgba(8,14,8,0.5) 100%);display:flex;justify-content:space-between;align-items:flex-end;padding:0 0 4px;}
 .day-marker{display:flex;flex-direction:column;gap:1px;}
-.day-marker-left{align-items:flex-start;} .day-marker-right{align-items:flex-end;}
+.day-marker-left{align-items:flex-start;margin-left:-13px;} .day-marker-right{align-items:flex-end;margin-right:-13px;}
 .day-marker-row{display:flex;align-items:center;gap:5px;}
 .day-marker-cap{font-family:var(--mono);font-size:8px;color:rgba(255,255,255,0.75);text-transform:uppercase;letter-spacing:0.07em;text-shadow:0 1px 3px rgba(0,0,0,0.6);}
 .day-marker-icon{font-size:16px;line-height:1;filter:drop-shadow(0 1px 3px rgba(0,0,0,0.4));}
@@ -180,19 +180,18 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #daybar-day .daybar-fill{height:100%;border-radius:0;box-shadow:0 0 8px rgba(126,212,79,0.6);}
 /* Last tee-off ticks on the horizon + the decision caption below the scene */
 .day-tick{position:absolute;bottom:0;z-index:8;transform:translateX(-50%);pointer-events:none;filter:drop-shadow(0 1px 2px rgba(0,0,0,0.55));}
-.day-lastcall{position:relative;height:30px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0 4px;}
-.day-lastcall .lc-side{position:absolute;top:9px;color:var(--tx2);white-space:nowrap;}
-.day-lastcall .lc-rise{left:4px;}
-.day-lastcall .lc-set{right:4px;}
-.day-lastcall .lc-cap{position:absolute;top:9px;white-space:nowrap;}
-.day-lastcall .lc-seg{position:absolute;top:9px;transform:translateX(-50%);color:var(--gb);font-weight:500;}
+.day-lastcall{display:flex;align-items:center;justify-content:space-between;gap:8px;height:34px;font-family:var(--mono);font-size:11.5px;color:var(--tx2);margin-top:0;padding:0 8px;}
+.day-lastcall .lc-side{white-space:nowrap;color:#9cc8f0;}
+.day-lastcall .lc-mid{white-space:nowrap;}
+.day-lastcall .lc-h{color:#d9921a;font-weight:600;}
+
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .day-lastcall b{color:var(--gb);font-weight:500;}
 .day-lastcall .lc-past{opacity:0.4;text-decoration:line-through;}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
-.night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:12px;}
+.night-scene{position:relative;height:200px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);margin-bottom:6px;}
 /* ── Sky panorama: real positions, az 0–360 left→right (N E S W N), alt 0–90 bottom→top ── */
 .night-sky{position:absolute;inset:0;z-index:2;pointer-events:none;}
 .sky-star{position:absolute;width:2px;height:2px;border-radius:50%;background:#fff;opacity:0.85;transform:translate(-50%,-50%);}
@@ -236,7 +235,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 @keyframes rainFall{0%{transform:translateY(-12px);opacity:0;}30%{opacity:0.8;}100%{transform:translateY(70px);opacity:0;}}
 .night-bolt{position:absolute;font-size:26px;animation:flash 4s ease-in-out infinite;}
 @keyframes flash{0%,92%,100%{opacity:0;}94%,97%{opacity:1;}}
-.night-info{padding:0 2px;height:30px;display:flex;flex-direction:column;justify-content:center;}
+.night-info{padding:0 2px;height:34px;display:flex;flex-direction:column;justify-content:center;}
 .night-label{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-bottom:3px;}
 .night-resume{font-family:var(--mono);font-size:14px;color:#8da9d6;font-weight:500;margin-bottom:12px;}
 .night-line{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1.7;padding:0 2px;}
@@ -798,14 +797,18 @@ const CLOUD_SHAPES=[
   '<ellipse cx="20" cy="42" rx="16" ry="13"/><ellipse cx="40" cy="34" rx="20" ry="17"/><ellipse cx="62" cy="33" rx="21" ry="18"/><ellipse cx="82" cy="42" rx="16" ry="13"/><ellipse cx="50" cy="48" rx="42" ry="12"/>',
   '<ellipse cx="28" cy="42" rx="18" ry="13"/><ellipse cx="54" cy="35" rx="22" ry="18"/><ellipse cx="78" cy="43" rx="17" ry="12"/><ellipse cx="52" cy="48" rx="36" ry="12"/>'
 ];
+const MAT_CLOUD="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.994 5.994 0 0 0 0 14a6 6 0 0 0 6 6h13a5 5 0 0 0 5-5c0-2.64-2.05-4.78-4.65-4.96z";
 // Cloud drift duration from wind: ~38s at a dead calm down to ~5s in a gale,
 // randomised per cloud.
 function cloudDur(wind){ const base=5+(1-Math.min(1,(wind||0)/40))*33; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
 function cloudSVG(cls,w,top,opacity,cd,delay,fill){
-  const h=Math.round(w*0.6);
-  const s=CLOUD_SHAPES[Math.floor(Math.random()*CLOUD_SHAPES.length)];   // pick a silhouette
-  const fx=Math.random()<0.5?' transform="translate(100,0) scale(-1,1)"':''; // random mirror
-  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;filter:drop-shadow(0 2px 2px rgba(20,30,50,0.18));"><g${fx} fill="${fill}">${s}</g></svg>`;
+  const base=`top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;filter:drop-shadow(0 2px 2px rgba(20,30,50,0.18));`;
+  if(Math.random()<0.3){   // ~30%: the simpler outlined cloud (as in the weather widget)
+    const h=Math.round(w*0.66), fx=Math.random()<0.5?' transform="translate(24,0) scale(-1,1)"':'';
+    return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="${base}"><path d="${MAT_CLOUD}"${fx} fill="${fill}" stroke="rgba(30,50,80,0.3)" stroke-width="0.7" vector-effect="non-scaling-stroke"/></svg>`;
+  }
+  const h=Math.round(w*0.6), s=CLOUD_SHAPES[Math.floor(Math.random()*CLOUD_SHAPES.length)], fx=Math.random()<0.5?' transform="translate(100,0) scale(-1,1)"':'';
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}"><g${fx} fill="${fill}">${s}</g></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
@@ -2053,10 +2056,9 @@ function render(){
   if(lcEl){
     if(renderNight){ lcEl.style.display='none'; }
     else{
-      lcEl.style.display='block';
-      const lt=parseFloat(tickPos(t18));
-      const seg=(label,t)=> `<span class="lc-seg${t<now?' lc-past':''}" style="left:${tickPos(t)};">${label}</span>`;
-      lcEl.innerHTML=`<span class="lc-side lc-rise">${minsToStr(sunriseMins)}</span><span class="lc-cap" style="right:${(100-lt+4).toFixed(1)}%">⛳ Last Tee</span>${seg('18h',t18)}${seg('9h',t9)}<span class="lc-side lc-set">${minsToStr(lastLightMins)}</span>`;
+      lcEl.style.display='flex';
+      const teeLbl=(label,t)=> `<span class="lc-h${t<now?' lc-past':''}">${label}</span>`;
+      lcEl.innerHTML=`<span class="lc-side">${minsToStr(sunriseMins)}</span><span class="lc-mid">⛳ Last Tee ${teeLbl('18h',t18)} ${teeLbl('9h',t9)}</span><span class="lc-side">${minsToStr(lastLightMins)}</span>`;
     }
   }
 
