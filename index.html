@@ -802,14 +802,27 @@ const MAT_CLOUD="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.9
 // Cloud drift duration from wind: ~38s at a dead calm down to ~5s in a gale,
 // randomised per cloud.
 function cloudDur(wind){ const base=5+(1-Math.min(1,(wind||0)/40))*33; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
-function cloudSVG(cls,w,top,opacity,cd,delay,fill){
+let _cgid=0;
+const _mix=(a,b,t)=>Math.round(a+(b-a)*t);
+// tone 0 = bright white cloud, 1 = storm near-black. Returns [crown,base] colours
+// for cell-shading: lighter top, darker underside.
+function cloudTones(tone){
+  tone=Math.max(0,Math.min(1,tone));
+  const tl=[250,252,255],td=[92,98,112], bl=[201,213,228],bd=[33,37,48];
+  return [`rgb(${_mix(tl[0],td[0],tone)},${_mix(tl[1],td[1],tone)},${_mix(tl[2],td[2],tone)})`,
+          `rgb(${_mix(bl[0],bd[0],tone)},${_mix(bl[1],bd[1],tone)},${_mix(bl[2],bd[2],tone)})`];
+}
+function cloudSVG(cls,w,top,opacity,cd,delay,c1,c2){
+  const gid='cg'+(_cgid++);
+  const grad=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2||c1}"/></linearGradient></defs>`;
+  const fill=`url(#${gid})`;
   const base=`top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;filter:drop-shadow(0 2px 2px rgba(20,30,50,0.18));`;
   if(Math.random()<0.3){   // ~30%: the simpler outlined cloud (as in the weather widget)
     const h=Math.round(w*0.66), fx=Math.random()<0.5?' transform="translate(24,0) scale(-1,1)"':'';
-    return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="${base}"><path d="${MAT_CLOUD}"${fx} fill="${fill}" stroke="rgba(30,50,80,0.3)" stroke-width="0.7" vector-effect="non-scaling-stroke"/></svg>`;
+    return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="${base}">${grad}<path d="${MAT_CLOUD}"${fx} fill="${fill}" stroke="rgba(30,50,80,0.3)" stroke-width="0.7" vector-effect="non-scaling-stroke"/></svg>`;
   }
   const h=Math.round(w*0.6), s=CLOUD_SHAPES[Math.floor(Math.random()*CLOUD_SHAPES.length)], fx=Math.random()<0.5?' transform="translate(100,0) scale(-1,1)"':'';
-  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}"><g${fx} fill="${fill}">${s}</g></svg>`;
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}">${grad}<g${fx} fill="${fill}">${s}</g></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
@@ -862,7 +875,7 @@ function buildNightScene(){
     window._nightWxKey=nightKey;
     let html='';
     if(wx&&wx.ok){
-      const lbl=wx.label;
+      const lbl=window._wxForce||wx.label;
       const isStorm=lbl.includes('Storm')||lbl.includes('hail');
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
@@ -878,7 +891,8 @@ function buildNightScene(){
           const cfr=bands[ci][0]+Math.random()*(bands[ci][1]-bands[ci][0]);   // random drift height within the cloud's band
           const top=Math.round(Math.min(Math.max(cfr*SKY_H-chh/2,0),SKY_H-chh));
           const dur=nds[ci]+Math.round(Math.random()*8-4);
-          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,ndl[ci],'#c4cee0');
+          const nt=cloudTones((isStorm?0.82:isRain?0.55:0.28)+(Math.random()-0.5)*0.14);
+          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,ndl[ci],nt[0],nt[1]);
         }
       }
       if(isStorm||isRain){
@@ -989,7 +1003,7 @@ function buildDayScene(now){
   // CSS animations, making rain/clouds visibly jump. Only the sun-ray
   // position is updated on cached ticks.
   const cloudPct=(()=>{const h=hourlyAt(sceneZone,window._fcOffset||0,nowMins());return h?h.cloud:null;})();
-  const sceneKey=(wx&&wx.ok)?`${wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${cloudPct==null?'?':cloudPct}`:'none';
+  const sceneKey=(wx&&wx.ok)?`${window._wxForce||wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${cloudPct==null?'?':cloudPct}`:'none';
   if(window._wxSceneKey===sceneKey){
     const ray=wxEl.querySelector('.day-ray');
     if(ray){ ray.style.setProperty('--sx',sx+'%'); ray.style.setProperty('--sy',sy+'%'); }
@@ -1000,7 +1014,7 @@ function buildDayScene(now){
   let html='';
   let overcastOpacity=0;
   if(wx&&wx.ok){
-    const lbl=wx.label;
+    const lbl=window._wxForce||wx.label;
     const wind=wx.wind||0;
     const isClear   = lbl.includes('Clear');
     const isPartly  = lbl.includes('Partly');
@@ -1037,11 +1051,12 @@ function buildDayScene(now){
 
     // Clouds: size scales with cover; the 3 clouds are spread down the scene
     // (top/middle/lower) so they fill the sky at high cover, not just a top band.
-    const cp=cloudParams(cloudPct!=null?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
+    const cp=cloudParams((window._wxForce==null&&cloudPct!=null)?cloudPct:(isStorm?90:isRain?80:isShower?70:isOvercast?85:isFog?65:isDrizzle?60:isPartly?35:isClear?5:20));
     const SCENE_H=200; window._dayWind=wind;
     const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));        // count tracks cover %, not size
     const cOpacity=+(0.8+0.18*cp.frac).toFixed(2);                    // clouds stay opaque white
     const sizes=[0.3,0.44,0.6,0.82];                                  // small / medium / large mix
+    const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.3:0.1; // darker with worse weather
     for(let i=0;i<nC;i++){
       const w=Math.max(22,Math.round(SCENE_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.85+Math.random()*0.35)));
       const ch=Math.round(w*0.6);
@@ -1057,7 +1072,8 @@ function buildDayScene(now){
         if(orb) html+=`<div class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s;"><div class="orb-bob"><svg width="52" height="31" viewBox="0 0 60 36">${art}</svg></div></div>`;
         else    html+=`<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
       } else {
-        html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,'#eef4fb');
+        const ct=cloudTones(baseTone+(Math.random()-0.5)*0.16);       // slight per-cloud grey variation
+        html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,ct[0],ct[1]);
       }
     }
 
@@ -1295,6 +1311,11 @@ function pad(n){ return String(n).padStart(2,'0'); }
 // or set window._testTime in minutes. Lets you demo any time of day.
 let _testTime = null;
 let _fcTime = null; window._fcOffset = 0; // forecast anchor: Night Y'orb=9pm tonight, Fore'cast=10am upcoming day
+// Preview override: ?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog
+// forces the hero scene's condition so precip/lightning effects can be seen.
+window._wxForce=(()=>{const p=new URLSearchParams(location.search).get('wx');if(!p)return null;
+  const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};
+  return m[p.toLowerCase().trim()]||null;})();
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
   if(p){
