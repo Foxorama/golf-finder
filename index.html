@@ -154,6 +154,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .day-flash{position:absolute;inset:0;background:radial-gradient(circle at 42% 26%,rgba(225,238,255,0.92),rgba(170,195,255,0.32) 42%,transparent 72%);opacity:0;pointer-events:none;mix-blend-mode:screen;animation:dayFlash 6s ease-out infinite;}
 @keyframes dayFlash{0%,7%,100%{opacity:0;}2%{opacity:0.95;}3.5%{opacity:0.15;}5%{opacity:0.85;}}
 .wx-bolt{position:absolute;z-index:7;pointer-events:none;opacity:0;filter:drop-shadow(0 0 4px rgba(160,205,255,0.95));animation:wxBolt 5.5s ease-out infinite;}
+.thundercloud{position:absolute;left:0;overflow:visible;z-index:3;animation:cloudDrift var(--cd,40s) linear infinite;}
+.tc-cloud{position:absolute;top:0;left:0;}
 @keyframes wxBolt{0%,9%,100%{opacity:0;}1.5%{opacity:1;}3%{opacity:0.12;}4.5%{opacity:0.92;}6.5%{opacity:0;}}
 .day-ray{position:absolute;inset:0;background:radial-gradient(circle at var(--sx,50%) var(--sy,40%),rgba(255,240,180,0.45),transparent 40%);z-index:1;pointer-events:none;}
 /* Overcast — grey wash over the sky that scales with cloud cover */
@@ -249,7 +251,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .night-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
 @keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
-.night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift 14s linear infinite;}
+.night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift var(--cd,24s) linear infinite;}
 @keyframes cloudDrift{0%{transform:translateX(-220px);}100%{transform:translateX(660px);}}
 .night-raindrop{position:absolute;width:1.5px;height:9px;background:linear-gradient(transparent,#6db3f2);border-radius:1px;animation:rainFall 0.8s linear infinite;animation-fill-mode:backwards;}
 @keyframes rainFall{0%{transform:translateY(-12px);opacity:0;}30%{opacity:0.8;}100%{transform:translateY(70px);opacity:0;}}
@@ -823,10 +825,16 @@ const MAT_CLOUD="M19.35 10.04A7.49 7.49 0 0 0 12 4C9.11 4 6.6 5.64 5.35 8.04A5.9
 // Cloud drift duration from wind: ~38s at a dead calm down to ~5s in a gale,
 // randomised per cloud.
 function cloudDur(wind){ const base=9+(1-Math.min(1,(wind||0)/40))*52; return +(base*(0.7+Math.random()*0.6)).toFixed(1); }
-// Jagged SVG lightning bolt that flashes; originates from a cloud underside.
-function lightningSVG(xPct,topPx,h,delay){
-  const w=Math.round(h*0.34);
-  return `<svg class="wx-bolt" style="left:${xPct}%;top:${topPx}px;animation-delay:${delay}s" width="${w}" height="${h}" viewBox="0 0 24 60" preserveAspectRatio="none"><polygon points="14,0 5,30 12,30 3,60 21,22 13,22 19,0" fill="#fdf7b5" stroke="#fffbe0" stroke-width="0.7"/></svg>`;
+// A drifting cloud with a jagged lightning bolt hanging from its underside, so
+// the bolt originates from a real cloud and moves with it. The bolt extends
+// below the cloud (and may clip the scene bottom) and flashes on its own cycle.
+function thunderCloud(w,top,opacity,cd,delay,c1,c2){
+  const ch=Math.round(w*0.6);
+  const inner=cloudSVG('tc-cloud',w,0,opacity,cd,0,c1,c2);          // static cloud (the wrapper drifts)
+  const bh=Math.round(58+Math.random()*60), bw=Math.max(8,Math.round(bh*0.32));
+  const bx=Math.round(w*(0.3+Math.random()*0.35));
+  const bolt=`<svg class="wx-bolt" style="left:${bx}px;top:${Math.round(ch*0.6)}px;animation-delay:${(Math.random()*4.5).toFixed(1)}s" width="${bw}" height="${bh}" viewBox="0 0 24 60" preserveAspectRatio="none"><polygon points="14,0 5,30 12,30 3,60 21,22 13,22 19,0" fill="#fdf7b5" stroke="#fffbe0" stroke-width="0.7"/></svg>`;
+  return `<div class="thundercloud" style="top:${top}px;left:0;width:${w}px;height:${ch}px;--cd:${cd}s;animation-delay:${delay}s;">${inner}${bolt}</div>`;
 }
 let _cgid=0;
 const _mix=(a,b,t)=>Math.round(a+(b-a)*t);
@@ -918,14 +926,18 @@ function buildNightScene(){
       const cp=cloudParams(cover);
       const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));
       const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.34:0.22;
-      const sizes=[0.3,0.44,0.6,0.82], emitYs=[];
+      const sizes=[0.3,0.44,0.6,0.82], emitYs=[]; let boltsLeft=isStorm?3:0;
       for(let i=0;i<nC;i++){
         const w=Math.max(20,Math.round(SKY_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.8+Math.random()*0.35)));
         const chh=Math.round(w*0.6);
         const top=Math.round(-chh*0.4 + Math.pow(Math.random(),1.3)*(SKY_H*0.72));   // bias high, may clip top
         const dur=cloudDur(wind), delay=-Math.random()*dur;
         const nt=cloudTones(baseTone+(Math.random()-0.5)*0.16);
-        html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,delay,nt[0],nt[1]);
+        if(isStorm && boltsLeft>0 && top<SKY_H*0.42 && Math.random()<0.55){
+          boltsLeft--; html+=thunderCloud(w,top,cp.opacity,dur,delay,nt[0],nt[1]);
+        } else {
+          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,delay,nt[0],nt[1]);
+        }
         emitYs.push(Math.min(SKY_H-20,top+Math.round(chh*0.62)));
       }
       const emitAt=()=> emitYs.length?emitYs[Math.floor(Math.random()*emitYs.length)]:24;
@@ -951,11 +963,7 @@ function buildNightScene(){
           html+=`<span class="day-hail" style="left:${x}%;top:${sy}px;--hdx:${hailDrift}px;--hf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
         }
       }
-      if(isStorm){
-        html+=`<div class="day-flash"></div>`;
-        const nb=1+Math.round(Math.random());
-        for(let i=0;i<nb;i++){ const bx=22+Math.random()*56, by=Math.max(10,emitAt()-12), bh=44+Math.random()*24; html+=lightningSVG(bx,by,bh,(i*2.4+Math.random()*0.6).toFixed(1)); }
-      }
+      if(isStorm) html+=`<div class="day-flash"></div>`;  // bolts come from the thunderclouds above
     }
     wxEl.innerHTML=html;
   }
@@ -1121,6 +1129,7 @@ function buildDayScene(now){
     const sizes=[0.3,0.44,0.6,0.82];                                  // small / medium / large mix
     const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.3:0.1; // darker with worse weather
     const emitYs=[]; // cloud bottoms — precip falls from here, not the scene top
+    let boltsLeft=isStorm?3:0;
     for(let i=0;i<nC;i++){
       const w=Math.max(22,Math.round(SCENE_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.85+Math.random()*0.35)));
       const ch=Math.round(w*0.6);
@@ -1137,7 +1146,11 @@ function buildDayScene(now){
         else    html+=`<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
       } else {
         const ct=cloudTones(baseTone+(Math.random()-0.5)*0.16);       // slight per-cloud grey variation
-        html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,ct[0],ct[1]);
+        if(isStorm && boltsLeft>0 && top<SCENE_H*0.42 && Math.random()<0.55){
+          boltsLeft--; html+=thunderCloud(w,top,cOpacity,dur,delay,ct[0],ct[1]);   // cloud + attached bolt
+        } else {
+          html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,ct[0],ct[1]);
+        }
         emitYs.push(Math.min(150,top+Math.round(ch*0.62)));           // this cloud's underside
       }
     }
@@ -1182,7 +1195,7 @@ function buildDayScene(now){
     }
 
     // Lightning for storms
-    if(isStorm){ html+=`<div class="day-flash"></div>`; const nb=1+Math.round(Math.random()); for(let i=0;i<nb;i++){ const bx=22+Math.random()*56, by=Math.max(12,emitAt()-12), bh=46+Math.random()*26; html+=lightningSVG(bx,by,bh,(i*2.4+Math.random()*0.6).toFixed(1)); } }
+    if(isStorm) html+=`<div class="day-flash"></div>`;  // bolts come from the thunderclouds above
 
     // ── Wind gusts — flowing line clusters with curl ends ──
     // Continuous scaling (no buckets): count, drift speed, stroke weight and
