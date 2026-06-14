@@ -814,15 +814,15 @@ function cloudTones(tone){
 }
 function cloudSVG(cls,w,top,opacity,cd,delay,c1,c2){
   const gid='cg'+(_cgid++);
-  const grad=`<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2||c1}"/></linearGradient></defs>`;
+  const grad=(y1,y2)=>`<defs><linearGradient id="${gid}" gradientUnits="userSpaceOnUse" x1="0" y1="${y1}" x2="0" y2="${y2}"><stop offset="0%" stop-color="${c1}"/><stop offset="100%" stop-color="${c2||c1}"/></linearGradient></defs>`;
   const fill=`url(#${gid})`;
   const base=`top:${top}px;left:0;opacity:${opacity};--cd:${cd}s;animation-delay:${delay}s;filter:drop-shadow(0 2px 2px rgba(20,30,50,0.18));`;
   if(Math.random()<0.3){   // ~30%: the simpler outlined cloud (as in the weather widget)
     const h=Math.round(w*0.66), fx=Math.random()<0.5?' transform="translate(24,0) scale(-1,1)"':'';
-    return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="${base}">${grad}<path d="${MAT_CLOUD}"${fx} fill="${fill}" stroke="rgba(30,50,80,0.3)" stroke-width="0.7" vector-effect="non-scaling-stroke"/></svg>`;
+    return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 4 24 16" preserveAspectRatio="none" style="${base}">${grad(5,20)}<path d="${MAT_CLOUD}"${fx} fill="${fill}" stroke="rgba(30,50,80,0.3)" stroke-width="0.7" vector-effect="non-scaling-stroke"/></svg>`;
   }
   const h=Math.round(w*0.6), s=CLOUD_SHAPES[Math.floor(Math.random()*CLOUD_SHAPES.length)], fx=Math.random()<0.5?' transform="translate(100,0) scale(-1,1)"':'';
-  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}">${grad}<g${fx} fill="${fill}">${s}</g></svg>`;
+  return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}">${grad(14,56)}<g${fx} fill="${fill}">${s}</g></svg>`;
 }
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
