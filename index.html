@@ -886,7 +886,7 @@ function buildNightScene(){
     let html='';
     if(wx&&wx.ok){
       const lbl=window._wxForce||wx.label;
-      const isStorm=lbl.includes('Storm')||lbl.includes('hail');
+      const isStorm=/storm|hail/i.test(lbl);
       const isRain=lbl.includes('Rain')||lbl.includes('Drizzle')||lbl.includes('Shower');
       const isCloud=lbl.includes('cloudy')||lbl.includes('Overcast')||lbl.includes('Foggy');
       {
@@ -988,7 +988,7 @@ function buildDayScene(now){
   const nowFloat=document.getElementById('day-now-float');
   if(nowFloat){
     nowFloat.style.left=Math.min(91,Math.max(9,sx))+'%';
-    nowFloat.style.top=Math.min(66,sy+14)+'%';
+    nowFloat.style.top=Math.min(71,sy+19)+'%';
   }
 
   // Weather for the scene: zone forecast in SEQ, true GPS forecast when outside
@@ -1000,8 +1000,12 @@ function buildDayScene(now){
 
   // The sun is always the sun — weather lives in the overlay. Under cloud or
   // rain it dims rather than morphing into a glowing rain-cloud emoji.
-  sun.style.opacity = sunOut?'1' : partlyNow?'0.75' : '0.35';
-  sun.style.filter = (sunOut||partlyNow) ? 'drop-shadow(0 0 14px rgba(255,220,120,0.9))' : 'grayscale(0.4)';
+  const elev=Math.sin(Math.max(0,Math.min(1,frac))*Math.PI);     // 0 at sunrise/last light, 1 at midday
+  const wxDim=sunOut?1:partlyNow?0.72:0.5;                        // cloud knocks the sun back
+  sun.style.opacity=(0.55+0.45*elev*wxDim).toFixed(2);           // brightens as it climbs
+  sun.style.filter=(sunOut||partlyNow)
+    ? `drop-shadow(0 0 ${Math.round(8+15*elev)}px rgba(255,222,130,${(0.5+0.45*elev).toFixed(2)}))`
+    : 'grayscale(0.4)';
 
   // Ambient warm glow only when the sun is actually out
   const glow=document.getElementById('day-glow');
@@ -1029,7 +1033,7 @@ function buildDayScene(now){
   if(wx&&wx.ok){
     const lbl=window._wxForce||wx.label;
     const wind=wx.wind||0;
-    const isClear   = lbl.includes('Clear');
+    const isClear   = /clear/i.test(lbl);
     const isPartly  = lbl.includes('Partly');
     const isOvercast= lbl.includes('Overcast');
     const isFog     = lbl.includes('Foggy');
@@ -1037,7 +1041,7 @@ function buildDayScene(now){
     const isRain    = lbl.includes('Rain');
     const isShower  = lbl.includes('Shower');
     const isSnow    = lbl.includes('Snow');
-    const isStorm   = lbl.includes('Storm');
+    const isStorm   = /storm/i.test(lbl);
     const isHail    = lbl.includes('hail');
     const anyRain   = isDrizzle||isRain||isShower||isStorm;
 
