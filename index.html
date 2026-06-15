@@ -446,13 +446,30 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 #loader .ld-night-scene{display:none;}
 #loader.loader-night .ld-day-scene{display:none;}
 #loader.loader-night .ld-night-scene{display:block;}
-/* Day: golfer swings, ball flies into the hole, repeat */
-.ld-club{transform-box:fill-box;transform-origin:0% 0%;animation:ld-swing 3s ease-in-out infinite;}
-@keyframes ld-swing{0%{transform:rotate(183deg);opacity:1;}13%{transform:rotate(0deg);opacity:1;}22%{transform:rotate(-72deg);opacity:1;}66%{transform:rotate(-72deg);opacity:1;}70%{transform:rotate(-72deg);opacity:0;}74%{transform:rotate(183deg);opacity:0;}80%{transform:rotate(183deg);opacity:1;}100%{transform:rotate(183deg);opacity:1;}}
-.ld-ball{animation:ld-fly 3s linear infinite;}
-@keyframes ld-fly{0%,13%{transform:translate(0,0);opacity:1;}23%{transform:translate(55px,-79px);}33%{transform:translate(111px,-108px);}43%{transform:translate(166px,-88px);}49%{transform:translate(200px,-51px);}55%{transform:translate(233px,7px);opacity:1;}66%{transform:translate(233px,7px);opacity:1;}70%{transform:translate(233px,7px);opacity:0;}74%{transform:translate(0,0);opacity:0;}80%{transform:translate(0,0);opacity:1;}100%{transform:translate(0,0);opacity:1;}}
-.ld-pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:ld-pop 3s ease-out infinite;}
-@keyframes ld-pop{0%,52%{opacity:0;transform:scale(0.3);}56%{opacity:0.9;transform:scale(0.6);}66%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
+/* Day: the golfer swings and the JS controller (further down the body) launches
+   a fresh ball on every swing — most are random misses that pile up across the
+   green, but a ~1-in-5 hole-out drops into the cup and turns the golfer Super
+   Saiyan God Blue, which then sticks for the rest of the load. The swing itself
+   is driven from JS (WAAPI) so the ball launch stays synced to impact; only the
+   club's pivot lives here. NB: the day ball used to animate via @keyframes
+   ld-fly, whose name collided with the night manta's ld-fly and hijacked the
+   day trajectory (the regression). That keyframe set is gone now. */
+.ld-club{transform-box:fill-box;transform-origin:0% 0%;transform:rotate(183deg);}
+.ld-balls circle{filter:drop-shadow(0 1px 0 rgba(0,0,0,0.25));}
+/* Super Saiyan: 1st hole-out = SSJ2 (gold spiky hair + blue lightning); the
+   2nd hole-out morphs it into SSJ God Blue. The active form persists on misses. */
+.ld-saiyan-back,.ld-saiyan-front,.ld-hair2,.ld-hairb,.ld-aura-gold,.ld-aura-blue{display:none;}
+.ld-golfer.ssj2 .ld-saiyan-back,.ld-golfer.ssjb .ld-saiyan-back,.ld-golfer.ssj2 .ld-saiyan-front,.ld-golfer.ssjb .ld-saiyan-front{display:block;}
+.ld-golfer.ssj2 .ld-hair2,.ld-golfer.ssj2 .ld-aura-gold{display:block;}
+.ld-golfer.ssjb .ld-hairb,.ld-golfer.ssjb .ld-aura-blue{display:block;}
+.ld-saiyan-back{transform-box:fill-box;transform-origin:50% 92%;}
+.ld-aura-gold,.ld-aura-blue{transform-box:fill-box;transform-origin:50% 60%;animation:ld-aura 1.15s ease-in-out infinite;}
+@keyframes ld-aura{0%,100%{opacity:0.4;transform:scale(0.92);}50%{opacity:0.82;transform:scale(1.1);}}
+.ld-hairf{transform-box:fill-box;transform-origin:50% 100%;animation:ld-hair 1.4s ease-in-out infinite;}
+@keyframes ld-hair{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.05);}}
+/* Crisp, fast-flickering bolts (CSS drop-shadow gives the glow, not a blur filter) */
+.ld-bolt{filter:drop-shadow(0 0 1.4px #3aa0ff);animation:ld-bolt 0.5s steps(1,end) infinite;animation-delay:var(--bd,0s);}
+@keyframes ld-bolt{0%{opacity:0;}8%{opacity:1;}18%{opacity:0.15;}28%{opacity:1;}42%{opacity:0;}100%{opacity:0;}}
 /* Night: the Night Y'orb flies in, bites the moon to a fingernail crescent,
    then flies off and the scene resets. One 6s master timeline (.ld-yorb flight,
    .ld-maw chomp, .ld-bite crescent reveal) + fast wing/tail/twinkle sub-loops. */
@@ -480,11 +497,43 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 <body>
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="ldd-glow" x="-120%" y="-120%" width="340%" height="340%"><feGaussianBlur stdDeviation="2.2"/></filter>
+      <radialGradient id="ldd-aura-gold" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff3b0" stop-opacity="0.95"/><stop offset="45%" stop-color="#ffcf3a" stop-opacity="0.5"/><stop offset="100%" stop-color="#ffae00" stop-opacity="0"/></radialGradient>
+      <radialGradient id="ldd-aura-blue" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bff0ff" stop-opacity="0.95"/><stop offset="45%" stop-color="#3aa0ff" stop-opacity="0.55"/><stop offset="100%" stop-color="#1e63e0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ldd-hair-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff7cc"/><stop offset="45%" stop-color="#ffd83a"/><stop offset="100%" stop-color="#f0960a"/></linearGradient>
+      <linearGradient id="ldd-hair-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6f7ff"/><stop offset="42%" stop-color="#5cc2ff"/><stop offset="100%" stop-color="#1f7fe0"/></linearGradient>
+    </defs>
     <path class="ld-ground" d="M0,228 Q200,204 400,228 L400,280 L0,280 Z" fill="#2d5a1b"/>
+    <g class="ld-balls"></g>
     <g class="ld-flag"><rect x="332" y="163" width="3" height="58" fill="#cfd6da"/><path d="M335,163 L362,171 L335,179 Z" fill="#e74c3c"/><ellipse cx="333" cy="221" rx="11" ry="3.5" fill="#15300f"/></g>
-    <g class="ld-golfer"><circle cx="78" cy="187" r="7" fill="#e8f5e0"/><rect x="74.5" y="194" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="199" x2="100" y2="214" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
-    <circle class="ld-ball" cx="100" cy="214" r="5" fill="#fff"/>
-    <circle class="ld-pop" cx="333" cy="221" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
+    <g class="ld-golfer">
+      <g class="ld-saiyan-back">
+        <ellipse class="ld-aura-gold" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-gold)" filter="url(#ldd-glow)"/>
+        <ellipse class="ld-aura-blue" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-blue)" filter="url(#ldd-glow)"/>
+        <g class="ld-hair2">
+          <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#b9740a"/>
+          <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-gold)"/>
+        </g>
+        <g class="ld-hairb">
+          <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#1763c8"/>
+          <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-blue)"/>
+        </g>
+      </g>
+      <circle cx="78" cy="187" r="7" fill="#e8f5e0"/>
+      <rect x="74.5" y="194" width="7" height="26" rx="3" fill="#e8f5e0"/>
+      <g class="ld-club"><line x1="78" y1="199" x2="100" y2="214" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g>
+      <g class="ld-saiyan-front" fill="none" stroke="#9fe6ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <polyline class="ld-bolt" style="--bd:0s" points="66,176 58,168 64,162 55,153 60,148"/>
+        <polyline class="ld-bolt" style="--bd:.07s" points="90,176 98,168 92,162 101,153 96,147"/>
+        <polyline class="ld-bolt" style="--bd:.14s" points="78,158 73,149 80,146 74,137 79,131"/>
+        <polyline class="ld-bolt" style="--bd:.21s" points="66,197 54,194 60,189 49,184 55,180"/>
+        <polyline class="ld-bolt" style="--bd:.28s" points="90,197 103,195 97,189 109,185 103,181"/>
+        <polyline class="ld-bolt" style="--bd:.1s" points="70,213 60,217 67,221 56,226 62,229" stroke="#eafcff" stroke-width="1.2"/>
+        <polyline class="ld-bolt" style="--bd:.18s" points="88,213 99,216 92,221 104,225 98,229" stroke="#eafcff" stroke-width="1.2"/>
+        <polyline class="ld-bolt" style="--bd:.24s" points="78,131 82,124 76,121 81,114" stroke="#eafcff" stroke-width="1.1"/>
+      </g>
+    </g>
   </svg>
   <svg class="ld-night-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs>
@@ -521,6 +570,90 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   </svg>
 </div>
 <script>(function(){try{var h=new Date().getHours();if(h>=18||h<6){var l=document.getElementById('loader');if(l)l.classList.add('loader-night');}}catch(e){}})();</script>
+<script>(function(){
+  var loader=document.getElementById('loader');
+  if(!loader||loader.classList.contains('loader-night'))return;            /* day loader only */
+  var svg=loader.querySelector('.ld-day-scene'); if(!svg)return;
+  var NS='http://www.w3.org/2000/svg',
+      club=svg.querySelector('.ld-club'),
+      golfer=svg.querySelector('.ld-golfer'),
+      ballsG=svg.querySelector('.ld-balls');
+  var LAUNCH={x:100,y:214}, HOLE={x:333,y:221}, SWING=2400, IMPACT=0.34, stage=0;
+  /* the green's top edge: y at a given x along the M0,228 Q200,204 400,228 curve,
+     so a miss always rests ON the green instead of hanging in the air */
+  function groundY(x){ var t=x/400; return 228-48*t+48*t*t; }
+  function rnd(a,b){return a+Math.random()*(b-a);}
+  function stopped(){return !loader.isConnected||loader.classList.contains('done');}
+  function arc(tx,ty){
+    var dx=tx-LAUNCH.x, dy=ty-LAUNCH.y, peak=Math.min(150,55+Math.hypot(dx,dy)*0.5), f=[], i, t;
+    for(i=0;i<=10;i++){ t=i/10;
+      f.push({transform:'translate('+(dx*t).toFixed(1)+'px,'+(dy*t-peak*Math.sin(Math.PI*t)).toFixed(1)+'px)'}); }
+    return f;
+  }
+  function newBall(){
+    var c=document.createElementNS(NS,'circle');
+    c.setAttribute('cx',LAUNCH.x); c.setAttribute('cy',LAUNCH.y); c.setAttribute('r',5);
+    c.setAttribute('fill','#fff'); c.setAttribute('stroke','#b9c2c7'); c.setAttribute('stroke-width','0.6');
+    c.style.transformBox='fill-box'; c.style.transformOrigin='center'; ballsG.appendChild(c); return c;
+  }
+  function shot(){
+    if(stopped())return;
+    var holeOut=Math.random()<0.18, t;
+    if(holeOut){ t={x:HOLE.x,y:HOLE.y}; }
+    else{ var mx,my,k=0; do{ mx=rnd(150,380); my=groundY(mx)+rnd(2,15); k++; }while(k<12 && Math.hypot(mx-HOLE.x,my-HOLE.y)<26); t={x:mx,y:my}; }
+    var ball=newBall(),
+        flight=Math.round(650+Math.hypot(t.x-LAUNCH.x,t.y-LAUNCH.y)*1.5),
+        a=ball.animate(arc(t.x,t.y),{duration:flight,easing:'linear',fill:'forwards'});
+    a.finished.then(function(){
+      if(holeOut){ dropIn(ball); }
+      else{ var ok=false; try{ a.commitStyles(); ok=true; }catch(e){} if(ok) a.cancel(); }  /* rest the miss on the green */
+    }).catch(function(){});
+  }
+  function dropIn(ball){
+    var dx=HOLE.x-LAUNCH.x, dy=HOLE.y-LAUNCH.y;
+    ball.animate([
+      {transform:'translate('+dx+'px,'+dy+'px) scale(1)',opacity:1},
+      {transform:'translate('+dx+'px,'+(dy+4)+'px) scale(0.28)',opacity:0.85,offset:0.7},
+      {transform:'translate('+dx+'px,'+(dy+7)+'px) scale(0)',opacity:0.3}
+    ],{duration:380,easing:'ease-in',fill:'forwards'}).finished
+      .then(function(){ ball.remove(); powerUp(); }).catch(function(){});
+  }
+  function powerUp(){
+    if(stage>=2) return;                              /* already SSJ God Blue (max) */
+    stage++;
+    if(stage===1){ golfer.classList.add('ssj2'); flash('#ffe98a'); }       /* 1st: SSJ2 gold */
+    else { golfer.classList.remove('ssj2'); golfer.classList.add('ssjb'); flash('#bfe6ff'); } /* 2nd: SSJ Blue */
+    var back=svg.querySelector('.ld-saiyan-back');
+    if(back) back.animate([{transform:'scale(0.4)',opacity:0},
+                           {transform:'scale(1.22)',opacity:1,offset:0.6},
+                           {transform:'scale(1)',opacity:1}],
+                          {duration:540,easing:'cubic-bezier(.2,1.5,.4,1)'});
+  }
+  function flash(color){
+    var fl=document.createElementNS(NS,'circle');
+    fl.setAttribute('cx',78); fl.setAttribute('cy',186); fl.setAttribute('r',10);
+    fl.setAttribute('fill',color); fl.setAttribute('filter','url(#ldd-glow)');
+    fl.style.transformBox='fill-box'; fl.style.transformOrigin='center'; golfer.appendChild(fl);
+    fl.animate([{transform:'scale(0.4)',opacity:0.95},{transform:'scale(7)',opacity:0}],
+               {duration:520,easing:'ease-out'}).finished.then(function(){fl.remove();}).catch(function(){});
+  }
+  (async function loop(){
+    while(!stopped()){
+      var swing=club.animate([
+        {transform:'rotate(183deg)',opacity:1,offset:0},
+        {transform:'rotate(183deg)',opacity:1,offset:0.12,easing:'ease-in'},
+        {transform:'rotate(0deg)',opacity:1,offset:0.34,easing:'ease-out'},
+        {transform:'rotate(-72deg)',opacity:1,offset:0.5},
+        {transform:'rotate(-72deg)',opacity:1,offset:0.66},
+        {transform:'rotate(-72deg)',opacity:0,offset:0.74},
+        {transform:'rotate(183deg)',opacity:0,offset:0.8},
+        {transform:'rotate(183deg)',opacity:1,offset:0.9}
+      ],{duration:SWING,easing:'ease-in-out'});
+      setTimeout(shot, SWING*IMPACT);
+      try{ await swing.finished; }catch(e){ break; }
+    }
+  })();
+})();</script>
 <div class="app">
 
   <!-- Header -->
