@@ -2633,13 +2633,21 @@ async function init(){
     if(originEl) originEl.textContent='drives est. from Toowong + typical traffic';
   }
 
-  const [result] = await Promise.all([
-    fetchSunset(lat, lng),
-    fetchAllWeather(),
-    fetchSpaceWx(),  // live Kp + ISS — optional, fails silently
-    loadCourseMaps() // OSM course-map coverage manifest — optional, fails silently
-  ]);
-  sunsetMins    = result.sunset;
+  // Load sun times + weather before the first render, so the loader hides
+  // straight into the correct day/night mode (no day-then-night flash). Wrapped
+  // so a failed optional fetch can't skip the render and strand the loader.
+  let result;
+  try{
+    result = (await Promise.all([
+      fetchSunset(lat, lng),
+      fetchAllWeather(),
+      fetchSpaceWx(),  // live Kp + ISS — optional, fails silently
+      loadCourseMaps() // OSM course-map coverage manifest — optional, fails silently
+    ]))[0];
+  }catch(e){
+    result = await fetchSunset(lat, lng).catch(()=>({}));  // still get sun times + render
+  }
+  sunsetMins    = result.sunset ?? 1020;
   sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
   lastLightMins = result.lastLight ?? (sunsetMins + TWILIGHT_EST);
   firstLightMins= result.firstLight ?? (sunriseMins - TWILIGHT_EST);
@@ -2817,7 +2825,7 @@ function closeLayout(){
   document.body.style.overflow='';
 }
 function tryHideLoader(){ const l=document.getElementById('loader'); if(l&&!l.classList.contains('done')){ l.classList.add('done'); setTimeout(()=>{ if(l.parentNode) l.remove(); },350); } }
-setTimeout(tryHideLoader, 6000); // safety: reveal even if the first render is slow
+setTimeout(tryHideLoader, 15000); // safety net only — normally hides on the first real render (after data loads)
 init();
 showTestBanner();
 </script>
