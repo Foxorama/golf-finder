@@ -433,7 +433,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 .ld-club{transform-box:fill-box;transform-origin:0% 0%;animation:ld-swing 3s ease-in-out infinite;}
 @keyframes ld-swing{0%{transform:rotate(183deg);opacity:1;}13%{transform:rotate(0deg);opacity:1;}22%{transform:rotate(-72deg);opacity:1;}66%{transform:rotate(-72deg);opacity:1;}70%{transform:rotate(-72deg);opacity:0;}74%{transform:rotate(183deg);opacity:0;}80%{transform:rotate(183deg);opacity:1;}100%{transform:rotate(183deg);opacity:1;}}
 .ld-ball{animation:ld-fly 3s linear infinite;}
-@keyframes ld-fly{0%,13%{transform:translate(0,0);opacity:1;}23%{transform:translate(55px,-79px);}33%{transform:translate(111px,-108px);}43%{transform:translate(166px,-88px);}49%{transform:translate(200px,-51px);}55%{transform:translate(233px,3px);opacity:1;}66%{transform:translate(233px,3px);opacity:1;}70%{transform:translate(233px,3px);opacity:0;}74%{transform:translate(0,0);opacity:0;}80%{transform:translate(0,0);opacity:1;}100%{transform:translate(0,0);opacity:1;}}
+@keyframes ld-fly{0%,13%{transform:translate(0,0);opacity:1;}23%{transform:translate(55px,-79px);}33%{transform:translate(111px,-108px);}43%{transform:translate(166px,-88px);}49%{transform:translate(200px,-51px);}55%{transform:translate(233px,7px);opacity:1;}66%{transform:translate(233px,7px);opacity:1;}70%{transform:translate(233px,7px);opacity:0;}74%{transform:translate(0,0);opacity:0;}80%{transform:translate(0,0);opacity:1;}100%{transform:translate(0,0);opacity:1;}}
 .ld-pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:ld-pop 3s ease-out infinite;}
 @keyframes ld-pop{0%,52%{opacity:0;transform:scale(0.3);}56%{opacity:0.9;transform:scale(0.6);}66%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
 /* Night: the Night Y'orb chomps a moon that drifts into its mouth, repeat */
@@ -449,11 +449,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 <body>
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
-    <path class="ld-ground" d="M0,218 Q200,214 400,218 L400,280 L0,280 Z" fill="#2d5a1b"/>
-    <g class="ld-flag"><rect x="332" y="158" width="3" height="58" fill="#cfd6da"/><path d="M335,158 L362,166 L335,174 Z" fill="#e74c3c"/><ellipse cx="333" cy="216" rx="11" ry="3.5" fill="#15300f"/></g>
-    <g class="ld-golfer"><circle cx="78" cy="183" r="7" fill="#e8f5e0"/><rect x="74.5" y="190" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="195" x2="100" y2="213" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
-    <circle class="ld-ball" cx="100" cy="213" r="5" fill="#fff"/>
-    <circle class="ld-pop" cx="333" cy="216" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
+    <path class="ld-ground" d="M0,228 Q200,204 400,228 L400,280 L0,280 Z" fill="#2d5a1b"/>
+    <g class="ld-flag"><rect x="332" y="163" width="3" height="58" fill="#cfd6da"/><path d="M335,163 L362,171 L335,179 Z" fill="#e74c3c"/><ellipse cx="333" cy="221" rx="11" ry="3.5" fill="#15300f"/></g>
+    <g class="ld-golfer"><circle cx="78" cy="187" r="7" fill="#e8f5e0"/><rect x="74.5" y="194" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="199" x2="100" y2="214" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
+    <circle class="ld-ball" cx="100" cy="214" r="5" fill="#fff"/>
+    <circle class="ld-pop" cx="333" cy="221" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
   </svg>
   <svg class="ld-night-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs><radialGradient id="ldmoon" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#fdfbf0"/><stop offset="68%" stop-color="#d8def0"/><stop offset="100%" stop-color="#a7b1cf"/></radialGradient><radialGradient id="ldorbg" cx="50%" cy="60%" r="72%"><stop offset="0%" stop-color="#c79bf5"/><stop offset="50%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#23265e"/></radialGradient></defs>
