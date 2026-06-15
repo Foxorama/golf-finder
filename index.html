@@ -431,11 +431,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 #loader.loader-night .ld-night-scene{display:block;}
 /* Day: golfer swings, ball flies into the hole, repeat */
 .ld-club{transform-box:fill-box;transform-origin:0% 0%;animation:ld-swing 3s ease-in-out infinite;}
-@keyframes ld-swing{0%,6%{transform:rotate(0deg);}22%{transform:rotate(-150deg);}30%{transform:rotate(0deg);}38%{transform:rotate(-60deg);}66%{transform:rotate(-60deg);}94%,100%{transform:rotate(0deg);}}
+@keyframes ld-swing{0%{transform:rotate(183deg);opacity:1;}13%{transform:rotate(0deg);opacity:1;}22%{transform:rotate(-72deg);opacity:1;}66%{transform:rotate(-72deg);opacity:1;}70%{transform:rotate(-72deg);opacity:0;}74%{transform:rotate(183deg);opacity:0;}80%{transform:rotate(183deg);opacity:1;}100%{transform:rotate(183deg);opacity:1;}}
 .ld-ball{animation:ld-fly 3s linear infinite;}
-@keyframes ld-fly{0%,30%{transform:translate(0,0);opacity:1;}38%{transform:translate(47px,-67px);}46%{transform:translate(94px,-101px);}54%{transform:translate(141px,-99px);}62%{transform:translate(188px,-64px);}72%{transform:translate(233px,3px);opacity:1;}76%{transform:translate(233px,3px);opacity:0;}100%{transform:translate(0,0);opacity:0;}}
+@keyframes ld-fly{0%,13%{transform:translate(0,0);opacity:1;}23%{transform:translate(55px,-79px);}33%{transform:translate(111px,-108px);}43%{transform:translate(166px,-88px);}49%{transform:translate(200px,-51px);}55%{transform:translate(233px,3px);opacity:1;}66%{transform:translate(233px,3px);opacity:1;}70%{transform:translate(233px,3px);opacity:0;}74%{transform:translate(0,0);opacity:0;}80%{transform:translate(0,0);opacity:1;}100%{transform:translate(0,0);opacity:1;}}
 .ld-pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:ld-pop 3s ease-out infinite;}
-@keyframes ld-pop{0%,69%{opacity:0;transform:scale(0.3);}73%{opacity:0.9;transform:scale(0.6);}85%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
+@keyframes ld-pop{0%,52%{opacity:0;transform:scale(0.3);}56%{opacity:0.9;transform:scale(0.6);}66%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
 /* Night: the Night Y'orb chomps a moon that drifts into its mouth, repeat */
 .ld-stars circle{animation:ld-tw 2.6s ease-in-out infinite;}
 @keyframes ld-tw{0%,100%{opacity:0.35;}50%{opacity:1;}}
