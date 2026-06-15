@@ -431,11 +431,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 #loader.loader-night .ld-night-scene{display:block;}
 /* Day: golfer swings, ball flies into the hole, repeat */
 .ld-club{transform-box:fill-box;transform-origin:0% 0%;animation:ld-swing 3s ease-in-out infinite;}
-@keyframes ld-swing{0%,3%{transform:rotate(-145deg);}12%{transform:rotate(8deg);}20%{transform:rotate(-72deg);}60%{transform:rotate(-72deg);}76%{transform:rotate(-12deg);}92%{transform:rotate(-145deg);}100%{transform:rotate(-145deg);}}
+@keyframes ld-swing{0%,8%{transform:rotate(-150deg);}17%{transform:rotate(0deg);}25%{transform:rotate(-60deg);}66%{transform:rotate(-60deg);}100%{transform:rotate(-150deg);}}
 .ld-ball{animation:ld-fly 3s linear infinite;}
-@keyframes ld-fly{0%,12%{transform:translate(0,0);opacity:1;}22%{transform:translate(47px,-67px);}32%{transform:translate(94px,-101px);}42%{transform:translate(141px,-99px);}52%{transform:translate(188px,-64px);}60%{transform:translate(235px,4px);opacity:1;}64%{transform:translate(235px,4px);opacity:0;}100%{transform:translate(0,0);opacity:0;}}
+@keyframes ld-fly{0%,17%{transform:translate(0,0);opacity:1;}26%{transform:translate(47px,-67px);}35%{transform:translate(94px,-101px);}44%{transform:translate(141px,-99px);}53%{transform:translate(188px,-64px);}62%{transform:translate(233px,3px);opacity:1;}66%{transform:translate(233px,3px);opacity:0;}100%{transform:translate(0,0);opacity:0;}}
 .ld-pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:ld-pop 3s ease-out infinite;}
-@keyframes ld-pop{0%,57%{opacity:0;transform:scale(0.3);}61%{opacity:0.9;transform:scale(0.6);}73%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
+@keyframes ld-pop{0%,59%{opacity:0;transform:scale(0.3);}63%{opacity:0.9;transform:scale(0.6);}75%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
 /* Night: the Night Y'orb chomps a moon that drifts into its mouth, repeat */
 .ld-stars circle{animation:ld-tw 2.6s ease-in-out infinite;}
 @keyframes ld-tw{0%,100%{opacity:0.35;}50%{opacity:1;}}
@@ -449,11 +449,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 <body>
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
-    <path class="ld-ground" d="M0,228 Q200,204 400,228 L400,280 L0,280 Z" fill="#2d5a1b"/>
-    <g class="ld-flag"><rect x="332" y="150" width="3" height="60" fill="#cfd6da"/><path d="M335,150 L362,158 L335,166 Z" fill="#e74c3c"/><ellipse cx="333" cy="212" rx="10" ry="3.5" fill="#15300f"/></g>
-    <g class="ld-golfer"><circle cx="78" cy="166" r="7" fill="#e8f5e0"/><rect x="74.5" y="173" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="180" x2="103" y2="205" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
-    <circle class="ld-ball" cx="98" cy="205" r="5" fill="#fff"/>
-    <circle class="ld-pop" cx="333" cy="209" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
+    <path class="ld-ground" d="M0,218 Q200,214 400,218 L400,280 L0,280 Z" fill="#2d5a1b"/>
+    <g class="ld-flag"><rect x="332" y="158" width="3" height="58" fill="#cfd6da"/><path d="M335,158 L362,166 L335,174 Z" fill="#e74c3c"/><ellipse cx="333" cy="216" rx="11" ry="3.5" fill="#15300f"/></g>
+    <g class="ld-golfer"><circle cx="78" cy="183" r="7" fill="#e8f5e0"/><rect x="74.5" y="190" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="195" x2="100" y2="213" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
+    <circle class="ld-ball" cx="100" cy="213" r="5" fill="#fff"/>
+    <circle class="ld-pop" cx="333" cy="216" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
   </svg>
   <svg class="ld-night-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs><radialGradient id="ldmoon" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#fdfbf0"/><stop offset="68%" stop-color="#d8def0"/><stop offset="100%" stop-color="#a7b1cf"/></radialGradient><radialGradient id="ldorbg" cx="50%" cy="60%" r="72%"><stop offset="0%" stop-color="#c79bf5"/><stop offset="50%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#23265e"/></radialGradient></defs>
