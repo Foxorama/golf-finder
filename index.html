@@ -924,6 +924,50 @@ function cloudSVG(cls,w,top,opacity,cd,delay,c1,c2){
   const h=Math.round(w*0.6), s=CLOUD_SHAPES[Math.floor(Math.random()*CLOUD_SHAPES.length)], fx=Math.random()<0.5?' transform="translate(100,0) scale(-1,1)"':'';
   return `<svg class="${cls}" width="${w}" height="${h}" viewBox="0 0 100 62" style="${base}">${grad(14,56)}<g${fx} fill="${fill}">${s}</g></svg>`;
 }
+// Build a drifting cloud field that visually covers ~cover% of the sky. Shared
+// by the day and night scenes so both read identically from cloud_cover — only
+// scene height, per-cloud tone and the (day-only) flyer easter egg differ.
+// Rather than a fixed cloud count, we scatter enough total cloud *area* across
+// the horizontal drift field (clouds translateX ~DRIFT px in @keyframes
+// cloudDrift) that the average on-screen coverage tracks the cover %: a 97% sky
+// reads ~97% clouded, a 30% sky stays mostly open. Window width cancels out, so
+// it's robust to the container size. Clouds keep random size/shape/colour and
+// drift. Returns {html, emitYs} (emitYs = cloud undersides for precip origins).
+function buildCloudField(cover, sceneH, wind, baseTone, cls, isStorm, flyer){
+  const cp=cloudParams(cover);
+  if(cp.frac===0) return {html:'', emitYs:[]};
+  const frac=cp.frac;
+  const opacity=+(0.8+0.18*frac).toFixed(2);                 // opaque white→grey, not raw-frac faint
+  const DRIFT=880;                                           // translateX span clouds drift across
+  const K=1.65;                                              // fill factor (cloud shape < bbox, off-scene clip, drift smear); calibrated so coverage tracks cover %
+  // Randomly-placed clouds give union coverage ≈ 1-e^(-density), so to make the
+  // on-screen coverage actually *track* the cover %, scale total area by
+  // -ln(1-cover) rather than linearly — otherwise the mid-range overshoots.
+  const targetArea=-Math.log(1-Math.min(frac,0.985))*sceneH*DRIFT*K;   // total cloud bbox area to scatter
+  const sizes=[0.3,0.44,0.6,0.82];                           // small / medium / large mix
+  const yPow=1.35-0.55*frac;                                 // 1.35 (puffy, biased high) → ~0.8 (fills sky) as cover rises
+  const yRange=sceneH*(0.7+0.28*frac);                       // clouds reach further down the sky at high cover
+  let html='', emitYs=[], area=0, boltsLeft=isStorm?3:0, n=0;
+  const MAXN=72;                                             // safety cap so 100% can't run away
+  while(area<targetArea && n<MAXN){
+    n++;
+    const wScale=0.8+frac*1.1+Math.random()*0.45;            // bigger clouds when more overcast (realistic sheets, fewer elements)
+    const w=Math.max(20,Math.round(sceneH*sizes[Math.floor(Math.random()*sizes.length)]*wScale));
+    const ch=Math.round(w*0.6);
+    const top=Math.round(-ch*0.4 + Math.pow(Math.random(),yPow)*yRange);  // bias high, may clip top/bottom
+    const dur=cloudDur(wind), delay=-Math.random()*dur;      // speed from wind, random phase per cloud
+    area+=w*ch;
+    if(flyer && Math.random()<0.0001){ html+=flyer(top,dur,delay); continue; }  // rare day-only easter egg
+    const ct=cloudTones(baseTone+(Math.random()-0.5)*0.16);  // slight per-cloud grey variation
+    if(isStorm && boltsLeft>0 && top<sceneH*0.42 && Math.random()<0.55){
+      boltsLeft--; html+=thunderCloud(w,top,opacity,dur,delay,ct[0],ct[1]);   // cloud + attached bolt
+    } else {
+      html+=cloudSVG(cls,w,top,opacity,dur,delay,ct[0],ct[1]);
+    }
+    emitYs.push(Math.min(sceneH-32,top+Math.round(ch*0.62)));// this cloud's underside
+  }
+  return {html, emitYs};
+}
 // Nearest curated Australian region code for the night-sky title (GPS-based).
 // Codes are informal; nearest-centroid picks the region for any AU location.
 const SKY_REGIONS=[
@@ -969,7 +1013,12 @@ function buildNightScene(){
   // Cached on condition so the 60s re-render doesn't restart the rain animation
   // (same fix the day scene already has).
   const wx=weatherCache[skyWxZone()]||weatherCache['brisbane_metro'];
-  const nightKey=(wx&&wx.ok)?(window._wxForce||wx.label):'none';
+  // Key on condition + wind + actual cloud_cover (like the day scene) so the
+  // overlay rebuilds when coverage changes within the same label — otherwise a
+  // "Partly Cloudy" sky stays stale as cover climbs and the card says 97% while
+  // the scene shows the old sparse clouds.
+  const nightCloudPct=(()=>{const h=hourlyAt(skyWxZone(),window._fcOffset||0,nowMins());return h?h.cloud:null;})();
+  const nightKey=(wx&&wx.ok)?`${window._wxForce||wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${nightCloudPct==null?'?':nightCloudPct}`:'none';
   const wxEl=document.getElementById('night-wx');
   if(wxEl && window._nightWxKey!==nightKey){
     window._nightWxKey=nightKey;
@@ -988,23 +1037,11 @@ function buildNightScene(){
       const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
       const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
       const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
-      const cp=cloudParams(cover);
-      const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*12));
+      // Clouds: coverage-driven field (shared with the day scene); night clouds
+      // run a darker, unlit tone. Cover % comes from the night's own weather.
       const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.34:0.22;
-      const sizes=[0.3,0.44,0.6,0.82], emitYs=[]; let boltsLeft=isStorm?3:0;
-      for(let i=0;i<nC;i++){
-        const w=Math.max(20,Math.round(SKY_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.8+Math.random()*0.35)));
-        const chh=Math.round(w*0.6);
-        const top=Math.round(-chh*0.4 + Math.pow(Math.random(),1.3)*(SKY_H*0.72));   // bias high, may clip top
-        const dur=cloudDur(wind), delay=-Math.random()*dur;
-        const nt=cloudTones(baseTone+(Math.random()-0.5)*0.16);
-        if(isStorm && boltsLeft>0 && top<SKY_H*0.42 && Math.random()<0.55){
-          boltsLeft--; html+=thunderCloud(w,top,cp.opacity,dur,delay,nt[0],nt[1]);
-        } else {
-          html+=cloudSVG('night-cloud',w,top,cp.opacity,dur,delay,nt[0],nt[1]);
-        }
-        emitYs.push(Math.min(SKY_H-20,top+Math.round(chh*0.62)));
-      }
+      const field=buildCloudField(cover,SKY_H,wind,baseTone,'night-cloud',isStorm);
+      html+=field.html; const emitYs=field.emitYs;
       const emitAt=()=> emitYs.length?emitYs[Math.floor(Math.random()*emitYs.length)]:24;
       if(anyRain){
         const drops=isStorm?34:isRain?24:isShower?16:10, rLen=isStorm?12:isDrizzle?6:8;
@@ -1187,38 +1224,22 @@ function buildDayScene(now){
     const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
     const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
     const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
-    const cp=cloudParams(cover);
     const SCENE_H=200; window._dayWind=wind;
-    const nC=cp.frac===0?0:Math.max(1,Math.round(cp.frac*14));        // count tracks cover %, not size
-    const cOpacity=+(0.8+0.18*cp.frac).toFixed(2);                    // clouds stay opaque white
-    const sizes=[0.3,0.44,0.6,0.82];                                  // small / medium / large mix
-    const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.3:0.1; // darker with worse weather
-    const emitYs=[]; // cloud bottoms — precip falls from here, not the scene top
-    let boltsLeft=isStorm?3:0;
-    for(let i=0;i<nC;i++){
-      const w=Math.max(22,Math.round(SCENE_H*sizes[Math.floor(Math.random()*sizes.length)]*(0.85+Math.random()*0.35)));
-      const ch=Math.round(w*0.6);
-      const top=Math.round(-ch*0.4 + Math.pow(Math.random(),1.3)*(SCENE_H*0.78));  // bias high, may clip the top
-      const dur=cloudDur(wind), delay=-Math.random()*dur;             // speed from wind, random per cloud
-      if(Math.random()<0.0001){
-        // ~1:10000 a cloud is replaced by a flyer: an alien saucer (straight)
-        // or the Night Y'orb (a gentle bob so it looks like it's flying).
-        const orb=Math.random()<0.5, fdur=(dur*1.4).toFixed(1);
-        const art=orb
-          ? '<defs><radialGradient id="ofly" cx="50%" cy="60%" r="70%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M30,33 C16,32 6,22 9,13 C14,18 21,20 27,21 C24,13 26,7 30,4 C34,7 36,13 33,21 C41,18 49,16 53,11 C57,22 45,33 30,33 Z" fill="url(#ofly)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="25.5" cy="26" r="2.3" fill="#ff5a8a"/><circle cx="34.5" cy="26" r="2.3" fill="#ff5a8a"/>'
-          : '<ellipse cx="30" cy="22" rx="22" ry="7" fill="#9fb3c8" stroke="#6f8398" stroke-width="0.8"/><ellipse cx="30" cy="15" rx="11" ry="8" fill="#bfeefb" opacity="0.92"/><circle cx="18" cy="22" r="1.6" fill="#ff5a8a"/><circle cx="30" cy="23.5" r="1.6" fill="#7ed4ff"/><circle cx="42" cy="22" r="1.6" fill="#ffd24a"/>';
-        if(orb) html+=`<div class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s;"><div class="orb-bob"><svg width="52" height="31" viewBox="0 0 60 36">${art}</svg></div></div>`;
-        else    html+=`<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
-      } else {
-        const ct=cloudTones(baseTone+(Math.random()-0.5)*0.16);       // slight per-cloud grey variation
-        if(isStorm && boltsLeft>0 && top<SCENE_H*0.42 && Math.random()<0.55){
-          boltsLeft--; html+=thunderCloud(w,top,cOpacity,dur,delay,ct[0],ct[1]);   // cloud + attached bolt
-        } else {
-          html+=cloudSVG('day-cloud',w,top,cOpacity,dur,delay,ct[0],ct[1]);
-        }
-        emitYs.push(Math.min(150,top+Math.round(ch*0.62)));           // this cloud's underside
-      }
-    }
+    const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.3:0.1; // darker with worse weather; day clouds sunlit
+    // Day-only easter egg: ~1:10000 a cloud is a flyer — an alien saucer
+    // (straight) or the Night Y'orb (a gentle bob so it looks like it's flying).
+    const dayFlyer=(top,dur,delay)=>{
+      const orb=Math.random()<0.5, fdur=(dur*1.4).toFixed(1);
+      const art=orb
+        ? '<defs><radialGradient id="ofly" cx="50%" cy="60%" r="70%"><stop offset="0%" stop-color="#bd8ef0"/><stop offset="52%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#262a66"/></radialGradient></defs><path d="M30,33 C16,32 6,22 9,13 C14,18 21,20 27,21 C24,13 26,7 30,4 C34,7 36,13 33,21 C41,18 49,16 53,11 C57,22 45,33 30,33 Z" fill="url(#ofly)" stroke="#9a86d8" stroke-width="0.6"/><circle cx="25.5" cy="26" r="2.3" fill="#ff5a8a"/><circle cx="34.5" cy="26" r="2.3" fill="#ff5a8a"/>'
+        : '<ellipse cx="30" cy="22" rx="22" ry="7" fill="#9fb3c8" stroke="#6f8398" stroke-width="0.8"/><ellipse cx="30" cy="15" rx="11" ry="8" fill="#bfeefb" opacity="0.92"/><circle cx="18" cy="22" r="1.6" fill="#ff5a8a"/><circle cx="30" cy="23.5" r="1.6" fill="#7ed4ff"/><circle cx="42" cy="22" r="1.6" fill="#ffd24a"/>';
+      return orb
+        ? `<div class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s;"><div class="orb-bob"><svg width="52" height="31" viewBox="0 0 60 36">${art}</svg></div></div>`
+        : `<svg class="day-cloud orb-fly" style="top:${top}px;left:0;--cd:${fdur}s;animation-delay:${delay}s" width="54" height="32" viewBox="0 0 60 36">${art}</svg>`;
+    };
+    // Coverage-driven cloud field (shared with the night scene) — area tracks cover %
+    const field=buildCloudField(cover,SCENE_H,wind,baseTone,'day-cloud',isStorm,dayFlyer);
+    html+=field.html; const emitYs=field.emitYs;
 
     // Heat shimmer near the horizon on a hot clear day
     if(isClear && wx.temp!=null && wx.temp>=30) html+=`<div class="day-haze"></div>`;
