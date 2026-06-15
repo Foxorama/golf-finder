@@ -430,10 +430,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 #loader.loader-night .ld-day-scene{display:none;}
 #loader.loader-night .ld-night-scene{display:block;}
 /* Day: golfer swings, ball flies into the hole, repeat */
-.ld-club{transform-box:fill-box;transform-origin:0% 0%;animation:ld-swing 3s ease-in-out infinite;}
-@keyframes ld-swing{0%,8%{transform:rotate(-150deg);}18%{transform:rotate(0deg);}70%{transform:rotate(-150deg);}100%{transform:rotate(-150deg);}}
+.ld-club{transform-box:fill-box;transform-origin:100% 0%;animation:ld-swing 3s ease-in-out infinite;}
+@keyframes ld-swing{0%,8%{transform:rotate(100deg);}18%{transform:rotate(0deg);}70%{transform:rotate(100deg);}100%{transform:rotate(100deg);}}
 .ld-ball{animation:ld-fly 3s linear infinite;}
-@keyframes ld-fly{0%,18%{transform:translate(0,0);opacity:1;}27%{transform:translate(47px,-67px);}36%{transform:translate(94px,-101px);}45%{transform:translate(141px,-99px);}54%{transform:translate(188px,-64px);}64%{transform:translate(233px,3px);opacity:1;}68%{transform:translate(233px,3px);opacity:0;}100%{transform:translate(0,0);opacity:0;}}
+@keyframes ld-fly{0%,18%{transform:translate(0,0);opacity:1;}27%{transform:translate(53px,-72px);}36%{transform:translate(106px,-104px);}45%{transform:translate(160px,-100px);}54%{transform:translate(213px,-62px);}64%{transform:translate(265px,3px);opacity:1;}68%{transform:translate(265px,3px);opacity:0;}100%{transform:translate(0,0);opacity:0;}}
 .ld-pop{opacity:0;transform-box:fill-box;transform-origin:center;animation:ld-pop 3s ease-out infinite;}
 @keyframes ld-pop{0%,61%{opacity:0;transform:scale(0.3);}65%{opacity:0.9;transform:scale(0.6);}77%{opacity:0;transform:scale(4.5);}100%{opacity:0;transform:scale(0.3);}}
 /* Night: the Night Y'orb chomps a moon that drifts into its mouth, repeat */
@@ -450,10 +450,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <path class="ld-ground" d="M0,218 Q200,214 400,218 L400,280 L0,280 Z" fill="#2d5a1b"/>
-    <g class="ld-flag"><rect x="332" y="158" width="3" height="58" fill="#cfd6da"/><path d="M335,158 L362,166 L335,174 Z" fill="#e74c3c"/><ellipse cx="333" cy="216" rx="11" ry="3.5" fill="#15300f"/></g>
-    <g class="ld-golfer"><circle cx="78" cy="183" r="7" fill="#e8f5e0"/><rect x="74.5" y="190" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="80" y1="195" x2="100" y2="213" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
-    <circle class="ld-ball" cx="100" cy="213" r="5" fill="#fff"/>
-    <circle class="ld-pop" cx="333" cy="216" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
+    <g class="ld-flag"><rect x="338" y="158" width="3" height="58" fill="#cfd6da"/><path d="M341,158 L368,166 L341,174 Z" fill="#e74c3c"/><ellipse cx="339" cy="216" rx="11" ry="3.5" fill="#15300f"/></g>
+    <g class="ld-golfer"><circle cx="95" cy="183" r="7" fill="#e8f5e0"/><rect x="91.5" y="190" width="7" height="26" rx="3" fill="#e8f5e0"/><g class="ld-club"><line x1="95" y1="196" x2="74" y2="213" stroke="#cfd6da" stroke-width="2.5" stroke-linecap="round"/></g></g>
+    <circle class="ld-ball" cx="74" cy="213" r="5" fill="#fff"/>
+    <circle class="ld-pop" cx="339" cy="216" r="6" fill="none" stroke="#ffd24a" stroke-width="2"/>
   </svg>
   <svg class="ld-night-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs><radialGradient id="ldmoon" cx="38%" cy="34%" r="78%"><stop offset="0%" stop-color="#fdfbf0"/><stop offset="68%" stop-color="#d8def0"/><stop offset="100%" stop-color="#a7b1cf"/></radialGradient><radialGradient id="ldorbg" cx="50%" cy="60%" r="72%"><stop offset="0%" stop-color="#c79bf5"/><stop offset="50%" stop-color="#6a4bb0"/><stop offset="100%" stop-color="#23265e"/></radialGradient></defs>
