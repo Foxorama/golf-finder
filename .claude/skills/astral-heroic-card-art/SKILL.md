@@ -20,8 +20,8 @@ Colours live in `:root` as CSS vars and are mirrored in JS:
 
 | Grade       | Colour       | `--rar-*`          | `RARITY_C`   | Meaning (how special to catch it) |
 |-------------|--------------|--------------------|--------------|-----------------------------------|
-| `common`    | blue         | `--rar-common`     | `#5aa9f0`    | up most clear nights — Moon, marquee constellations, bright planets |
-| `rare`      | green        | `--rar-rare`       | `#3fd07f`    | needs dark skies / a season — Magellanic Clouds, clusters, fainter figures |
+| `common`    | green        | `--rar-common`     | `#3fd07f`    | up most clear nights — Moon, marquee constellations, bright planets |
+| `rare`      | blue         | `--rar-rare`       | `#5aa9f0`    | needs dark skies / a season — Magellanic Clouds, clusters, fainter figures |
 | `epic`      | purple       | `--rar-epic`       | `#b07cff`    | time-limited or showpiece — meteor showers, ISS, big nebulae, conjunctions |
 | `legendary` | orange       | `--rar-legendary`  | `#f5a623`    | once-in-a-while — aurora alert, eclipses, great comets |
 
