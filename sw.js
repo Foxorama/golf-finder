@@ -10,7 +10,7 @@
  *
  * Bump CACHE when index.html changes so clients pick up the new version.
  */
-const CACHE = 'golf-finder-v25';
+const CACHE = 'golf-finder-v26';
 const SHELL = ['./', './index.html', './course-maps.json'];
 
 self.addEventListener('install', (e) => {

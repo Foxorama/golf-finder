@@ -264,6 +264,26 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .sky-compass-btn{position:absolute;top:8px;right:8px;z-index:8;background:rgba(16,22,43,0.75);border:1px solid rgba(124,148,210,0.35);border-radius:10px;width:38px;height:34px;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
 .sky-compass-btn:active{transform:scale(0.94);}
 .sky-compass-btn.on{border-color:#8fb8e8;box-shadow:0 0 10px rgba(143,184,232,0.45);background:rgba(143,184,232,0.18);}
+/* Immersive mode: tapping the compass blows the panorama up to the whole viewport
+   (and, where supported, true fullscreen locked to landscape) so the busy detail
+   view has room to breathe. Pure CSS overlay, so it works even where the
+   Fullscreen API / orientation lock don't (e.g. iPhone Safari) — there the user
+   rotates the phone and the sky repaints to fill the landscape screen. */
+body.sky-full-on{overflow:hidden;}
+.night-scene.sky-full{position:fixed;inset:0;width:100vw;height:100dvh;margin:0;border-radius:0;z-index:2000;background:radial-gradient(120% 80% at 50% 18%,#0c1430 0%,#070a18 60%,#04060f 100%);box-shadow:none;}
+.night-scene.sky-full::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 160px 30px rgba(0,0,0,0.55);z-index:6;}
+.night-scene.sky-full .sky-compass{height:22px;bottom:6px;}
+.night-scene.sky-full .sky-compass span{font-size:14px;}
+.night-scene.sky-full .sky-compass span.minor{font-size:12px;}
+.night-scene.sky-full .so-label{font-size:15px;}
+.night-scene.sky-full .so-const{font-size:13px;letter-spacing:0.14em;}
+.night-scene.sky-full .so-icon{font-size:34px;}
+.night-scene.sky-full .so-mark{width:9px;height:9px;}
+.night-scene.sky-full .so-deep{width:11px;height:11px;}
+.night-scene.sky-full .sky-compass-btn{top:calc(env(safe-area-inset-top,0px) + 12px);width:44px;height:40px;font-size:19px;}
+.night-scene.sky-full .sky-center-tick{height:24px;}
+.sky-full-exit{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:2100;display:none;align-items:center;gap:5px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:8px 13px;cursor:pointer;}
+.sky-full-exit:active{transform:scale(0.95);}
 /* Star-depth cycle button (naked eye → dark sky → binoculars) — lives in the
    info row under the scene, to the right of the best-viewing text */
 .sky-mag-btn{flex:none;min-width:118px;justify-content:center;background:rgba(16,22,43,0.75);border:1px solid rgba(124,148,210,0.35);border-radius:10px;height:32px;padding:0 11px;font-family:var(--mono);font-size:11px;color:#cdd9f5;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
@@ -307,6 +327,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Rarity word-pill + upcoming tag in the card head */
 .acard-rar{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);border-radius:5px;padding:1.5px 5px;line-height:1.3;}
 .acard-soon{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#0a0e1f;background:var(--ac);border-radius:5px;padding:1.5px 5px;line-height:1.3;box-shadow:0 0 9px -2px var(--ac);}
+.acard-eye{font-size:10px;line-height:1;opacity:0.7;}
 @media(prefers-reduced-motion:reduce){
   .acard-art .ca-outline{animation:none;opacity:0;}
   .acard-art .ca-heroic{animation:none;opacity:1;}
@@ -314,9 +335,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 /* Constellation labels drawn in the sky panorama — quieter than object labels */
 .sky-obj .so-const{font-size:9.5px;letter-spacing:0.13em;text-transform:uppercase;color:#bcd3f5;opacity:0.82;font-weight:500;}
 /* Night-card filter chips + tap hint (night mode only) */
-.sky-filters{display:flex;gap:7px;overflow-x:auto;padding:1px 2px 11px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
-.sky-filters::-webkit-scrollbar{display:none;}
-.sky-chip{flex:none;background:var(--sur);border:1px solid var(--bdr2);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--tx2);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
+.sky-filters{display:flex;flex-wrap:wrap;gap:6px;padding:1px 2px 11px;margin:0 -2px;}
+.sky-chip{flex:none;background:var(--sur);border:1px solid var(--bdr2);border-radius:999px;padding:4.5px 10px;font-family:var(--mono);font-size:10.5px;color:var(--tx2);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
 .sky-chip:active{transform:scale(0.96);}
 .sky-chip.on{background:rgba(143,184,232,0.2);border-color:#8fb8e8;color:#eef3ff;}
 .sky-hint{font-family:var(--mono);font-size:10.5px;color:var(--tx3);margin:0 2px 11px;}
@@ -856,6 +876,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <button class="sky-compass-btn" id="compass-btn" onclick="toggleCompass()" aria-pressed="false" aria-label="Point the sky map in the direction you are facing">🧭</button>
         <div class="sky-facing" id="sky-facing" style="display:none;"></div>
         <div class="sky-center-tick" id="sky-center-tick" style="display:none;" aria-hidden="true"></div>
+        <button class="sky-full-exit" id="sky-full-exit" style="display:none;" onclick="toggleCompass()" aria-label="Exit full-screen sky">✕ exit</button>
       </div>
       <div class="night-info">
         <div class="night-info-main">
@@ -2521,11 +2542,12 @@ function buildCard(o){
   const lead=o.dot?`<span class="acard-dot" style="background:${o.dot};color:${o.dot}"></span>`
                   :`<span class="acard-icon">${o.icon||'✨'}</span>`;
   const rar=`<span class="acard-rar">${RARITY_LBL[o.rar]||'Common'}</span>`;
+  const binoc=o.eye==='binoc'?`<span class="acard-eye" title="Best with binoculars">🔭</span>`:'';
   const soon=o.vis==='soon'?`<span class="acard-soon">${o.soonTxt||'Upcoming'}</span>`:'';
   const pos=o.pos?`<span class="acard-pos">${o.pos}</span>`:'';
-  return `<div class="acard tappable${o.cls?(' '+o.cls):''}" data-cat="${o.cat}" data-vis="${o.vis}" data-rarity="${o.rar}" onclick="openSkyStory('${o.slug}')" style="--ac:${ac};--phase:${phase};">`
+  return `<div class="acard tappable${o.cls?(' '+o.cls):''}" data-cat="${o.cat}" data-vis="${o.vis}" data-eye="${o.eye||'naked'}" data-rarity="${o.rar}" onclick="openSkyStory('${o.slug}')" style="--ac:${ac};--phase:${phase};">`
     +`<div class="acard-art" aria-hidden="true">${cardArt(o)}</div>`
-    +`<div class="acard-body"><div class="acard-head">${lead}<span class="acard-name">${o.name}</span>${rar}${soon}${pos}</div>`
+    +`<div class="acard-body"><div class="acard-head">${lead}<span class="acard-name">${o.name}</span>${rar}${binoc}${soon}${pos}</div>`
     +`<div class="acard-note">${o.note}</div></div></div>`;
 }
 function fmtSkyDate(d){ try{ return d.toLocaleDateString(undefined,{day:'numeric',month:'short'}); }catch(e){ return ''; } }
@@ -2636,7 +2658,7 @@ const DEEPSKY=[
      ['What you’re seeing','Around 10 million stars bound by gravity into a sphere ~150 light-years across, 17,000 light-years away. Possibly the stripped core of a galaxy our Milky Way swallowed.'],
      ['How to find it','A fuzzy “star” to the naked eye in Centaurus. Binoculars show a round glow; a telescope shatters it into countless pinpoints.'],
      ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
-  {slug:'jewelbox',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',
+  {slug:'jewelbox',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',eye:'binoc',
    blurb:'A glittering young star cluster beside the Southern Cross, its suns tinted blue, white and one ruby-red.',
    rows:[
      ['What you’re seeing','A few hundred hot young stars only ~14 million years old (NGC 4755). John Herschel named it for looking like “a casket of variously coloured precious stones”.'],
@@ -2648,7 +2670,7 @@ const DEEPSKY=[
      ['What you’re seeing','A dense swarm of hundreds of thousands of stars, 13,000 light-years away — close enough to look as big as the full Moon.'],
      ['How to find it','Near the Small Magellanic Cloud, deep in the south toward Tucana. Naked-eye from dark skies; a jewel in any telescope.'],
      ['Best from SEQ','Circumpolar; highest on spring–summer evenings.']]},
-  {slug:'tarantula',n:'Tarantula Nebula',icon:'🕷️',ra:84.679,dec:-69.100,vis:8,rar:'epic',
+  {slug:'tarantula',n:'Tarantula Nebula',icon:'🕷️',ra:84.679,dec:-69.100,vis:8,rar:'epic',eye:'binoc',
    blurb:'A monster nebula inside the Large Magellanic Cloud — so luminous that, set where Orion’s nebula is, it would cast shadows.',
    rows:[
      ['What you’re seeing','The largest, most active star-forming region known (NGC 2070), 160,000 light-years away in a neighbouring galaxy, yet bright enough to glimpse unaided.'],
@@ -2671,7 +2693,31 @@ const DEEPSKY=[
    rows:[
      ['What you’re seeing','A dense cloud of cold dust ~600 light-years away, blotting out the stars behind it — one of the most obvious dark nebulae in the sky.'],
      ['Origin & culture','The starting point of the great Emu in the Sky, a dark-cloud constellation central to many First Nations Australian traditions.'],
-     ['Best from SEQ','Circumpolar; needs a dark sky to show against the Milky Way.']]}
+     ['Best from SEQ','Circumpolar; needs a dark sky to show against the Milky Way.']]},
+  {slug:'centaurusa',n:'Centaurus A',icon:'🌀',ra:201.365,dec:-43.019,vis:10,rar:'epic',eye:'binoc',
+   blurb:'A bright peculiar galaxy split by a dark dust lane — one of the nearest active galaxies, with a supermassive black hole firing jets across space.',
+   rows:[
+     ['What you’re seeing','An elliptical galaxy ~12 million light-years away (NGC 5128), crossed by the wreckage of a spiral it is swallowing. Its black hole launches jets millions of light-years long.'],
+     ['How to find it','Just north of Omega Centauri. A faint round glow in binoculars; a small telescope starts to show the dark lane cutting across it.'],
+     ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
+  {slug:'lagoon',n:'Lagoon Nebula',icon:'🌫️',ra:270.924,dec:-24.386,vis:8,rar:'rare',eye:'binoc',
+   blurb:'A big, bright star-forming cloud in Sagittarius, sitting right on the glowing core of the Milky Way.',
+   rows:[
+     ['What you’re seeing','A vast cloud of glowing hydrogen (M8) ~4,000 light-years away, cradling a newborn star cluster, with a dark “lagoon” channel down the middle.'],
+     ['How to find it','Just above the spout of the Sagittarius “Teapot”. A misty patch to the naked eye from dark skies; lovely in binoculars.'],
+     ['Best from SEQ','Winter evenings (Jun–Aug), riding high overhead.']]},
+  {slug:'sculptor',n:'Sculptor Galaxy',icon:'🌀',ra:11.888,dec:-25.288,vis:10,rar:'epic',eye:'binoc',
+   blurb:'A bright, dust-streaked starburst galaxy seen nearly edge-on — one of the finest galaxies for binoculars in the southern sky.',
+   rows:[
+     ['What you’re seeing','A spiral galaxy ~11 million light-years away (NGC 253), bursting with new stars and thick with dust — an elongated silver sliver of light.'],
+     ['How to find it','In the dim constellation Sculptor, below Cetus. An easy oval glow in binoculars from a dark site.'],
+     ['Best from SEQ','Spring–summer evenings, high in the south.']]},
+  {slug:'m83',n:'Southern Pinwheel',icon:'🌀',ra:204.254,dec:-29.866,vis:10,rar:'epic',eye:'binoc',
+   blurb:'A bright, face-on spiral galaxy on the Hydra–Centaurus border — a swirl of star-forming arms.',
+   rows:[
+     ['What you’re seeing','A grand-design spiral ~15 million light-years away (M83), a prolific maker of supernovae, turned face-on so its pinwheel arms show.'],
+     ['How to find it','Between Hydra and Centaurus, near the star Menkent. A round, soft glow in binoculars; its arms emerge in a telescope.'],
+     ['Best from SEQ','Autumn–winter evenings.']]}
 ];
 // Solstices & equinoxes (approx fixed dates — ample for a two-week heads-up).
 const SEASON_MARKERS=[
@@ -2778,6 +2824,7 @@ function cycleStarMag(){
   try{ localStorage.setItem('gf_starmag',p.k); }catch(e){}
   updateStarMagBtn();
   buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
+  applySkyFilter();   // depth gates which binocular targets count as "Visible now"
 }
 // Paint the star field + constellation lines for the current region/time onto
 // one canvas behind the labelled objects. No DOM nodes: a single pass handles
@@ -3174,12 +3221,45 @@ function _compassMsg(txt){
   const f=document.getElementById('sky-facing');
   if(f){f.style.display='block';f.textContent=txt;}
 }
+// Full-screen immersive sky helpers. The CSS .sky-full class alone fills the
+// viewport everywhere; on top of that we ask for true fullscreen + a landscape
+// orientation lock where the platform allows it (best-effort, errors swallowed).
+function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251); }
+let _skyFullT=null;
+function _skyFullResize(){ clearTimeout(_skyFullT); _skyFullT=setTimeout(_skyFullRepaint,150); }
+function enterSkyFullscreen(){
+  const sc=document.getElementById('night-scene'); if(!sc) return;
+  sc.classList.add('sky-full'); document.body.classList.add('sky-full-on');
+  const x=document.getElementById('sky-full-exit'); if(x) x.style.display='flex';
+  const fs=sc.requestFullscreen||sc.webkitRequestFullscreen;
+  const lock=()=>{ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} };
+  let p=null; try{ if(fs) p=fs.call(sc); }catch(e){}
+  if(p&&p.then) p.then(lock).catch(lock); else lock();
+  window.addEventListener('resize',_skyFullResize);
+  requestAnimationFrame(()=>requestAnimationFrame(_skyFullRepaint));
+}
+function exitSkyFullscreen(){
+  const sc=document.getElementById('night-scene');
+  if(sc) sc.classList.remove('sky-full');
+  document.body.classList.remove('sky-full-on');
+  const x=document.getElementById('sky-full-exit'); if(x) x.style.display='none';
+  window.removeEventListener('resize',_skyFullResize);
+  try{ if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
+  try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen(); }catch(e){}
+  requestAnimationFrame(_skyFullRepaint);
+}
+// If the user leaves system fullscreen (back-swipe / Esc) while compass is on,
+// drop the immersive overlay too so the two never disagree.
+document.addEventListener('fullscreenchange',()=>{
+  if(!document.fullscreenElement && _compassOn && document.getElementById('night-scene').classList.contains('sky-full')) toggleCompass();
+});
+
 async function toggleCompass(){
   const btn=document.getElementById('compass-btn');
   const f=document.getElementById('sky-facing');
   const tick=document.getElementById('sky-center-tick');
   if(_compassOn){
-    // off → back to the full-sky overview (S centred)
+    // off → leave immersive view, back to the full-sky overview (S centred)
     if(_orientHandler)window.removeEventListener(_orientEvent,_orientHandler,true);
     _compassOn=false;_orientHandler=null;_headingSm=null;skyHeading=null;
     _skyFov=360;_skyCenter=180;
@@ -3187,29 +3267,33 @@ async function toggleCompass(){
     if(f)f.style.display='none';
     if(tick)tick.style.display='none';
     const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=false;  // re-enable overview control
+    exitSkyFullscreen();
     buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
     return;
   }
-  if(!('DeviceOrientationEvent' in window)){_compassMsg('no compass on this device');setTimeout(()=>{if(f)f.style.display='none';},2500);return;}
-  // iOS 13+: permission must be requested inside this tap
-  if(typeof DeviceOrientationEvent.requestPermission==='function'){
-    try{
-      const r=await DeviceOrientationEvent.requestPermission();
-      if(r!=='granted'){_compassMsg('compass permission denied');setTimeout(()=>{if(f)f.style.display='none';},2500);return;}
-    }catch(e){_compassMsg('compass unavailable');setTimeout(()=>{if(f)f.style.display='none';},2500);return;}
-  }
-  _orientEvent=('ondeviceorientationabsolute' in window)?'deviceorientationabsolute':'deviceorientation';
-  _orientHandler=_onOrient;
-  window.addEventListener(_orientEvent,_orientHandler,true);
+  // on → immersive landscape detail view. Works with or without a magnetometer;
+  // a live one pans the sky as you turn, otherwise it's a big static southern sky.
   _compassOn=true;
-  _skyFov=SKY_FOV_DETAIL;     // pointing at the sky → zoom to a ~120° detail slice
+  _skyFov=SKY_FOV_DETAIL;_skyCenter=180;skyHeading=null;   // ~120° detail slice
   loadDeepCatalog();          // detail view has room for the deep field — fetch it now
   const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=true;  // depth is automatic here
   if(btn){btn.classList.add('on');btn.setAttribute('aria-pressed','true');}
   if(tick)tick.style.display='block';
+  enterSkyFullscreen();       // must run inside this tap (fullscreen + lock need the gesture)
+  if(!('DeviceOrientationEvent' in window)){ _compassMsg('no compass sensor — static sky'); setTimeout(()=>{if(f&&skyHeading==null)f.style.display='none';},2600); return; }
+  // iOS 13+: permission must be requested inside this tap
+  if(typeof DeviceOrientationEvent.requestPermission==='function'){
+    try{
+      const r=await DeviceOrientationEvent.requestPermission();
+      if(r!=='granted'){_compassMsg('compass permission denied');setTimeout(()=>{if(f&&skyHeading==null)f.style.display='none';},2600);return;}
+    }catch(e){_compassMsg('compass unavailable');setTimeout(()=>{if(f&&skyHeading==null)f.style.display='none';},2600);return;}
+  }
+  _orientEvent=('ondeviceorientationabsolute' in window)?'deviceorientationabsolute':'deviceorientation';
+  _orientHandler=_onOrient;
+  window.addEventListener(_orientEvent,_orientHandler,true);
   _compassMsg('waiting for compass…');
-  // If no usable reading arrives, say so rather than silently doing nothing
-  setTimeout(()=>{if(_compassOn&&skyHeading==null)_compassMsg('no compass signal — is this a phone?');},3000);
+  // If no usable reading arrives, nudge the user to rotate rather than do nothing
+  setTimeout(()=>{if(_compassOn&&skyHeading==null)_compassMsg('rotate to landscape · point at the sky');},3000);
 }
 
 // Day wind compass: tap to align the ring (N/E/S/W) + wind arrow to the phone's
@@ -3341,7 +3425,7 @@ function astroCards(lat,lng){
   // Deep-sky showpieces
   for(const d of DEEPSKY){
     const aa=altAz(d.ra,d.dec,lat,lng,date), up=aa.alt>=(d.vis||8);
-    cards.push({slug:d.slug,cat:'deep',rar:d.rar,vis:up?'now':'later',name:d.n,icon:d.icon,glyph:d.icon,
+    cards.push({slug:d.slug,cat:'deep',rar:d.rar,vis:up?'now':'later',eye:d.eye||'naked',name:d.n,icon:d.icon,glyph:d.icon,
       pos:up?`${Math.round(aa.alt)}° · ${compass16(aa.az)}`:'below horizon',sortAlt:aa.alt,note:d.blurb});
   }
   // ── Upcoming dated events (next 2 weeks) ──
@@ -3380,8 +3464,8 @@ function astroCards(lat,lng){
 const SKY_FILTERS=[
   {k:'now',label:'Visible now',icon:'🌙'},
   {k:'all',label:'All',icon:'✨'},
-  {k:'stars',label:'Constellations',icon:'✦'},
-  {k:'planets',label:'Planets & Moon',icon:'🪐'},
+  {k:'stars',label:'Stars',icon:'✦'},
+  {k:'planets',label:'Planets',icon:'🪐'},
   {k:'deep',label:'Deep sky',icon:'🌌'},
   {k:'events',label:'Events',icon:'☄️'}
 ];
@@ -3394,10 +3478,13 @@ function filterChipsHTML(){
 }
 function applySkyFilter(){
   const list=document.getElementById('course-list'); if(!list) return;
+  // "Visible now" also respects the naked-eye / binoculars depth button: a card
+  // that needs binoculars only counts as visible-now when binocular depth is set.
+  const binocDepth = (STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc';
   let shown=0;
   list.querySelectorAll('.acard').forEach(c=>{
-    const cat=c.getAttribute('data-cat'), v=c.getAttribute('data-vis');
-    const show = _skyFilter==='now' ? v==='now'
+    const cat=c.getAttribute('data-cat'), v=c.getAttribute('data-vis'), eye=c.getAttribute('data-eye');
+    const show = _skyFilter==='now' ? (v==='now' && (eye!=='binoc' || binocDepth))
                : _skyFilter==='all' ? true
                : cat===_skyFilter;
     c.style.display=show?'':'none'; if(show)shown++;
@@ -3406,7 +3493,7 @@ function applySkyFilter(){
   let empty=document.getElementById('sky-empty');
   if(!shown){
     if(!empty){ empty=document.createElement('div'); empty.id='sky-empty'; empty.className='no-results'; list.appendChild(empty); }
-    empty.textContent = _skyFilter==='now' ? 'Nothing is above the horizon right now — switch to “All” to browse the whole sky.'
+    empty.textContent = _skyFilter==='now' ? 'Nothing in naked-eye reach right now — try the 🔭 binoculars depth, or “All” to browse the whole sky.'
                       : _skyFilter==='events' ? 'No events visible or upcoming in the next two weeks.'
                       : 'Nothing in this category right now.';
     empty.style.display='';

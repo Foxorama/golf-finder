@@ -73,12 +73,16 @@ In `index.html`, in dependency order:
    stars + line index pairs) and a `CONST_INFO` entry with a `rar`. Deep sky → a
    `DEEPSKY` entry (`{slug,n,icon,ra,dec,vis,rar,blurb,rows}`); lore is auto-built.
    Dated event → `SKY_EVENTS` (or a computed helper) with a `rar`.
-2. In `astroCards()`, push a descriptor: `{slug,cat,rar,vis,name,icon|dot,glyph,
+2. In `astroCards()`, push a descriptor: `{slug,cat,rar,vis,eye?,name,icon|dot,glyph,
    fig?,art?,ring?,pos,note,soonTxt?,sortAlt}`.
    - `cat` ∈ `stars | planets | deep | events` (drives the filter chips).
    - `vis` ∈ `now` (up / happening) | `soon` (a dated event within 14 days) |
      `later` (real but below the horizon now). The default **Visible now** filter
      keeps only `now`; `soon` cards get the upcoming pill via `soonTxt`.
+   - `eye` ∈ `naked` (default) | `binoc`. A `binoc` card only counts as Visible
+     now when the depth button is set to 🔭 binoculars (`applySkyFilter` gates it
+     on `_starMagIdx`), and it shows a 🔭 tag. Use it for telescopic/binocular
+     targets (faint galaxies, small clusters) so switching depth "unlocks" them.
 3. Give it a rarity from §1 and add the slug to `skyRarity()`'s map if it is not a
    figure / DEEPSKY / SKY_EVENTS entry, so the modal crest is tinted correctly.
 4. That's it — `buildCard`/`cardArt` dress it automatically. Verify with the preview

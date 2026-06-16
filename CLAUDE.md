@@ -36,7 +36,12 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   card also gets a phasing **Star Outline ↔ Astral Heroic** SVG emblem (`cardArt`).
   The whole visual style — and how to add a new card so it matches — is documented
   in the **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures'
-  star coords real (J2000): wrong coords draw the wrong outline.
+  star coords real (J2000): wrong coords draw the wrong outline. **Visible now**
+  also respects the naked-eye/binoculars depth button — `eye:'binoc'` cards only
+  count as visible-now at binocular depth. Tapping the **compass** (🧭) opens an
+  immersive full-viewport landscape sky (`enterSkyFullscreen`; best-effort
+  Fullscreen API + `screen.orientation.lock('landscape')`, with a CSS `.sky-full`
+  overlay that works everywhere else).
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
