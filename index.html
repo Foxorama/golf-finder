@@ -109,17 +109,24 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .app-title span{color:var(--gg);}
 .app-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
-.hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;width:42px;height:38px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s;}
-.hdr-actions{display:flex;gap:8px;align-items:flex-start;}
+.hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:18px;width:36px;height:36px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s,transform 0.1s;}
+.hdr-btn:hover{background:var(--sur2);border-color:var(--bdr);}
+.hdr-actions{display:flex;gap:8px;align-items:flex-end;}
 .hdr-icons{display:flex;gap:8px;}
+/* #btn-forecast is the primary day/night toggle — keep it prominent (on top when stacked) */
+#btn-forecast{order:1;}
+.hdr-icons{order:2;}
 @media(max-width:480px){
   .hdr-actions{flex-direction:column;align-items:flex-end;}
-  .hdr-actions .hdr-icons{order:1;}
-  .hdr-actions #btn-forecast{order:2;height:32px;font-size:11px;}
 }
-.hdr-btn:active{transform:scale(0.95);background:var(--sur2);}
-.hdr-btn.fc-day{background:rgba(90,171,53,0.18);border-color:rgba(90,171,53,0.5);color:#bfe8a8;}
-.hdr-btn.fc-night{background:rgba(124,148,210,0.18);border-color:rgba(143,184,232,0.55);color:#cdd9f5;}
+.hdr-btn:active{transform:scale(0.94);}
+/* day/night toggle pill — bold, mode-coloured fills (bolder still when pressed) */
+.hdr-btn.fc-day{background:rgba(90,171,53,0.34);border-color:rgba(90,171,53,0.85);color:#e3f7d2;}
+.hdr-btn.fc-day:hover{background:rgba(90,171,53,0.46);border-color:rgba(110,200,70,1);}
+.hdr-btn.fc-day:active{background:rgba(90,171,53,0.58);}
+.hdr-btn.fc-night{background:rgba(124,148,210,0.4);border-color:rgba(159,190,240,0.9);color:#eef3ff;}
+.hdr-btn.fc-night:hover{background:rgba(124,148,210,0.52);border-color:rgba(180,205,250,1);}
+.hdr-btn.fc-night:active{background:rgba(124,148,210,0.64);}
 .hero-zone{min-height:0;}  /* hero card height now matches in both modes; filters moved into the day hero */
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
@@ -345,11 +352,21 @@ body.night .stat-leaveby #s-leaveby{color:#aec6f0;}
 body.night .drive-chip{border-color:rgba(141,169,214,0.3);}
 body.night .drive-chip .drive-num{color:#aec6f0;}
 
-.filter-select{background:var(--sur);color:var(--tx2);border:1px solid var(--bdr2);border-radius:8px;font-family:var(--mono);font-size:10.5px;font-weight:500;padding:3px 8px;max-width:160px;cursor:pointer;-webkit-appearance:none;appearance:none;}
-.filter-select:focus{outline:none;border-color:var(--gb);}
+/* Rounded mode-coloured dropdown pill — green for the day course filter,
+   auto-flips blue for the night region picker (see body.night below). */
+.pill-select{background-color:rgba(90,171,53,0.2);color:#d6f3bf;border:1px solid rgba(90,171,53,0.6);border-radius:13px;font-family:var(--mono);font-size:11px;font-weight:500;padding:3px 22px 3px 13px;max-width:172px;cursor:pointer;-webkit-appearance:none;appearance:none;-webkit-font-smoothing:antialiased;text-align:center;text-align-last:center;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23cdeeb5' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");background-repeat:no-repeat;background-position:right 9px center;transition:background-color 0.15s,border-color 0.15s;}
+.pill-select:hover{background-color:rgba(90,171,53,0.32);border-color:rgba(90,171,53,0.85);}
+.pill-select:focus{outline:none;border-color:var(--gb);}
+.pill-select option{background:var(--sur);color:var(--tx);font-weight:500;}
+.pill-select optgroup{background:var(--sur);color:var(--tx2);font-weight:600;}
 .loc-row{display:flex;align-items:center;justify-content:space-between;gap:10px;height:24px;margin:0 0 8px;}
 .loc-row #loc-status{flex:1;min-width:0;}
-body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doesn't shift when flicking modes */
+/* Day shows the course filter, night shows the region picker — same slot, no hero shift */
+#region-select{display:none;}
+body.night #filter-select{display:none;}
+body.night #region-select{display:inline-block;}
+body.night .pill-select{background-color:rgba(124,148,210,0.28);color:#e9efff;border-color:rgba(143,184,232,0.65);background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6'><path d='M1 1l4 4 4-4' fill='none' stroke='%23dbe6ff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/></svg>");}
+body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-color:rgba(143,184,232,0.9);}
 .filters::-webkit-scrollbar{display:none;}
 .fpill{background:var(--sur);border:1px solid var(--bdr);border-radius:99px;padding:6px 13px;font-family:var(--mono);font-size:11px;color:var(--tx3);cursor:pointer;white-space:nowrap;flex-shrink:0;transition:all 0.15s;}
 .fpill.on{background:var(--bg3);border-color:var(--gb);color:var(--gg);}
@@ -388,6 +405,8 @@ body.night .filter-select{visibility:hidden;}  /* keep its space so the hero doe
 .fav-btn.on{opacity:1;}
 .fav-btn:active{transform:scale(1.3);}
 .no-results{text-align:center;padding:32px 20px;font-family:var(--mono);font-size:13px;color:var(--tx3);background:var(--sur);border:1px solid var(--bdr);border-radius:14px;}
+.area-notice{background:var(--bg3);border:1px solid var(--bdr2);border-left:3px solid var(--al);border-radius:12px;padding:12px 14px;margin-bottom:14px;font-family:var(--sans);font-size:12.5px;line-height:1.5;color:var(--tx2);}
+.area-notice b{color:var(--tx);font-weight:600;}
 .pulse{animation:pulse 1.2s ease-in-out infinite;}
 #test-banner{background:rgba(245,166,35,0.15);border:1px solid rgba(245,166,35,0.4);border-radius:10px;padding:8px 12px;margin-bottom:12px;font-family:var(--mono);font-size:11px;color:var(--al);text-align:center;cursor:pointer;}
 #test-banner #test-banner-text{font-weight:700;letter-spacing:0.06em;}
@@ -663,7 +682,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <div class="app-meta" id="updated-ts">tap refresh to load</div>
     </div>
     <div class="hdr-actions">
-      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;width:auto;padding:0 10px;white-space:nowrap;">⛳ Fore'cast</button>
+      <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
       <div class="hdr-icons">
         <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
         <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
@@ -707,7 +726,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <span style="opacity:0.7;">· tap to cycle · </span><span onclick="event.stopPropagation();clearTime();hideTestBanner();" style="text-decoration:underline;">exit</span>
   </div>
 
-  <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="filter-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select></div>
+  <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="pill-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select><select class="pill-select" id="region-select" onchange="setNightRegion(this.value)" aria-label="Sky-watching region"><option value="">📍 My location</option><optgroup label="SE Queensland"><option value="brisbane">Brisbane / SEQ</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="ipswich">Ipswich</option><option value="toowoomba">Toowoomba</option></optgroup><optgroup label="Regional QLD"><option value="cairns">Cairns</option><option value="townsville">Townsville</option><option value="mackay">Mackay</option><option value="rockhampton">Rockhampton</option></optgroup><optgroup label="NSW / ACT"><option value="sydney">Sydney</option><option value="newcastle">Newcastle</option><option value="centralcoast">Central Coast</option><option value="wollongong">Wollongong</option><option value="canberra">Canberra</option></optgroup><optgroup label="Victoria"><option value="melbourne">Melbourne</option><option value="geelong">Geelong</option><option value="ballarat">Ballarat</option></optgroup><optgroup label="SA / WA"><option value="adelaide">Adelaide</option><option value="perth">Perth</option></optgroup><optgroup label="Tasmania"><option value="hobart">Hobart</option><option value="launceston">Launceston</option></optgroup><optgroup label="Northern Territory"><option value="darwin">Darwin</option><option value="alicesprings">Alice Springs</option></optgroup></select></div>
   <div class="hero-zone">
   <!-- HERO: Daylight bar -->
   <div class="daybar">
@@ -1786,6 +1805,80 @@ function setFilter(f,btn){
   render();
 }
 
+// ── Night-mode region filter ──────────────────────────────────────────────
+// Virtually relocate the night view to any curated Australian region: the
+// title region code, weather widget, moon/planet positions and best-viewing
+// window recompute as if your GPS sat there. '' restores your real spot.
+// Sky positions come from the absolute instant + lat/lng so they're timezone-
+// correct; all clock times stay in YOUR local time ("3am over Perth, my time").
+// We deliberately do NOT refetch sun times on relocate — the day/night gate
+// must stay on your real clock. Weather is fetched on demand (cached) so the
+// list can span the whole country without slowing the load (see setNightRegion).
+const NIGHT_REGIONS={
+  brisbane:    {label:'Brisbane / SEQ', lat:-27.4698, lng:153.0251},
+  goldcoast:   {label:'Gold Coast',     lat:-28.0167, lng:153.4000},
+  sunshine:    {label:'Sunshine Coast', lat:-26.6500, lng:153.0700},
+  ipswich:     {label:'Ipswich',        lat:-27.6145, lng:152.7595},
+  toowoomba:   {label:'Toowoomba',      lat:-27.5598, lng:151.9507},
+  cairns:      {label:'Cairns',         lat:-16.9200, lng:145.7700},
+  townsville:  {label:'Townsville',     lat:-19.2600, lng:146.8200},
+  mackay:      {label:'Mackay',         lat:-21.1400, lng:149.1900},
+  rockhampton: {label:'Rockhampton',    lat:-23.3800, lng:150.5100},
+  sydney:      {label:'Sydney',         lat:-33.8700, lng:151.2100},
+  newcastle:   {label:'Newcastle',      lat:-32.9300, lng:151.7800},
+  centralcoast:{label:'Central Coast',  lat:-33.4300, lng:151.3400},
+  wollongong:  {label:'Wollongong',     lat:-34.4200, lng:150.8900},
+  canberra:    {label:'Canberra',       lat:-35.2800, lng:149.1300},
+  melbourne:   {label:'Melbourne',      lat:-37.8100, lng:144.9600},
+  geelong:     {label:'Geelong',        lat:-38.1500, lng:144.3600},
+  ballarat:    {label:'Ballarat',       lat:-37.5600, lng:143.8500},
+  adelaide:    {label:'Adelaide',       lat:-34.9300, lng:138.6000},
+  perth:       {label:'Perth',          lat:-31.9500, lng:115.8600},
+  hobart:      {label:'Hobart',         lat:-42.8800, lng:147.3300},
+  launceston:  {label:'Launceston',     lat:-41.4300, lng:147.1400},
+  darwin:      {label:'Darwin',         lat:-12.4600, lng:130.8400},
+  alicesprings:{label:'Alice Springs',  lat:-23.7000, lng:133.8800},
+};
+let _realGps=null;   // the genuine detected position, saved by init() for "My location"
+async function setNightRegion(key){
+  const reg = key && NIGHT_REGIONS[key];
+  const icon=document.getElementById('refresh-icon'); if(icon) icon.className='spin';
+  let lat,lng,zone,label,ok;
+  if(reg){
+    lat=reg.lat; lng=reg.lng; zone=key; ok=true;
+    window._locOverride=key; label='sky over '+reg.label;
+  } else {
+    window._locOverride=null;
+    if(_realGps){ lat=_realGps.lat; lng=_realGps.lng; zone=_realGps.zone; ok=_realGps.ok; label=_realGps.label; }
+    else { lat=-27.4698; lng=153.0251; zone='brisbane_metro'; ok=false; label='location unavailable — using Toowong'; }
+  }
+  window._gpsLat=lat; window._gpsLng=lng; window._gpsZone=zone; window._gpsFar=false;
+  const ls=document.getElementById('loc-status');
+  if(ls){ ls.textContent=label; ls.className='app-meta '+(ok?'loc-ok':'loc-est'); }
+  // Lazy weather: the night view reads weatherCache[skyWxZone()]. For a region
+  // that's weatherCache[key]; fetchWeatherZone returns instantly if cached and
+  // only hits the network the first time a region is opened. Back to "My
+  // location" refreshes the GPS slot. Spread over taps, never a 429 burst.
+  try{
+    delete weatherCache['gps'];
+    await fetchWeatherZone(reg?zone:'gps', {lat,lng});
+  }catch(e){/* offline — fall back to whatever's cached */}
+  if(icon) icon.className='';
+  window._uiNight=undefined;    // force the title/region + theme to recompute for the new spot
+  const sel=document.getElementById('region-select'); if(sel) sel.value=window._locOverride||'';
+  render();
+}
+// Day mode always reflects your real GPS — a region picked at night is a
+// night-only "look elsewhere", so snap the location back when day renders.
+function clearRegionOverride(){
+  if(!window._locOverride) return;
+  window._locOverride=null;
+  if(_realGps){ window._gpsLat=_realGps.lat; window._gpsLng=_realGps.lng; window._gpsZone=_realGps.zone; window._gpsFar=_realGps.gpsFar; }
+  const ls=document.getElementById('loc-status');
+  if(ls&&_realGps){ ls.textContent=_realGps.label; ls.className='app-meta '+(_realGps.ok?'loc-ok':'loc-est'); }
+  const sel=document.getElementById('region-select'); if(sel) sel.value='';
+}
+
 function getFiltered(daylight){
   return COURSES.filter(c=>{
     switch(activeFilter){
@@ -2327,6 +2420,7 @@ function render(){
   // Day/night mode switch — night when past last light OR before first light
   const isNight = now>=lastLightMins || now<firstLightMins;
   const renderNight = isNight;          // forecast anchor is baked into nowMins()
+  if(!renderNight) clearRegionOverride();   // day always reflects your real GPS
   const forecastDaylight = daylight;
   updateForecastBtn();
   document.getElementById('daybar-day').style.display   = renderNight?'none':'block';
@@ -2605,6 +2699,14 @@ function render(){
     document.getElementById('course-list').innerHTML=html;
     return;
   }
+  // Out-of-coverage notice: when the nearest course is beyond any realistic
+  // day-trip, the distance-based "unplayable" wall isn't useful on its own.
+  // Triggered by distance to the nearest course (not a hardcoded SEQ check), so
+  // it disappears by itself once courses exist near the user as coverage grows.
+  const nearestCourseKm=Math.min(...COURSES.filter(c=>c.lat!=null).map(c=>haversineKm(glat,glng,c.lat,c.lng)));
+  if(nearestCourseKm>150 && !playable.length){
+    html+=`<div class="area-notice">🏌️ <b>No courses near you yet</b> &mdash; you're ~${Math.round(nearestCourseKm)} km from the closest one. Golf&nbsp;Finder currently covers <b>SE&nbsp;Queensland</b> and is expanding across Australia, so the courses below read as unplayable from here. The <b>Night sky view</b> (top-right) already works anywhere.</div>`;
+  }
   if(playable.length){
     html+=`<div class="section-head"><span class="sdot sdot-g"></span>${forecastMode?'Upcoming available courses':'Enough daylight today'} &mdash; ${playable.length} course${playable.length!==1?'s':''} &middot; check tee sheet</div>`;
     playable.forEach(c=>{html+=courseCard(c,forecastDaylight,false);});
@@ -2863,6 +2965,13 @@ async function init(){
   sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
   lastLightMins = result.lastLight ?? (sunsetMins + TWILIGHT_EST);
   firstLightMins= result.firstLight ?? (sunriseMins - TWILIGHT_EST);
+  // Remember the genuine position (incl. _gpsFar, now set by fetchAllWeather) so
+  // the night region picker can snap back to "My location"; a manual refresh
+  // re-detects GPS and so also clears any active region override.
+  _realGps={lat:window._gpsLat,lng:window._gpsLng,zone:window._gpsZone,gpsFar:!!window._gpsFar,ok:!!loc,
+            label:loc?`GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`:'location unavailable — using Toowong'};
+  window._locOverride=null;
+  { const _rs=document.getElementById('region-select'); if(_rs) _rs.value=''; }
   document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
   icon.className='';
