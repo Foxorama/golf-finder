@@ -284,6 +284,20 @@ body.sky-full-on{overflow:hidden;}
 .night-scene.sky-full .sky-center-tick{height:24px;}
 .sky-full-exit{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:2100;display:none;align-items:center;gap:5px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:8px 13px;cursor:pointer;}
 .sky-full-exit:active{transform:scale(0.95);}
+/* In-overlay sky controls (depth toggle + filter dropdown), fullscreen only. Sits
+   bottom-centre, clear of the busy top row (exit/facing/compass) and the compass strip. */
+.sky-full-controls{display:none;}
+.night-scene.sky-full .sky-full-controls{display:flex;gap:8px;align-items:center;position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);transform:translateX(-50%);z-index:2100;}
+.sky-fc-depth,.sky-fc-filter{height:38px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:0 12px;cursor:pointer;}
+.sky-fc-depth:active{transform:scale(0.96);}
+.sky-fc-filter{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aec6f0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
+.sky-fc-filter option{background:#101630;color:#dbe6ff;}
+/* Focus-band emphasis: the figure/object you're pointing at brightens and reveals its
+   anchor star name; .so-star is hidden otherwise. */
+.so-star{display:none;}
+.night-scene.sky-full .sky-obj.so-focus .so-label{color:#ffffff;}
+.night-scene.sky-full .sky-obj.so-focus .so-const{color:#ffffff;opacity:1;}
+.night-scene.sky-full .sky-obj.so-focus .so-star{display:block;font-family:var(--mono);font-size:11px;color:#9fd4ff;opacity:0.9;text-shadow:0 0 2px #000,0 0 3px #000;margin-top:1px;letter-spacing:0.01em;}
 /* Star-depth cycle button (naked eye → dark sky → binoculars) — lives in the
    info row under the scene, to the right of the best-viewing text */
 .sky-mag-btn{flex:none;min-width:118px;justify-content:center;background:rgba(16,22,43,0.75);border:1px solid rgba(124,148,210,0.35);border-radius:10px;height:32px;padding:0 11px;font-family:var(--mono);font-size:11px;color:#cdd9f5;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
@@ -877,6 +891,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="sky-facing" id="sky-facing" style="display:none;"></div>
         <div class="sky-center-tick" id="sky-center-tick" style="display:none;" aria-hidden="true"></div>
         <button class="sky-full-exit" id="sky-full-exit" style="display:none;" onclick="toggleCompass()" aria-label="Exit full-screen sky">✕ exit</button>
+        <div class="sky-full-controls" id="sky-full-controls" aria-label="Sky depth and filter"></div>
       </div>
       <div class="night-info">
         <div class="night-info-main">
@@ -2166,8 +2181,8 @@ const STAR_FIGURES=[
   {n:'Canis Major',s:[
     ['Sirius',101.287,-16.716,-1.5],['Mirzam',95.674,-17.956,2.0],
     ['Wezen',107.098,-26.393,1.8],['Adhara',104.656,-28.972,1.5],
-    ['Aludra',111.024,-29.303,2.4]],
-   l:[[0,1],[0,3],[3,2],[2,4]]},
+    ['Aludra',111.024,-29.303,2.4],['Furud',95.078,-30.063,3.0]],
+   l:[[0,1],[1,5],[0,3],[3,2],[2,4],[3,4]]},
   {n:'Scorpius',s:[
     ['Dschubba',240.083,-22.622,2.3],['Acrab',241.359,-19.805,2.6],
     ['Pi Sco',239.713,-26.114,2.9],['Antares',247.352,-26.432,1.1],
@@ -2181,8 +2196,8 @@ const STAR_FIGURES=[
     ['Kaus Australis',276.043,-34.385,1.8],['Kaus Media',275.249,-29.828,2.7],
     ['Kaus Borealis',276.993,-25.421,2.8],['Nunki',283.816,-26.297,2.0],
     ['Ascella',285.653,-29.880,2.6],['Phi Sgr',281.414,-26.990,3.2],
-    ['Alnasl',271.452,-30.424,3.0]],
-   l:[[6,1],[1,0],[0,4],[4,3],[3,5],[5,1],[5,2],[2,1]]},
+    ['Alnasl',271.452,-30.424,3.0],['Tau Sgr',286.735,-27.670,3.3]],
+   l:[[1,0],[0,4],[4,5],[5,1],[1,2],[2,5],[1,6],[6,0],[5,3],[3,7],[7,4]]},
   {n:'Leo',s:[
     ['Regulus',152.093,11.967,1.4],['Eta Leo',151.833,16.763,3.5],
     ['Algieba',154.993,19.842,2.0],['Adhafera',154.173,23.417,3.4],
@@ -2198,10 +2213,11 @@ const STAR_FIGURES=[
    l:[[1,2],[2,0],[1,3],[0,4],[3,5]]},
   {n:'Gemini',s:[
     ['Castor',113.650,31.888,1.6],['Pollux',116.329,28.026,1.1],
-    ['Wasat',110.031,21.982,3.5],['Mekbuda',106.027,20.570,4.0],
+    ['Wasat',110.031,21.982,3.5],['Mekbuda',106.027,20.570,3.9],
     ['Alhena',99.428,16.399,1.9],['Mebsuta',100.983,25.131,3.0],
-    ['Tejat',95.740,22.514,2.9]],
-   l:[[0,1],[0,5],[5,6],[1,2],[2,3],[3,4]]},
+    ['Tejat',95.740,22.514,2.9],['Propus',93.719,22.507,3.3],
+    ['Alzirr',101.322,12.896,3.4],['Lambda Gem',109.523,16.540,3.6]],
+   l:[[0,1],[0,5],[5,6],[6,7],[1,2],[2,3],[3,4],[2,9],[9,8],[5,2]]},
   {n:'Carina',s:[
     ['Canopus',95.988,-52.696,-0.7],['Avior',125.628,-59.509,1.9],
     ['Aspidiske',139.273,-59.275,2.2],['Miaplacidus',138.300,-69.717,1.7],
@@ -2222,7 +2238,7 @@ const STAR_FIGURES=[
     ['Mu Vel',161.693,-49.420,2.7]],
    l:[[0,2],[2,4],[4,3],[3,1],[1,0]]},
   {n:'Corvus',s:[
-    ['Alchiba',182.089,-22.620,3.0],['Gienah Crv',183.952,-17.542,2.6],
+    ['Minkar',182.531,-22.620,3.0],['Gienah Crv',183.952,-17.542,2.6],
     ['Algorab',187.466,-16.515,2.9],['Kraz',188.597,-23.397,2.7]],
    l:[[1,2],[2,3],[3,0],[0,1]]},
   {n:'Cygnus',s:[
@@ -2238,8 +2254,9 @@ const STAR_FIGURES=[
   {n:'Aquila',s:[
     ['Altair',297.696,8.868,0.8],['Tarazed',296.565,10.613,2.7],
     ['Alshain',298.828,6.407,3.7],['Delta Aql',291.375,3.115,3.4],
-    ['Zeta Aql',286.352,13.863,3.0]],
-   l:[[4,0],[0,3],[1,0],[0,2]]},
+    ['Zeta Aql',286.352,13.863,3.0],['Theta Aql',302.826,-0.821,3.2],
+    ['Lambda Aql',286.562,-4.882,3.4]],
+   l:[[4,0],[1,0],[0,2],[0,3],[3,6],[3,5]]},
   {n:'Virgo',s:[
     ['Spica',201.298,-11.161,1.0],['Porrima',190.415,-1.449,2.7],
     ['Vindemiatrix',195.544,10.959,2.8],['Delta Vir',193.901,3.398,3.4],
@@ -2271,7 +2288,7 @@ const STAR_LOOSE=[
   ['Zubenelgenubi',222.720,-16.042,2.7],['Alpha Arae',262.960,-49.876,2.8],['Beta Arae',261.325,-55.530,2.8],
   ['Rasalhague',263.734,12.560,2.1],['Sabik',257.594,-15.725,2.4],['Tarazed',296.565,10.613,2.7],
   ['Sadr',305.557,40.257,2.2],['Albireo',292.680,27.960,3.1],['Enif',326.046,9.875,2.4],
-  ['Kraz',188.597,-23.397,2.6],['Algorab',187.466,-16.515,2.9],['Epsilon Crv',182.089,-22.620,3.0],
+  ['Kraz',188.597,-23.397,2.6],['Algorab',187.466,-16.515,2.9],['Epsilon Crv',182.531,-22.620,3.0],
   ['Pi Pup',109.286,-37.097,2.7],['Ankaa',6.571,-42.306,2.4],['Acamar',44.565,-40.305,2.9],
   ['Zaurak',59.507,-13.509,2.9],['Cursa',76.962,-5.086,2.8],['Menkar',45.570,4.090,2.5],
   ['Tiaki',340.667,-46.885,2.1],['Aldhanab',328.483,-37.365,3.0],['Alpha Tuc',334.625,-60.259,2.9],
@@ -2284,12 +2301,14 @@ const STAR_LOOSE=[
 // shape the baked catalog uses, so buildStarField has a single code path.
 const SKY_SEED=(()=>{
   const stars=[],lines=[];
-  for(const f of STAR_FIGURES){
+  // 5th element on figure stars / 3rd on each line = the STAR_FIGURES index, so the
+  // canvas can emphasise one figure at a time (focus band). Loose stars carry -1.
+  STAR_FIGURES.forEach((f,fi)=>{
     const base=stars.length;
-    for(const s of f.s) stars.push([s[1],s[2],s[3],f.cx?1:0]);
-    for(const e of (f.l||[])) lines.push([base+e[0],base+e[1]]);
-  }
-  for(const s of STAR_LOOSE) stars.push([s[1],s[2],s[3],0]);
+    for(const s of f.s) stars.push([s[1],s[2],s[3],f.cx?1:0,fi]);
+    for(const e of (f.l||[])) lines.push([base+e[0],base+e[1],fi]);
+  });
+  for(const s of STAR_LOOSE) stars.push([s[1],s[2],s[3],0,-1]);
   return {stars,lines};
 })();
 // Constellation lore — keyed by the figure name in STAR_FIGURES. Powers the
@@ -2818,11 +2837,12 @@ function updateStarMagBtn(){
   const b=document.getElementById('sky-mag-btn'); if(b) b.textContent=STAR_MAG_PRESETS[_starMagIdx].label;
 }
 function cycleStarMag(){
-  if(_compassOn) return;                 // overview-only control, disabled in detail view
   _starMagIdx=(_starMagIdx+1)%STAR_MAG_PRESETS.length;
   const p=STAR_MAG_PRESETS[_starMagIdx];
   try{ localStorage.setItem('gf_starmag',p.k); }catch(e){}
+  if(p.k==='binoc') loadDeepCatalog();   // deep field only fetched when actually needed
   updateStarMagBtn();
+  syncSkyFullControls();                  // mirror onto the in-fullscreen depth button
   buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
   applySkyFilter();   // depth gates which binocular targets count as "Visible now"
 }
@@ -2833,6 +2853,22 @@ function cycleStarMag(){
 // hand off to paintSky(). Splitting projection (heavy: an altAz per star) from
 // painting (cheap) lets the twinkle loop repaint at ~9fps without re-projecting.
 let _skyDots=[],_skyLines=[],_skyCanvas=null,_skyW=0,_skyH=0;
+// Focus-band state for the fullscreen compass: which figures/objects sit within the
+// band of where you're pointing. Hysteresis (enter ≤18°, leave >23°) on top of the
+// existing heading low-pass keeps the band from flickering on hand-shake.
+const SKY_BAND_IN=18,SKY_BAND_OUT=23;
+let _figBandState=new Set(),_objBandState=new Set();
+function bandMember(key,dist,state){
+  const was=state.has(key), inB=dist<=(was?SKY_BAND_OUT:SKY_BAND_IN);
+  if(inB)state.add(key); else state.delete(key);
+  return inB;
+}
+// Category gate for the sky map. The 360° overview stays unfiltered (unchanged); only
+// the fullscreen detail view honours the card filter, so it can show one kind at a time.
+function skyShows(cat){
+  if(!_compassOn) return true;
+  return _skyFilter==='all'||_skyFilter==='now' ? true : _skyFilter===cat;
+}
 function buildStarField(lat,lng){
   const cv=document.getElementById('sky-canvas'); if(!cv) return;
   const W=cv.clientWidth,H=cv.clientHeight; if(!W||!H) return;   // hidden in day mode
@@ -2846,14 +2882,27 @@ function buildStarField(lat,lng){
   const py=(alt)=>((4+(1-Math.min(alt,90)/90)*88)/100)*H;
   const proj=(s)=>{ const aa=altAz(s[0],s[1],lat,lng,date); return aa.alt<-1?null:{x:px(aa.az),y:py(aa.alt)}; };
   // Constellation lines — always the curated seed figures, so they stay correct
-  // whether or not the dense catalog has loaded.
+  // whether or not the dense catalog has loaded. Hidden when the (detail-view) filter
+  // isn't showing stars; in the live compass the focus-band figures glow and the rest
+  // dim (emphasis = each line's 5th value, read by paintSky).
   const seedP=SKY_SEED.stars.map(proj), lines=[];
-  for(const e of SKY_SEED.lines){
+  const detail=!full, live=skyHeading!=null, showStars=skyShows('stars');
+  let figBand=null;
+  if(detail && live && showStars){
+    for(let fi=0;fi<STAR_FIGURES.length;fi++){
+      const f=STAR_FIGURES[fi], a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
+      const up=aa.alt>=((f.info&&f.info.vis)||0);
+      bandMember(fi, up?Math.abs(((aa.az-c+540)%360)-180):999, _figBandState);
+    }
+    figBand=_figBandState;
+  }
+  if(showStars) for(const e of SKY_SEED.lines){
     const a=seedP[e[0]],b=seedP[e[1]]; if(!a||!b) continue;
     if(Math.abs(a.x-b.x)>W*0.5) continue;                        // straddles the seam — skip
-    lines.push([a.x,a.y,b.x,b.y]);
-    if(full){ if(a.x<W*0.08||b.x<W*0.08) lines.push([a.x+W,a.y,b.x+W,b.y]);
-              else if(a.x>W*0.92||b.x>W*0.92) lines.push([a.x-W,a.y,b.x-W,b.y]); }
+    const em=figBand?(figBand.has(e[2])?1.5:0.4):1;
+    lines.push([a.x,a.y,b.x,b.y,em]);
+    if(full){ if(a.x<W*0.08||b.x<W*0.08) lines.push([a.x+W,a.y,b.x+W,b.y,em]);
+              else if(a.x>W*0.92||b.x>W*0.92) lines.push([a.x-W,a.y,b.x-W,b.y,em]); }
   }
   // Star field. A deterministic ra/dec hash sets each star's size, base
   // brightness and twinkle phase/rate/depth, so the field looks uneven and lived-in.
@@ -2861,9 +2910,11 @@ function buildStarField(lat,lng){
   // the tiny strip stays legible, drawn from the naked-eye catalog. Compass-on
   // detail: a ~120° slice across the full width has room for the deepest field we
   // have, so show it all (toggle disabled there — see toggleCompass).
-  const preset=STAR_MAG_PRESETS[_starMagIdx];
-  const magCap=full?preset.mag:7.0;
-  const field=(!full&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
+  const preset=STAR_MAG_PRESETS[_starMagIdx], binoc=preset.k==='binoc';
+  // Depth now gates the detail view too: naked eye keeps the field light, binoculars
+  // pulls the deep catalog and the faintest stars.
+  const magCap=full?preset.mag:(binoc?7.0:5.5);
+  const field=(!full&&binoc&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
             :(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars
             :SKY_SEED.stars;
   const dots=[];
@@ -2903,18 +2954,20 @@ function paintSky(){
     // Two passes so the figures read clearly without drowning the stars: a soft
     // blue glow underlay, then a crisp brighter core on top. Both step up in the
     // compass detail view, where there's room and the constellations are the point.
+    // Each line's 5th value (em) scales its emphasis — focus band glows, others dim.
     const detail=_skyFov<360;
     ctx.lineCap='round'; ctx.lineJoin='round';
-    ctx.strokeStyle='rgba(120,165,255,0.16)'; ctx.lineWidth=detail?3.2:2.2;
     ctx.shadowColor='rgba(120,165,255,0.6)'; ctx.shadowBlur=detail?6:4;
-    ctx.beginPath();
-    for(const L of _skyLines){ ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); }
-    ctx.stroke();
+    for(const L of _skyLines){ const em=L[4]==null?1:L[4];
+      ctx.strokeStyle='rgba(120,165,255,'+(0.16*em).toFixed(3)+')';
+      ctx.lineWidth=(detail?3.2:2.2)*(em>1.2?1.12:1);
+      ctx.beginPath(); ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); ctx.stroke(); }
     ctx.shadowBlur=0;
-    ctx.strokeStyle=detail?'rgba(178,204,255,0.8)':'rgba(166,194,250,0.6)'; ctx.lineWidth=detail?1.4:1.0;
-    ctx.beginPath();
-    for(const L of _skyLines){ ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); }
-    ctx.stroke();
+    const cBase=detail?'rgba(178,204,255,':'rgba(166,194,250,', aBase=detail?0.8:0.6;
+    for(const L of _skyLines){ const em=L[4]==null?1:L[4];
+      ctx.strokeStyle=cBase+(aBase*Math.min(1.15,em)).toFixed(3)+')';
+      ctx.lineWidth=(detail?1.4:1.0)*(em>1.2?1.2:1);
+      ctx.beginPath(); ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); ctx.stroke(); }
   }
   const t=_twinklePhase;
   for(const d of _skyDots){
@@ -3132,52 +3185,91 @@ function buildSkyObjects(lat,lng){
   // Star field + constellation lines live on the canvas behind this layer
   buildStarField(lat,lng);
   const pos=(az,alt)=>({x:skyAzX(az), y:4+(1-Math.min(alt,90)/90)*88});
+  // Depth + filter only bite in the fullscreen detail view (skyShows()); the overview
+  // is unchanged. binocDepth also gates binocular-only deep-sky, matching the cards.
+  const binocDepth=(STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc';
+  const RR=r=>RARITY_RANK[r||'common'];
   let html='';
   // Aurora glow sits on the true southern horizon, wherever south currently is
   const au=auroraStatus(lat);
-  if(au&&(au.level==='alert'||au.level==='watch')) html+=wrapX(skyAzX(180), x=>`<div class="sky-aurora" style="left:${(x-18).toFixed(1)}%"></div>`);
+  if(skyShows('events')&&au&&(au.level==='alert'||au.level==='watch')) html+=wrapX(skyAzX(180), x=>`<div class="sky-aurora" style="left:${(x-18).toFixed(1)}%"></div>`);
   // Constellation name labels. In the compass detail view there's room to label
   // every figure that's up; in the squished 360° overview we keep just Crux as
   // the southern anchor, so labels don't pile up on top of each other.
-  for(const f of STAR_FIGURES){
+  if(skyShows('stars')) for(const f of STAR_FIGURES){
     if(!f.info) continue;
     if(!_compassOn && f.slug!=='crux') continue;
     const a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
     if(aa.alt<(f.info.vis||6)) continue;
     const p=pos(aa.az,aa.alt), off=f.slug==='crux'?8:0, mk=rarCol(f.info.rar||'common');
-    html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+off).toFixed(1)}%;--mk:${mk}"><span class="so-mark"></span><span class="so-label so-const" style="color:${mk}">${f.n}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${20+RR(f.info.rar)}" data-key="c-${f.slug}" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+off).toFixed(1)}%;--mk:${mk}"><span class="so-mark"></span><span class="so-label so-const" style="color:${mk}">${f.n}</span><span class="so-star">${a[0]}</span></div>`);
   }
   // Deep-sky showpieces — rarity-tinted markers, detail (compass) view only so
-  // the 360° overview stays uncluttered.
-  if(_compassOn) for(const d of DEEPSKY){
+  // the 360° overview stays uncluttered. Binocular-only targets need binoc depth.
+  if(_compassOn && skyShows('deep')) for(const d of DEEPSKY){
+    if(d.eye==='binoc' && !binocDepth) continue;
     const aa=altAz(d.ra,d.dec,lat,lng,date);
     if(aa.alt<(d.vis||8)) continue;
     const p=pos(aa.az,aa.alt), mk=rarCol(d.rar);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}"><span class="so-deep"></span><span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}"><span class="so-deep"></span><span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
   }
-  for(const pl of planetPositions(lat,lng,date)){
+  if(skyShows('planets')) for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt<3)continue;
     const p=pos(pl.az,pl.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;color:${pl.dot}"><div class="so-dot" style="background:${pl.dot}"></div><span class="so-label">${pl.label}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${pl.az.toFixed(1)}" data-prio="10" data-key="p-${pl.key}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;color:${pl.dot}"><div class="so-dot" style="background:${pl.dot}"></div><span class="so-label">${pl.label}</span></div>`);
   }
-  const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
-  if(gc.alt>8){
-    const p=pos(gc.az,gc.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-mw" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div><div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+9).toFixed(1)}%"><span class="so-label" style="opacity:0.75;">Milky Way core</span></div>`);
+  if(skyShows('deep')){
+    const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
+    if(gc.alt>8){
+      const p=pos(gc.az,gc.alt);
+      html+=wrapX(p.x, x=>`<div class="sky-mw" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div><div class="sky-obj" data-az="${gc.az.toFixed(1)}" data-prio="40" data-key="milkyway" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+9).toFixed(1)}%"><span class="so-label" style="opacity:0.75;">Milky Way core</span></div>`);
+    }
+    for(const mc of MAGELLANIC){
+      const aa=altAz(mc.ra,mc.dec,lat,lng,date);
+      if(aa.alt<4)continue;
+      const p=pos(aa.az,aa.alt);
+      html+=wrapX(p.x, x=>`<div class="sky-mc" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;width:${mc.sz}px;height:${mc.sz}px;"></div><div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="41" data-key="mc-${mc.n}" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+6).toFixed(1)}%"><span class="so-label" style="opacity:0.65;">${mc.n}</span></div>`);
+    }
   }
-  for(const mc of MAGELLANIC){
-    const aa=altAz(mc.ra,mc.dec,lat,lng,date);
-    if(aa.alt<4)continue;
-    const p=pos(aa.az,aa.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-mc" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;width:${mc.sz}px;height:${mc.sz}px;"></div><div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+6).toFixed(1)}%"><span class="so-label" style="opacity:0.65;">${mc.n}</span></div>`);
-  }
-  const m=moonAltAz(lat,lng,date);
-  if(m.alt>0){
-    const mp=moonPhase(date), p=pos(m.az,m.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"><span class="so-icon">${mp.icon}</span><span class="so-label">Moon</span></div>`);
+  if(skyShows('planets')){
+    const m=moonAltAz(lat,lng,date);
+    if(m.alt>0){
+      const mp=moonPhase(date), p=pos(m.az,m.alt);
+      html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="5" data-key="moon" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"><span class="so-icon">${mp.icon}</span><span class="so-label">Moon</span></div>`);
+    }
   }
   layer.innerHTML=html;
+  if(_compassOn) declutterSkyLabels();
   renderCompassStrip();
+}
+// Fullscreen-compass declutter. Live compass: only the focus band (where you point)
+// keeps its label + emphasis; everything else shows just its marker, so figures read
+// one at a time as you pan. No sensor: show every label, trimming overlaps. Collision
+// order is fixed (priority), never heading-derived, so a hand-wobble can't reshuffle
+// what's on screen; band membership uses hysteresis (see bandMember) against jitter.
+function declutterSkyLabels(){
+  const layer=document.getElementById('night-sky'); if(!layer) return;
+  const nodes=[...layer.querySelectorAll('.sky-obj[data-az]')];
+  if(!nodes.length) return;
+  const c=skyViewCenter(), live=skyHeading!=null, candidates=[];
+  for(const n of nodes){
+    const lab=n.querySelector('.so-label');
+    if(live){
+      const az=+n.getAttribute('data-az'), dist=Math.abs(((az-c+540)%360)-180);
+      const inB=bandMember('o'+(n.getAttribute('data-key')||az), dist, _objBandState);
+      n.classList.toggle('so-focus', inB);
+      if(inB) candidates.push(n); else if(lab) lab.style.display='none';
+    }else{ n.classList.remove('so-focus'); candidates.push(n); }
+  }
+  candidates.sort((a,b)=>(+a.getAttribute('data-prio'))-(+b.getAttribute('data-prio')));
+  const placed=[];
+  for(const n of candidates){
+    const lab=n.querySelector('.so-label'); if(!lab) continue;
+    lab.style.display='';
+    const r=lab.getBoundingClientRect();
+    if(placed.some(p=>!(r.right<p.left||r.left>p.right||r.bottom<p.top||r.top>p.bottom))) lab.style.display='none';
+    else placed.push(r);
+  }
 }
 
 // ── Device compass plumbing ──────────────────────────────────
@@ -3227,10 +3319,21 @@ function _compassMsg(txt){
 function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251); }
 let _skyFullT=null;
 function _skyFullResize(){ clearTimeout(_skyFullT); _skyFullT=setTimeout(_skyFullRepaint,150); }
+// Build/refresh the in-overlay control bar (depth toggle + filter dropdown). Kept
+// compact (a dropdown, not a chip row) so future categories scale; mirrors the same
+// _skyFilter / depth state the cards use, so the two stay in sync.
+function syncSkyFullControls(){
+  const bar=document.getElementById('sky-full-controls'); if(!bar) return;
+  const depth=STAR_MAG_PRESETS[_starMagIdx]||STAR_MAG_PRESETS[0];
+  const opts=SKY_FILTERS.map(o=>`<option value="${o.k}"${o.k===_skyFilter?' selected':''}>${o.icon} ${o.label}</option>`).join('');
+  bar.innerHTML=`<button class="sky-fc-depth" onclick="cycleStarMag()" aria-label="Star depth">${depth.label}</button>`
+    +`<select class="sky-fc-filter" aria-label="Filter the sky" onchange="setSkyFilter(this.value)">${opts}</select>`;
+}
 function enterSkyFullscreen(){
   const sc=document.getElementById('night-scene'); if(!sc) return;
   sc.classList.add('sky-full'); document.body.classList.add('sky-full-on');
   const x=document.getElementById('sky-full-exit'); if(x) x.style.display='flex';
+  syncSkyFullControls();
   const fs=sc.requestFullscreen||sc.webkitRequestFullscreen;
   const lock=()=>{ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} };
   let p=null; try{ if(fs) p=fs.call(sc); }catch(e){}
@@ -3263,10 +3366,10 @@ async function toggleCompass(){
     if(_orientHandler)window.removeEventListener(_orientEvent,_orientHandler,true);
     _compassOn=false;_orientHandler=null;_headingSm=null;skyHeading=null;
     _skyFov=360;_skyCenter=180;
+    _figBandState.clear();_objBandState.clear();   // drop focus-band memory
     if(btn){btn.classList.remove('on');btn.setAttribute('aria-pressed','false');}
     if(f)f.style.display='none';
     if(tick)tick.style.display='none';
-    const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=false;  // re-enable overview control
     exitSkyFullscreen();
     buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
     return;
@@ -3275,8 +3378,8 @@ async function toggleCompass(){
   // a live one pans the sky as you turn, otherwise it's a big static southern sky.
   _compassOn=true;
   _skyFov=SKY_FOV_DETAIL;_skyCenter=180;skyHeading=null;   // ~120° detail slice
-  loadDeepCatalog();          // detail view has room for the deep field — fetch it now
-  const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=true;  // depth is automatic here
+  _figBandState.clear();_objBandState.clear();
+  if((STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc') loadDeepCatalog();  // deep field only at binoc depth
   if(btn){btn.classList.add('on');btn.setAttribute('aria-pressed','true');}
   if(tick)tick.style.display='block';
   enterSkyFullscreen();       // must run inside this tap (fullscreen + lock need the gesture)
@@ -3502,6 +3605,8 @@ function applySkyFilter(){
 function setSkyFilter(k){
   _skyFilter=k; try{ localStorage.setItem('gf_skyfilter',k); }catch(e){}
   applySkyFilter();
+  if(_compassOn) buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);  // filter the live sky map too
+  syncSkyFullControls();
 }
 // Rarity for any story slug (mirrors the loot grade shown on its list card).
 const SKY_RARITY={milkyway:'rare',magellanic:'rare',moon:'common',aurora:'legendary',meteors:'epic',
