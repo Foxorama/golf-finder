@@ -89,8 +89,8 @@
   --tx:#e8f5e0;--tx2:#a8c89a;--tx3:#6a9d60;
   --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
   /* Loot-grade rarity palette for night-sky cards + sky-map highlights:
-     common→blue, rare→green, epic→purple, legendary→orange. */
-  --rar-common:#5aa9f0;--rar-rare:#3fd07f;--rar-epic:#b07cff;--rar-legendary:#f5a623;
+     common→green, rare→blue, epic→purple, legendary→orange. */
+  --rar-common:#3fd07f;--rar-rare:#5aa9f0;--rar-epic:#b07cff;--rar-legendary:#f5a623;
 }
 /* ── Were-mode: at night the whole app sheds its golf greens for moonlight indigo.
    Amber/red stay untouched — they're semantic (alerts), not theme. ── */
@@ -288,8 +288,10 @@ body.sky-full-on{overflow:hidden;}
    bottom-centre, clear of the busy top row (exit/facing/compass) and the compass strip. */
 .sky-full-controls{display:none;}
 .night-scene.sky-full .sky-full-controls{display:flex;gap:8px;align-items:center;position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);transform:translateX(-50%);z-index:2100;}
-.sky-fc-depth,.sky-fc-filter{height:38px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:0 12px;cursor:pointer;}
-.sky-fc-depth:active{transform:scale(0.96);}
+.sky-fc-depth,.sky-fc-filter,.sky-fc-wx{height:38px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:0 12px;cursor:pointer;}
+.sky-fc-depth:active,.sky-fc-wx:active{transform:scale(0.96);}
+.sky-fc-wx{opacity:0.62;}
+.sky-fc-wx.on{opacity:1;background:rgba(90,169,240,0.26);border-color:rgba(143,184,232,0.85);color:#fff;}
 .sky-fc-filter{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aec6f0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
 .sky-fc-filter option{background:#101630;color:#dbe6ff;}
 /* Focus-band emphasis: the figure/object you're pointing at brightens and reveals its
@@ -1274,66 +1276,80 @@ function buildNightScene(){
   updateStarMagBtn();
   // Real sky: star field, constellation lines, moon, planets at true alt/az now
   buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
-  // Weather overlay from the true at-your-GPS forecast (zone fallback).
-  // Cached on condition so the 60s re-render doesn't restart the rain animation
-  // (same fix the day scene already has).
+  // Weather overlay — sized to the scene (full viewport in fullscreen). See renderNightWx.
+  renderNightWx();
+}
+// Night weather overlay. Sized to whatever height #night-wx actually has — the
+// ~182px strip normally, the full viewport in the fullscreen compass — so effects
+// cover the whole scene. In that immersive view weather is OFF by default (a clear
+// stargazing sky) and renders only when the viewer toggles it on (_skyWxOn). Cached
+// on condition + wind + cloud% + height bucket so the 60s re-render doesn't restart
+// the animation, but it does rebuild when coverage changes or the scene resizes.
+let _skyWxOn=false;
+try{ _skyWxOn=localStorage.getItem('gf_skywx')==='1'; }catch(e){}
+function renderNightWx(){
+  const wxEl=document.getElementById('night-wx'); if(!wxEl) return;
+  if(_compassOn && !_skyWxOn){ if(wxEl.innerHTML) wxEl.innerHTML=''; window._nightWxKey=null; return; }
   const wx=weatherCache[skyWxZone()]||weatherCache['brisbane_metro'];
-  // Key on condition + wind + actual cloud_cover (like the day scene) so the
-  // overlay rebuilds when coverage changes within the same label — otherwise a
-  // "Partly Cloudy" sky stays stale as cover climbs and the card says 97% while
-  // the scene shows the old sparse clouds.
+  const SKY_H=Math.max(120,Math.round(wxEl.clientHeight||182)), GY=SKY_H-12;
   const nightCloudPct=(()=>{const h=hourlyAt(skyWxZone(),window._fcOffset||0,nowMins());return h?h.cloud:null;})();
-  const nightKey=(wx&&wx.ok)?`${window._wxForce||wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${nightCloudPct==null?'?':nightCloudPct}`:'none';
-  const wxEl=document.getElementById('night-wx');
-  if(wxEl && window._nightWxKey!==nightKey){
-    window._nightWxKey=nightKey;
-    let html='';
-    if(wx&&wx.ok){
-      // Night weather mirrors day: same conditions, cloud cover, precip and lightning.
-      const lbl=window._wxForce||wx.label;
-      const isStorm=/storm|hail/i.test(lbl), isHail=/hail/i.test(lbl);
-      const isRain=lbl.includes('Rain'), isDrizzle=lbl.includes('Drizzle'), isShower=lbl.includes('Shower');
-      const isSnow=lbl.includes('Snow'), isFog=lbl.includes('Foggy'), isOvercast=lbl.includes('Overcast');
-      const isPartly=lbl.includes('Partly'), isClear=/clear/i.test(lbl);
-      const anyRain=isDrizzle||isRain||isShower||isStorm;
-      const wind=wx.wind||0, windF=Math.min(1,wind/30), slantDeg=windF*32, slantPx=windF*60;
-      const SKY_H=182, GY=SKY_H-12;
-      const nm=nowMins(), hc=hourlyAt(skyWxZone(),window._fcOffset||0,nm), cloudPct=hc?hc.cloud:null;
-      const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
-      const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
-      const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
-      // Clouds: coverage-driven field (shared with the day scene); night clouds
-      // run a darker, unlit tone. Cover % comes from the night's own weather.
-      const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.34:0.22;
-      const field=buildCloudField(cover,SKY_H,wind,baseTone,'night-cloud',isStorm);
-      html+=field.html; const emitYs=field.emitYs;
-      const emitAt=()=> emitYs.length?emitYs[Math.floor(Math.random()*emitYs.length)]:24;
-      if(anyRain){
-        const drops=isStorm?34:isRain?24:isShower?16:10, rLen=isStorm?12:isDrizzle?6:8;
-        for(let i=0;i<drops;i++){
-          const x=Math.random()*100, d=Math.random()*0.7, sy=emitAt()+Math.random()*8;
-          const dur=(Math.random()*0.3+(isDrizzle?0.7:0.45))*(1-windF*0.35);
-          html+=`<span class="day-raindrop" style="left:${x}%;top:${sy}px;--rang:${slantDeg}deg;--rdx:${slantPx}px;--rh:${rLen}px;--rf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
-        }
+  const nightKey=(wx&&wx.ok)?`${window._wxForce||wx.label}|${Math.round((wx.wind||0)/5)}|${Math.round((wx.gust||0)/8)}|${nightCloudPct==null?'?':nightCloudPct}|${Math.round(SKY_H/40)}`:'none';
+  if(window._nightWxKey===nightKey) return;
+  window._nightWxKey=nightKey;
+  let html='';
+  if(wx&&wx.ok){
+    // Night weather mirrors day: same conditions, cloud cover, precip and lightning.
+    const lbl=window._wxForce||wx.label;
+    const isStorm=/storm|hail/i.test(lbl), isHail=/hail/i.test(lbl);
+    const isRain=lbl.includes('Rain'), isDrizzle=lbl.includes('Drizzle'), isShower=lbl.includes('Shower');
+    const isSnow=lbl.includes('Snow'), isFog=lbl.includes('Foggy'), isOvercast=lbl.includes('Overcast');
+    const isPartly=lbl.includes('Partly'), isClear=/clear/i.test(lbl);
+    const anyRain=isDrizzle||isRain||isShower||isStorm;
+    const wind=wx.wind||0, windF=Math.min(1,wind/30), slantDeg=windF*32, slantPx=windF*60;
+    const nScale=Math.min(2.4,Math.max(1,SKY_H/182));   // more precip to fill a taller (fullscreen) scene
+    const nm=nowMins(), hc=hourlyAt(skyWxZone(),window._fcOffset||0,nm), cloudPct=hc?hc.cloud:null;
+    const condCover=isStorm?100:isHail?100:isRain?97:isShower?90:isSnow?92:isDrizzle?85:isFog?70:isOvercast?90:isPartly?38:isClear?6:20;
+    const realCover=(window._wxForce==null&&cloudPct!=null)?cloudPct:null;
+    const cover=realCover!=null ? ((anyRain||isSnow||isOvercast||isFog)?Math.max(realCover,condCover):realCover) : condCover;
+    // Clouds: coverage-driven field (shared with the day scene); night clouds
+    // run a darker, unlit tone. Cover % comes from the night's own weather.
+    const baseTone=isStorm?0.85:isHail?0.8:isRain?0.6:isSnow?0.5:isShower?0.46:isDrizzle?0.4:isFog?0.44:isOvercast?0.34:0.22;
+    const field=buildCloudField(cover,SKY_H,wind,baseTone,'night-cloud',isStorm);
+    html+=field.html; const emitYs=field.emitYs;
+    const emitAt=()=> emitYs.length?emitYs[Math.floor(Math.random()*emitYs.length)]:24;
+    if(anyRain){
+      const drops=Math.round((isStorm?34:isRain?24:isShower?16:10)*nScale), rLen=isStorm?12:isDrizzle?6:8;
+      for(let i=0;i<drops;i++){
+        const x=Math.random()*100, d=Math.random()*0.7, sy=emitAt()+Math.random()*8;
+        const dur=(Math.random()*0.3+(isDrizzle?0.7:0.45))*(1-windF*0.35);
+        html+=`<span class="day-raindrop" style="left:${x}%;top:${sy}px;--rang:${slantDeg}deg;--rdx:${slantPx}px;--rh:${rLen}px;--rf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
       }
-      if(isSnow){
-        const snowDrift=12+windF*70;
-        for(let i=0;i<26;i++){
-          const x=Math.random()*100, d=Math.random()*3, dur=(Math.random()*2+2.5)*(1-windF*0.4), dx=snowDrift*(0.7+Math.random()*0.6), sy=emitAt()+Math.random()*6;
-          html+=`<span class="day-snow" style="left:${x}%;top:${sy}px;--sdx:${dx}px;--sf:${Math.max(40,GY-sy+8)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
-        }
-      }
-      if(isHail){
-        const hailDrift=slantPx*0.5;
-        for(let i=0;i<24;i++){
-          const x=Math.random()*100, d=Math.random()*0.5, dur=Math.random()*0.15+0.35, sy=emitAt()+Math.random()*6;
-          html+=`<span class="day-hail" style="left:${x}%;top:${sy}px;--hdx:${hailDrift}px;--hf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
-        }
-      }
-      if(isStorm) html+=`<div class="day-flash"></div>`;  // bolts come from the thunderclouds above
     }
-    wxEl.innerHTML=html;
+    if(isSnow){
+      const snowDrift=12+windF*70, cnt=Math.round(26*nScale);
+      for(let i=0;i<cnt;i++){
+        const x=Math.random()*100, d=Math.random()*3, dur=(Math.random()*2+2.5)*(1-windF*0.4), dx=snowDrift*(0.7+Math.random()*0.6), sy=emitAt()+Math.random()*6;
+        html+=`<span class="day-snow" style="left:${x}%;top:${sy}px;--sdx:${dx}px;--sf:${Math.max(40,GY-sy+8)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
+    if(isHail){
+      const hailDrift=slantPx*0.5, cnt=Math.round(24*nScale);
+      for(let i=0;i<cnt;i++){
+        const x=Math.random()*100, d=Math.random()*0.5, dur=Math.random()*0.15+0.35, sy=emitAt()+Math.random()*6;
+        html+=`<span class="day-hail" style="left:${x}%;top:${sy}px;--hdx:${hailDrift}px;--hf:${Math.max(40,GY-sy)}px;animation-delay:${d}s;animation-duration:${dur}s;"></span>`;
+      }
+    }
+    if(isStorm) html+=`<div class="day-flash"></div>`;  // bolts come from the thunderclouds above
   }
+  wxEl.innerHTML=html;
+}
+// Fullscreen weather toggle (off by default for a clear stargazing sky).
+function toggleSkyWx(){
+  _skyWxOn=!_skyWxOn;
+  try{ localStorage.setItem('gf_skywx',_skyWxOn?'1':'0'); }catch(e){}
+  window._nightWxKey=null;            // force a rebuild: off→clear, on→render at full height
+  renderNightWx();
+  syncSkyFullControls();
 }
 
 // Build the day scene: time-of-day sky, arcing sun, weather overlay
@@ -2460,12 +2476,12 @@ function figureSVG(slug){
   return s+`</svg>`;
 }
 // ── Loot-grade rarity + two-phase "astral heroic" card art ──────────────────
-// Every night card carries a rarity (loot colours: common→blue, rare→green,
+// Every night card carries a rarity (loot colours: common→green, rare→blue,
 // epic→purple, legendary→orange) and a phasing emblem that morphs between a
 // faint "Star Outline" sketch and a glowing "Astral Heroic" crest. The same two
 // builders dress every object, present and future — the house style lives in the
 // astral-heroic-card-art skill. Pure inline SVG: no assets, renders offline.
-const RARITY_C={common:'#5aa9f0',rare:'#3fd07f',epic:'#b07cff',legendary:'#f5a623'};
+const RARITY_C={common:'#3fd07f',rare:'#5aa9f0',epic:'#b07cff',legendary:'#f5a623'};
 const RARITY_LBL={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary'};
 const RARITY_RANK={legendary:0,epic:1,rare:2,common:3};
 function rarCol(r){ return RARITY_C[r]||RARITY_C.common; }
@@ -3316,7 +3332,7 @@ function _compassMsg(txt){
 // Full-screen immersive sky helpers. The CSS .sky-full class alone fills the
 // viewport everywhere; on top of that we ask for true fullscreen + a landscape
 // orientation lock where the platform allows it (best-effort, errors swallowed).
-function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251); }
+function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251); renderNightWx(); }
 let _skyFullT=null;
 function _skyFullResize(){ clearTimeout(_skyFullT); _skyFullT=setTimeout(_skyFullRepaint,150); }
 // Build/refresh the in-overlay control bar (depth toggle + filter dropdown). Kept
@@ -3327,7 +3343,8 @@ function syncSkyFullControls(){
   const depth=STAR_MAG_PRESETS[_starMagIdx]||STAR_MAG_PRESETS[0];
   const opts=SKY_FILTERS.map(o=>`<option value="${o.k}"${o.k===_skyFilter?' selected':''}>${o.icon} ${o.label}</option>`).join('');
   bar.innerHTML=`<button class="sky-fc-depth" onclick="cycleStarMag()" aria-label="Star depth">${depth.label}</button>`
-    +`<select class="sky-fc-filter" aria-label="Filter the sky" onchange="setSkyFilter(this.value)">${opts}</select>`;
+    +`<select class="sky-fc-filter" aria-label="Filter the sky" onchange="setSkyFilter(this.value)">${opts}</select>`
+    +`<button class="sky-fc-wx${_skyWxOn?' on':''}" onclick="toggleSkyWx()" aria-pressed="${_skyWxOn}" aria-label="Toggle weather effects">☁ weather</button>`;
 }
 function enterSkyFullscreen(){
   const sc=document.getElementById('night-scene'); if(!sc) return;
