@@ -256,8 +256,10 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .sky-compass-btn.on{border-color:#8fb8e8;box-shadow:0 0 10px rgba(143,184,232,0.45);background:rgba(143,184,232,0.18);}
 /* Star-depth cycle button (naked eye → dark sky → binoculars) — lives in the
    info row under the scene, to the right of the best-viewing text */
-.sky-mag-btn{flex:none;background:rgba(16,22,43,0.75);border:1px solid rgba(124,148,210,0.35);border-radius:10px;height:32px;padding:0 11px;font-family:var(--mono);font-size:11px;color:#cdd9f5;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
+.sky-mag-btn{flex:none;min-width:118px;justify-content:center;background:rgba(16,22,43,0.75);border:1px solid rgba(124,148,210,0.35);border-radius:10px;height:32px;padding:0 11px;font-family:var(--mono);font-size:11px;color:#cdd9f5;cursor:pointer;display:flex;align-items:center;gap:5px;white-space:nowrap;}
 .sky-mag-btn:active{transform:scale(0.96);}
+.sky-mag-btn:disabled{opacity:0.38;cursor:default;}
+.sky-mag-btn:disabled:active{transform:none;}
 .sky-facing{position:absolute;top:9px;left:50%;transform:translateX(-50%);z-index:8;font-family:var(--mono);font-size:10.5px;color:#cdd9f5;background:rgba(16,22,43,0.78);border:1px solid rgba(124,148,210,0.3);padding:4px 9px;border-radius:8px;white-space:nowrap;}
 .sky-center-tick{position:absolute;left:50%;bottom:13px;width:2px;height:15px;background:rgba(222,232,255,0.9);z-index:7;transform:translateX(-50%);border-radius:1px;box-shadow:0 0 6px rgba(160,190,255,0.7);pointer-events:none;}
 .sky-horizon{position:absolute;bottom:13px;left:0;right:0;height:1px;background:rgba(160,180,220,0.18);z-index:1;}
@@ -1159,12 +1161,11 @@ function skyRegionCode(lat,lng){
 }
 // Build the night scene: stars, accurate moon phase, weather overlay
 function buildNightScene(){
-  // Pull the full mag-5 catalog in once (lazy, cached); the embedded seed has
-  // already drawn the marquee figures on the first paint below. If the viewer
-  // last chose a deeper preset, fetch that tier too.
+  // Pull the naked-eye catalog in once (lazy, cached); the embedded seed has
+  // already drawn the marquee figures on the first paint below. The deeper
+  // catalog is fetched only when the compass opens the ~120° detail view.
   loadStarCatalog();
   updateStarMagBtn();
-  if(STAR_MAG_PRESETS[_starMagIdx].deep) loadDeepCatalog();
   // Real sky: star field, constellation lines, moon, planets at true alt/az now
   buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
   // Weather overlay from the true at-your-GPS forecast (zone fallback).
@@ -2158,15 +2159,15 @@ async function loadStarCatalog(){
   if(STAR_CATALOG && document.body.classList.contains('night'))
     buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
 }
-// Star-depth presets. "naked eye" shows star-catalog.json down to mag 6.5 — the
-// true dark-sky naked-eye limit (~4,400 stars up), enough to fill the sparse
-// anti-Milky-Way side of the sky. "binoculars" pulls the bigger
-// star-catalog-deep.json (mag ≤ 7) on demand and client-filters to its limit, so
-// default users never download it. Real binoculars reach fainter, but ~7 is as
-// deep as this small strip stays legible without becoming a white smear.
+// Star-depth presets, used only for the full-sky OVERVIEW (compass off). The
+// overview is a ~309×200 strip, so a deep field just smears into a white wash —
+// these caps keep it legible. "naked eye" is the bright stars + figures; the
+// "binoculars" step fills the field out. The compass-on DETAIL view ignores
+// these and shows the full deep field across its ~120° slice (see buildStarField
+// + toggleCompass), and the toggle is disabled there since depth is its own job.
 const STAR_MAG_PRESETS=[
-  {k:'eye',  label:'👁 naked eye',  mag:6.5, deep:false},
-  {k:'binoc',label:'🔭 binoculars', mag:7.0, deep:true}
+  {k:'eye',  label:'👁 naked eye',  mag:4.9},
+  {k:'binoc',label:'🔭 binoculars', mag:5.8}
 ];
 let _starMagIdx=0;
 try{ const i=STAR_MAG_PRESETS.findIndex(p=>p.k===localStorage.getItem('gf_starmag')); if(i>=0)_starMagIdx=i; }catch(e){}
@@ -2186,10 +2187,10 @@ function updateStarMagBtn(){
   const b=document.getElementById('sky-mag-btn'); if(b) b.textContent=STAR_MAG_PRESETS[_starMagIdx].label;
 }
 function cycleStarMag(){
+  if(_compassOn) return;                 // overview-only control, disabled in detail view
   _starMagIdx=(_starMagIdx+1)%STAR_MAG_PRESETS.length;
   const p=STAR_MAG_PRESETS[_starMagIdx];
   try{ localStorage.setItem('gf_starmag',p.k); }catch(e){}
-  if(p.deep) loadDeepCatalog();
   updateStarMagBtn();
   buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
 }
@@ -2222,12 +2223,15 @@ function buildStarField(lat,lng){
     if(full){ if(a.x<W*0.08||b.x<W*0.08) lines.push([a.x+W,a.y,b.x+W,b.y]);
               else if(a.x>W*0.92||b.x>W*0.92) lines.push([a.x-W,a.y,b.x-W,b.y]); }
   }
-  // Star field. Pick the deepest source the preset needs and has (deep catalog
-  // for dark-sky/binoculars, else naked-eye catalog, else seed), capped at the
-  // preset magnitude. A deterministic ra/dec hash sets each star's size, base
-  // brightness and twinkle phase, so the field looks uneven and lived-in.
-  const preset=STAR_MAG_PRESETS[_starMagIdx], magCap=preset.mag;
-  const field=(preset.deep&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
+  // Star field. A deterministic ra/dec hash sets each star's size, base
+  // brightness and twinkle phase/rate/depth, so the field looks uneven and lived-in.
+  // Density is mode-aware. Full-sky overview: keep it sparse (the preset cap) so
+  // the tiny strip stays legible, drawn from the naked-eye catalog. Compass-on
+  // detail: a ~120° slice across the full width has room for the deepest field we
+  // have, so show it all (toggle disabled there — see toggleCompass).
+  const preset=STAR_MAG_PRESETS[_starMagIdx];
+  const magCap=full?preset.mag:7.0;
+  const field=(!full&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
             :(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars
             :SKY_SEED.stars;
   const dots=[];
@@ -2237,9 +2241,17 @@ function buildStarField(lat,lng){
     if(!full && (p.x<-2||p.x>W+2)) continue;                     // off the zoomed edge
     const mag=s[2], cx=s[3];
     const hsh=Math.sin(s[0]*12.9898+s[1]*78.233)*43758.5, j=hsh-Math.floor(hsh);  // 0..1
+    const hsh2=Math.sin(s[0]*4.137+s[1]*19.71)*9277.31, j2=hsh2-Math.floor(hsh2); // 0..1
+    const hsh3=Math.sin(s[0]*7.71+s[1]*3.137)*6151.17, j3=hsh3-Math.floor(hsh3);  // 0..1
     const r=Math.max(0.55,2.6-mag*0.45)*(0.85+0.32*j);
     const a=Math.min(1,Math.max(0.4,Math.min(1,1.15-mag*0.12))*(0.82+0.26*j));
-    const d={x:p.x,y:p.y,r,a,cx,glow:mag<1.4,ph:j*6.2832};
+    // ph = phase offset, tf = per-star rate (mixed speeds), ta = per-star depth:
+    // a 0.15 baseline so the whole field shimmers, plus a j3²-skewed bump that
+    // grows with faintness — distant stars are dim/tiny, so they need a deeper
+    // (near-winking) swing to read at all, which puts more of them in motion.
+    const faint=Math.max(0,(mag-3.5)/3.5);                  // 0 (bright) → ~1 (mag 7)
+    const ta=Math.min(0.9,0.15+(0.4+0.55*faint)*j3*j3);
+    const d={x:p.x,y:p.y,r,a,cx,glow:mag<1.4,ph:j*6.2832,tf:0.7+j2*1.4,ta};
     dots.push(d);
     if(full){ if(p.x<W*0.08) dots.push({...d,x:p.x+W}); else if(p.x>W*0.92) dots.push({...d,x:p.x-W}); }
   }
@@ -2262,10 +2274,12 @@ function paintSky(){
   }
   const t=_twinklePhase;
   for(const d of _skyDots){
-    const s=Math.sin(t+d.ph);
-    const tw=d.glow?(0.8+0.2*s):(0.6+0.4*s);   // bright: 0.6–1.0, faint: 0.2–1.0
-    ctx.globalAlpha=Math.min(1,Math.max(0.05,d.a*tw)); ctx.fillStyle=d.cx?'#bcd8ff':'#fbfdff';
-    if(d.glow){ ctx.shadowColor=d.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=3+2*(0.5+0.5*s); }
+    const ph=t*d.tf+d.ph, w=0.5-0.5*Math.sin(ph);   // 0 at peak, 1 at trough
+    // Each star only dips by its own ta below full, so steady stars stay put and
+    // the high-ta few visibly sparkle. Bright anchors barely move (figures stay).
+    const tw=d.glow ? 1-0.18*w : 1-d.ta*w;
+    ctx.globalAlpha=Math.min(1,Math.max(0.04,d.a*tw)); ctx.fillStyle=d.cx?'#bcd8ff':'#fbfdff';
+    if(d.glow){ ctx.shadowColor=d.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=3+1.5*(1-w); }
     else ctx.shadowBlur=0;
     ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,6.2832); ctx.fill();
   }
@@ -2277,7 +2291,7 @@ let _twinklePhase=0,_twinkleRaf=0,_twinkleLast=0;
 function startTwinkle(){ if(!_twinkleRaf) _twinkleRaf=requestAnimationFrame(twinkleTick); }
 function twinkleTick(ts){
   if(!document.body.classList.contains('night')||document.hidden||!_skyCanvas||!_skyCanvas.clientWidth){ _twinkleRaf=0; return; }
-  if(ts-_twinkleLast>=110){ _twinkleLast=ts; _twinklePhase+=0.17; paintSky(); }
+  if(ts-_twinkleLast>=70){ _twinkleLast=ts; _twinklePhase+=0.2; paintSky(); }
   _twinkleRaf=requestAnimationFrame(twinkleTick);
 }
 // Next time an object's altitude rises above 3°, sampling 15-min steps
@@ -2524,6 +2538,7 @@ async function toggleCompass(){
     if(btn){btn.classList.remove('on');btn.setAttribute('aria-pressed','false');}
     if(f)f.style.display='none';
     if(tick)tick.style.display='none';
+    const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=false;  // re-enable overview control
     buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
     return;
   }
@@ -2540,6 +2555,8 @@ async function toggleCompass(){
   window.addEventListener(_orientEvent,_orientHandler,true);
   _compassOn=true;
   _skyFov=SKY_FOV_DETAIL;     // pointing at the sky → zoom to a ~120° detail slice
+  loadDeepCatalog();          // detail view has room for the deep field — fetch it now
+  const mb=document.getElementById('sky-mag-btn'); if(mb)mb.disabled=true;  // depth is automatic here
   if(btn){btn.classList.add('on');btn.setAttribute('aria-pressed','true');}
   if(tick)tick.style.display='block';
   _compassMsg('waiting for compass…');
