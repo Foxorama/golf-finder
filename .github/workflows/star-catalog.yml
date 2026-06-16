@@ -12,9 +12,9 @@ on:
   workflow_dispatch:
     inputs:
       mag_limit:
-        description: "Naked-eye tier limit → star-catalog.json (5.0 ≈ suburban)"
+        description: "Naked-eye tier limit → star-catalog.json (6.5 ≈ dark-sky eye)"
         required: false
-        default: "5.0"
+        default: "6.5"
       deep_limit:
         description: "Deep tier limit → star-catalog-deep.json (6.5 dark-sky / 7.0 binocular)"
         required: false

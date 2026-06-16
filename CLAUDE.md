@@ -16,11 +16,11 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
 - **`star-catalog.json`** / **`star-catalog-deep.json`** — *optional* pre-baked
   star field for night mode, from the public-domain HYG database. One bake run of
   `scripts/build-star-catalog.mjs` (+ `.github/workflows/star-catalog.yml`,
-  manual-dispatch; static J2000 data so it's one-time) writes **both**: the lean
-  `star-catalog.json` (mag ≤ 5, the "naked eye" default) and the bigger
-  `star-catalog-deep.json` (mag ≤ 7), fetched **only** when the viewer cycles the
-  `#sky-mag-btn` to "dark sky"/"binoculars" (then client-filtered to 6.5/7.0), so
-  default users never download it. The app works **without** either: index.html
+  manual-dispatch; static J2000 data so it's one-time) writes **both**:
+  `star-catalog.json` (mag ≤ 6.5 ≈ dark-sky naked eye, the "naked eye" default)
+  and the bigger `star-catalog-deep.json` (mag ≤ 7), fetched **only** when the
+  viewer cycles the `#sky-mag-btn` to "binoculars", so default users never
+  download it. The app works **without** either: index.html
   embeds a seed of the marquee southern figures (`STAR_FIGURES`/`STAR_LOOSE`), and
   constellation **lines are always curated in `STAR_FIGURES`** (never baked), so the
   catalogs only enrich the background field. Every star is positioned at runtime by
