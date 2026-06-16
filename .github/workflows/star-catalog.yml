@@ -1,0 +1,74 @@
+name: Build star catalog
+
+# Regenerates star-catalog.json (naked-eye star field for night mode) from the
+# public-domain HYG database. Run manually — the source is static (J2000), so
+# this only needs re-running to change MAG_LIMIT or refresh the data. Branch
+# protection blocks direct pushes, so the result arrives as a pull request.
+#
+# Constellation lines are NOT baked here; they're curated in index.html. If this
+# never runs, the app still works from its embedded seed figures.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mag_limit:
+        description: "Naked-eye tier limit → star-catalog.json (5.0 ≈ suburban)"
+        required: false
+        default: "5.0"
+      deep_limit:
+        description: "Deep tier limit → star-catalog-deep.json (6.5 dark-sky / 7.0 binocular)"
+        required: false
+        default: "7.0"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: star-catalog
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Generate star catalogs
+        env:
+          MAG_LIMIT: ${{ github.event.inputs.mag_limit }}
+          DEEP_LIMIT: ${{ github.event.inputs.deep_limit }}
+        run: node scripts/build-star-catalog.mjs
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: star-catalog
+          path: |
+            star-catalog.json
+            star-catalog-deep.json
+
+      - name: Open PR if changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- star-catalog.json star-catalog-deep.json; then
+            echo "No changes to star catalogs"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B bot/star-catalog
+          git add star-catalog.json star-catalog-deep.json
+          git commit -m "Update star catalogs from HYG database"
+          git push -f origin bot/star-catalog
+          if [ -z "$(gh pr list --head bot/star-catalog --state open --json number -q '.[0].number')" ]; then
+            gh pr create --base main --head bot/star-catalog \
+              --title "Update star-catalog.json from HYG database" \
+              --body "Automated naked-eye star-field refresh. Data: HYG database (public domain)."
+          fi
