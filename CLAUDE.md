@@ -5,6 +5,18 @@ courses by daylight + weather; by **night** it flips to a star/sky-watching view
 Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
 `main`).
 
+## How to work with me (ground rules)
+- **Pressure-test my ideas before building them.** Don't just implement on
+  command. If an idea is sound, say so and go. If it isn't, push back: question
+  the premise and propose a better solution/alternative, or flat out say
+  *"that's not a great idea, Dave."* A cheerful "yep, let's do it" followed by a
+  half-working result is the worst outcome — I'd rather get the friction up front.
+- **Implement properly or stop.** If you can't do something well, don't ship a
+  shaky version of it. Stop, re-check, and either ask for the extra context you
+  need or take the time to do it right. Bouncing off the same concept three or
+  four times is what frustrates me; a request for clarification or a "this can't
+  be done cleanly because X — here's what I'd do instead" is always welcome.
+
 ## Layout
 - **`index.html`** — the whole app (HTML + CSS + JS, ~190 KB). Almost all work
   happens here. There is no build step; the file ships as-is.
