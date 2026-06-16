@@ -255,6 +255,19 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
    bright diamond pins a deep-sky object — both tinted to the loot grade (--mk). */
 .sky-obj .so-mark{display:block;width:7px;height:7px;border-radius:50%;margin:0 auto 2px;background:var(--mk,#9fd4ff);box-shadow:0 0 8px 1px var(--mk,#9fd4ff),0 0 2px #fff;}
 .sky-obj .so-deep{display:block;width:8px;height:8px;margin:0 auto 2px;background:var(--mk,#9fd4ff);box-shadow:0 0 9px 2px var(--mk,#9fd4ff);transform:rotate(45deg);border:0.5px solid rgba(255,255,255,0.85);}
+/* Deep-sky marker by category: shape tells the *type* apart (nebula vs cluster vs
+   galaxy…), colour (--mk) still encodes rarity. Shapes stay inside the base box so
+   the fullscreen .so-deep size-bump scales them all together. Untyped → diamond. */
+.sky-obj .so-deep.dso-nebula{transform:none;border:0;border-radius:50%;background:radial-gradient(circle,var(--mk) 0%,var(--mk) 26%,transparent 70%);box-shadow:0 0 11px 3px var(--mk);}
+.sky-obj .so-deep.dso-dark{transform:none;border:1.5px solid var(--mk);border-radius:50%;background:rgba(4,6,15,0.55);box-shadow:0 0 7px 0 var(--mk),inset 0 0 3px rgba(0,0,0,0.7);}
+.sky-obj .so-deep.dso-globular{transform:none;border:0;border-radius:50%;background:radial-gradient(circle,#fff 0%,#fff 20%,var(--mk) 46%,transparent 80%);box-shadow:0 0 9px 2px var(--mk);}
+.sky-obj .so-deep.dso-galaxy{transform:rotate(-24deg);border:0;border-radius:50%;background:radial-gradient(ellipse 94% 40% at 50% 50%,#fff 0%,#fff 12%,var(--mk) 44%,transparent 82%);box-shadow:0 0 8px 1px var(--mk);}
+.sky-obj .so-deep.dso-open{transform:none;border:0;background-repeat:no-repeat;box-shadow:0 0 5px 0 var(--mk);background:
+  radial-gradient(circle 1.2px at 32% 34%,var(--mk) 96%,transparent 100%),
+  radial-gradient(circle 1.2px at 68% 30%,var(--mk) 96%,transparent 100%),
+  radial-gradient(circle 1.1px at 52% 64%,var(--mk) 96%,transparent 100%),
+  radial-gradient(circle 1.0px at 27% 68%,var(--mk) 96%,transparent 100%),
+  radial-gradient(circle 1.0px at 74% 62%,var(--mk) 96%,transparent 100%);}
 .sky-obj .so-icon{font-size:22px;filter:drop-shadow(0 0 9px rgba(220,230,255,0.5));}
 .sky-obj .so-label{font-family:var(--mono);font-weight:500;font-size:11px;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 4px #000,0 1px 3px #000;margin-top:2px;display:block;white-space:nowrap;letter-spacing:0.01em;}
 .sky-compass{position:absolute;bottom:1px;left:0;right:0;height:13px;z-index:3;pointer-events:none;}
@@ -2704,73 +2717,73 @@ const SKY_LORE={};
 // real region and instant. vis = min altitude before we call it "up". rar grades
 // it on the loot scale. rows = its full story-sheet lore.
 const DEEPSKY=[
-  {slug:'etacarina',n:'Eta Carinae Nebula',icon:'🌫️',ra:161.265,dec:-59.866,vis:10,rar:'epic',
+  {slug:'etacarina',type:'nebula',n:'Eta Carinae Nebula',icon:'🌫️',ra:161.265,dec:-59.866,vis:10,rar:'epic',
    blurb:'A vast glowing star-factory four times the size of the Orion Nebula — but a southern-sky secret, riding high over Australia.',
    rows:[
      ['What you’re seeing','An enormous cloud of gas lit by hot young stars, wrapped around the unstable supergiant Eta Carinae — a doomed star that may go supernova in the astronomically near future.'],
      ['How to find it','A bright, distinct patch of the Milky Way in Carina, between the Southern Cross and the False Cross. Naked-eye from a dark site; spectacular in binoculars.'],
      ['Best from SEQ','Summer–autumn evenings, when Carina rides high in the south.']]},
-  {slug:'omegacen',n:'Omega Centauri',icon:'🔆',ra:201.697,dec:-47.479,vis:10,rar:'epic',
+  {slug:'omegacen',type:'globular',n:'Omega Centauri',icon:'🔆',ra:201.697,dec:-47.479,vis:10,rar:'epic',
    blurb:'The grandest globular cluster in the sky — ten million ancient stars packed into a ball you can see with the naked eye.',
    rows:[
      ['What you’re seeing','Around 10 million stars bound by gravity into a sphere ~150 light-years across, 17,000 light-years away. Possibly the stripped core of a galaxy our Milky Way swallowed.'],
      ['How to find it','A fuzzy “star” to the naked eye in Centaurus. Binoculars show a round glow; a telescope shatters it into countless pinpoints.'],
      ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
-  {slug:'jewelbox',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',eye:'binoc',
+  {slug:'jewelbox',type:'open',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',eye:'binoc',
    blurb:'A glittering young star cluster beside the Southern Cross, its suns tinted blue, white and one ruby-red.',
    rows:[
      ['What you’re seeing','A few hundred hot young stars only ~14 million years old (NGC 4755). John Herschel named it for looking like “a casket of variously coloured precious stones”.'],
      ['How to find it','Right beside Mimosa (Beta Crucis), the left-hand star of the Southern Cross. A hazy point to the eye; binoculars reveal the colours.'],
      ['Best from SEQ','Circumpolar — up every clear night, highest on autumn–winter evenings.']]},
-  {slug:'47tuc',n:'47 Tucanae',icon:'✴️',ra:6.024,dec:-72.081,vis:8,rar:'rare',
+  {slug:'47tuc',type:'globular',n:'47 Tucanae',icon:'✴️',ra:6.024,dec:-72.081,vis:8,rar:'rare',
    blurb:'The second-finest globular cluster in the sky, a naked-eye glow right next to the Small Magellanic Cloud.',
    rows:[
      ['What you’re seeing','A dense swarm of hundreds of thousands of stars, 13,000 light-years away — close enough to look as big as the full Moon.'],
      ['How to find it','Near the Small Magellanic Cloud, deep in the south toward Tucana. Naked-eye from dark skies; a jewel in any telescope.'],
      ['Best from SEQ','Circumpolar; highest on spring–summer evenings.']]},
-  {slug:'tarantula',n:'Tarantula Nebula',icon:'🕷️',ra:84.679,dec:-69.100,vis:8,rar:'epic',eye:'binoc',
+  {slug:'tarantula',type:'nebula',n:'Tarantula Nebula',icon:'🕷️',ra:84.679,dec:-69.100,vis:8,rar:'epic',eye:'binoc',
    blurb:'A monster nebula inside the Large Magellanic Cloud — so luminous that, set where Orion’s nebula is, it would cast shadows.',
    rows:[
      ['What you’re seeing','The largest, most active star-forming region known (NGC 2070), 160,000 light-years away in a neighbouring galaxy, yet bright enough to glimpse unaided.'],
      ['How to find it','A knotted bright spot on the eastern edge of the Large Magellanic Cloud. Binoculars show its tangled, leggy shape.'],
      ['Best from SEQ','Circumpolar; highest on summer evenings.']]},
-  {slug:'orionneb',n:'Orion Nebula',icon:'🌫️',ra:83.822,dec:-5.391,vis:8,rar:'epic',
+  {slug:'orionneb',type:'nebula',n:'Orion Nebula',icon:'🌫️',ra:83.822,dec:-5.391,vis:8,rar:'epic',
    blurb:'The middle “star” of Orion’s Sword is no star at all — a glowing nursery of newborn suns, faintly green to the eye.',
    rows:[
      ['What you’re seeing','A cloud of gas 1,300 light-years away where stars are being born right now (M42). The four hot Trapezium stars at its heart light the whole nebula.'],
      ['How to find it','Look at the row of stars below Orion’s Belt (the Sword, or the handle of the “Saucepan”); the middle one looks fuzzy. Stunning in binoculars.'],
      ['Best from SEQ','Summer evenings (Dec–Mar), high in the north.']]},
-  {slug:'pleiades',n:'The Pleiades',icon:'✨',ra:56.871,dec:24.105,vis:6,rar:'rare',
+  {slug:'pleiades',type:'open',n:'The Pleiades',icon:'✨',ra:56.871,dec:24.105,vis:6,rar:'rare',
    blurb:'The Seven Sisters — a tight, icy-blue knot of stars and one of the most storied objects in the sky.',
    rows:[
      ['What you’re seeing','A young open cluster ~440 light-years away (M45). Most people see six or seven stars; binoculars show dozens veiled in faint blue nebulosity.'],
      ['Origin & culture','Known on every inhabited continent — the Seven Sisters of Greek myth, and across Aboriginal Australia a group of women pursued by the hunter of Orion.'],
      ['Best from SEQ','Summer evenings (Nov–Mar), to the north.']]},
-  {slug:'coalsack',n:'The Coalsack',icon:'🌑',ra:186.0,dec:-63.0,vis:8,rar:'rare',
+  {slug:'coalsack',type:'dark',n:'The Coalsack',icon:'🌑',ra:186.0,dec:-63.0,vis:8,rar:'rare',
    blurb:'A dark nebula notched into the bright Milky Way beside the Southern Cross — the head of the Emu in the Sky.',
    rows:[
      ['What you’re seeing','A dense cloud of cold dust ~600 light-years away, blotting out the stars behind it — one of the most obvious dark nebulae in the sky.'],
      ['Origin & culture','The starting point of the great Emu in the Sky, a dark-cloud constellation central to many First Nations Australian traditions.'],
      ['Best from SEQ','Circumpolar; needs a dark sky to show against the Milky Way.']]},
-  {slug:'centaurusa',n:'Centaurus A',icon:'🌀',ra:201.365,dec:-43.019,vis:10,rar:'epic',eye:'binoc',
+  {slug:'centaurusa',type:'galaxy',n:'Centaurus A',icon:'🌀',ra:201.365,dec:-43.019,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright peculiar galaxy split by a dark dust lane — one of the nearest active galaxies, with a supermassive black hole firing jets across space.',
    rows:[
      ['What you’re seeing','An elliptical galaxy ~12 million light-years away (NGC 5128), crossed by the wreckage of a spiral it is swallowing. Its black hole launches jets millions of light-years long.'],
      ['How to find it','Just north of Omega Centauri. A faint round glow in binoculars; a small telescope starts to show the dark lane cutting across it.'],
      ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
-  {slug:'lagoon',n:'Lagoon Nebula',icon:'🌫️',ra:270.924,dec:-24.386,vis:8,rar:'rare',eye:'binoc',
+  {slug:'lagoon',type:'nebula',n:'Lagoon Nebula',icon:'🌫️',ra:270.924,dec:-24.386,vis:8,rar:'rare',eye:'binoc',
    blurb:'A big, bright star-forming cloud in Sagittarius, sitting right on the glowing core of the Milky Way.',
    rows:[
      ['What you’re seeing','A vast cloud of glowing hydrogen (M8) ~4,000 light-years away, cradling a newborn star cluster, with a dark “lagoon” channel down the middle.'],
      ['How to find it','Just above the spout of the Sagittarius “Teapot”. A misty patch to the naked eye from dark skies; lovely in binoculars.'],
      ['Best from SEQ','Winter evenings (Jun–Aug), riding high overhead.']]},
-  {slug:'sculptor',n:'Sculptor Galaxy',icon:'🌀',ra:11.888,dec:-25.288,vis:10,rar:'epic',eye:'binoc',
+  {slug:'sculptor',type:'galaxy',n:'Sculptor Galaxy',icon:'🌀',ra:11.888,dec:-25.288,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright, dust-streaked starburst galaxy seen nearly edge-on — one of the finest galaxies for binoculars in the southern sky.',
    rows:[
      ['What you’re seeing','A spiral galaxy ~11 million light-years away (NGC 253), bursting with new stars and thick with dust — an elongated silver sliver of light.'],
      ['How to find it','In the dim constellation Sculptor, below Cetus. An easy oval glow in binoculars from a dark site.'],
      ['Best from SEQ','Spring–summer evenings, high in the south.']]},
-  {slug:'m83',n:'Southern Pinwheel',icon:'🌀',ra:204.254,dec:-29.866,vis:10,rar:'epic',eye:'binoc',
+  {slug:'m83',type:'galaxy',n:'Southern Pinwheel',icon:'🌀',ra:204.254,dec:-29.866,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright, face-on spiral galaxy on the Hydra–Centaurus border — a swirl of star-forming arms.',
    rows:[
      ['What you’re seeing','A grand-design spiral ~15 million light-years away (M83), a prolific maker of supernovae, turned face-on so its pinwheel arms show.'],
@@ -2809,7 +2822,8 @@ const SKY_EVENTS=[
 ];
 // Build story-sheet lore for the deep-sky + dated events from their own data.
 (function(){
-  for(const d of DEEPSKY) SKY_LORE[d.slug]={icon:d.icon,title:d.n,tag:'Deep sky',blurb:d.blurb,rows:d.rows};
+  const _dsoTag={nebula:'Nebula',dark:'Dark nebula',globular:'Globular cluster',open:'Open cluster',galaxy:'Galaxy'};
+  for(const d of DEEPSKY) SKY_LORE[d.slug]={icon:d.icon,title:d.n,tag:_dsoTag[d.type]||'Deep sky',blurb:d.blurb,rows:d.rows};
   for(const e of SKY_EVENTS) SKY_LORE[e.slug]={icon:e.icon,title:e.name,tag:'Event',blurb:e.blurb,rows:e.rows};
   for(const s of SEASON_MARKERS) SKY_LORE[s.slug]={icon:s.icon,title:s.name,tag:'Event',blurb:s.note,
     rows:[['For stargazers',s.star],['Why it happens','It marks a turning point in Earth’s year-long orbit — the tilt of our axis swinging the Sun’s path higher or lower in the sky.']]};
@@ -3250,7 +3264,7 @@ function buildSkyObjects(lat,lng){
     const aa=altAz(d.ra,d.dec,lat,lng,date);
     if(aa.alt<(d.vis||8)) continue;
     const p=pos(aa.az,aa.alt), mk=rarCol(d.rar);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}"><span class="so-deep"></span><span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}"><span class="so-deep${d.type?(' dso-'+d.type):''}"></span><span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
   }
   if(skyShows('planets')) for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt<3)continue;
