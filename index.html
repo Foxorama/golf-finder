@@ -272,6 +272,15 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 body.sky-full-on{overflow:hidden;}
 .night-scene.sky-full{position:fixed;inset:0;width:100vw;height:100dvh;margin:0;border-radius:0;z-index:2000;background:radial-gradient(120% 80% at 50% 18%,#0c1430 0%,#070a18 60%,#04060f 100%);box-shadow:none;}
 .night-scene.sky-full::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 160px 30px rgba(0,0,0,0.55);z-index:6;}
+/* Fullscreen safe-zone: reserve a horizon strip for the bottom control bar and a
+   small margin from the frame edges, so sky markers never render under the
+   controls (issue A) or get bisected at the edge (issue B). Inset the star canvas
+   and the object layer by the same amounts so the two stay pixel-aligned. */
+.night-scene.sky-full .night-sky{left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);}
+/* The star canvas is a replaced element, so left+right can't stretch it — size it
+   explicitly to the same inset box as .night-sky so stars/lines stay aligned with
+   the object markers (buildStarField re-measures on the fullscreen repaint). */
+.night-scene.sky-full .sky-canvas{left:12px;top:0;right:auto;bottom:auto;width:calc(100% - 24px);height:calc(100% - (env(safe-area-inset-bottom,0px) + 92px));}
 .night-scene.sky-full .sky-compass{height:22px;bottom:6px;}
 .night-scene.sky-full .sky-compass span{font-size:14px;}
 .night-scene.sky-full .sky-compass span.minor{font-size:12px;}
@@ -294,6 +303,17 @@ body.sky-full-on{overflow:hidden;}
 .sky-fc-wx.on{opacity:1;background:rgba(90,169,240,0.26);border-color:rgba(143,184,232,0.85);color:#fff;}
 .sky-fc-filter{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aec6f0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
 .sky-fc-filter option{background:#101630;color:#dbe6ff;}
+.sky-fc-filterwrap{position:relative;display:flex;align-items:center;}
+.sky-fc-filter{display:flex;align-items:center;justify-content:center;white-space:nowrap;}
+.sky-fc-filter:active{transform:scale(0.96);}
+.sky-fc-filter.open{background:rgba(90,169,240,0.26);border-color:rgba(143,184,232,0.85);color:#fff;}
+.sky-fc-backdrop{position:fixed;inset:0;z-index:2250;}
+.sky-fc-pop{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:3px;min-width:172px;background:rgba(12,18,38,0.97);border:1px solid rgba(143,184,232,0.5);border-radius:12px;padding:7px;z-index:2300;box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+.sky-fc-opt{display:flex;align-items:center;gap:9px;height:36px;padding:0 13px;background:transparent;border:1px solid transparent;border-radius:8px;color:#cdd9f5;font-family:var(--mono);font-size:13px;text-align:left;cursor:pointer;}
+.sky-fc-opt:active{transform:scale(0.97);}
+.sky-fc-opt.on{background:rgba(90,169,240,0.22);border-color:rgba(143,184,232,0.7);color:#fff;}
+.sky-fc-opt.lens.on{background:rgba(120,140,225,0.3);border-color:#9fb6ff;}
+.sky-fc-pop-sep{height:1px;background:rgba(143,184,232,0.22);margin:3px 6px;}
 /* Focus-band emphasis: the figure/object you're pointing at brightens and reveals its
    anchor star name; .so-star is hidden otherwise. */
 .so-star{display:none;}
@@ -355,6 +375,9 @@ body.sky-full-on{overflow:hidden;}
 .sky-chip{flex:none;background:var(--sur);border:1px solid var(--bdr2);border-radius:999px;padding:4.5px 10px;font-family:var(--mono);font-size:10.5px;color:var(--tx2);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
 .sky-chip:active{transform:scale(0.96);}
 .sky-chip.on{background:rgba(143,184,232,0.2);border-color:#8fb8e8;color:#eef3ff;}
+.sky-chip.lens{border-color:rgba(143,184,232,0.5);}
+.sky-chip.lens.on{background:rgba(120,140,225,0.26);border-color:#9fb6ff;color:#fff;}
+.sky-chip-sep{flex:none;align-self:center;width:1px;height:15px;background:var(--bdr2);margin:1px 3px;}
 .sky-hint{font-family:var(--mono);font-size:10.5px;color:var(--tx3);margin:0 2px 11px;}
 /* ── Sky-object story modal (constellations + phenomena) ── */
 #sky-modal{display:none;position:fixed;inset:0;background:rgba(4,7,18,0.8);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;backdrop-filter:blur(2px);}
@@ -2882,8 +2905,8 @@ function bandMember(key,dist,state){
 // Category gate for the sky map. The 360° overview stays unfiltered (unchanged); only
 // the fullscreen detail view honours the card filter, so it can show one kind at a time.
 function skyShows(cat){
-  if(!_compassOn) return true;
-  return _skyFilter==='all'||_skyFilter==='now' ? true : _skyFilter===cat;
+  if(!_compassOn) return true;          // 360° overview shows everything
+  return _skyCats.has(cat);             // detail view honours the category toggles
 }
 function buildStarField(lat,lng){
   const cv=document.getElementById('sky-canvas'); if(!cv) return;
@@ -3335,15 +3358,27 @@ function _compassMsg(txt){
 function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251); renderNightWx(); }
 let _skyFullT=null;
 function _skyFullResize(){ clearTimeout(_skyFullT); _skyFullT=setTimeout(_skyFullRepaint,150); }
-// Build/refresh the in-overlay control bar (depth toggle + filter dropdown). Kept
-// compact (a dropdown, not a chip row) so future categories scale; mirrors the same
-// _skyFilter / depth state the cards use, so the two stay in sync.
+// Build/refresh the in-overlay control bar (depth toggle + filter menu + weather).
+// The filter is a button that opens an upward popover of toggles (lens + the four
+// categories) — a popover, not a <select>, so the categories are multi-select and
+// mirror the same _skyNowOnly / _skyCats state the night cards use.
+function skyFilterSummary(){
+  const n=_skyCats.size, lens=_skyNowOnly?'🌙 ':'';
+  return lens + (n===0 ? 'none' : n===SKY_CATS.length ? 'all sky' : n+' type'+(n===1?'':'s'));
+}
 function syncSkyFullControls(){
   const bar=document.getElementById('sky-full-controls'); if(!bar) return;
   const depth=STAR_MAG_PRESETS[_starMagIdx]||STAR_MAG_PRESETS[0];
-  const opts=SKY_FILTERS.map(o=>`<option value="${o.k}"${o.k===_skyFilter?' selected':''}>${o.icon} ${o.label}</option>`).join('');
+  const pop = _skyFcOpen
+    ? `<div class="sky-fc-backdrop" onclick="toggleSkyFcMenu()" aria-hidden="true"></div>`
+      +`<div class="sky-fc-pop" role="menu">`
+      +`<button class="sky-fc-opt lens${_skyNowOnly?' on':''}" role="menuitemcheckbox" aria-checked="${_skyNowOnly}" onclick="toggleSkyNow()">🌙 Visible now</button>`
+      +`<div class="sky-fc-pop-sep" aria-hidden="true"></div>`
+      +SKY_CATS.map(c=>`<button class="sky-fc-opt${_skyCats.has(c.k)?' on':''}" role="menuitemcheckbox" aria-checked="${_skyCats.has(c.k)}" onclick="toggleSkyCat('${c.k}')">${c.icon} ${c.label}</button>`).join('')
+      +`</div>`
+    : '';
   bar.innerHTML=`<button class="sky-fc-depth" onclick="cycleStarMag()" aria-label="Star depth">${depth.label}</button>`
-    +`<select class="sky-fc-filter" aria-label="Filter the sky" onchange="setSkyFilter(this.value)">${opts}</select>`
+    +`<div class="sky-fc-filterwrap">${pop}<button class="sky-fc-filter${_skyFcOpen?' open':''}" aria-haspopup="true" aria-expanded="${_skyFcOpen}" aria-label="Filter the sky" onclick="toggleSkyFcMenu()">${skyFilterSummary()}</button></div>`
     +`<button class="sky-fc-wx${_skyWxOn?' on':''}" onclick="toggleSkyWx()" aria-pressed="${_skyWxOn}" aria-label="Toggle weather effects">☁ weather</button>`;
 }
 function enterSkyFullscreen(){
@@ -3359,6 +3394,7 @@ function enterSkyFullscreen(){
   requestAnimationFrame(()=>requestAnimationFrame(_skyFullRepaint));
 }
 function exitSkyFullscreen(){
+  _skyFcOpen=false;
   const sc=document.getElementById('night-scene');
   if(sc) sc.classList.remove('sky-full');
   document.body.classList.remove('sky-full-on');
@@ -3581,50 +3617,77 @@ function astroCards(lat,lng){
 // The night list mixes constellations, planets, deep-sky objects and one-off
 // events; the chips let you focus on one kind. Filter is applied by hiding
 // .acard nodes (each tagged data-cat) so it survives the per-minute re-render.
-const SKY_FILTERS=[
-  {k:'now',label:'Visible now',icon:'🌙'},
-  {k:'all',label:'All',icon:'✨'},
+// Two orthogonal axes: a "Visible now" lens (what's up right now) and a set of
+// category toggles that compose — so you can show, say, planets AND deep sky at
+// once, instead of one-at-a-time. Both axes drive the night card list and the
+// live sky map (applySkyFilter + skyShows). Old single-select prefs migrate once.
+const SKY_CATS=[
   {k:'stars',label:'Stars',icon:'✦'},
   {k:'planets',label:'Planets',icon:'🪐'},
   {k:'deep',label:'Deep sky',icon:'🌌'},
   {k:'events',label:'Events',icon:'☄️'}
 ];
-let _skyFilter='now';
-try{ const s=localStorage.getItem('gf_skyfilter'); if(s&&SKY_FILTERS.some(f=>f.k===s)) _skyFilter=s; }catch(e){}
+let _skyNowOnly=true;                          // the "Visible now" lens
+let _skyCats=new Set(SKY_CATS.map(c=>c.k));    // active categories (default: all)
+let _skyFcOpen=false;                          // fullscreen filter popover open?
+(function(){
+  try{
+    const nv=localStorage.getItem('gf_skynow'), cv=localStorage.getItem('gf_skycats');
+    if(nv!=null||cv!=null){
+      if(nv!=null) _skyNowOnly = nv==='1';
+      if(cv!=null) _skyCats=new Set(cv.split(',').filter(k=>SKY_CATS.some(c=>c.k===k)));
+    }else{                                      // migrate the old single-select value
+      const old=localStorage.getItem('gf_skyfilter');
+      if(old==='all') _skyNowOnly=false;
+      else if(['stars','planets','deep','events'].includes(old)){ _skyNowOnly=false; _skyCats=new Set([old]); }
+      // 'now' (or nothing stored) keeps the default: lens on, all categories
+    }
+  }catch(e){}
+})();
+function persistSkyFilter(){ try{ localStorage.setItem('gf_skynow',_skyNowOnly?'1':'0'); localStorage.setItem('gf_skycats',[..._skyCats].join(',')); }catch(e){} }
 function filterChipsHTML(){
-  return `<div class="sky-filters" id="sky-filters">`+SKY_FILTERS.map(f=>
-    `<button class="sky-chip${f.k===_skyFilter?' on':''}" data-k="${f.k}" onclick="setSkyFilter('${f.k}')">${f.icon} ${f.label}</button>`
-  ).join('')+`</div>`;
+  const lens=`<button class="sky-chip lens${_skyNowOnly?' on':''}" data-k="now" aria-pressed="${_skyNowOnly}" onclick="toggleSkyNow()">🌙 Visible now</button>`;
+  const cats=SKY_CATS.map(c=>
+    `<button class="sky-chip${_skyCats.has(c.k)?' on':''}" data-k="${c.k}" aria-pressed="${_skyCats.has(c.k)}" onclick="toggleSkyCat('${c.k}')">${c.icon} ${c.label}</button>`
+  ).join('');
+  return `<div class="sky-filters" id="sky-filters">${lens}<span class="sky-chip-sep" aria-hidden="true"></span>${cats}</div>`;
 }
 function applySkyFilter(){
   const list=document.getElementById('course-list'); if(!list) return;
-  // "Visible now" also respects the naked-eye / binoculars depth button: a card
-  // that needs binoculars only counts as visible-now when binocular depth is set.
+  // The "Visible now" lens also respects the naked-eye / binoculars depth button:
+  // a card that needs binoculars only counts as visible-now at binocular depth.
   const binocDepth = (STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc';
   let shown=0;
   list.querySelectorAll('.acard').forEach(c=>{
     const cat=c.getAttribute('data-cat'), v=c.getAttribute('data-vis'), eye=c.getAttribute('data-eye');
-    const show = _skyFilter==='now' ? (v==='now' && (eye!=='binoc' || binocDepth))
-               : _skyFilter==='all' ? true
-               : cat===_skyFilter;
+    const nowOk = !_skyNowOnly || (v==='now' && (eye!=='binoc' || binocDepth));
+    const show = _skyCats.has(cat) && nowOk;
     c.style.display=show?'':'none'; if(show)shown++;
   });
-  list.querySelectorAll('.sky-chip').forEach(ch=>ch.classList.toggle('on',ch.getAttribute('data-k')===_skyFilter));
+  list.querySelectorAll('.sky-chip[data-k]').forEach(ch=>{
+    const k=ch.getAttribute('data-k');
+    ch.classList.toggle('on', k==='now' ? _skyNowOnly : _skyCats.has(k));
+  });
   let empty=document.getElementById('sky-empty');
   if(!shown){
     if(!empty){ empty=document.createElement('div'); empty.id='sky-empty'; empty.className='no-results'; list.appendChild(empty); }
-    empty.textContent = _skyFilter==='now' ? 'Nothing in naked-eye reach right now — try the 🔭 binoculars depth, or “All” to browse the whole sky.'
-                      : _skyFilter==='events' ? 'No events visible or upcoming in the next two weeks.'
-                      : 'Nothing in this category right now.';
+    empty.textContent = !_skyCats.size ? 'No categories selected — tap Stars, Planets, Deep sky or Events to fill the sky.'
+                      : _skyNowOnly ? 'Nothing in those categories is up right now — switch off “Visible now” to browse the whole sky, or try the 🔭 binoculars depth.'
+                      : 'Nothing in those categories right now.';
     empty.style.display='';
   }else if(empty){ empty.style.display='none'; }
 }
-function setSkyFilter(k){
-  _skyFilter=k; try{ localStorage.setItem('gf_skyfilter',k); }catch(e){}
+// Filter changes flow to both surfaces: the card list (applySkyFilter) and, when
+// the compass detail view is live, the sky map (buildSkyObjects → skyShows).
+function _afterSkyFilterChange(){
+  persistSkyFilter();
   applySkyFilter();
-  if(_compassOn) buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);  // filter the live sky map too
+  if(_compassOn) buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
   syncSkyFullControls();
 }
+function toggleSkyNow(){ _skyNowOnly=!_skyNowOnly; _afterSkyFilterChange(); }
+function toggleSkyCat(k){ if(_skyCats.has(k)) _skyCats.delete(k); else _skyCats.add(k); _afterSkyFilterChange(); }
+function toggleSkyFcMenu(){ _skyFcOpen=!_skyFcOpen; syncSkyFullControls(); }
 // Rarity for any story slug (mirrors the loot grade shown on its list card).
 const SKY_RARITY={milkyway:'rare',magellanic:'rare',moon:'common',aurora:'legendary',meteors:'epic',
   iss:'epic',venus:'common',jupiter:'common',mars:'rare',saturn:'rare',mercury:'rare',
