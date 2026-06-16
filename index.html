@@ -2578,7 +2578,12 @@ function _dayOnOrient(e){
   else if(_dayOrientEv==='deviceorientationabsolute'&&e.alpha!=null){ h=(360-e.alpha+(screen.orientation?.angle||0))%360; }
   if(h==null||isNaN(h)) return;
   h=((h%360)+360)%360;
-  if(_dayHead==null)_dayHead=h; else{ const diff=((h-_dayHead+540)%360)-180; _dayHead=((_dayHead+diff*0.25)%360+360)%360; }
+  // Accumulate the smoothed heading WITHOUT wrapping it into [0,360). Each step
+  // moves at most ~45°, so the #wc-rotor CSS transition always animates the short
+  // way; keeping it modulo made the value jump ~360° across north and the
+  // transition spun the long way around (reverse "unwind"). rotate(-720) looks
+  // identical to rotate(0), so the unbounded drift is harmless.
+  if(_dayHead==null)_dayHead=h; else{ const diff=(((h-_dayHead+540)%360)+360)%360-180; _dayHead+=diff*0.25; }
   const rotor=document.getElementById('wc-rotor');
   if(rotor) rotor.setAttribute('transform','rotate('+(-_dayHead).toFixed(1)+' 42 30)');
 }
