@@ -246,7 +246,7 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .sky-obj{position:absolute;transform:translate(-50%,-50%);text-align:center;line-height:1;}
 .sky-obj .so-dot{width:5px;height:5px;border-radius:50%;margin:0 auto;box-shadow:0 0 6px currentColor;}
 .sky-obj .so-icon{font-size:22px;filter:drop-shadow(0 0 9px rgba(220,230,255,0.5));}
-.sky-obj .so-label{font-family:var(--mono);font-size:9.5px;color:rgba(222,232,255,0.95);text-shadow:0 1px 4px rgba(0,0,0,1),0 0 6px rgba(0,0,0,0.8);margin-top:2px;display:block;white-space:nowrap;}
+.sky-obj .so-label{font-family:var(--mono);font-weight:500;font-size:11px;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 4px #000,0 1px 3px #000;margin-top:2px;display:block;white-space:nowrap;letter-spacing:0.01em;}
 .sky-compass{position:absolute;bottom:1px;left:0;right:0;height:13px;z-index:3;pointer-events:none;}
 .sky-compass span{position:absolute;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:rgba(185,202,240,0.8);letter-spacing:0.05em;text-shadow:0 1px 3px rgba(0,0,0,0.9);}
 .sky-compass span.minor{font-size:8.5px;color:rgba(185,202,240,0.5);}
@@ -2247,8 +2247,10 @@ function buildStarField(lat,lng){
   paintSky();
   startTwinkle();
 }
-// Repaint the cached field. Faint stars shimmer on a per-star phase (atmospheric
-// twinkle); the brightest sit steady so they anchor the figures.
+// Repaint the cached field. Every star scintillates on its own per-star phase
+// (atmospheric twinkle); the brightest also pulse their glow but never dip far,
+// so they stay legible as figure anchors. The swing is deliberately wide — a
+// timid flicker is invisible on a small high-DPI phone.
 function paintSky(){
   const cv=_skyCanvas; if(!cv) return; const W=_skyW,H=_skyH;
   const dpr=Math.min(2,window.devicePixelRatio||1);
@@ -2260,9 +2262,10 @@ function paintSky(){
   }
   const t=_twinklePhase;
   for(const d of _skyDots){
-    const tw=d.glow?1:(0.78+0.22*Math.sin(t+d.ph));
-    ctx.globalAlpha=Math.min(1,d.a*tw); ctx.fillStyle=d.cx?'#bcd8ff':'#fbfdff';
-    if(d.glow){ ctx.shadowColor=d.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=4; }
+    const s=Math.sin(t+d.ph);
+    const tw=d.glow?(0.8+0.2*s):(0.6+0.4*s);   // bright: 0.6–1.0, faint: 0.2–1.0
+    ctx.globalAlpha=Math.min(1,Math.max(0.05,d.a*tw)); ctx.fillStyle=d.cx?'#bcd8ff':'#fbfdff';
+    if(d.glow){ ctx.shadowColor=d.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=3+2*(0.5+0.5*s); }
     else ctx.shadowBlur=0;
     ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,6.2832); ctx.fill();
   }
@@ -3239,6 +3242,9 @@ async function init(){
 // Pause weather animations when the tab is backgrounded (battery)
 document.addEventListener('visibilitychange',()=>{
   document.body.classList.toggle('wx-paused',document.hidden);
+  // The twinkle loop self-stops while hidden (battery) and isn't otherwise
+  // restarted, so re-arm it on return or the sky goes static until a repaint.
+  if(!document.hidden&&document.body.classList.contains('night')) startTwinkle();
 });
 
 
