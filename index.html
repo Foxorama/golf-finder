@@ -3717,7 +3717,7 @@ function render(){
     document.title = renderNight?`${rc} Night Sky`:`${rc} Golf Finder`;
     const tm=document.querySelector('meta[name="theme-color"]');
     if(tm) tm.content = renderNight?'#0a0e1f':'#0f1a0f';
-    // (favicon stays the were-fox in both modes — the icon embodies the shift)
+    // (favicon stays the constellation-fox icon in both modes — the icon embodies the shift)
     document.body.classList.toggle('night',renderNight);
   }
 
