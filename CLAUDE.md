@@ -13,6 +13,15 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   runtime Overpass fetch is the fallback). `scripts/build-course-maps.mjs` +
   `.github/workflows/course-maps.yml` generate it (manual-dispatch; Overpass
   throttles CI IPs, so it often needs a residential connection — left as-is).
+- **`star-catalog.json`** — *optional* pre-baked naked-eye star field (mag ≤ ~5)
+  for night mode, from the public-domain HYG database. `scripts/build-star-catalog.mjs`
+  + `.github/workflows/star-catalog.yml` generate it (manual-dispatch; static
+  J2000 data, so it's a one-time bake). The app works **without** it: index.html
+  embeds a seed of the marquee southern figures (`STAR_FIGURES`/`STAR_LOOSE`), and
+  constellation **lines are always curated in `STAR_FIGURES`** (never baked), so the
+  catalog only enriches the background field. Every star is positioned at runtime by
+  `altAz()`, so the same list is correct for any region/date — `buildStarField()`
+  draws it all onto one `#sky-canvas` behind the labelled objects.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow

@@ -271,9 +271,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .acard-pos{font-family:var(--mono);font-size:11px;color:var(--ac,#a8c0e8);margin-left:auto;text-align:right;}
 .acard-note{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1.6;}
 .acard.alert{border-color:rgba(80,255,170,0.45);background:rgba(80,255,170,0.05);}
-.night-stars{position:absolute;inset:0;}
-.night-star{position:absolute;background:#fff;border-radius:50%;animation:twinkle var(--dur,3s) ease-in-out infinite;animation-delay:var(--delay,0s);}
-@keyframes twinkle{0%,100%{opacity:0.15;}50%{opacity:0.9;}}
+/* Real star field + constellation lines — drawn on one canvas behind the
+   labelled objects (#night-sky), positioned by the same altAz projection. */
+.sky-canvas{position:absolute;inset:0;z-index:1;pointer-events:none;}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift var(--cd,24s) linear infinite;}
 @keyframes cloudDrift{0%{transform:translateX(-220px);}100%{transform:translateX(660px);}}
@@ -764,7 +764,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <!-- NIGHT MODE -->
     <div id="daybar-night" style="display:none;">
       <div class="night-scene" id="night-scene">
-        <div class="night-stars" id="night-stars"></div>
+        <canvas class="sky-canvas" id="sky-canvas" aria-hidden="true"></canvas>
         <div class="sky-horizon" aria-hidden="true"></div>
         <div class="night-sky" id="night-sky" aria-hidden="true"></div>
         <div class="sky-compass" id="sky-compass" aria-hidden="true"></div>
@@ -1143,23 +1143,11 @@ function skyRegionCode(lat,lng){
   return best;
 }
 // Build the night scene: stars, accurate moon phase, weather overlay
-let _nightBuilt=false;
 function buildNightScene(){
-  // Stars only need building once (they're static positions)
-  const starsEl=document.getElementById('night-stars');
-  if(starsEl && !_nightBuilt){
-    let html='';
-    for(let i=0;i<34;i++){
-      const x=Math.random()*100, y=Math.random()*100;
-      const sz=Math.random()*1.6+0.8;
-      const dur=Math.random()*2.5+2;
-      const delay=Math.random()*3;
-      html+=`<span class="night-star" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;--dur:${dur}s;--delay:${delay}s;"></span>`;
-    }
-    starsEl.innerHTML=html;
-    _nightBuilt=true;
-  }
-  // Real sky: moon, planets, bright stars at their actual alt/az right now
+  // Pull the full mag-5 catalog in once (lazy, cached); the embedded seed has
+  // already drawn the marquee figures on the first paint below.
+  loadStarCatalog();
+  // Real sky: star field, constellation lines, moon, planets at true alt/az now
   buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
   // Weather overlay from the true at-your-GPS forecast (zone fallback).
   // Cached on condition so the 60s re-render doesn't restart the rain animation
@@ -2037,6 +2025,149 @@ const BRIGHT_STARS=[
 // Naked-eye deep-sky anchors (J2000): galactic core + Magellanic Clouds
 const GAL_CORE={ra:266.42,dec:-29.01};
 const MAGELLANIC=[{n:'LMC',ra:80.89,dec:-69.76,sz:15},{n:'SMC',ra:13.16,dec:-72.80,sz:10}];
+
+// ── Real star field (naked-eye, mag ≤ ~5) + constellation line figures ──────
+// Every star rides the same altAz() projection as the labelled objects, so it's
+// correct for the region and the exact instant — and rotates through the night
+// and the seasons automatically (J2000 coords; precession is < 0.5° over decades,
+// invisible here). A compact embedded SEED draws the marquee southern-sky figures
+// immediately and offline; star-catalog.json, when present (CI-baked, lazy-loaded
+// on first night render), supersedes it with the full mag-5 field. Each star is
+// [ra°, dec°, mag, cruxFlag]; constellation lines are index pairs into the field.
+const STAR_FIGURES=[
+  {n:'Crux',cx:1,s:[
+    ['Acrux',186.650,-63.099,0.8],['Mimosa',191.930,-59.689,1.3],
+    ['Gacrux',187.791,-57.113,1.6],['Imai',183.786,-58.749,2.8],
+    ['Ginan',185.340,-60.401,3.6]],
+   l:[[2,0],[1,3]]},
+  {n:'Centaurus',s:[
+    ['Rigil Kent',219.902,-60.834,-0.3],['Hadar',210.956,-60.373,0.6]],
+   l:[[0,1]]},
+  {n:'Orion',s:[
+    ['Betelgeuse',88.793,7.407,0.5],['Rigel',78.634,-8.202,0.1],
+    ['Bellatrix',81.283,6.350,1.6],['Saiph',86.939,-9.670,2.1],
+    ['Alnitak',85.190,-1.943,1.8],['Alnilam',84.053,-1.202,1.7],
+    ['Mintaka',83.002,-0.299,2.2]],
+   l:[[0,2],[4,5],[5,6],[2,6],[0,4],[1,6],[3,4]]},
+  {n:'Canis Major',s:[
+    ['Sirius',101.287,-16.716,-1.5],['Mirzam',95.674,-17.956,2.0],
+    ['Wezen',107.098,-26.393,1.8],['Adhara',104.656,-28.972,1.5],
+    ['Aludra',111.024,-29.303,2.4]],
+   l:[[0,1],[0,3],[3,2],[2,4]]},
+  {n:'Scorpius',s:[
+    ['Dschubba',240.083,-22.622,2.3],['Acrab',241.359,-19.805,2.6],
+    ['Pi Sco',239.713,-26.114,2.9],['Antares',247.352,-26.432,1.1],
+    ['Tau Sco',248.971,-28.216,2.8],['Epsilon Sco',252.968,-34.293,2.3],
+    ['Mu Sco',253.084,-38.017,3.0],['Zeta Sco',253.648,-42.362,3.6],
+    ['Eta Sco',258.038,-43.239,3.3],['Sargas',264.330,-42.998,1.9],
+    ['Iota Sco',266.896,-40.127,3.0],['Girtab',265.622,-39.030,2.4],
+    ['Shaula',263.402,-37.104,1.6],['Lesath',262.691,-37.296,2.7]],
+   l:[[1,0],[0,2],[0,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]},
+  {n:'Sagittarius',s:[
+    ['Kaus Australis',276.043,-34.385,1.8],['Kaus Media',275.249,-29.828,2.7],
+    ['Kaus Borealis',276.993,-25.421,2.8],['Nunki',283.816,-26.297,2.0],
+    ['Ascella',285.653,-29.880,2.6],['Phi Sgr',281.414,-26.990,3.2],
+    ['Alnasl',271.452,-30.424,3.0]],
+   l:[[6,1],[1,0],[0,4],[4,3],[3,5],[5,1],[5,2],[2,1]]},
+  {n:'Leo',s:[
+    ['Regulus',152.093,11.967,1.4],['Eta Leo',151.833,16.763,3.5],
+    ['Algieba',154.993,19.842,2.0],['Adhafera',154.173,23.417,3.4],
+    ['Rasalas',148.190,26.007,3.9],['Epsilon Leo',146.463,23.774,3.0],
+    ['Denebola',177.265,14.572,2.1],['Zosma',168.527,20.524,2.6],
+    ['Chort',168.560,15.430,3.3]],
+   l:[[5,4],[4,3],[3,2],[2,1],[1,0],[2,7],[7,6],[6,8],[8,0],[7,8]]}
+];
+const STAR_LOOSE=[
+  ['Canopus',95.988,-52.696,-0.7],['Achernar',24.429,-57.237,0.5],
+  ['Vega',279.235,38.784,0.0],['Altair',297.696,8.868,0.8],
+  ['Arcturus',213.915,19.182,0.0],['Spica',201.298,-11.161,1.0],
+  ['Fomalhaut',344.413,-29.622,1.2],['Pollux',116.329,28.026,1.1],
+  ['Castor',113.650,31.888,1.6],['Procyon',114.825,5.225,0.3],
+  ['Capella',79.172,45.998,0.1],['Aldebaran',68.980,16.509,0.9],
+  ['Miaplacidus',138.300,-69.717,1.7],['Avior',125.628,-59.509,1.9],
+  ['Aspidiske',139.273,-59.275,2.2],['Atria',252.166,-69.028,1.9],
+  ['Alnair',332.058,-46.961,1.7],['Peacock',306.412,-56.735,1.9],
+  ['Diphda',10.897,-17.987,2.0],['Menkent',211.671,-36.370,2.1],
+  ['Gienah',183.952,-17.542,2.6],['Suhail',136.999,-43.432,2.2],
+  ['Markeb',140.528,-55.011,2.5],['Regor',122.383,-47.337,1.8],
+  ['Naos',120.896,-40.003,2.2],['Alphard',141.897,-8.659,2.0],
+  ['Deneb',310.358,45.280,1.3],['Hamal',31.793,23.462,2.0],
+  ['Alcyone',56.871,24.105,2.9]
+];
+// Flatten the seed once into the same {stars:[[ra,dec,mag,cx]], lines:[[i,j]]}
+// shape the baked catalog uses, so buildStarField has a single code path.
+const SKY_SEED=(()=>{
+  const stars=[],lines=[];
+  for(const f of STAR_FIGURES){
+    const base=stars.length;
+    for(const s of f.s) stars.push([s[1],s[2],s[3],f.cx?1:0]);
+    for(const e of (f.l||[])) lines.push([base+e[0],base+e[1]]);
+  }
+  for(const s of STAR_LOOSE) stars.push([s[1],s[2],s[3],0]);
+  return {stars,lines};
+})();
+// Optional dense field: star-catalog.json = {stars:[[ra°,dec°,mag],…]} baked by
+// CI from a public-domain catalogue (Yale BSC / HYG) to mag ~5. Constellation
+// LINES always come from the curated seed figures above (accurate + licence-clean),
+// so the catalog only ever has to enrich the background field — no fragile line
+// remapping. Lazy-loaded on first night render; cached by the service worker.
+let STAR_CATALOG=null,_starCatDone=false,_starCatBusy=false;
+async function loadStarCatalog(){
+  if(_starCatDone||_starCatBusy) return;
+  _starCatBusy=true;
+  try{
+    const r=await fetch('star-catalog.json');
+    if(r.ok){ const j=await r.json(); if(j&&Array.isArray(j.stars)&&j.stars.length) STAR_CATALOG=j; }
+  }catch(e){ /* seed already covers the marquee figures, online or off */ }
+  _starCatDone=true;_starCatBusy=false;
+  if(STAR_CATALOG && document.body.classList.contains('night'))
+    buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
+}
+// Paint the star field + constellation lines for the current region/time onto
+// one canvas behind the labelled objects. No DOM nodes: a single pass handles
+// ~1500 stars in well under a frame, so it repaints cheaply as the compass pans.
+function buildStarField(lat,lng){
+  const cv=document.getElementById('sky-canvas'); if(!cv) return;
+  const W=cv.clientWidth,H=cv.clientHeight; if(!W||!H) return;   // hidden in day mode
+  const dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
+  const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  const date=nowDate();
+  const center=skyHeading==null?180:skyHeading;
+  // Identical placement to buildSkyObjects' pos(): az→x across the panorama, alt→y
+  const px=(az)=>(((((az-center+180)%360)+360)%360)/360)*W;
+  const py=(alt)=>((8+(1-Math.min(alt,90)/90)*76)/100)*H;
+  const proj=(s)=>{ const aa=altAz(s[0],s[1],lat,lng,date); return aa.alt<-1?null:{x:px(aa.az),y:py(aa.alt)}; };
+  // Constellation lines (under the stars) — always the curated seed figures, so
+  // they stay correct whether or not the dense catalog has loaded.
+  const seedP=SKY_SEED.stars.map(proj);
+  if(SKY_SEED.lines.length){
+    ctx.lineWidth=0.7; ctx.strokeStyle='rgba(150,178,230,0.24)'; ctx.beginPath();
+    for(const e of SKY_SEED.lines){
+      const a=seedP[e[0]],b=seedP[e[1]]; if(!a||!b) continue;
+      if(Math.abs(a.x-b.x)>W*0.5) continue;                      // straddles the seam — skip
+      ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y);
+      if(a.x<W*0.08||b.x<W*0.08){ ctx.moveTo(a.x+W,a.y); ctx.lineTo(b.x+W,b.y); }
+      else if(a.x>W*0.92||b.x>W*0.92){ ctx.moveTo(a.x-W,a.y); ctx.lineTo(b.x-W,b.y); }
+    }
+    ctx.stroke();
+  }
+  // Star field on top — the dense catalog if it's loaded, otherwise the seed.
+  // Radius and brightness scale with magnitude; the brightest get a soft glow.
+  const field=(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars:SKY_SEED.stars;
+  for(const s of field){
+    const p=proj(s); if(!p) continue;
+    const mag=s[2], cx=s[3];
+    const r=Math.max(0.5,2.5-mag*0.46), a=Math.max(0.32,Math.min(1,1.12-mag*0.13));
+    ctx.globalAlpha=a; ctx.fillStyle=cx?'#bcd8ff':'#fbfdff';
+    if(mag<1.4){ ctx.shadowColor=cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=4; }
+    else ctx.shadowBlur=0;
+    const dot=(x)=>{ ctx.beginPath(); ctx.arc(x,p.y,r,0,6.2832); ctx.fill(); };
+    dot(p.x);
+    if(p.x<W*0.08) dot(p.x+W); else if(p.x>W*0.92) dot(p.x-W);
+  }
+  ctx.globalAlpha=1; ctx.shadowBlur=0;
+}
 // Next time an object's altitude rises above 3°, sampling 15-min steps
 function nextRise(altFn,from,untilMins){
   for(let m=15;m<=untilMins;m+=15){
@@ -2181,17 +2312,13 @@ function wrapX(x,fn){
 function buildSkyObjects(lat,lng){
   const layer=document.getElementById('night-sky'); if(!layer)return;
   const date=nowDate();
+  // Star field + constellation lines live on the canvas behind this layer
+  buildStarField(lat,lng);
   const pos=(az,alt)=>({x:skyAzX(az), y:8+(1-Math.min(alt,90)/90)*76});
   let html='';
   // Aurora glow sits on the true southern horizon, wherever south currently is
   const au=auroraStatus(lat);
   if(au&&(au.level==='alert'||au.level==='watch')) html+=wrapX(skyAzX(180), x=>`<div class="sky-aurora" style="left:${(x-18).toFixed(1)}%"></div>`);
-  for(const st of BRIGHT_STARS){
-    const aa=altAz(st.ra,st.dec,lat,lng,date);
-    if(aa.alt<2)continue;
-    const p=pos(aa.az,aa.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-star${st.crux?' crux':''}"${st.big?' data-big':''} style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div>`);
-  }
   const ac=altAz(186.65,-63.099,lat,lng,date); // Acrux anchors the Crux label
   if(ac.alt>6){const p=pos(ac.az,ac.alt);html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+8).toFixed(1)}%"><span class="so-label">Crux</span></div>`);}
   for(const pl of planetPositions(lat,lng,date)){
