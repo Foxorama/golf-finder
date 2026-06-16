@@ -234,6 +234,9 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 #loc-status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;}
 .day-lastcall b{color:var(--gb);font-weight:500;}
 .day-lastcall .lc-past{opacity:0.4;text-decoration:line-through;}
+/* Very narrow phones: shrink the bar labels so the spelled-out "18 holes"/
+   "9 holes" tee markers don't collide with the sunrise/last-light times. */
+@media(max-width:359px){.day-lastcall{font-size:9.5px;}}
 
 /* ── Daybar night mode — starfield scene ── */
 #daybar-night{margin:-2px;}
@@ -2758,7 +2761,7 @@ function render(){
       lcEl.style.display='block';
       const lt=parseFloat(tickPos(t18));
       const teeLbl=(label,t)=> `<span class="lc-h${t<now?' lc-past':''}" style="left:${tickPos(t)};">${label}</span>`;
-      lcEl.innerHTML=`<span class="lc-side lc-rise">${minsToStr(sunriseMins)}</span><span class="lc-cap" style="right:${(100-lt+5).toFixed(1)}%">⛳ Last Tee</span>${teeLbl('18h',t18)}${teeLbl('9h',t9)}<span class="lc-side lc-set">${minsToStr(lastLightMins)}</span>`;
+      lcEl.innerHTML=`<span class="lc-side lc-rise">${minsToStr(sunriseMins)}</span><span class="lc-cap" style="right:${(100-lt+10).toFixed(1)}%">⛳ Last Tee</span>${teeLbl('18 holes',t18)}${teeLbl('9 holes',t9)}<span class="lc-side lc-set">${minsToStr(lastLightMins)}</span>`;
     }
   }
 
@@ -2820,15 +2823,19 @@ function render(){
     dlLabel.textContent=forecastMode?'Upcoming':'Daylight left';
     dlHrs.style.color='';
     dlHrs.innerHTML=`${dHrs}<span style="font-size:13px;color:var(--tx3);margin-left:2px;">hrs</span>`;
-    // The verdict, not just the quantity: which round still fits in this filter
-    const fits18=playableInFilter.some(c=>!c.par3&&canPlayHoles(c,18,daylight));
-    const fits9 =playableInFilter.some(c=>!c.par3&&canPlayHoles(c,9,daylight));
-    const fitsP3=playableInFilter.some(c=>c.par3&&canPlayAny(c,daylight));
+    // Which round still fits the remaining LIGHT — same last-tee deadlines as the
+    // daybar markers (t18/t9), so the card and the bar never disagree. How far
+    // you'd have to drive is the Last call card's job, not this one; a course just
+    // has to exist in the filter and be open when you'd arrive.
+    const openInFilter=filtered.filter(c=>!isClosedAt(c, now+PREP+driveMins(c)));
+    const tP3=lastLightMins-90;  // 9-hole par-3 ~60 min + 30 dusk margin
+    const fits18=t18>now && openInFilter.some(c=>!c.par3&&c.holes.includes(18));
+    const fits9 =t9 >now && openInFilter.some(c=>!c.par3&&c.holes.includes(9));
+    const fitsP3=tP3>now && openInFilter.some(c=>c.par3);
     let verdict,vcol;
-    if(fits18&&fits9){verdict='18 ✓ · 9 ✓';vcol='var(--gb)';}
-    else if(fits18){verdict='18 ✓';vcol='var(--gb)';}
-    else if(fits9){verdict='9 holes only';vcol='var(--al)';}
-    else if(fitsP3){verdict='par-3 only';vcol='var(--al)';}
+    if(fits18){verdict='18 holes';vcol='var(--gb)';}
+    else if(fits9){verdict='9 holes';vcol='var(--al)';}
+    else if(fitsP3){verdict='par-3';vcol='var(--al)';}
     else{verdict='no round fits';vcol='var(--rl)';}
     dlSub.innerHTML=`last light ${minsToStr(lastLightMins)}<br><span style="color:${vcol};">${verdict}</span>`;
     const lvl=daylight<120?'danger':daylight<240?'warn':'ok';
