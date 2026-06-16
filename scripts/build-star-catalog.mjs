@@ -20,15 +20,15 @@ const OUT = join(ROOT, 'star-catalog.json');
 const OUT_DEEP = join(ROOT, 'star-catalog-deep.json');
 
 // Two tiers, baked in one pass:
-//  • star-catalog.json      mag ≤ MAG_LIMIT  (~1,600 stars) — the lean default
-//    lazy-loaded for everyone on first night render ("naked eye").
+//  • star-catalog.json      mag ≤ MAG_LIMIT  (~8,800 stars) — lazy-loaded for
+//    everyone on first night render ("naked eye"); 6.5 fills the sparse
+//    anti-Milky-Way side that mag 5 left looking empty.
 //  • star-catalog-deep.json mag ≤ DEEP_LIMIT (~14,000 stars) — fetched ONLY when
-//    the viewer switches to "dark sky" / "binoculars", so default users never
-//    pay for it. The app client-filters this one down per preset (6.5 / 7.0).
-// 5.0 ≈ practical naked-eye limit under suburban skies; 6.5 ≈ true dark-sky
-// naked-eye limit; ~7 is about as deep as the small night strip stays legible
-// (real binoculars reach ~9, but that's 100k+ stars — a smear and a 1 MB file).
-const MAG_LIMIT = Number(process.env.MAG_LIMIT || 5.0);
+//    the viewer switches to "binoculars", so default users never pay for it.
+// 6.5 ≈ the true dark-sky naked-eye limit; ~7 is about as deep as the small night
+// strip stays legible (real binoculars reach ~9, but that's 100k+ stars — a
+// smear and a 1 MB file).
+const MAG_LIMIT = Number(process.env.MAG_LIMIT || 6.5);
 const DEEP_LIMIT = Number(process.env.DEEP_LIMIT || 7.0);
 
 // HYG CSV (one big file; pick whichever responds). Public domain. The repo
