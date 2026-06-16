@@ -12,9 +12,13 @@ on:
   workflow_dispatch:
     inputs:
       mag_limit:
-        description: "Faintest magnitude to include (5.0 ≈ naked-eye, 6.5 ≈ dark-sky)"
+        description: "Naked-eye tier limit → star-catalog.json (5.0 ≈ suburban)"
         required: false
         default: "5.0"
+      deep_limit:
+        description: "Deep tier limit → star-catalog-deep.json (6.5 dark-sky / 7.0 binocular)"
+        required: false
+        default: "7.0"
 
 permissions:
   contents: write
@@ -34,9 +38,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Generate star-catalog.json
+      - name: Generate star catalogs
         env:
           MAG_LIMIT: ${{ github.event.inputs.mag_limit }}
+          DEEP_LIMIT: ${{ github.event.inputs.deep_limit }}
         run: node scripts/build-star-catalog.mjs
 
       - name: Upload artifact
@@ -44,21 +49,23 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: star-catalog
-          path: star-catalog.json
+          path: |
+            star-catalog.json
+            star-catalog-deep.json
 
       - name: Open PR if changed
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- star-catalog.json; then
-            echo "No changes to star-catalog.json"
+          if git diff --quiet -- star-catalog.json star-catalog-deep.json; then
+            echo "No changes to star catalogs"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B bot/star-catalog
-          git add star-catalog.json
-          git commit -m "Update star-catalog.json from HYG database"
+          git add star-catalog.json star-catalog-deep.json
+          git commit -m "Update star catalogs from HYG database"
           git push -f origin bot/star-catalog
           if [ -z "$(gh pr list --head bot/star-catalog --state open --json number -q '.[0].number')" ]; then
             gh pr create --base main --head bot/star-catalog \

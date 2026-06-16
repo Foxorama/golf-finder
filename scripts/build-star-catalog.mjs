@@ -17,11 +17,19 @@ import { dirname, join } from 'node:path';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = join(ROOT, 'star-catalog.json');
+const OUT_DEEP = join(ROOT, 'star-catalog-deep.json');
 
-// Faintest stars to include. ~5.0 ≈ the practical naked-eye limit under
-// suburban skies (~1,600 stars whole-sky) and keeps the file small. Bump toward
-// 6.5 for true dark-sky depth at the cost of size, or ~7 for "binocular".
+// Two tiers, baked in one pass:
+//  • star-catalog.json      mag ≤ MAG_LIMIT  (~1,600 stars) — the lean default
+//    lazy-loaded for everyone on first night render ("naked eye").
+//  • star-catalog-deep.json mag ≤ DEEP_LIMIT (~14,000 stars) — fetched ONLY when
+//    the viewer switches to "dark sky" / "binoculars", so default users never
+//    pay for it. The app client-filters this one down per preset (6.5 / 7.0).
+// 5.0 ≈ practical naked-eye limit under suburban skies; 6.5 ≈ true dark-sky
+// naked-eye limit; ~7 is about as deep as the small night strip stays legible
+// (real binoculars reach ~9, but that's 100k+ stars — a smear and a 1 MB file).
 const MAG_LIMIT = Number(process.env.MAG_LIMIT || 5.0);
+const DEEP_LIMIT = Number(process.env.DEEP_LIMIT || 7.0);
 
 // HYG v3 CSV mirrors (one big file; pick whichever responds). Public domain.
 const SOURCES = [
@@ -44,7 +52,8 @@ async function fetchCsv() {
   throw lastErr || new Error('no HYG source responded');
 }
 
-function parse(csv) {
+// Parse the HYG CSV into [ra°, dec°, mag] for every star down to `limit`.
+function parse(csv, limit) {
   const lines = csv.split(/\r?\n/);
   const header = lines[0].split(',');
   const iRa = header.indexOf('ra');     // hours
@@ -57,7 +66,7 @@ function parse(csv) {
     if (!row) continue;
     const f = row.split(',');           // HYG numeric columns are comma-clean
     const mag = parseFloat(f[iMag]);
-    if (!isFinite(mag) || mag > MAG_LIMIT) continue;
+    if (!isFinite(mag) || mag > limit) continue;
     const raH = parseFloat(f[iRa]), dec = parseFloat(f[iDec]);
     if (!isFinite(raH) || !isFinite(dec)) continue;
     if (raH === 0 && dec === 0 && mag < -20) continue;   // the Sun (id 0)
@@ -71,20 +80,27 @@ function parse(csv) {
   return stars;
 }
 
+function write(path, name, stars, limit) {
+  const out = { generated: new Date().toISOString(), mag_limit: limit, count: stars.length, stars };
+  writeFileSync(path, JSON.stringify(out) + '\n');
+  console.log(`Wrote ${name} — ${stars.length} stars at mag ≤ ${limit} (${(JSON.stringify(out).length / 1024).toFixed(0)} KB)`);
+}
+
 async function main() {
-  const stars = parse(await fetchCsv());
-  console.log(`Kept ${stars.length} stars at mag ≤ ${MAG_LIMIT}`);
-  if (stars.length < 200) {
+  const csv = await fetchCsv();
+  const deep = parse(csv, DEEP_LIMIT);
+  const naked = deep.filter((s) => s[2] <= MAG_LIMIT);   // subset — parse once
+  console.log(`Parsed ${naked.length} naked-eye (≤${MAG_LIMIT}) of ${deep.length} deep (≤${DEEP_LIMIT}) stars`);
+  if (naked.length < 200) {
     // A real mag-5 catalogue has ~1,600 stars; far fewer means a bad parse —
     // don't clobber a good file (the app's seed still covers the marquee figures).
     let prev = 0;
     try { prev = (JSON.parse(readFileSync(OUT, 'utf8')).stars || []).length; } catch {}
-    console.error(`Refusing to overwrite: only ${stars.length} stars parsed (had ${prev}).`);
+    console.error(`Refusing to overwrite: only ${naked.length} stars parsed (had ${prev}).`);
     process.exit(1);
   }
-  const out = { generated: new Date().toISOString(), mag_limit: MAG_LIMIT, count: stars.length, stars };
-  writeFileSync(OUT, JSON.stringify(out) + '\n');
-  console.log(`Wrote star-catalog.json (${(JSON.stringify(out).length / 1024).toFixed(0)} KB)`);
+  write(OUT, 'star-catalog.json', naked, MAG_LIMIT);
+  write(OUT_DEEP, 'star-catalog-deep.json', deep, DEEP_LIMIT);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });
