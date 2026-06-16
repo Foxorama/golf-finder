@@ -277,7 +277,14 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .acard.alert{border-color:rgba(80,255,170,0.45);background:rgba(80,255,170,0.05);}
 /* Real star field + constellation lines — drawn on one canvas behind the
    labelled objects (#night-sky), positioned by the same altAz projection. */
-.sky-canvas{position:absolute;inset:0;z-index:1;pointer-events:none;}
+/* width/height:100% is load-bearing, not cosmetic: a <canvas> is a replaced
+   element, so inset:0 alone does NOT stretch it to the container — it falls back
+   to its intrinsic (width/height attribute) size. buildStarField reads
+   cv.clientWidth then writes cv.width=clientWidth*dpr, so without an explicit CSS
+   size clientWidth tracks the attribute and every repaint multiplies the canvas
+   by dpr (a feedback loop that crashes mobile renderers). Pinning the CSS box to
+   the container decouples display size from the backing-store resolution. */
+.sky-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:1;pointer-events:none;}
 .night-wx{position:absolute;inset:0;z-index:3;pointer-events:none;}
 .night-cloud{position:absolute;font-size:30px;opacity:0.85;animation:cloudDrift var(--cd,24s) linear infinite;}
 @keyframes cloudDrift{0%{transform:translateX(-220px);}100%{transform:translateX(660px);}}
