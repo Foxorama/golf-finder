@@ -69,8 +69,12 @@ jobs:
           git checkout -B bot/star-catalog
           git commit -m "Update star catalogs from HYG database"
           git push -f origin bot/star-catalog
+          # PR creation is best-effort: many repos block Actions from opening PRs
+          # ("Allow GitHub Actions to create and approve pull requests" off). The
+          # branch is already pushed either way — open the PR by hand if this warns.
           if [ -z "$(gh pr list --head bot/star-catalog --state open --json number -q '.[0].number')" ]; then
             gh pr create --base main --head bot/star-catalog \
-              --title "Update star-catalog.json from HYG database" \
-              --body "Automated naked-eye star-field refresh. Data: HYG database (public domain)."
+              --title "Update star catalogs from HYG database" \
+              --body "Automated star-field refresh. Data: HYG database (public domain)." \
+              || echo "::warning::Could not open PR automatically — branch bot/star-catalog is pushed; open the PR manually."
           fi
