@@ -27,6 +27,16 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `altAz()` from the viewer's real GPS (region picker can override), so the same
   list is correct for any region/date — `buildStarField()` draws it all onto one
   `#sky-canvas` behind the labelled objects.
+- **Night-card system** — the night list (`astroCards`) emits one `.acard` per
+  sky object/event through a single `buildCard()` template. Each card has a
+  **loot-grade rarity** (common→blue, rare→green, epic→purple, legendary→orange;
+  `RARITY_C`/`rarCol`) that colours its accent, the modal crest and the sky-map
+  marker, and a **visibility** state (`now`/`soon`/`later`) that drives the default
+  **Visible now** filter and the *upcoming* pill (dated events ≤2 weeks out). Every
+  card also gets a phasing **Star Outline ↔ Astral Heroic** SVG emblem (`cardArt`).
+  The whole visual style — and how to add a new card so it matches — is documented
+  in the **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures'
+  star coords real (J2000): wrong coords draw the wrong outline.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
