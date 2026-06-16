@@ -57,14 +57,16 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if git diff --quiet -- star-catalog.json star-catalog-deep.json; then
+          # Stage first so brand-new (untracked) catalogs register as a change —
+          # plain `git diff` ignores untracked files and would skip the PR.
+          git add star-catalog.json star-catalog-deep.json
+          if git diff --cached --quiet; then
             echo "No changes to star catalogs"
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B bot/star-catalog
-          git add star-catalog.json star-catalog-deep.json
           git commit -m "Update star catalogs from HYG database"
           git push -f origin bot/star-catalog
           if [ -z "$(gh pr list --head bot/star-catalog --state open --json number -q '.[0].number')" ]; then
