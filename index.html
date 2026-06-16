@@ -2099,7 +2099,24 @@ const STAR_LOOSE=[
   ['Markeb',140.528,-55.011,2.5],['Regor',122.383,-47.337,1.8],
   ['Naos',120.896,-40.003,2.2],['Alphard',141.897,-8.659,2.0],
   ['Deneb',310.358,45.280,1.3],['Hamal',31.793,23.462,2.0],
-  ['Alcyone',56.871,24.105,2.9]
+  ['Alcyone',56.871,24.105,2.9],
+  // Wider naked-eye spread (to ~mag 3) so the field reads as a starfield even
+  // before star-catalog.json bakes. Real coords, no figure lines attached.
+  ['Elnath',81.573,28.608,1.7],['Alhena',99.428,16.399,1.9],['Gomeisa',111.788,8.289,2.9],
+  ['Delta Vel',131.176,-54.709,1.9],['Theta Car',160.739,-64.394,2.7],['Alpha Mus',189.296,-69.136,2.7],
+  ['Muhlifain',190.379,-48.960,2.2],['Epsilon Cen',204.972,-53.466,2.3],['Eta Cen',218.877,-42.158,2.3],
+  ['Alpha Lupi',220.482,-47.388,2.3],['Beta Lupi',224.633,-43.134,2.7],['Zubeneschamali',229.252,-9.383,2.6],
+  ['Zubenelgenubi',222.720,-16.042,2.7],['Alpha Arae',262.960,-49.876,2.8],['Beta Arae',261.325,-55.530,2.8],
+  ['Rasalhague',263.734,12.560,2.1],['Sabik',257.594,-15.725,2.4],['Tarazed',296.565,10.613,2.7],
+  ['Sadr',305.557,40.257,2.2],['Albireo',292.680,27.960,3.1],['Enif',326.046,9.875,2.4],
+  ['Kraz',188.597,-23.397,2.6],['Algorab',187.466,-16.515,2.9],['Epsilon Crv',182.089,-22.620,3.0],
+  ['Pi Pup',109.286,-37.097,2.7],['Ankaa',6.571,-42.306,2.4],['Acamar',44.565,-40.305,2.9],
+  ['Zaurak',59.507,-13.509,2.9],['Cursa',76.962,-5.086,2.8],['Menkar',45.570,4.090,2.5],
+  ['Tiaki',340.667,-46.885,2.1],['Aldhanab',328.483,-37.365,3.0],['Alpha Tuc',334.625,-60.259,2.9],
+  ['Alpha Hyi',29.692,-61.570,2.9],['Beta Hyi',6.438,-77.254,2.8],['Markab',346.190,15.205,2.5],
+  ['Scheat',345.944,28.083,2.4],['Algenib',3.309,15.184,2.8],['Alpheratz',2.097,29.090,2.1],
+  ['Mirach',17.433,35.621,2.1],['Deneb Algedi',326.760,-16.127,2.8],['Sadalsuud',322.890,-5.571,2.9],
+  ['Sadalmelik',331.446,-0.320,2.9],['Kappa Sco',265.622,-39.030,2.4],['Mu Vel',161.693,-49.420,2.7]
 ];
 // Flatten the seed once into the same {stars:[[ra,dec,mag,cx]], lines:[[i,j]]}
 // shape the baked catalog uses, so buildStarField has a single code path.
@@ -2201,12 +2218,17 @@ function buildStarField(lat,lng){
   const field=(preset.deep&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
             :(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars
             :SKY_SEED.stars;
-  // Radius and brightness scale with magnitude; the brightest get a soft glow.
+  // Radius and brightness scale with magnitude; a deterministic per-star jitter
+  // (hashed from ra/dec, so it's stable across repaints and never flickers as
+  // the compass pans) gives the field the uneven, lived-in look of a real
+  // starfield instead of uniform dots. The brightest stars get a soft glow.
   for(const s of field){
     if(s[2]>magCap) continue;
     const p=proj(s); if(!p) continue;
     const mag=s[2], cx=s[3];
-    const r=Math.max(0.5,2.5-mag*0.46), a=Math.max(0.32,Math.min(1,1.12-mag*0.13));
+    const hsh=Math.sin(s[0]*12.9898+s[1]*78.233)*43758.5, j=hsh-Math.floor(hsh);  // 0..1
+    const r=Math.max(0.55,2.6-mag*0.45)*(0.85+0.32*j);
+    const a=Math.min(1,Math.max(0.4,Math.min(1,1.15-mag*0.12))*(0.82+0.26*j));
     ctx.globalAlpha=a; ctx.fillStyle=cx?'#bcd8ff':'#fbfdff';
     if(mag<1.4){ ctx.shadowColor=cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'; ctx.shadowBlur=4; }
     else ctx.shadowBlur=0;
