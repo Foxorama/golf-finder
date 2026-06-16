@@ -280,6 +280,40 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .acard-pos{font-family:var(--mono);font-size:11px;color:var(--ac,#a8c0e8);margin-left:auto;text-align:right;}
 .acard-note{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1.6;}
 .acard.alert{border-color:rgba(80,255,170,0.45);background:rgba(80,255,170,0.05);}
+/* Tappable cards open a full-screen story sheet — a chevron after the name +
+   a faint hover/press affordance signal there's more behind the card. */
+.acard.tappable{cursor:pointer;transition:border-color .15s,transform .08s,background .15s;}
+.acard.tappable:hover{border-color:var(--ac,#8fb8e8);}
+.acard.tappable:active{transform:scale(0.985);}
+.acard.tappable .acard-name::after{content:' ›';color:var(--ac,#9fd4ff);opacity:0.75;font-weight:700;}
+/* Constellation labels drawn in the sky panorama — quieter than object labels */
+.sky-obj .so-const{font-size:9.5px;letter-spacing:0.13em;text-transform:uppercase;color:#bcd3f5;opacity:0.82;font-weight:500;}
+/* Night-card filter chips + tap hint (night mode only) */
+.sky-filters{display:flex;gap:7px;overflow-x:auto;padding:1px 2px 11px;margin:0 -2px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.sky-filters::-webkit-scrollbar{display:none;}
+.sky-chip{flex:none;background:var(--sur);border:1px solid var(--bdr2);border-radius:999px;padding:6px 12px;font-family:var(--mono);font-size:11px;color:var(--tx2);cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
+.sky-chip:active{transform:scale(0.96);}
+.sky-chip.on{background:rgba(143,184,232,0.2);border-color:#8fb8e8;color:#eef3ff;}
+.sky-hint{font-family:var(--mono);font-size:10.5px;color:var(--tx3);margin:0 2px 11px;}
+/* ── Sky-object story modal (constellations + phenomena) ── */
+#sky-modal{display:none;position:fixed;inset:0;background:rgba(4,7,18,0.8);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;backdrop-filter:blur(2px);}
+.sky-modal-card{position:relative;max-width:480px;margin:26px auto 0;background:linear-gradient(180deg,#0c1330,#0a0f22);border:1px solid rgba(124,148,210,0.28);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,0.6);padding:0 0 22px;overflow:hidden;animation:skyCardUp .26s cubic-bezier(.2,.8,.2,1);}
+@keyframes skyCardUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
+.sky-modal-x{position:absolute;top:12px;right:12px;z-index:3;width:34px;height:34px;border-radius:50%;background:rgba(20,28,52,0.85);border:1px solid rgba(124,148,210,0.3);color:var(--tx2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.sky-modal-x:active{transform:scale(0.92);}
+.sky-modal-hd{display:flex;align-items:center;gap:12px;padding:20px 52px 6px 20px;}
+.sky-modal-icon{font-size:30px;line-height:1;flex:none;}
+.sky-modal-dot{width:18px;height:18px;border-radius:50%;box-shadow:0 0 12px currentColor;flex:none;}
+.sky-modal-title{font-family:var(--sans);font-size:21px;font-weight:800;color:var(--tx);line-height:1.1;}
+.sky-modal-tag{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:3px;letter-spacing:0.04em;}
+.sky-modal-map{margin:12px 18px 2px;}
+.sky-modal-map svg{display:block;border-radius:14px;width:100%;height:auto;}
+.sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
+.sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
+.sky-sec{margin:14px 20px 0;}
+.sky-sec-h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--tx3);margin-bottom:4px;}
+.sky-sec-b{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1.65;}
+.sky-modal-foot{text-align:center;color:var(--tx3);font-size:10.5px;font-family:var(--mono);margin:18px 20px 0;}
 /* Real star field + constellation lines — drawn on one canvas behind the
    labelled objects (#night-sky), positioned by the same altAz projection. */
 /* width/height:100% is load-bearing, not cosmetic: a <canvas> is a replaced
@@ -2097,7 +2131,33 @@ const STAR_FIGURES=[
     ['Rasalas',148.190,26.007,3.9],['Epsilon Leo',146.463,23.774,3.0],
     ['Denebola',177.265,14.572,2.1],['Zosma',168.527,20.524,2.6],
     ['Chort',168.560,15.430,3.3]],
-   l:[[5,4],[4,3],[3,2],[2,1],[1,0],[2,7],[7,6],[6,8],[8,0],[7,8]]}
+   l:[[5,4],[4,3],[3,2],[2,1],[1,0],[2,7],[7,6],[6,8],[8,0],[7,8]]},
+  {n:'Taurus',s:[
+    ['Aldebaran',68.980,16.509,0.9],['Prima Hyadum',64.948,15.627,3.7],
+    ['Hyadum II',65.734,17.543,3.8],['Ain',67.154,19.180,3.5],
+    ['Zeta Tauri',84.411,21.143,3.0],['Elnath',81.573,28.608,1.7],
+    ['Alcyone',56.871,24.105,2.9]],
+   l:[[1,2],[2,0],[1,3],[0,4],[3,5]]},
+  {n:'Gemini',s:[
+    ['Castor',113.650,31.888,1.6],['Pollux',116.329,28.026,1.1],
+    ['Wasat',110.031,21.982,3.5],['Mekbuda',106.027,20.570,4.0],
+    ['Alhena',99.428,16.399,1.9],['Mebsuta',100.983,25.131,3.0],
+    ['Tejat',95.740,22.514,2.9]],
+   l:[[0,1],[0,5],[5,6],[1,2],[2,3],[3,4]]},
+  {n:'Carina',s:[
+    ['Canopus',95.988,-52.696,-0.7],['Avior',125.628,-59.509,1.9],
+    ['Aspidiske',139.273,-59.275,2.2],['Miaplacidus',138.300,-69.717,1.7],
+    ['Theta Carinae',160.739,-64.394,2.7]],
+   l:[[0,1],[1,2],[2,3],[3,4]]},
+  {n:'Triangulum Australe',s:[
+    ['Atria',252.166,-69.028,1.9],['Beta TrA',238.787,-63.431,2.8],
+    ['Gamma TrA',229.726,-68.679,2.9]],
+   l:[[0,1],[1,2],[2,0]]},
+  {n:'Grus',s:[
+    ['Alnair',332.058,-46.961,1.7],['Tiaki',340.667,-46.885,2.1],
+    ['Aldhanab',328.483,-37.365,3.0],['Delta Gruis',337.658,-43.495,3.5],
+    ['Epsilon Gruis',343.155,-51.317,3.5]],
+   l:[[2,0],[0,3],[3,1],[1,4]]}
 ];
 const STAR_LOOSE=[
   ['Canopus',95.988,-52.696,-0.7],['Achernar',24.429,-57.237,0.5],
@@ -2144,6 +2204,207 @@ const SKY_SEED=(()=>{
   }
   for(const s of STAR_LOOSE) stars.push([s[1],s[2],s[3],0]);
   return {stars,lines};
+})();
+// Constellation lore — keyed by the figure name in STAR_FIGURES. Powers the
+// tappable story cards, the in-sky labels and the full-screen detail sheet.
+// vis = minimum altitude (°) of the brightest star before we surface the
+// card/label; content is plain naked-eye guidance with a southern (SEQ) slant.
+const CONST_INFO={
+  'Crux':{slug:'crux',abbr:'Cru',icon:'✚',vis:6,
+    meaning:'The Southern Cross — smallest of the 88 constellations, but the most famous in the southern sky.',
+    culture:'A navigation beacon for thousands of years and a deep presence in First Nations Australian astronomy, where the cross and the dark Coalsack beside it form part of the great Emu in the Sky. It flies on the flags of Australia, New Zealand, Brazil, Samoa and Papua New Guinea.',
+    find:'The two bright Pointers (Alpha and Beta Centauri) aim straight at it. Extend the long axis of the cross about 4½ times its length and you reach the south celestial pole — true south.',
+    season:'Circumpolar from SEQ — up every clear night, riding highest on autumn–winter evenings (Apr–Jul).',
+    bright:'Acrux (Alpha Crucis), a brilliant blue-white double at the foot of the cross.'},
+  'Centaurus':{slug:'centaurus',abbr:'Cen',icon:'🏇',vis:6,
+    meaning:'The Centaur — a vast constellation wrapping around the Southern Cross, home to our nearest neighbouring star.',
+    culture:'In Greek myth this is Chiron, the wise centaur who tutored heroes like Heracles and Achilles, set among the stars after his death. Its two brightest stars stand guard as the Pointers to the Cross.',
+    find:'Find the two Pointers just east of the Southern Cross. The nearer one, Alpha Centauri, is the closest star system to the Sun — 4.4 light-years away.',
+    season:'Circumpolar from SEQ, highest on autumn–winter evenings.',
+    bright:'Rigil Kentaurus (Alpha Centauri) — our Sun’s nearest stellar neighbour.'},
+  'Orion':{slug:'orion',abbr:'Ori',icon:'🗡️',vis:5,
+    meaning:'The Hunter — the most recognisable constellation on Earth, sitting astride the celestial equator.',
+    culture:'The Greek hunter Orion, placed in the sky opposite Scorpius — the scorpion that killed him — so the two never share the sky. Seen from Australia he stands “upside down”, and his Belt and Sword make the asterism Aussies call the Saucepan, or the Pot.',
+    find:'Three evenly spaced stars in a short row form the Belt; blue Rigel and orange Betelgeuse mark opposite corners of his body.',
+    season:'Summer evenings from SEQ (Dec–Mar), high in the north.',
+    bright:'Rigel (a blue supergiant) and Betelgeuse (a red supergiant that will one day go supernova).'},
+  'Canis Major':{slug:'canis-major',abbr:'CMa',icon:'🐕',vis:5,
+    meaning:'The Greater Dog — home to Sirius, the brightest star in all the night sky.',
+    culture:'One of Orion’s two hunting dogs, forever at his heels. Its dawn rising in late summer gave the ancient “dog days” their name.',
+    find:'Run the line of Orion’s Belt down to the dazzling white star Sirius; the dog’s body fans out from there.',
+    season:'Summer from SEQ (Dec–Mar), passing high overhead.',
+    bright:'Sirius — just 8.6 light-years away, so close it flashes through every colour as it twinkles low down.'},
+  'Scorpius':{slug:'scorpius',abbr:'Sco',icon:'🦂',vis:6,
+    meaning:'The Scorpion — one of the rare constellations that genuinely looks like its name.',
+    culture:'The scorpion that stung Orion; the gods set them at opposite ends of the sky. In Māori and Polynesian tradition its curved tail is Maui’s fish-hook. Its red heart, Antares, means “rival of Mars”.',
+    find:'A bright fish-hook curving through the southern Milky Way, with ruddy Antares glowing at its heart.',
+    season:'Winter (Jun–Aug) from SEQ — passes almost overhead, the finest view on Earth.',
+    bright:'Antares — a red supergiant some 700 times the Sun’s diameter.'},
+  'Sagittarius':{slug:'sagittarius',abbr:'Sgr',icon:'🏹',vis:6,
+    meaning:'The Archer — and the direction of the very heart of our galaxy.',
+    culture:'A centaur drawing his bow at Scorpius. Its central stars form the modern “Teapot”, and on winter nights the Milky Way seems to steam from its spout — that glow is the galactic centre, 26,000 light-years away.',
+    find:'Look just east of Scorpius for the Teapot shape; the Milky Way is at its thickest and brightest right here.',
+    season:'Winter (Jun–Aug) from SEQ, high in the sky.',
+    bright:'Kaus Australis (Epsilon Sagittarii), at the base of the Teapot.'},
+  'Leo':{slug:'leo',abbr:'Leo',icon:'🦁',vis:6,
+    meaning:'The Lion — a zodiac constellation that really does look like its namesake.',
+    culture:'The Nemean Lion slain by Heracles in the first of his twelve labours. The backwards-question-mark “Sickle” traces the lion’s mane and head.',
+    find:'Spot the Sickle (a reversed question mark) ending at bright Regulus for the head; a triangle to the east marks the hindquarters and the tail star Denebola.',
+    season:'Autumn to early-winter evenings from SEQ (Mar–Jun), seen to the north.',
+    bright:'Regulus — “the little king”, sitting right on the ecliptic.'},
+  'Taurus':{slug:'taurus',abbr:'Tau',icon:'🐂',vis:5,
+    meaning:'The Bull — charging at Orion, and carrying two of the sky’s most famous star clusters.',
+    culture:'Zeus disguised as a white bull in Greek myth. Its face is the Hyades, the nearest star cluster to us, and on its shoulder rides the Pleiades — the “Seven Sisters”, one of the oldest recorded star groups, with stories on every inhabited continent, including many across Aboriginal Australia.',
+    find:'Look for an orange eye (Aldebaran) at the point of a V-shaped face, with the small, glittering knot of the Pleiades nearby.',
+    season:'Summer evenings from SEQ (Dec–Feb), to the north.',
+    bright:'Aldebaran — an orange giant that happens to lie in front of the more distant Hyades.'},
+  'Gemini':{slug:'gemini',abbr:'Gem',icon:'👯',vis:5,
+    meaning:'The Twins — headed by two bright stars side by side.',
+    culture:'Castor and Pollux, the inseparable twin brothers of Greek myth — one mortal, one immortal — set together in the heavens and honoured as protectors of sailors.',
+    find:'Find two bright stars close together (golden Pollux and white Castor); two parallel stick-figure bodies trail from them toward Orion.',
+    season:'Summer evenings from SEQ (Jan–Mar), to the north.',
+    bright:'Pollux (an orange giant) and Castor (a remarkable system of six stars).'},
+  'Carina':{slug:'carina',abbr:'Car',icon:'⛵',vis:6,
+    meaning:'The Keel — the hull of the mythical ship Argo, and home to brilliant Canopus.',
+    culture:'Once part of the enormous ship Argo Navis that carried Jason and the Argonauts; astronomers later split that unwieldy constellation into the Keel (Carina), the Sails (Vela) and the Stern (Puppis). It hosts the vast, glowing Eta Carinae Nebula.',
+    find:'Dazzling Canopus, the second-brightest star in the sky, anchors it. Nearby lies the False Cross — often mistaken for the real Southern Cross.',
+    season:'Circumpolar from SEQ; highest on summer–autumn evenings.',
+    bright:'Canopus — a white supergiant roughly 10,000 times more luminous than the Sun.'},
+  'Triangulum Australe':{slug:'triangulum-australe',abbr:'TrA',icon:'🔺',vis:6,
+    meaning:'The Southern Triangle — a neat, bright triangle tucked in beside the Pointers.',
+    culture:'Charted by the Dutch navigators Keyser and de Houtman in the 1590s on voyages to the East Indies — one of a dozen new southern constellations they brought back to the star charts.',
+    find:'A compact, almost-equilateral triangle of three similar stars, just south of Alpha and Beta Centauri (the Pointers).',
+    season:'Circumpolar from SEQ; rides high on winter evenings.',
+    bright:'Atria (Alpha Trianguli Australis), an orange giant.'},
+  'Grus':{slug:'grus',abbr:'Gru',icon:'🦢',vis:6,
+    meaning:'The Crane — a graceful southern water-bird in mid-flight.',
+    culture:'One of the “southern birds” introduced by Keyser and de Houtman in the 1590s, alongside the Peacock, Phoenix and Toucan. To the ancient Egyptians the crane was an emblem of the star-watcher.',
+    find:'Look south of bright Fomalhaut for a bent line of stars; the two leaders, Alnair and Tiaki, mark the crane’s body.',
+    season:'Spring evenings from SEQ (Sep–Nov), to the south.',
+    bright:'Alnair (Alpha Gruis), a hot blue-white star.'}
+};
+// Attach slug/info onto each figure + index figures by slug for the mini-map.
+const FIG_BY_SLUG={};
+for(const f of STAR_FIGURES){ const ci=CONST_INFO[f.n]; if(ci){ f.slug=ci.slug; f.info=ci; FIG_BY_SLUG[ci.slug]=f; } }
+// Brightest star of a figure (lowest magnitude) — its label/position anchor. Memoised.
+function figureAnchor(f){
+  if(f._anc) return f._anc;
+  let best=f.s[0]; for(const s of f.s) if(s[3]<best[3]) best=s;
+  return (f._anc=best);
+}
+// Stylised single-constellation diagram for the story sheet: project the figure's
+// own stars (cos-dec-corrected RA, north up) and normalise into the box.
+function figureSVG(slug){
+  const f=FIG_BY_SLUG[slug]; if(!f) return '';
+  const W=300,H=190,pad=34;
+  const decMid=f.s.reduce((a,s)=>a+s[2],0)/f.s.length;
+  const raMid =f.s.reduce((a,s)=>a+s[1],0)/f.s.length;
+  const k=Math.cos(decMid*RAD);
+  const pts=f.s.map(s=>{ const dra=((s[1]-raMid+540)%360)-180; return {x:-dra*k, y:s[2]-decMid, mag:s[3], n:s[0]}; });
+  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  const sc=Math.min((W-2*pad)/Math.max(0.01,maxx-minx),(H-2*pad)/Math.max(0.01,maxy-miny));
+  const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
+  const X=p=>(W/2+(p.x-cx)*sc), Y=p=>(H/2-(p.y-cy)*sc);
+  const anc=figureAnchor(f), col=f.cx?'#bcd8ff':'#ffffff';
+  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star map">`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="rgba(10,16,38,0.55)"/>`;
+  for(const e of (f.l||[])){ const a=pts[e[0]],b=pts[e[1]]; s+=`<line x1="${X(a).toFixed(1)}" y1="${Y(a).toFixed(1)}" x2="${X(b).toFixed(1)}" y2="${Y(b).toFixed(1)}" stroke="rgba(150,185,255,0.5)" stroke-width="1.3" stroke-linecap="round"/>`; }
+  for(const p of pts){
+    const r=Math.max(1.6,4.4-p.mag*0.62), x=X(p).toFixed(1), y=Y(p).toFixed(1);
+    s+=`<circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${col}"${p.mag<2?` style="filter:drop-shadow(0 0 4px ${f.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'})"`:''}/>`;
+    if(p.n===anc[0]){ const ty=Math.max(11,Y(p)-r-5); s+=`<text x="${x}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${p.n}</text>`; }
+  }
+  return s+`</svg>`;
+}
+// Where a story's object sits in the sky right now (for the modal's "Up now" chip).
+function loreNowPos(slug,lat,lng){
+  const date=nowDate(); let aa=null;
+  const f=FIG_BY_SLUG[slug];
+  if(f){ const a=figureAnchor(f); aa=altAz(a[1],a[2],lat,lng,date); }
+  else if(slug==='milkyway') aa=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
+  else if(slug==='moon') aa=moonAltAz(lat,lng,date);
+  else if(slug==='magellanic') aa=altAz(MAGELLANIC[0].ra,MAGELLANIC[0].dec,lat,lng,date);
+  else if(['mercury','venus','mars','jupiter','saturn'].includes(slug)){ const p=planetPositions(lat,lng,date).find(q=>q.key===slug); if(p) aa={alt:p.alt,az:p.az}; }
+  if(!aa) return null;
+  return aa.alt>2 ? `Up now — about ${Math.round(aa.alt)}° above the ${compass16(aa.az)} horizon.`
+                  : 'Below the horizon right now — it will come around as the sky turns.';
+}
+// Full lore registry: constellations (auto, with mini-maps) + sky phenomena.
+const SKY_LORE={};
+(function(){
+  for(const f of STAR_FIGURES){ const ci=f.info; if(!ci) continue;
+    SKY_LORE[ci.slug]={icon:ci.icon,title:f.n,tag:'Constellation',sub:'· '+ci.abbr,fig:ci.slug,blurb:ci.meaning,
+      rows:[['Origin & culture',ci.culture],['How to find it',ci.find],['Best from SEQ',ci.season],['Brightest star',ci.bright]]};
+  }
+  Object.assign(SKY_LORE,{
+    milkyway:{icon:'🌠',title:'The Milky Way',tag:'Deep sky',blurb:'Our home galaxy seen edge-on — a faint river made of a hundred billion stars.',
+      rows:[
+        ['What you’re seeing','The blended glow of countless distant stars in the disc of our spiral galaxy, threaded with dark lanes of dust. The bright bulge toward Sagittarius is the galactic centre, about 26,000 light-years away.'],
+        ['How to find it','You need a dark site away from city lights and 10–15 minutes for your eyes to adapt. Trace a soft band arching across the sky; it is brightest and broadest through Scorpius and Sagittarius.'],
+        ['Best from SEQ','Winter (Jun–Aug), when the bright core rides high overhead on moonless nights.'],
+        ['Watch out for','Moonlight and light pollution wash it out completely — check the Moon is down first.']]},
+    magellanic:{icon:'☁️',title:'The Magellanic Clouds',tag:'Deep sky',blurb:'Two dwarf galaxies orbiting our own — naked-eye only from the southern hemisphere.',
+      rows:[
+        ['What you’re seeing','The Large and Small Magellanic Clouds, satellite galaxies about 160,000 and 200,000 light-years away. They look like two detached, misty fragments of the Milky Way.'],
+        ['Origin & culture','Logged by Ferdinand Magellan’s crew in 1519, though southern peoples knew them for millennia; they appear in many Aboriginal Australian sky-stories.'],
+        ['How to find it','Look toward the south celestial pole on a dark night. The larger, brighter LMC sits near Dorado; the fainter SMC near Tucana.'],
+        ['Best from SEQ','Circumpolar — up every clear, dark night, highest on summer evenings.']]},
+    moon:{icon:'🌙',title:'The Moon',tag:'Solar System',blurb:'Earth’s only natural satellite, and the brightest thing in the night sky.',
+      rows:[
+        ['What you’re seeing','A 3,474 km rocky world about 384,000 km away, lit by the Sun. The phase depends on the angle between the Sun, Moon and Earth.'],
+        ['Through the month','It cycles new → crescent → first quarter → full → last quarter → new every 29.5 days. The terminator — the day/night line — is where craters throw their longest, sharpest shadows and the best place to look.'],
+        ['For stargazers','A bright Moon floods the sky and hides faint stars, meteors and the Milky Way. Darkest skies come near new moon, or once the Moon has set.'],
+        ['Did you know','The Moon drifts about 3.8 cm farther from Earth each year, and always keeps the same face turned toward us.']]},
+    aurora:{icon:'🌌',title:'Aurora Australis',tag:'Event',blurb:'The Southern Lights — curtains of colour where solar particles strike the upper atmosphere.',
+      rows:[
+        ['What causes it','Charged particles from the Sun funnel down Earth’s magnetic field near the poles and excite oxygen and nitrogen 100–300 km up, which glow green, red and purple.'],
+        ['Seeing it from SEQ','Rare this far north — it takes a strong geomagnetic storm (high Kp). When it happens the glow hugs the southern horizon rather than sitting overhead, so a clear, dark view south is essential.'],
+        ['Improve your odds','Get away from city lights, look south, and be patient — auroras pulse and fade over minutes. A camera often catches colour the eye cannot.'],
+        ['The numbers','The Kp index (0–9) measures geomagnetic activity. The card shows the live value from NOAA and roughly what is needed to reach your latitude.']]},
+    meteors:{icon:'☄️',title:'Meteor Showers',tag:'Event',blurb:'“Shooting stars” — specks of comet and asteroid dust burning up overhead.',
+      rows:[
+        ['What you’re seeing','Grains no bigger than sand hitting the air at tens of kilometres per second and vaporising in a streak about 80 km up. A shower happens when Earth ploughs through the debris trail left by a comet.'],
+        ['The radiant','Shower meteors appear to stream out from one point — the radiant — named for the constellation it lies in. The show is best when that radiant is high.'],
+        ['How to watch','No telescope needed: dark skies, a reclining view of as much sky as possible, and patience. The quoted rate (ZHR) is an ideal maximum; expect fewer in real conditions.'],
+        ['Best from SEQ','After midnight and before dawn are usually richest, when your side of Earth faces into the stream.']]},
+    iss:{icon:'🛰',title:'The Space Station',tag:'Event',blurb:'The International Space Station — a crewed laboratory orbiting 400 km up.',
+      rows:[
+        ['What you’re seeing','A football-field-sized spacecraft circling Earth every ~90 minutes at 28,000 km/h. It shines by reflected sunlight — a steady, bright point gliding across the sky in a few minutes, and it never blinks.'],
+        ['When it’s visible','Only when it is sunlit but your sky is dark — within a couple of hours of dusk or dawn. Mid-night passes vanish into Earth’s shadow.'],
+        ['Telling it apart','Unlike a plane it has no flashing lights and makes no sound; unlike a star it moves steadily and simply fades out as it enters shadow.'],
+        ['Tip','Apps and sites such as NASA’s Spot the Station predict exact pass times and directions for your location.']]},
+    venus:{title:'Venus',tag:'Planet',dot:'#f3ecd2',blurb:'The brightest planet — dazzling low in the dawn or dusk twilight.',
+      rows:[
+        ['About','A rocky world nearly Earth’s twin in size, wrapped in thick CO₂ clouds that trap a furnace-like 460°C surface — the hottest planet.'],
+        ['How to spot it','Unmistakable: the brightest thing in the sky after the Sun and Moon, low in the west after sunset or the east before sunrise. Never far from the Sun.'],
+        ['Through binoculars','It shows phases like the Moon — Galileo’s view of these helped overturn the Earth-centred universe.'],
+        ['Best viewing','Around “greatest elongation”, when it stands highest above the twilight.']]},
+    jupiter:{title:'Jupiter',tag:'Planet',dot:'#e8d9b8',blurb:'The largest planet — a steady, brilliant cream-coloured “star”.',
+      rows:[
+        ['About','A gas giant 11 times Earth’s width, with a centuries-old storm — the Great Red Spot — and at least 95 moons.'],
+        ['How to spot it','Very bright and steady (planets barely twinkle). Outshines every star except Sirius, and Sirius flickers.'],
+        ['Through binoculars','Its four big Galilean moons — Io, Europa, Ganymede, Callisto — appear as tiny stars in a line, shifting night to night.'],
+        ['Best viewing','Around opposition, when it rises at sunset and is up all night.']]},
+    mars:{title:'Mars',tag:'Planet',dot:'#e0795a',blurb:'The Red Planet — a distinctly orange point that flares near opposition.',
+      rows:[
+        ['About','A cold desert world half Earth’s size, with the Solar System’s tallest volcano (Olympus Mons) and clear signs of ancient water.'],
+        ['How to spot it','Its rusty-orange colour gives it away. Brightness swings hugely with distance — sometimes modest, sometimes outshining all but Venus and Jupiter.'],
+        ['Did you know','Its colour is iron oxide — literally rust — coating the surface.'],
+        ['Best viewing','Around opposition (roughly every 26 months), when it is closest and brightest.']]},
+    saturn:{title:'Saturn',tag:'Planet',dot:'#ded2a8',blurb:'The ringed planet — a calm, pale-gold point to the naked eye.',
+      rows:[
+        ['About','A gas giant famous for its broad, bright rings of ice and rock, with over 140 known moons including hazy Titan.'],
+        ['How to spot it','Looks like a steady, faintly yellow star — less bright than Jupiter, but unmistakable once a telescope is on it.'],
+        ['Through a telescope','Even a small scope reveals the rings — one of the most jaw-dropping sights in all of amateur astronomy.'],
+        ['Best viewing','Around opposition, high in a dark sky.']]},
+    mercury:{title:'Mercury',tag:'Planet',dot:'#b9b3a8',blurb:'The innermost planet — a fleeting glimpse low in bright twilight.',
+      rows:[
+        ['About','The smallest planet and closest to the Sun: a cratered, airless world of extreme heat and cold.'],
+        ['How to spot it','The hardest naked-eye planet — it never strays far from the Sun, so catch it very low in the west just after sunset, or the east before sunrise, during its brief appearances.'],
+        ['Did you know','A day on Mercury (sunrise to sunrise) lasts about 176 Earth days — longer than its year.'],
+        ['Best viewing','At greatest elongation, when it stands farthest from the Sun in twilight.']]}
+  });
 })();
 // Optional dense field: star-catalog.json = {stars:[[ra°,dec°,mag],…]} baked by
 // CI from a public-domain catalogue (Yale BSC / HYG) to mag ~5. Constellation
@@ -2271,7 +2532,19 @@ function paintSky(){
   const dpr=Math.min(2,window.devicePixelRatio||1);
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
   if(_skyLines.length){
-    ctx.lineWidth=0.7; ctx.strokeStyle='rgba(150,178,230,0.24)'; ctx.beginPath();
+    // Two passes so the figures read clearly without drowning the stars: a soft
+    // blue glow underlay, then a crisp brighter core on top. Both step up in the
+    // compass detail view, where there's room and the constellations are the point.
+    const detail=_skyFov<360;
+    ctx.lineCap='round'; ctx.lineJoin='round';
+    ctx.strokeStyle='rgba(120,165,255,0.16)'; ctx.lineWidth=detail?3.2:2.2;
+    ctx.shadowColor='rgba(120,165,255,0.6)'; ctx.shadowBlur=detail?6:4;
+    ctx.beginPath();
+    for(const L of _skyLines){ ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); }
+    ctx.stroke();
+    ctx.shadowBlur=0;
+    ctx.strokeStyle=detail?'rgba(178,204,255,0.8)':'rgba(166,194,250,0.6)'; ctx.lineWidth=detail?1.4:1.0;
+    ctx.beginPath();
     for(const L of _skyLines){ ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); }
     ctx.stroke();
   }
@@ -2461,8 +2734,17 @@ function buildSkyObjects(lat,lng){
   // Aurora glow sits on the true southern horizon, wherever south currently is
   const au=auroraStatus(lat);
   if(au&&(au.level==='alert'||au.level==='watch')) html+=wrapX(skyAzX(180), x=>`<div class="sky-aurora" style="left:${(x-18).toFixed(1)}%"></div>`);
-  const ac=altAz(186.65,-63.099,lat,lng,date); // Acrux anchors the Crux label
-  if(ac.alt>6){const p=pos(ac.az,ac.alt);html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+8).toFixed(1)}%"><span class="so-label">Crux</span></div>`);}
+  // Constellation name labels. In the compass detail view there's room to label
+  // every figure that's up; in the squished 360° overview we keep just Crux as
+  // the southern anchor, so labels don't pile up on top of each other.
+  for(const f of STAR_FIGURES){
+    if(!f.info) continue;
+    if(!_compassOn && f.slug!=='crux') continue;
+    const a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
+    if(aa.alt<(f.info.vis||6)) continue;
+    const p=pos(aa.az,aa.alt), off=f.slug==='crux'?8:0;
+    html+=wrapX(p.x, x=>`<div class="sky-obj" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+off).toFixed(1)}%"><span class="so-label so-const">${f.n}</span></div>`);
+  }
   for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt<3)continue;
     const p=pos(pl.az,pl.alt);
@@ -2619,32 +2901,32 @@ function astroCards(lat,lng){
       :au.level==='watch'
       ?`Storm under way at Kp ${au.kp.toFixed(1)}. Aurora needs ~Kp ${au.need} to reach you — a notch stronger and it could. Worth checking the southern horizon.`
       :`Kp ${au.kp.toFixed(1)} — aurora likely at Tasmania-grade latitudes tonight; needs ~Kp ${au.need} to reach yours.`;
-    html+=`<div class="acard${au.level==='alert'?' alert':''}" style="--ac:#50ffaa;"><div class="acard-head"><span class="acard-icon">🌌</span><span class="acard-name">Aurora Australis</span><span class="acard-pos">Kp ${au.kp.toFixed(1)} live</span></div><div class="acard-note">${txt} <span style="opacity:0.65">Rough estimate — NOAA SWPC data.</span></div></div>`;
+    html+=`<div class="acard tappable${au.level==='alert'?' alert':''}" data-cat="events" onclick="openSkyStory('aurora')" style="--ac:#50ffaa;"><div class="acard-head"><span class="acard-icon">🌌</span><span class="acard-name">Aurora Australis</span><span class="acard-pos">Kp ${au.kp.toFixed(1)} live</span></div><div class="acard-note">${txt} <span style="opacity:0.65">Rough estimate — NOAA SWPC data.</span></div></div>`;
   }
   const ss=showerStatus(date);
   if(ss){
     const rad=altAz(ss.sh.ra,ss.sh.dec,lat,lng,date);
     const when=ss.active?(Math.abs(ss.daysToPeak)<=1?'peaking tonight':ss.daysToPeak>0?`peak in ${Math.round(ss.daysToPeak)}d`:'past peak'):`peak in ${Math.round(ss.daysToPeak)}d`;
     const radTxt=rad.alt>5?`Radiant ${Math.round(rad.alt)}° up in the ${compass16(rad.az)} now.`:'Radiant below the horizon right now — best later tonight / pre-dawn.';
-    html+=`<div class="acard" style="--ac:#f5a623;"><div class="acard-head"><span class="acard-icon">☄️</span><span class="acard-name">${ss.sh.n}</span><span class="acard-pos">${when}</span></div><div class="acard-note">Up to ~${ss.sh.zhr}/hr under dark skies. ${radTxt} ${ss.sh.note}.</div></div>`;
+    html+=`<div class="acard tappable" data-cat="events" onclick="openSkyStory('meteors')" style="--ac:#f5a623;"><div class="acard-head"><span class="acard-icon">☄️</span><span class="acard-name">${ss.sh.n}</span><span class="acard-pos">${when}</span></div><div class="acard-note">Up to ~${ss.sh.zhr}/hr under dark skies. ${radTxt} ${ss.sh.note}.</div></div>`;
   }
   // Milky Way core — the southern winter showpiece
   const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
   if(gc.alt>15){
     const il0=Math.round(moonIllum(date)*100);
     const moonNote=il0>40?' Tonight\u2019s moonlight will dim it.':' Get away from streetlights and let your eyes adapt ~10 min.';
-    html+=`<div class="acard" style="--ac:#b58cff;"><div class="acard-head"><span class="acard-icon">🌠</span><span class="acard-name">Milky Way core</span><span class="acard-pos">${Math.round(gc.alt)}° · ${compass16(gc.az)}</span></div><div class="acard-note">The galaxy\u2019s bright centre in Sagittarius. Winter (Jun–Aug) is prime season from Australia.${moonNote}</div></div>`;
+    html+=`<div class="acard tappable" data-cat="deep" onclick="openSkyStory('milkyway')" style="--ac:#b58cff;"><div class="acard-head"><span class="acard-icon">🌠</span><span class="acard-name">Milky Way core</span><span class="acard-pos">${Math.round(gc.alt)}° · ${compass16(gc.az)}</span></div><div class="acard-note">The galaxy\u2019s bright centre in Sagittarius. Winter (Jun–Aug) is prime season from Australia.${moonNote}</div></div>`;
   }
   // Planets: up now, or rising before dawn (an empty planet list is a missed answer)
   let untilDawnM=(()=>{const n=now_mins_for_astro(date);return n>=lastLightMins?(1440-n)+firstLightMins:Math.max(0,firstLightMins-n);})();
   for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt>=5){
-      html+=`<div class="acard" style="--ac:${pl.dot};"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot}"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">${Math.round(pl.alt)}° · ${compass16(pl.az)}</span></div><div class="acard-note">${pl.note}. ${pl.dist.toFixed(2)} au away tonight.</div></div>`;
+      html+=`<div class="acard tappable" data-cat="planets" onclick="openSkyStory('${pl.key}')" style="--ac:${pl.dot};"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot}"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">${Math.round(pl.alt)}° · ${compass16(pl.az)}</span></div><div class="acard-note">${pl.note}. ${pl.dist.toFixed(2)} au away tonight.</div></div>`;
     } else if(untilDawnM>30){
       const rise=nextRise(t=>planetPositions(lat,lng,t).find(q=>q.key===pl.key).alt, date, untilDawnM);
       if(rise){
         const az=planetPositions(lat,lng,rise).find(q=>q.key===pl.key).az;
-        html+=`<div class="acard" style="--ac:${pl.dot}99;"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot};opacity:0.6;"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">rises ~${fmtClock(rise)}</span></div><div class="acard-note">Up before dawn in the ${compass16(az)}. ${pl.note}.</div></div>`;
+        html+=`<div class="acard tappable" data-cat="planets" onclick="openSkyStory('${pl.key}')" style="--ac:${pl.dot}99;"><div class="acard-head"><span class="acard-dot" style="background:${pl.dot};color:${pl.dot};opacity:0.6;"></span><span class="acard-name">${pl.label}</span><span class="acard-pos">rises ~${fmtClock(rise)}</span></div><div class="acard-note">Up before dawn in the ${compass16(az)}. ${pl.note}.</div></div>`;
       }
     }
   }
@@ -2653,23 +2935,97 @@ function astroCards(lat,lng){
   const evTxt=m.alt>0?(ev.set?` Sets ${fmtClock(ev.set)}.`:''):(ev.rise?` Rises ${fmtClock(ev.rise)}.`:' Down for most of the night.');
   const where=m.alt>0?`${Math.round(m.alt)}° · ${compass16(m.az)}`:'below horizon';
   const darkNote=il<30?' Dark skies — a great night for faint stars and meteors.':il>85?' Bright moonlight will wash out faint stars and meteors.':'';
-  html+=`<div class="acard" style="--ac:#cdd6ea;"><div class="acard-head"><span class="acard-icon">${mp.icon}</span><span class="acard-name">${mp.name}</span><span class="acard-pos">${where}</span></div><div class="acard-note">${il}% illuminated.${evTxt}${darkNote}</div></div>`;
+  html+=`<div class="acard tappable" data-cat="planets" onclick="openSkyStory('moon')" style="--ac:#cdd6ea;"><div class="acard-head"><span class="acard-icon">${mp.icon}</span><span class="acard-name">${mp.name}</span><span class="acard-pos">${where}</span></div><div class="acard-note">${il}% illuminated.${evTxt}${darkNote}</div></div>`;
   ac_alt_card(lat,lng,date,h=>{html+=h;});
+  // Constellations above the horizon — tap any for its full story + sky map.
+  // Crux is already covered by the Southern Cross card just above.
+  for(const f of STAR_FIGURES){
+    if(!f.info||f.slug==='crux') continue;
+    const a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
+    if(aa.alt<(f.info.vis||6)) continue;
+    const acc=f.cx?'#9fd4ff':'#c4b5ff';
+    html+=`<div class="acard tappable" data-cat="stars" onclick="openSkyStory('${f.slug}')" style="--ac:${acc};"><div class="acard-head"><span class="acard-icon">${f.info.icon}</span><span class="acard-name">${f.n}</span><span class="acard-pos">${Math.round(aa.alt)}° · ${compass16(aa.az)}</span></div><div class="acard-note">${f.info.meaning}</div></div>`;
+  }
   // Magellanic Clouds — naked-eye dwarf galaxies, circumpolar from SEQ
   const lmc=altAz(MAGELLANIC[0].ra,MAGELLANIC[0].dec,lat,lng,date);
   const smc=altAz(MAGELLANIC[1].ra,MAGELLANIC[1].dec,lat,lng,date);
   if(Math.max(lmc.alt,smc.alt)>12){
-    html+=`<div class="acard" style="--ac:#7ab8f5;"><div class="acard-head"><span class="acard-icon">☁️</span><span class="acard-name">Magellanic Clouds</span><span class="acard-pos">LMC ${Math.round(lmc.alt)}° ${compass16(lmc.az)} · SMC ${Math.round(smc.alt)}° ${compass16(smc.az)}</span></div><div class="acard-note">Two naked-eye companion galaxies circling the south celestial pole — look like detached wisps of Milky Way. Dark southern skies only.</div></div>`;
+    html+=`<div class="acard tappable" data-cat="deep" onclick="openSkyStory('magellanic')" style="--ac:#7ab8f5;"><div class="acard-head"><span class="acard-icon">☁️</span><span class="acard-name">Magellanic Clouds</span><span class="acard-pos">LMC ${Math.round(lmc.alt)}° ${compass16(lmc.az)} · SMC ${Math.round(smc.alt)}° ${compass16(smc.az)}</span></div><div class="acard-note">Two naked-eye companion galaxies circling the south celestial pole — look like detached wisps of Milky Way. Dark southern skies only.</div></div>`;
   }
   const el=issElevation(lat,lng);
-  if(el!==null&&el>10) html+=`<div class="acard" style="--ac:#5fd4d0;"><div class="acard-head"><span class="acard-icon">🛰</span><span class="acard-name">ISS overhead</span><span class="acard-pos">~${Math.round(el)}° up</span></div><div class="acard-note">The Space Station is above your horizon right now — a bright steadily-moving star, but only visible while sunlit (typically within ~2h of dusk or dawn).</div></div>`;
+  if(el!==null&&el>10) html+=`<div class="acard tappable" data-cat="events" onclick="openSkyStory('iss')" style="--ac:#5fd4d0;"><div class="acard-head"><span class="acard-icon">🛰</span><span class="acard-name">ISS overhead</span><span class="acard-pos">~${Math.round(el)}° up</span></div><div class="acard-note">The Space Station is above your horizon right now — a bright steadily-moving star, but only visible while sunlit (typically within ~2h of dusk or dawn).</div></div>`;
   return html;
 }
 function ac_alt_card(lat,lng,date,add){
   const ac=altAz(186.65,-63.099,lat,lng,date);
-  if(ac.alt>8) add(`<div class="acard" style="--ac:#9fd4ff;"><div class="acard-head"><span class="acard-icon" style="color:#9fd4ff;">✚</span><span class="acard-name">Southern Cross</span><span class="acard-pos">${Math.round(ac.alt)}° · ${compass16(ac.az)}</span></div><div class="acard-note">Crux, with the two Pointers (α and β Centauri) trailing nearby — the anchor of the southern sky.</div></div>`);
+  if(ac.alt>8) add(`<div class="acard tappable" data-cat="stars" onclick="openSkyStory('crux')" style="--ac:#9fd4ff;"><div class="acard-head"><span class="acard-icon" style="color:#9fd4ff;">✚</span><span class="acard-name">Southern Cross</span><span class="acard-pos">${Math.round(ac.alt)}° · ${compass16(ac.az)}</span></div><div class="acard-note">Crux, with the two Pointers (α and β Centauri) trailing nearby — the anchor of the southern sky.</div></div>`);
   return false;
 }
+
+// ── Night-card filters + full-screen story sheet ──
+// The night list mixes constellations, planets, deep-sky objects and one-off
+// events; the chips let you focus on one kind. Filter is applied by hiding
+// .acard nodes (each tagged data-cat) so it survives the per-minute re-render.
+const SKY_FILTERS=[
+  {k:'all',label:'All',icon:'✨'},
+  {k:'stars',label:'Constellations',icon:'✦'},
+  {k:'planets',label:'Planets & Moon',icon:'🪐'},
+  {k:'deep',label:'Deep sky',icon:'🌌'},
+  {k:'events',label:'Events',icon:'☄️'}
+];
+let _skyFilter='all';
+try{ const s=localStorage.getItem('gf_skyfilter'); if(s&&SKY_FILTERS.some(f=>f.k===s)) _skyFilter=s; }catch(e){}
+function filterChipsHTML(){
+  return `<div class="sky-filters" id="sky-filters">`+SKY_FILTERS.map(f=>
+    `<button class="sky-chip${f.k===_skyFilter?' on':''}" data-k="${f.k}" onclick="setSkyFilter('${f.k}')">${f.icon} ${f.label}</button>`
+  ).join('')+`</div>`;
+}
+function applySkyFilter(){
+  const list=document.getElementById('course-list'); if(!list) return;
+  let shown=0;
+  list.querySelectorAll('.acard').forEach(c=>{
+    const vis=_skyFilter==='all'||c.getAttribute('data-cat')===_skyFilter;
+    c.style.display=vis?'':'none'; if(vis)shown++;
+  });
+  list.querySelectorAll('.sky-chip').forEach(ch=>ch.classList.toggle('on',ch.getAttribute('data-k')===_skyFilter));
+  let empty=document.getElementById('sky-empty');
+  if(!shown){
+    if(!empty){ empty=document.createElement('div'); empty.id='sky-empty'; empty.className='no-results'; list.appendChild(empty); }
+    empty.textContent='Nothing in this category is above the horizon right now.'; empty.style.display='';
+  }else if(empty){ empty.style.display='none'; }
+}
+function setSkyFilter(k){
+  _skyFilter=k; try{ localStorage.setItem('gf_skyfilter',k); }catch(e){}
+  applySkyFilter();
+}
+// Build + open the story sheet for a sky object (constellation or phenomenon).
+function renderStoryBody(slug,lat,lng){
+  const L=SKY_LORE[slug]; if(!L) return '';
+  let s=`<div class="sky-modal-hd">`;
+  s+= L.dot ? `<span class="sky-modal-dot" style="background:${L.dot};color:${L.dot}"></span>`
+            : `<span class="sky-modal-icon">${L.icon}</span>`;
+  s+=`<div><div class="sky-modal-title">${L.title}</div><div class="sky-modal-tag">${L.tag}${L.sub?(' '+L.sub):''}</div></div></div>`;
+  if(L.fig) s+=`<div class="sky-modal-map">${figureSVG(L.fig)}</div>`;
+  const np=loreNowPos(slug,lat,lng);
+  if(np) s+=`<div class="sky-now">📍 ${np}</div>`;
+  s+=`<div class="sky-modal-blurb">${L.blurb}</div>`;
+  for(const r of L.rows) s+=`<div class="sky-sec"><div class="sky-sec-h">${r[0]}</div><div class="sky-sec-b">${r[1]}</div></div>`;
+  return s;
+}
+function openSkyStory(slug){
+  if(!SKY_LORE[slug]) return;
+  const m=document.getElementById('sky-modal'), b=document.getElementById('sky-modal-body');
+  if(!m||!b) return;
+  b.innerHTML=renderStoryBody(slug, window._gpsLat??-27.4698, window._gpsLng??153.0251);
+  m.style.display='block'; m.setAttribute('aria-hidden','false'); m.scrollTop=0;
+  document.body.style.overflow='hidden';
+}
+function closeSkyStory(){
+  const m=document.getElementById('sky-modal'); if(!m) return;
+  m.style.display='none'; m.setAttribute('aria-hidden','true');
+  document.body.style.overflow='';
+}
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=document.getElementById('sky-modal'); if(m&&m.style.display==='block') closeSkyStory(); } });
 
 // ── Space weather: live Kp (NOAA SWPC) + ISS position — both keyless, both optional ──
 async function fetchSpaceWx(){
@@ -2978,8 +3334,11 @@ function render(){
   let html='';
   if(renderNight){
     html+=`<div class="section-head"><span class="sdot" style="background:#8da9d6;box-shadow:0 0 6px rgba(141,169,214,0.8);"></span>Tonight's sky</div>`;
+    html+=filterChipsHTML();
+    html+=`<div class="sky-hint">Tap any card for its full story, sky map &amp; lore.</div>`;
     html+=astroCards(glat,glng);
     document.getElementById('course-list').innerHTML=html;
+    applySkyFilter();
     return;
   }
   // Out-of-coverage notice: when the nearest course is beyond any realistic
@@ -3446,6 +3805,15 @@ showTestBanner();
     </div>
     <div id="layout-svg-wrap" style="border-radius:12px;overflow:hidden;"></div>
     <p style="color:var(--tx3);font-size:11px;text-align:center;margin:10px 0 0;font-family:var(--mono);">Tap outside to close · Scroll to zoom on mobile</p>
+  </div>
+</div>
+
+<!-- Sky-object story sheet (constellations + phenomena) -->
+<div id="sky-modal" onclick="closeSkyStory()" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="sky-modal-card" onclick="event.stopPropagation()">
+    <button class="sky-modal-x" onclick="closeSkyStory()" aria-label="Close">✕</button>
+    <div class="sky-modal-body" id="sky-modal-body"></div>
+    <p class="sky-modal-foot">Tap outside or press Esc to close</p>
   </div>
 </div></body>
 </html>
