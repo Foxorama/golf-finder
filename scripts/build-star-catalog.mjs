@@ -31,11 +31,12 @@ const OUT_DEEP = join(ROOT, 'star-catalog-deep.json');
 const MAG_LIMIT = Number(process.env.MAG_LIMIT || 5.0);
 const DEEP_LIMIT = Number(process.env.DEEP_LIMIT || 7.0);
 
-// HYG v3 CSV mirrors (one big file; pick whichever responds). Public domain.
+// HYG CSV (one big file; pick whichever responds). Public domain. The repo
+// moved the file to hyg/CURRENT/ and bumped to v4.1; the v3 paths are fallbacks.
 const SOURCES = [
-  'https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/v3/hyg_v3.csv',
+  'https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/CURRENT/hygdata_v41.csv',
   'https://raw.githubusercontent.com/astronexus/HYG-Database/master/hygdata_v3.csv',
-  'https://raw.githubusercontent.com/astronexus/HYG-Database/main/hygdata_v3.csv',
+  'https://raw.githubusercontent.com/astronexus/HYG-Database/main/hyg/v3/hyg_v3.csv',
 ];
 
 async function fetchCsv() {
@@ -55,7 +56,8 @@ async function fetchCsv() {
 // Parse the HYG CSV into [ra°, dec°, mag] for every star down to `limit`.
 function parse(csv, limit) {
   const lines = csv.split(/\r?\n/);
-  const header = lines[0].split(',');
+  // HYG v4.1 quotes its header cells ("ra","dec","mag"), so strip quotes/space.
+  const header = lines[0].split(',').map((h) => h.replace(/^"|"$/g, '').trim());
   const iRa = header.indexOf('ra');     // hours
   const iDec = header.indexOf('dec');   // degrees
   const iMag = header.indexOf('mag');   // apparent visual magnitude
