@@ -870,29 +870,34 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   function groundY(x){ var t=x/400; return 228-48*t+48*t*t; }
   function rnd(a,b){return a+Math.random()*(b-a);}
   function stopped(){return !loader.isConnected||loader.classList.contains('done');}
-  function arc(tx,ty){
-    var dx=tx-LAUNCH.x, dy=ty-LAUNCH.y, peak=Math.min(150,55+Math.hypot(dx,dy)*0.5), f=[], i, t;
-    for(i=0;i<=10;i++){ t=i/10;
-      f.push({transform:'translate('+(dx*t).toFixed(1)+'px,'+(dy*t-peak*Math.sin(Math.PI*t)).toFixed(1)+'px)'}); }
-    return f;
-  }
   function newBall(){
     var c=document.createElementNS(NS,'circle');
     c.setAttribute('cx',LAUNCH.x); c.setAttribute('cy',LAUNCH.y); c.setAttribute('r',5);
     c.setAttribute('fill','#fff'); c.setAttribute('stroke','#b9c2c7'); c.setAttribute('stroke-width','0.6');
     c.style.transformBox='fill-box'; c.style.transformOrigin='center'; ballsG.appendChild(c); return c;
   }
+  /* The ball rides the SAME timeline as the swing — one WAAPI animation, both
+     composited — so its launch can't drift off the club head: it rests on the tee
+     through IMPACT, then arcs to the target on the same clock the club swings on.
+     (The old code launched it from a wall-clock setTimeout that, while the main
+     thread is busy loading the app, fired late — so the ball left the tee after
+     the club had already swept past, a visible whiff. Sharing the swing's clock
+     makes contact frame-exact under any jank.) */
   function shot(){
     if(stopped())return;
     var holeOut=Math.random()<0.18, t;
     if(holeOut){ t={x:HOLE.x,y:HOLE.y}; }
     else{ var mx,my,k=0; do{ mx=rnd(150,380); my=groundY(mx)+rnd(2,15); k++; }while(k<12 && Math.hypot(mx-HOLE.x,my-HOLE.y)<26); t={x:mx,y:my}; }
     var ball=newBall(),
-        flight=Math.round(650+Math.hypot(t.x-LAUNCH.x,t.y-LAUNCH.y)*1.5),
-        a=ball.animate(arc(t.x,t.y),{duration:flight,easing:'linear',fill:'forwards'});
+        dx=t.x-LAUNCH.x, dy=t.y-LAUNCH.y, peak=Math.min(150,55+Math.hypot(dx,dy)*0.5),
+        span=Math.min(0.98-IMPACT,(650+Math.hypot(dx,dy)*1.5)/SWING),   /* same flight speed as before, placed after impact */
+        kf=[{transform:'translate(0px,0px)',offset:0},{transform:'translate(0px,0px)',offset:IMPACT}], i, tt;
+    for(i=1;i<=10;i++){ tt=i/10;
+      kf.push({offset:IMPACT+span*tt,transform:'translate('+(dx*tt).toFixed(1)+'px,'+(dy*tt-peak*Math.sin(Math.PI*tt)).toFixed(1)+'px)'}); }
+    var a=ball.animate(kf,{duration:SWING,easing:'linear',fill:'forwards'});
     a.finished.then(function(){
-      if(holeOut){ dropIn(ball); }
-      else{ var ok=false; try{ a.commitStyles(); ok=true; }catch(e){} if(ok) a.cancel(); }  /* rest the miss on the green */
+      var ok=false; try{ a.commitStyles(); ok=true; }catch(e){} if(ok) a.cancel();  /* bake the rest position, drop the held anim */
+      if(holeOut) dropIn(ball);
     }).catch(function(){});
   }
   function dropIn(ball){
@@ -935,7 +940,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         {transform:'rotate(183deg)',opacity:0,offset:0.8},
         {transform:'rotate(183deg)',opacity:1,offset:0.9}
       ],{duration:SWING,easing:'ease-in-out'});
-      setTimeout(shot, SWING*IMPACT);
+      shot();                                  /* ball shares the swing's clock (its own keyframes hold it on the tee until IMPACT) */
       try{ await swing.finished; }catch(e){ break; }
     }
   })();
