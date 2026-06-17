@@ -4,6 +4,11 @@ These are the **illustrated "astral heroic" figures** that a constellation's sta
 chart morphs into when you open its card in night mode (e.g. the Centaurus chart →
 the centaur Chiron). They are AI-generated, then dropped into this folder.
 
+> **Status:** all 18 constellation heroes now exist (`<slug>.jpg`, 1536×1024),
+> generated with the **Flux MCP** (`flux2_max`) from the template below and wired into
+> `HERO_ART` in `index.html`. To re-roll one, regenerate with its prompt and overwrite
+> the file. The prompts used live in the Flux generation history.
+
 The art is *inspired by* a luminous-centaur reference but is **our own house style** —
 do not trace or copy any existing image. Web sources are for **confirming the right
 figure, pose and stars** for a constellation only, never for lifting artwork.
@@ -21,8 +26,8 @@ figure, pose and stars** for a constellation only, never for lifting artwork.
 |-------|-------|
 | Aspect | **3:2 landscape** (matches the stage; anything else gets cropped by `object-fit:cover`) |
 | Resolution | 1536 × 1024 px |
-| Format | **PNG** (drop in as `night-heroes/<slug>.png`) — may be converted to WebP later for size |
-| Target size | ≤ ~400 KB after compression — these are fetched on tap, so keep them lean |
+| Format | **JPG** (Flux MCP outputs JPG; saved as `night-heroes/<slug>.jpg`). PNG/WebP also fine |
+| Target size | ~0.5–0.7 MB from Flux is acceptable (fetched on tap, never precached); convert to WebP if you want them leaner |
 | Background | **Full-bleed scene** (deep night sky + faint horizon), not transparent — no compositing needed |
 | Text | Avoid baked-in labels/watermarks (the app draws its own star labels). A faint star name is tolerable; never a logo, signature or caption block |
 
@@ -94,11 +99,10 @@ premium, serene; soft glow, gentle vignette, delicate sparkles. Cohesive observa
 composition, figure centred with breathing room.
 ```
 
-Save the result as **`night-heroes/centaurus.png`** — the wiring is already done
-(`centaurus` is in `HERO_ART`), so it goes live on the next load.
+Saved as **`night-heroes/centaurus.jpg`** and wired into `HERO_ART`.
 
-## 5. Adding a figure later (recap)
-1. Fill the template (§3) for the constellation; generate; export 3:2 PNG ≤ ~400 KB.
-2. Save as `night-heroes/<slug>.png`.
-3. Add `'<slug>':'night-heroes/<slug>.png'` to `HERO_ART` in `index.html`.
+## 5. Adding / re-rolling a figure (recap)
+1. Fill the template (§3) for the constellation; generate via Flux MCP (`flux2_max`, 1536×1024).
+2. Save as `night-heroes/<slug>.jpg`.
+3. Add `'<slug>':'night-heroes/<slug>.jpg'` to `HERO_ART` in `index.html` (already done for all 18).
 4. Open that card in night mode — chart morphs into the figure. Done.

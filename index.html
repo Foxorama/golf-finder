@@ -3777,7 +3777,17 @@ function skyRarity(slug){
 // crest; everything else falls back to the inline-SVG heroic. Images are fetched only
 // when a card is opened (lazy) and runtime-cached by the service worker, so default
 // users never download them — and a missing/offline image just reveals the SVG beneath.
-const HERO_ART={ centaurus:'night-heroes/centaurus.svg' };
+const HERO_ART={
+  centaurus:'night-heroes/centaurus.jpg', crux:'night-heroes/crux.jpg',
+  orion:'night-heroes/orion.jpg', 'canis-major':'night-heroes/canis-major.jpg',
+  scorpius:'night-heroes/scorpius.jpg', sagittarius:'night-heroes/sagittarius.jpg',
+  leo:'night-heroes/leo.jpg', taurus:'night-heroes/taurus.jpg',
+  gemini:'night-heroes/gemini.jpg', carina:'night-heroes/carina.jpg',
+  'triangulum-australe':'night-heroes/triangulum-australe.jpg', grus:'night-heroes/grus.jpg',
+  vela:'night-heroes/vela.jpg', corvus:'night-heroes/corvus.jpg',
+  cygnus:'night-heroes/cygnus.jpg', lyra:'night-heroes/lyra.jpg',
+  aquila:'night-heroes/aquila.jpg', virgo:'night-heroes/virgo.jpg'
+};
 // Build + open the story sheet for a sky object (constellation or phenomenon).
 function renderStoryBody(slug,lat,lng){
   const L=SKY_LORE[slug]; if(!L) return '';
