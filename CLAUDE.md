@@ -266,3 +266,13 @@ it with the preview tool:
   offset, then arcs, so contact is frame-exact under any jank. General rule: if a
   DOM event must land on a specific animation frame, drive it from the animation's
   own clock (shared timeline / `.finished` of a same-duration anim), not wall-clock.
+- **A WAAPI keyframe list whose last offset is < 1 reverts to the underlying value.**
+  If you want an animation to *hold* its final pose for the rest of a longer timeline,
+  you must add an **explicit keyframe at `offset:1`** with that pose. The spec
+  synthesizes a final keyframe at offset 1 using the element's underlying value
+  (for `transform`, `none`), so the property interpolates *back to base* over the
+  tail of the timeline — and `commitStyles()` then bakes the base value, not the
+  pose. This caused PR #133: the loader ball arced out, landed at offset ~0.74, then
+  rubber-banded straight back to the tee over the remaining timeline. Fix: append
+  `{offset:1, transform:'<landing>'}` so it holds. (The old short-duration arc
+  didn't hit this because its keyframes already spanned offset 0→1.)
