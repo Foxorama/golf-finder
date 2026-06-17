@@ -75,13 +75,16 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   with `webkitCompassHeading` (offset refreshed only while the phone is level enough,
   `|cosβ|>0.25`, and held as you tilt up). `window._camAz=false` falls back to the old
   top-edge heading. **Tilt-to-pan:** `buildStarField` centres the band on that altitude
-  (clamped on-sky) — raise the phone to walk toward the zenith, lower it to the horizon;
-  no signal → mid-sky default (alt 48°), `window._tiltPan=false` pins it. Heading + pitch
-  are smoothed by a **time-based** low-pass (`_easeAngle`,
+  **1:1 from the horizon up** (`_skyAltC=clamp(pitch,0,90−span·0.35)`) — only the TOP is
+  clamped, so lifting off the horizon responds immediately (the old `span/2` floor gave a
+  ~26° dead zone before the view moved) and pointing near the zenith holds steady instead
+  of lurching; no signal → mid-sky default (alt 48°), `window._tiltPan=false` pins it.
+  Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
   tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
-  **zenith hold** (heading's pull fades to ~0 above ~65° altitude, so pointing overhead /
-  fast 360s don't spin the view) and a per-second **slew cap** (a momentary sensor flip
-  eases instead of snapping); `_maybePaintSky` repaints at ~18fps with a deadband. The
+  **zenith hold** (heading's pull fades to 0 by ~80° altitude and its slew cap drops
+  *quadratically*, so the jittery 70–80° approach can't snap and pointing overhead / a
+  fast 360 near the top doesn't spin the view) and a per-second **slew cap** (a momentary
+  sensor flip eases instead of snapping); `_maybePaintSky` repaints at ~18fps with a deadband. The
   overview (compass off) keeps the squished 360° strip. Constellation names are pinned **below** each figure (not on the anchor) so
   they don't overlay the lines; `declutterSkyLabels` names **every** up-figure that
   fits (collision-decluttered, reads then writes in separate batches to avoid layout

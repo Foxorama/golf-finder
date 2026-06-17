@@ -3137,12 +3137,13 @@ function buildStarField(lat,lng){
   if(full){ _skyVSpan=90; _skyAltC=46; }
   else {
     _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov));
-    // Tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch),
-    // so raising the phone walks the view up toward the zenith and lowering it drops to
-    // the horizon. No tilt signal → a comfortable mid-sky default. Clamp so the band
-    // stays fully on-sky (you can reach the horizon and the zenith, nothing wasted).
+    // Tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch) — 1:1,
+    // so it tracks the moment you start lifting from the horizon (no dead zone at the
+    // bottom: the old span/2 floor meant the first ~26° of lift moved nothing). Only the
+    // TOP is clamped, so pointing near the zenith holds steady (no vertical lurch up there)
+    // and the zenith stays in frame. No tilt signal → a comfortable mid-sky default.
     const cen=(_tiltPan&&window._tiltPan!==false&&_skyPitch!=null)?_skyPitch:48;
-    _skyAltC=Math.max(_skyVSpan/2,Math.min(90-_skyVSpan/2,cen));
+    _skyAltC=Math.max(0,Math.min(90-_skyVSpan*0.35,cen));
   }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
   // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
@@ -3704,10 +3705,11 @@ function _onOrient(e){
     if(_headingSm==null) _headingSm=h;
     else {
       // Zenith hold: azimuth is ill-defined as you point overhead (the camera vector goes
-      // vertical), so fade the heading's pull (and its slew cap) to ~0 above ~65° altitude
-      // — lifting the phone up or doing a fast 360 near the top no longer spins the view.
-      const alt=_pitchSm!=null?_pitchSm:0, wAz=Math.max(0.04,Math.min(1,(80-alt)/15));
-      _headingSm=_easeAngle(_headingSm,h,true,0.18/wAz,dt,300*wAz);
+      // vertical, so tiny hand-shake swings it wildly). Fade the heading's pull to 0 by
+      // ~80° altitude (full control ≤58°, heavily damped 70–80°), and drop the slew cap
+      // QUADRATICALLY so the jittery 70–80° approach can't snap — above 80° it's frozen.
+      const alt=_pitchSm!=null?_pitchSm:0, wAz=Math.max(0,Math.min(1,(80-alt)/22));
+      _headingSm=_easeAngle(_headingSm,h,true,0.18/Math.max(0.05,wAz),dt,300*wAz*wAz);
     }
   }
   _maybePaintSky();
