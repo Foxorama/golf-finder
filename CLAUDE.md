@@ -97,7 +97,10 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `fieldBase`/`seedBase`/`figMeta` caches and only re-mapped to x/y each repaint — do
   **not** reintroduce per-paint `altAz` over the catalog (that was the pan "chug"). The
   constellation lines are drawn as a soft glow (wide halo + faint thread), not a hard
-  line, to blend into the field.
+  line, to blend into the field. Because the band can dip below altitude 0, `paintSky`
+  draws a **dotted horizon line** at alt 0 with a **dimmed ground** gradient beneath it
+  (no faux stars — there are none below the horizon), and the field/seed culls (`alt<0`)
+  keep stars + figure lines above it.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow

@@ -3088,7 +3088,7 @@ function fieldBase(field,tag,lat,lng,date){
   if(_fieldBaseKey===key&&_fieldBase) return _fieldBase;
   const out=[];
   for(const s of field){
-    const aa=altAz(s[0],s[1],lat,lng,date); if(aa.alt<-1) continue;
+    const aa=altAz(s[0],s[1],lat,lng,date); if(aa.alt<0) continue;   // nothing below the horizon (Earth's in the way)
     const mag=s[2];
     const hsh=Math.sin(s[0]*12.9898+s[1]*78.233)*43758.5, j=hsh-Math.floor(hsh);
     const hsh2=Math.sin(s[0]*4.137+s[1]*19.71)*9277.31, j2=hsh2-Math.floor(hsh2);
@@ -3106,7 +3106,7 @@ let _seedBase=null,_seedBaseKey='';
 function seedBase(lat,lng,date){
   const key=_skyBucket(date,lat,lng);
   if(_seedBaseKey===key&&_seedBase) return _seedBase;
-  _seedBase=SKY_SEED.stars.map(s=>{ const aa=altAz(s[0],s[1],lat,lng,date); return aa.alt<-1?null:{az:aa.az,alt:aa.alt}; });
+  _seedBase=SKY_SEED.stars.map(s=>{ const aa=altAz(s[0],s[1],lat,lng,date); return aa.alt<0?null:{az:aa.az,alt:aa.alt}; });   // clip figure lines at the horizon
   _seedBaseKey=key;return _seedBase;
 }
 // Per-figure anchor + footprint (lowest star), cached the same way — drives both the
@@ -3210,6 +3210,20 @@ function paintSky(){
   const cv=_skyCanvas; if(!cv) return; const W=_skyW,H=_skyH;
   const dpr=Math.min(2,window.devicePixelRatio||1);
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
+  // Horizon + ground (detail view only). The tilt band can dip below altitude 0 now, and
+  // below the horizon is the EARTH — no stars there (they're behind the planet). So rather
+  // than leave it looking like empty sky, mark the horizon with a dotted line and dim the
+  // ground beneath it; the star/line culls (alt<0) keep the field itself above the line.
+  if(_skyFov<360){
+    const yH=skyAltFrac(0)*H;
+    if(yH<H){
+      const gy=Math.max(0,yH);
+      const grad=ctx.createLinearGradient(0,gy,0,H);
+      grad.addColorStop(0,'rgba(9,11,20,0)'); grad.addColorStop(0.55,'rgba(7,9,15,0.5)'); grad.addColorStop(1,'rgba(4,5,11,0.8)');
+      ctx.fillStyle=grad; ctx.fillRect(0,gy,W,H-gy);
+      if(yH>=-1){ ctx.save(); ctx.setLineDash([2.5,5]); ctx.lineWidth=1.1; ctx.strokeStyle='rgba(196,214,255,0.42)'; ctx.shadowColor='rgba(150,185,255,0.5)'; ctx.shadowBlur=4; ctx.beginPath(); ctx.moveTo(0,yH); ctx.lineTo(W,yH); ctx.stroke(); ctx.restore(); }
+    }
+  }
   if(_skyLines.length){
     // Three passes so the figures read clearly without drowning the stars: a wide
     // soft halo, a tighter blue glow, then a crisp brighter core on top — the halo
