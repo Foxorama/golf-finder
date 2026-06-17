@@ -66,13 +66,18 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   spiral galaxy, cloud nebula, ringed globular, dashed open cluster, void dark nebula;
   + a real phase `moonMark()`), still tinted by rarity (`--mk`); and the detail-view
   projection is **conformal** (`skyAltFrac` — equal deg/px both axes, so constellations
-  keep their true shape instead of squishing) showing a true-scale altitude band. That
-  band is **tilt-to-pan**: `_onOrient` derives the pointing altitude of the back of the
-  phone as `asin(−cosβ·cosγ)` (screen-orientation independent, even in β/γ so iOS/Android
-  signs don't matter, accelerometer-based so it works with no compass) and `buildStarField`
-  centres the band on it (clamped on-sky) — raise the phone to walk up toward the zenith,
-  lower it to the horizon. No tilt signal → a mid-sky default (alt 48°); `window._tiltPan
-  =false` pins it. Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
+  keep their true shape instead of squishing) showing a true-scale altitude band. The
+  view aims with the **back camera**, not the phone's top edge: `_camOrientation` builds
+  the device-orientation matrix and takes the **−Z (out-the-back) vector** to get BOTH the
+  azimuth (`atan2(E,N)`) and altitude (`asin(Up)` = `asin(−cosβ·cosγ)`) it points at — so
+  it's correct in landscape (the old top-edge heading read ~90° off there). North ref:
+  Android/absolute `alpha` is already true; iOS `alpha` is relative, so it's calibrated
+  with `webkitCompassHeading` (offset refreshed only while the phone is level enough,
+  `|cosβ|>0.25`, and held as you tilt up). `window._camAz=false` falls back to the old
+  top-edge heading. **Tilt-to-pan:** `buildStarField` centres the band on that altitude
+  (clamped on-sky) — raise the phone to walk toward the zenith, lower it to the horizon;
+  no signal → mid-sky default (alt 48°), `window._tiltPan=false` pins it. Heading + pitch
+  are smoothed by a **time-based** low-pass (`_easeAngle`,
   tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
   **zenith hold** (heading's pull fades to ~0 above ~65° altitude, so pointing overhead /
   fast 360s don't spin the view) and a per-second **slew cap** (a momentary sensor flip
