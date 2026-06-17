@@ -196,12 +196,21 @@ it with the preview tool:
 - **The compass/widgets are tiny.** To inspect detail, temporarily blow one up via
   `preview_eval`: set `el.style.transform='scale(5)'` + `transformOrigin`, then
   screenshot.
-- **Don't pause + seek `document.getAnimations()` wholesale.** Pausing all
-  animations and setting `currentTime` to capture a specific frame **wedges the
-  renderer** — every subsequent `preview_screenshot` times out until you
-  `preview_stop`/`preview_start` again. To freeze a frame, instead set inline
-  `animation:'none'` + `opacity` on *just the target elements* and leave the rest
-  of the page alone.
+- **Don't pause + seek WAAPI animations at all** (not even a couple — the
+  `getAnimations()`-wholesale warning is too narrow). Calling `.pause()` then
+  setting `.currentTime` on *any* compositor animation to capture a frame **wedges
+  the `preview_screenshot` renderer**: every subsequent screenshot times out, and
+  in practice `preview_stop`/`preview_start`, a full page reload, and
+  `preview_resize` all **failed to recover it** in the same session (the wedge
+  lives in the shared browser process). `preview_eval` keeps working, so you don't
+  lose measurement — but you lose the ability to show pictures. To freeze a frame,
+  set inline `animation:'none'` + `transform`/`opacity` on *just the target
+  elements* (this reflects in layout *and* screenshots); never seek the WAAPI clock.
+- **`getBoundingClientRect` does NOT reflect a running WAAPI transform** (it reads
+  the main-thread base style, e.g. the CSS-default `transform`), so it silently
+  mis-measures a compositor-animated element. Measure animated geometry by freezing
+  with inline styles (above) and reading the rect, or by `getComputedStyle().transform`
+  — not by rect-reading a live animation.
 - Measuring beats eyeballing for geometry: read computed transforms / element
   rects via `preview_eval` (e.g. confirming the club head meets the ball).
 - **Verifying the immersive night star map** (the conformal tilt-to-pan compass view):
@@ -245,3 +254,15 @@ it with the preview tool:
   (lowercase "storm"), so storm/clear checks use `/storm/i`, `/clear/i`.
 - `window._testTime` (set via eval) is **not** the module-local `_testTime`; use
   `?time=` to actually move the clock.
+- **Don't sync a compositor animation to a `setTimeout`.** WAAPI transform/opacity
+  animations play on the compositor and keep running through main-thread jank; a
+  `setTimeout` does **not** — it fires late when the main thread is busy. The day
+  loader's golf ball used to launch via `setTimeout(shot, SWING*IMPACT)` while the
+  club swung as a WAAPI animation, so during page load (exactly when the loader is
+  up and the thread is busy) the timer fired ~400ms late and the ball left the tee
+  *after* the club had swept past — a visible whiff, even though the impact-frame
+  geometry was perfect. Fix (PR #131): put the ball on the **same WAAPI timeline**
+  as the swing (one clock, both composited) — it holds at the tee until the `IMPACT`
+  offset, then arcs, so contact is frame-exact under any jank. General rule: if a
+  DOM event must land on a specific animation frame, drive it from the animation's
+  own clock (shared timeline / `.finished` of a same-duration anim), not wall-clock.
