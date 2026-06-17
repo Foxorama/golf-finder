@@ -69,12 +69,15 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   keep their true shape instead of squishing) showing a true-scale altitude band. That
   band is **tilt-to-pan**: `_onOrient` derives the pointing altitude of the back of the
   phone as `asin(−cosβ·cosγ)` (screen-orientation independent, even in β/γ so iOS/Android
-  signs don't matter, accelerometer-based so it works with no compass), low-passes it
-  into `_skyPitch`, and `buildStarField` centres the band there (clamped on-sky) — raise
-  the phone to walk up toward the zenith, lower it to the horizon. No tilt signal → a
-  mid-sky default (alt 48°); `window._tiltPan=false` pins it. Heading + pitch share one
-  throttled repaint (`_sensorPaint`). The overview (compass off) keeps the squished 360°
-  strip. Constellation names are pinned **below** each figure (not on the anchor) so
+  signs don't matter, accelerometer-based so it works with no compass) and `buildStarField`
+  centres the band on it (clamped on-sky) — raise the phone to walk up toward the zenith,
+  lower it to the horizon. No tilt signal → a mid-sky default (alt 48°); `window._tiltPan
+  =false` pins it. Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
+  tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
+  **zenith hold** (heading's pull fades to ~0 above ~65° altitude, so pointing overhead /
+  fast 360s don't spin the view) and a per-second **slew cap** (a momentary sensor flip
+  eases instead of snapping); `_maybePaintSky` repaints at ~18fps with a deadband. The
+  overview (compass off) keeps the squished 360° strip. Constellation names are pinned **below** each figure (not on the anchor) so
   they don't overlay the lines; `declutterSkyLabels` names **every** up-figure that
   fits (collision-decluttered, reads then writes in separate batches to avoid layout
   thrash) — the live focus band only adds *emphasis* (brighter label + revealed anchor
