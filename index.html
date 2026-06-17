@@ -894,6 +894,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         kf=[{transform:'translate(0px,0px)',offset:0},{transform:'translate(0px,0px)',offset:IMPACT}], i, tt;
     for(i=1;i<=10;i++){ tt=i/10;
       kf.push({offset:IMPACT+span*tt,transform:'translate('+(dx*tt).toFixed(1)+'px,'+(dy*tt-peak*Math.sin(Math.PI*tt)).toFixed(1)+'px)'}); }
+    kf.push({offset:1,transform:'translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)'});  /* hold at the landing spot to the swing's end — WAAPI otherwise synthesizes an offset-1 keyframe at the underlying value (no transform), rubber-banding the ball back to the tee */
     var a=ball.animate(kf,{duration:SWING,easing:'linear',fill:'forwards'});
     a.finished.then(function(){
       var ok=false; try{ a.commitStyles(); ok=true; }catch(e){} if(ok) a.cancel();  /* bake the rest position, drop the held anim */
