@@ -377,18 +377,17 @@ body.sky-full-on{overflow:hidden;}
    works offline). See the astral-heroic-card-art skill for the shared style. ── */
 .acard-art{flex:none;width:64px;height:64px;position:relative;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,0.05),rgba(8,12,28,0.55) 72%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 28%,transparent),0 0 14px -7px var(--ac);}
 .acard-art .ca-layer{position:absolute;inset:0;width:100%;height:100%;display:block;}
-.acard-art .ca-outline{animation:caOutline 11s ease-in-out infinite;animation-delay:var(--phase,0s);}
-.acard-art .ca-heroic{opacity:0;animation:caHeroic 11s ease-in-out infinite;animation-delay:var(--phase,0s);}
-@keyframes caOutline{0%,16%{opacity:1;}40%,60%{opacity:0;}84%,100%{opacity:1;}}
-@keyframes caHeroic{0%,16%{opacity:0;}40%,60%{opacity:1;}84%,100%{opacity:0;}}
+/* List card shows ONE static graphic — the lit "highlighted" design. The
+   realistic↔heroic morph now lives only in the detail crest (crestMorph). */
+.acard-art .ca-outline{display:none;}
+.acard-art .ca-heroic{opacity:1;}
+@keyframes crestOutline{0%,30%{opacity:1;}68%,100%{opacity:0;}}
+@keyframes crestHeroic{0%,30%{opacity:0;}68%,100%{opacity:1;}}
 /* Rarity word-pill + upcoming tag in the card head */
 .acard-rar{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);border-radius:5px;padding:1.5px 5px;line-height:1.3;}
 .acard-soon{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#0a0e1f;background:var(--ac);border-radius:5px;padding:1.5px 5px;line-height:1.3;box-shadow:0 0 9px -2px var(--ac);}
 .acard-eye{font-size:10px;line-height:1;opacity:0.7;}
-@media(prefers-reduced-motion:reduce){
-  .acard-art .ca-outline{animation:none;opacity:0;}
-  .acard-art .ca-heroic{animation:none;opacity:1;}
-}
+/* List art is already static (heroic only); no reduced-motion override needed. */
 /* Constellation labels drawn in the sky panorama — quieter than object labels */
 .sky-obj .so-const{font-size:9.5px;letter-spacing:0.13em;text-transform:uppercase;color:#bcd3f5;opacity:0.82;font-weight:500;}
 /* Night-card filter chips + tap hint (night mode only) */
@@ -416,11 +415,23 @@ body.sky-full-on{overflow:hidden;}
    ↔ Astral Heroic layers as the list cards, scaled up. */
 .sky-modal-crest{position:relative;width:150px;height:150px;margin:16px auto 2px;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--ac) 14%,transparent),rgba(8,12,28,0.5) 72%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 30%,transparent),0 0 26px -10px var(--ac);}
 .sky-modal-crest .ca-layer{position:absolute;inset:0;width:100%;height:100%;}
-.sky-modal-crest .ca-outline{animation:caOutline 11s ease-in-out infinite;}
-.sky-modal-crest .ca-heroic{opacity:0;animation:caHeroic 11s ease-in-out infinite;}
+/* Plays once when the sheet opens (innerHTML is rebuilt each time, so the fresh
+   nodes restart the animation): hold the realistic chart, then morph into the
+   heroic crest and stay there — "see why it's named that". */
+.sky-modal-crest .ca-outline{animation:crestOutline 2.6s ease-in-out .25s both;}
+.sky-modal-crest .ca-heroic{opacity:0;animation:crestHeroic 2.6s ease-in-out .25s both;}
 @media(prefers-reduced-motion:reduce){.sky-modal-crest .ca-outline{animation:none;opacity:0;}.sky-modal-crest .ca-heroic{animation:none;opacity:1;}}
-.sky-modal-map{margin:12px 18px 2px;}
-.sky-modal-map svg{display:block;border-radius:14px;width:100%;height:auto;}
+/* Constellation hero stage — the prominent panel whose real star chart morphs once
+   into the illustrated "astral heroic" figure (night-heroes/<slug>.png) when art
+   exists; without art it just shows the chart. The <img> is lazy + SW-cached; if it
+   fails (missing/offline) .has-hero is dropped and the chart simply stays. */
+.sky-hero-stage{position:relative;margin:16px 16px 4px;border-radius:16px;overflow:hidden;aspect-ratio:3/2;background:#070c1e;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 26%,transparent),0 0 28px -12px var(--ac);}
+.sky-hero-stage .ca-outline,.sky-hero-stage .sky-hero-img{position:absolute;inset:0;width:100%;height:100%;}
+.sky-hero-stage .ca-outline svg{display:block;width:100%;height:100%;}
+.sky-hero-stage .sky-hero-img{object-fit:cover;opacity:0;}
+.sky-hero-stage.has-hero .ca-outline{animation:crestOutline 3s ease-in-out .4s both;}
+.sky-hero-stage.has-hero .sky-hero-img{animation:crestHeroic 3s ease-in-out .4s both;}
+@media(prefers-reduced-motion:reduce){.sky-hero-stage.has-hero .ca-outline{animation:none;opacity:0;}.sky-hero-stage.has-hero .sky-hero-img{animation:none;opacity:1;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
 .sky-sec{margin:14px 20px 0;}
@@ -2508,13 +2519,21 @@ function figureSVG(slug){
   const sc=Math.min((W-2*pad)/Math.max(0.01,maxx-minx),(H-2*pad)/Math.max(0.01,maxy-miny));
   const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
   const X=p=>(W/2+(p.x-cx)*sc), Y=p=>(H/2-(p.y-cy)*sc);
-  const anc=figureAnchor(f), col=f.cx?'#bcd8ff':'#ffffff';
+  const anc=figureAnchor(f), col=f.cx?'#bcd8ff':'#ffffff', id='fm'+_hashStr(slug);
   let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star map">`;
-  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="rgba(10,16,38,0.55)"/>`;
-  for(const e of (f.l||[])){ const a=pts[e[0]],b=pts[e[1]]; s+=`<line x1="${X(a).toFixed(1)}" y1="${Y(a).toFixed(1)}" x2="${X(b).toFixed(1)}" y2="${Y(b).toFixed(1)}" stroke="rgba(150,185,255,0.5)" stroke-width="1.3" stroke-linecap="round"/>`; }
+  // Nebula-tinted sky + faint star-dust behind the figure — closer to a real chart.
+  s+=`<defs><radialGradient id="${id}" cx="50%" cy="42%" r="75%"><stop offset="0%" stop-color="#16244e"/><stop offset="48%" stop-color="#0e1838"/><stop offset="100%" stop-color="#070c1e"/></radialGradient>`
+    +`<radialGradient id="${id}n" cx="46%" cy="40%" r="40%"><stop offset="0%" stop-color="rgba(90,140,225,0.28)"/><stop offset="100%" stop-color="rgba(90,140,225,0)"/></radialGradient></defs>`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#${id})"/>`;
+  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#${id}n)"/>`;
+  let h=_hashStr(slug)||1; const rnd=()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; };
+  let dust=''; for(let i=0;i<48;i++){ const dx=(rnd()*W).toFixed(1), dy=(rnd()*H).toFixed(1), dr=(0.3+rnd()*0.9).toFixed(2); dust+=`<circle cx="${dx}" cy="${dy}" r="${dr}" fill="#cfe0ff" opacity="${(0.12+rnd()*0.33).toFixed(2)}"/>`; }
+  s+=`<g>${dust}</g>`;
+  for(const e of (f.l||[])){ const a=pts[e[0]],b=pts[e[1]]; s+=`<line x1="${X(a).toFixed(1)}" y1="${Y(a).toFixed(1)}" x2="${X(b).toFixed(1)}" y2="${Y(b).toFixed(1)}" stroke="rgba(190,215,255,0.62)" stroke-width="1.1" stroke-linecap="round" style="filter:drop-shadow(0 0 2px rgba(150,185,255,0.5))"/>`; }
   for(const p of pts){
     const r=Math.max(1.6,4.4-p.mag*0.62), x=X(p).toFixed(1), y=Y(p).toFixed(1);
-    s+=`<circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${col}"${p.mag<2?` style="filter:drop-shadow(0 0 4px ${f.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'})"`:''}/>`;
+    const glow=p.mag<3.2?` style="filter:drop-shadow(0 0 ${(r*1.6).toFixed(1)}px ${f.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'})"`:'';
+    s+=`<circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${col}"${glow}/>`;
     if(p.n===anc[0]){ const ty=Math.max(11,Y(p)-r-5); s+=`<text x="${x}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${p.n}</text>`; }
   }
   return s+`</svg>`;
@@ -2554,10 +2573,12 @@ function _heroicSparks(sz,ac,seed){
 }
 // Phase A — constellation as a faint chart.
 function figOutlineSVG(f,sz){
-  const {pts,lines}=projFigure(f,sz,sz,11);
+  const {pts,lines}=projFigure(f,sz,sz,11), id='fo'+_hashStr(f.n);
   let s=`<svg class="ca-layer ca-outline" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">`;
-  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; s+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(150,185,255,0.42)" stroke-width="1" stroke-linecap="round"/>`; }
-  for(const p of pts){ const r=Math.max(0.9,2.1-p.mag*0.3); s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#cfe0ff"/>`; }
+  s+=`<defs><radialGradient id="${id}" cx="48%" cy="42%" r="62%"><stop offset="0%" stop-color="rgba(90,140,225,0.22)"/><stop offset="100%" stop-color="rgba(90,140,225,0)"/></radialGradient></defs>`;
+  s+=`<circle cx="${(sz*0.48).toFixed(1)}" cy="${(sz*0.42).toFixed(1)}" r="${(sz*0.55).toFixed(1)}" fill="url(#${id})"/>`;
+  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; s+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(190,215,255,0.55)" stroke-width="1" stroke-linecap="round"/>`; }
+  for(const p of pts){ const r=Math.max(0.9,2.3-p.mag*0.3); const glow=p.mag<2.6?` style="filter:drop-shadow(0 0 2px rgba(207,224,255,0.9))"`:''; s+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#eaf2ff"${glow}/>`; }
   return s+`</svg>`;
 }
 // Phase B — constellation lit up: rarity aura, glowing sinew, bright orbs, a
@@ -3751,19 +3772,48 @@ function skyRarity(slug){
   if(SEASON_MARKERS.some(x=>x.slug===slug)) return 'rare';
   return SKY_RARITY[slug]||'common';
 }
+// Illustrated "astral heroic" figures (AI-generated; see night-heroes/HERO-ART-SPEC.md).
+// A constellation listed here gets its star-chart → painted-figure morph in the modal
+// crest; everything else falls back to the inline-SVG heroic. Images are fetched only
+// when a card is opened (lazy) and runtime-cached by the service worker, so default
+// users never download them — and a missing/offline image just reveals the SVG beneath.
+const HERO_ART={
+  centaurus:'night-heroes/centaurus.jpg', crux:'night-heroes/crux.jpg',
+  orion:'night-heroes/orion.jpg', 'canis-major':'night-heroes/canis-major.jpg',
+  scorpius:'night-heroes/scorpius.jpg', sagittarius:'night-heroes/sagittarius.jpg',
+  leo:'night-heroes/leo.jpg', taurus:'night-heroes/taurus.jpg',
+  gemini:'night-heroes/gemini.jpg', carina:'night-heroes/carina.jpg',
+  'triangulum-australe':'night-heroes/triangulum-australe.jpg', grus:'night-heroes/grus.jpg',
+  vela:'night-heroes/vela.jpg', corvus:'night-heroes/corvus.jpg',
+  cygnus:'night-heroes/cygnus.jpg', lyra:'night-heroes/lyra.jpg',
+  aquila:'night-heroes/aquila.jpg', virgo:'night-heroes/virgo.jpg'
+};
 // Build + open the story sheet for a sky object (constellation or phenomenon).
 function renderStoryBody(slug,lat,lng){
   const L=SKY_LORE[slug]; if(!L) return '';
   const rar=skyRarity(slug), ac=rarCol(rar);
   // Phasing astral-heroic crest — same Star Outline ↔ Astral Heroic art as the card.
-  const ao={slug,rar,glyph:L.icon,icon:L.icon};
-  if(FIG_BY_SLUG[slug]) ao.fig=slug; else if(L.dot){ ao.art='planet'; ao.dot=L.dot; ao.ring=(slug==='saturn'); }
-  let s=`<div class="sky-modal-crest" style="--ac:${ac};" aria-hidden="true">${cardArt(ao)}</div>`;
+  let s='';
+  if(FIG_BY_SLUG[slug]){
+    // Constellation: prominent full-width hero stage. The real star chart morphs
+    // once into the illustrated figure (when HERO_ART exists), else just the chart.
+    const art=HERO_ART[slug], cls=art?' has-hero':'';
+    s+=`<div class="sky-hero-stage${cls}" style="--ac:${ac};" aria-hidden="true"><div class="ca-outline">${figureSVG(slug)}</div>`;
+    // No loading="lazy": the modal (and this <img>) only exist once the card is
+    // tapped, so the fetch is already on-demand; lazy would stop it loading inside
+    // the fixed-position sheet. The SW runtime-caches it after the first open.
+    if(art) s+=`<img class="sky-hero-img" src="${art}" alt="${L.title} — astral heroic figure" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();">`;
+    s+=`</div>`;
+  }else{
+    // Planet / deep sky / event: the small phasing emblem crest (chart → SVG heroic).
+    const ao={slug,rar,glyph:L.icon,icon:L.icon};
+    if(L.dot){ ao.art='planet'; ao.dot=L.dot; ao.ring=(slug==='saturn'); }
+    s+=`<div class="sky-modal-crest" style="--ac:${ac};" aria-hidden="true">${cardArt(ao)}</div>`;
+  }
   s+=`<div class="sky-modal-hd">`;
   s+= L.dot ? `<span class="sky-modal-dot" style="background:${L.dot};color:${L.dot}"></span>`
             : `<span class="sky-modal-icon">${L.icon}</span>`;
   s+=`<div><div class="sky-modal-title">${L.title}</div><div class="sky-modal-tag">${L.tag}${L.sub?(' '+L.sub):''}<span class="sky-modal-rar" style="--ac:${ac};">${RARITY_LBL[rar]}</span></div></div></div>`;
-  if(L.fig) s+=`<div class="sky-modal-map">${figureSVG(L.fig)}</div>`;
   const np=loreNowPos(slug,lat,lng);
   if(np) s+=`<div class="sky-now">📍 ${np}</div>`;
   s+=`<div class="sky-modal-blurb">${L.blurb}</div>`;

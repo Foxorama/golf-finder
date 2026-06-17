@@ -45,10 +45,15 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `RARITY_C`/`rarCol`) that colours its accent, the modal crest and the sky-map
   marker, and a **visibility** state (`now`/`soon`/`later`) that drives the default
   **Visible now** filter and the *upcoming* pill (dated events ≤2 weeks out). Every
-  card also gets a phasing **Star Outline ↔ Astral Heroic** SVG emblem (`cardArt`).
-  The whole visual style — and how to add a new card so it matches — is documented
-  in the **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures'
-  star coords real (J2000): wrong coords draw the wrong outline. **Visible now**
+  card shows a single static **Astral Heroic** SVG graphic (`cardArt`); the
+  **Star Outline → Astral Heroic morph** plays once when you open the story modal.
+  For **constellations** the modal uses a full-width **hero stage** (`.sky-hero-stage`)
+  where the real star chart morphs into an illustrated figure when one exists in the
+  **`HERO_ART`** map (`night-heroes/<slug>.svg|png`, lazy + SW-cached, chart fallback
+  if missing); see `night-heroes/HERO-ART-SPEC.md`. The whole visual style — and how
+  to add a new card so it matches — is documented in the **`astral-heroic-card-art`
+  skill** (`.claude/skills/`). Keep new figures' star coords real (J2000): wrong
+  coords draw the wrong outline. **Visible now**
   also respects the naked-eye/binoculars depth button — `eye:'binoc'` cards only
   count as visible-now at binocular depth. Tapping the **compass** (🧭) opens an
   immersive full-viewport landscape sky (`enterSkyFullscreen`; best-effort

@@ -32,9 +32,12 @@ a card colour** — pick a rarity and let the colour follow.
 ## 2. The two phases
 
 Both phases are 64×64 SVG with class `ca-layer` + (`ca-outline` | `ca-heroic`).
-CSS (`@keyframes caOutline` / `caHeroic`) crossfades them on an 11s loop; each card
-gets a staggered negative `--phase` delay so the list shimmers unevenly. Reduced-
-motion users see the heroic phase, frozen.
+**On the list cards only the heroic phase shows — one static "highlighted" graphic
+per card** (`.acard-art .ca-outline{display:none}`); the perpetual crossfade is gone.
+The Star-Outline ↔ Astral-Heroic *morph* now lives in the **story modal**, where it
+plays **once on open** (`@keyframes crestOutline`/`crestHeroic`) and holds on the
+heroic frame — "see why it's named that". Reduced-motion users skip the morph and see
+the heroic frame.
 
 - **Star Outline (phase A)** — the faint "chart". For a constellation it is the
   figure's *real* projected stars (dots) + lines in dim blue. For everything else
@@ -48,7 +51,16 @@ motion users see the heroic phase, frozen.
   sky / events, a vivid glowing glyph ringed in the rarity colour. It is a stylised
   *crest*, not a literal photo — invent the heroic form, do not trace a reference.
 
-Same crest is reused, scaled up, at the top of the story modal (`.sky-modal-crest`).
+**In the modal the heroic frame depends on the object type:**
+- **Constellations** get a prominent full-width **hero stage** (`.sky-hero-stage`, 3:2):
+  the improved star chart (`figureSVG`) morphs into an **illustrated figure** when one
+  exists in the **`HERO_ART`** map (`night-heroes/<slug>.svg|png`), else it just holds
+  the chart. The illustration is a real asset (hand-authored luminous SVG today, a
+  painted raster drop-in later — the loader is source-agnostic, lazy on open, SW-cached,
+  and falls back to the chart if the file is missing/offline). See
+  `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
+- **Planets / deep sky / events** keep the small crest (`.sky-modal-crest`), the same
+  64×64 `cardArt` pair scaled up, morphing once on open.
 
 ## 3. The generators (don't fork them)
 
