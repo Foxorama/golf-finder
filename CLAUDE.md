@@ -75,10 +75,11 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   with `webkitCompassHeading` (offset refreshed only while the phone is level enough,
   `|cosβ|>0.25`, and held as you tilt up). `window._camAz=false` falls back to the old
   top-edge heading. **Tilt-to-pan:** `buildStarField` centres the band on that altitude
-  **1:1 from the horizon up** (`_skyAltC=clamp(pitch,0,90−span·0.35)`) — only the TOP is
-  clamped, so lifting off the horizon responds immediately (the old `span/2` floor gave a
-  ~26° dead zone before the view moved) and pointing near the zenith holds steady instead
-  of lurching; no signal → mid-sky default (alt 48°), `window._tiltPan=false` pins it.
+  **1:1** (`_skyAltC=clamp(pitch,−span·0.4,90−span·0.35)`) — the floor sits just BELOW the
+  horizon so pointing at/just-below it and tilting up responds immediately (a floor of 0,
+  or the older `span/2`, left a dead zone there), and only the TOP is clamped so pointing
+  near the zenith holds steady instead of lurching; no signal → mid-sky default (alt 48°),
+  `window._tiltPan=false` pins it.
   Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
   tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
   **zenith hold** (heading's pull fades to 0 by ~80° altitude and its slew cap drops

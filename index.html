@@ -3138,12 +3138,13 @@ function buildStarField(lat,lng){
   else {
     _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov));
     // Tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch) — 1:1,
-    // so it tracks the moment you start lifting from the horizon (no dead zone at the
-    // bottom: the old span/2 floor meant the first ~26° of lift moved nothing). Only the
-    // TOP is clamped, so pointing near the zenith holds steady (no vertical lurch up there)
-    // and the zenith stays in frame. No tilt signal → a comfortable mid-sky default.
+    // so it tracks the moment you start lifting. The floor sits a little BELOW the horizon
+    // (−span·0.4) so pointing at/just-below the horizon and tilting up responds straight
+    // away (a floor of 0 left a dead zone there — you'd point a touch low and the first
+    // few degrees of lift did nothing); only the TOP is clamped, so pointing near the
+    // zenith holds steady. No tilt signal → a comfortable mid-sky default.
     const cen=(_tiltPan&&window._tiltPan!==false&&_skyPitch!=null)?_skyPitch:48;
-    _skyAltC=Math.max(0,Math.min(90-_skyVSpan*0.35,cen));
+    _skyAltC=Math.max(-_skyVSpan*0.4,Math.min(90-_skyVSpan*0.35,cen));
   }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
   // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
