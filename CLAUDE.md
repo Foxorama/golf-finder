@@ -16,6 +16,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   need or take the time to do it right. Bouncing off the same concept three or
   four times is what frustrates me; a request for clarification or a "this can't
   be done cleanly because X — here's what I'd do instead" is always welcome.
+- **Promote durable knowledge out of memory.** Your per-session memory is a private
+  scratchpad; `CLAUDE.md`, the `.claude/skills/`, and these notes are the *shared*
+  record. Whenever you save a memory that's worth keeping for the project — a
+  verification recipe, a hard-won gotcha, an architecture note, a workflow — also
+  surface it where the repo can see it (a `CLAUDE.md` section, a skill, or a
+  workflow doc), so the knowledge isn't siloed where only you can read it. When you
+  write a memory, ask "does this belong in the shared docs too?" and, if so, do both.
 
 ## Layout
 - **`index.html`** — the whole app (HTML + CSS + JS, ~190 KB). Almost all work
@@ -197,6 +204,28 @@ it with the preview tool:
   of the page alone.
 - Measuring beats eyeballing for geometry: read computed transforms / element
   rects via `preview_eval` (e.g. confirming the club head meets the ball).
+- **Verifying the immersive night star map** (the conformal tilt-to-pan compass view):
+  1. **Resize the viewport to LANDSCAPE first** (e.g. 844×390). A square/portrait
+     viewport degenerates the conformal band — `_skyVSpan` clamps to 90 and it fills
+     0–90, so tilt / horizon / zenith behaviour won't match a real phone (realistic
+     landscape span ≈ 50). This is easy to miss and silently misleads.
+  2. **Force the detail view from `preview_eval`:** `if(!_compassOn) toggleCompass();
+     buildSkyObjects(window._gpsLat, window._gpsLng);` — `toggleCompass`'s repaint is
+     rAF-deferred, so call `buildSkyObjects` directly to read state synchronously
+     (page must be in night mode first via `?time=21:00`).
+  3. **No real sensors in preview.** Either set `_headingSm`/`_pitchSm` (or
+     `skyHeading`/`_skyPitch`) directly then `_maybePaintSky()`, **or** dispatch
+     `new DeviceOrientationEvent('deviceorientationabsolute',{alpha,beta,gamma,
+     absolute:true})` through the live `_onOrient` to exercise the camera matrix.
+     Pose→(α,β,γ): (0,135,0)=camera North +45°, (270,135,0)=East +45°, (0,90,0)=North
+     at the horizon. The *feel* (smoothing / zenith hold / overhead flip) can only be
+     judged on a real phone — verify the math here, ship behind a `window._*`
+     escape-hatch (`window._tiltPan`, `window._camAz`), and have me test on-device.
+  4. **The baked catalogs DO load in preview** (`star-catalog*.json` are same-origin
+     files the inline server serves), so star density / depth tiers are testable
+     locally — the "network is sandboxed" caveat is only about external APIs.
+  5. SVG `el.className` is an `SVGAnimatedString` — use `el.getAttribute('class')`
+     when checking marker classes in `preview_eval`.
 - **Delete `C:\golf-finder\.claude\launch.json` (and any `serve.ps1`) when done.**
   `preview_start` reuses a stale one, so remove it to keep the next session clean.
   Note `.claude/launch.json` is **not** git-ignored (only `settings.local.json`
