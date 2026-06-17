@@ -46,19 +46,31 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   marker, and a **visibility** state (`now`/`soon`/`later`) that drives the default
   **Visible now** filter and the *upcoming* pill (dated events ≤2 weeks out). Every
   card shows a single static **Astral Heroic** SVG graphic (`cardArt`); the
-  **Star Outline → Astral Heroic morph** plays once when you open the story modal.
-  For **constellations** the modal uses a full-width **hero stage** (`.sky-hero-stage`)
-  where the real star chart morphs into an illustrated figure when one exists in the
-  **`HERO_ART`** map (`night-heroes/<slug>.svg|png`, lazy + SW-cached, chart fallback
-  if missing); see `night-heroes/HERO-ART-SPEC.md`. The whole visual style — and how
-  to add a new card so it matches — is documented in the **`astral-heroic-card-art`
-  skill** (`.claude/skills/`). Keep new figures' star coords real (J2000): wrong
-  coords draw the wrong outline. **Visible now**
+  **Star Outline ↔ Astral Heroic morph loops** (chart→hero→chart, a slow `infinite
+  alternate` ping-pong via the `morphChart`/`morphHero` keyframes) the whole time the
+  story modal is open. For **constellations** the modal uses a full-width **hero stage**
+  (`.sky-hero-stage`) where the real star chart morphs into an illustrated figure (and
+  back) when one exists in the **`HERO_ART`** map (`night-heroes/<slug>.svg|png`, lazy +
+  SW-cached, chart fallback if missing); see `night-heroes/HERO-ART-SPEC.md`. The whole
+  visual style — and how to add a new card so it matches — is documented in the
+  **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords
+  real (J2000): wrong coords draw the wrong outline. **Visible now**
   also respects the naked-eye/binoculars depth button — `eye:'binoc'` cards only
   count as visible-now at binocular depth. Tapping the **compass** (🧭) opens an
   immersive full-viewport landscape sky (`enterSkyFullscreen`; best-effort
   Fullscreen API + `screen.orientation.lock('landscape')`, with a CSS `.sky-full`
-  overlay that works everywhere else).
+  overlay that works everywhere else). The compass button is also the **exit** (no
+  separate exit button). In that immersive view: depth/filter/weather controls sit in
+  a compact **top-right stack** under the compass (centre stays clear); the sky map
+  draws a **distinct SVG glyph per category** (`skyMark()` — sparkle star, orb planet,
+  spiral galaxy, cloud nebula, ringed globular, dashed open cluster, void dark nebula;
+  + a real phase `moonMark()`), still tinted by rarity (`--mk`); and the detail-view
+  projection is **conformal** (`skyAltFrac` — equal deg/px both axes, so constellations
+  keep their true shape instead of squishing) showing a true-scale altitude band
+  centred a touch above mid-sky. The overview (compass off) keeps the squished 360°
+  strip. Constellation names are pinned **below** each figure (not on the anchor) so
+  they don't overlay the lines, and `declutterSkyLabels` keeps labels clear of the
+  corner controls.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow

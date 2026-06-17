@@ -251,24 +251,12 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .sky-star[data-big]{width:3px;height:3px;box-shadow:0 0 5px rgba(255,255,255,0.9);}
 .sky-star.crux{background:#9fd4ff;box-shadow:0 0 5px rgba(159,212,255,0.9);width:2.5px;height:2.5px;}
 .sky-obj{position:absolute;transform:translate(-50%,-50%);text-align:center;line-height:1;}
-.sky-obj .so-dot{width:5px;height:5px;border-radius:50%;margin:0 auto;box-shadow:0 0 6px currentColor;}
-/* Rarity markers in the panorama: a glowing pip pins a constellation anchor, a
-   bright diamond pins a deep-sky object — both tinted to the loot grade (--mk). */
-.sky-obj .so-mark{display:block;width:7px;height:7px;border-radius:50%;margin:0 auto 2px;background:var(--mk,#9fd4ff);box-shadow:0 0 8px 1px var(--mk,#9fd4ff),0 0 2px #fff;}
-.sky-obj .so-deep{display:block;width:8px;height:8px;margin:0 auto 2px;background:var(--mk,#9fd4ff);box-shadow:0 0 9px 2px var(--mk,#9fd4ff);transform:rotate(45deg);border:0.5px solid rgba(255,255,255,0.85);}
-/* Deep-sky marker by category: shape tells the *type* apart (nebula vs cluster vs
-   galaxy…), colour (--mk) still encodes rarity. Shapes stay inside the base box so
-   the fullscreen .so-deep size-bump scales them all together. Untyped → diamond. */
-.sky-obj .so-deep.dso-nebula{transform:none;border:0;border-radius:50%;background:radial-gradient(circle,var(--mk) 0%,var(--mk) 26%,transparent 70%);box-shadow:0 0 11px 3px var(--mk);}
-.sky-obj .so-deep.dso-dark{transform:none;border:1.5px solid var(--mk);border-radius:50%;background:rgba(4,6,15,0.55);box-shadow:0 0 7px 0 var(--mk),inset 0 0 3px rgba(0,0,0,0.7);}
-.sky-obj .so-deep.dso-globular{transform:none;border:0;border-radius:50%;background:radial-gradient(circle,#fff 0%,#fff 20%,var(--mk) 46%,transparent 80%);box-shadow:0 0 9px 2px var(--mk);}
-.sky-obj .so-deep.dso-galaxy{transform:rotate(-24deg);border:0;border-radius:50%;background:radial-gradient(ellipse 94% 40% at 50% 50%,#fff 0%,#fff 12%,var(--mk) 44%,transparent 82%);box-shadow:0 0 8px 1px var(--mk);}
-.sky-obj .so-deep.dso-open{transform:none;border:0;background-repeat:no-repeat;box-shadow:0 0 5px 0 var(--mk);background:
-  radial-gradient(circle 1.2px at 32% 34%,var(--mk) 96%,transparent 100%),
-  radial-gradient(circle 1.2px at 68% 30%,var(--mk) 96%,transparent 100%),
-  radial-gradient(circle 1.1px at 52% 64%,var(--mk) 96%,transparent 100%),
-  radial-gradient(circle 1.0px at 27% 68%,var(--mk) 96%,transparent 100%),
-  radial-gradient(circle 1.0px at 74% 62%,var(--mk) 96%,transparent 100%);}
+/* Sky-map markers: a compact inline-SVG glyph per category (skyMark) — the SHAPE
+   tells the type apart (sparkle star, orb planet, spiral galaxy, cloud nebula,
+   ringed globular, dashed open cluster, void dark nebula), while the colour (--mk)
+   still encodes loot rarity (or the planet's own tint) and drives a matching glow. */
+.sky-obj .so-glyph{display:block;width:12px;height:12px;margin:0 auto 2px;overflow:visible;filter:drop-shadow(0 0 4px var(--mk,#9fd4ff));}
+.sky-obj .so-glyph.sm-moon{filter:drop-shadow(0 0 6px rgba(222,231,255,0.6));}
 .sky-obj .so-icon{font-size:22px;filter:drop-shadow(0 0 9px rgba(220,230,255,0.5));}
 .sky-obj .so-label{font-family:var(--mono);font-weight:500;font-size:11px;color:#fff;text-shadow:0 0 2px #000,0 0 2px #000,0 0 4px #000,0 1px 3px #000;margin-top:2px;display:block;white-space:nowrap;letter-spacing:0.01em;}
 .sky-compass{position:absolute;bottom:1px;left:0;right:0;height:13px;z-index:3;pointer-events:none;}
@@ -286,15 +274,16 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 body.sky-full-on{overflow:hidden;}
 .night-scene.sky-full{position:fixed;inset:0;width:100vw;height:100dvh;margin:0;border-radius:0;z-index:2000;background:radial-gradient(120% 80% at 50% 18%,#0c1430 0%,#070a18 60%,#04060f 100%);box-shadow:none;}
 .night-scene.sky-full::after{content:"";position:absolute;inset:0;pointer-events:none;box-shadow:inset 0 0 160px 30px rgba(0,0,0,0.55);z-index:6;}
-/* Fullscreen safe-zone: reserve a horizon strip for the bottom control bar and a
-   small margin from the frame edges, so sky markers never render under the
-   controls (issue A) or get bisected at the edge (issue B). Inset the star canvas
-   and the object layer by the same amounts so the two stay pixel-aligned. */
-.night-scene.sky-full .night-sky{left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 92px);}
+/* Fullscreen safe-zone: now the controls live in the top-right corner (not a bottom
+   bar), the sky fills almost the whole frame — only a thin strip at the bottom is
+   reserved for the compass azimuth labels + the centre tick, plus a small side margin
+   so markers aren't bisected at the edge. Inset the star canvas and the object layer
+   by the same amounts so the two stay pixel-aligned. */
+.night-scene.sky-full .night-sky{left:12px;right:12px;bottom:calc(env(safe-area-inset-bottom,0px) + 34px);overflow:hidden;}
 /* The star canvas is a replaced element, so left+right can't stretch it — size it
    explicitly to the same inset box as .night-sky so stars/lines stay aligned with
    the object markers (buildStarField re-measures on the fullscreen repaint). */
-.night-scene.sky-full .sky-canvas{left:12px;top:0;right:auto;bottom:auto;width:calc(100% - 24px);height:calc(100% - (env(safe-area-inset-bottom,0px) + 92px));}
+.night-scene.sky-full .sky-canvas{left:12px;top:0;right:auto;bottom:auto;width:calc(100% - 24px);height:calc(100% - (env(safe-area-inset-bottom,0px) + 34px));}
 /* Fullscreen sky is tappable: tap a marker to reveal its name when a crowd hid it
    (declutter), tap again or tap empty sky to clear. Bigger invisible hit pad over
    each marker; the revealed label gets a chip background so it reads over others. */
@@ -307,30 +296,29 @@ body.sky-full-on{overflow:hidden;}
 .night-scene.sky-full .sky-compass span{font-size:14px;}
 .night-scene.sky-full .sky-compass span.minor{font-size:12px;}
 .night-scene.sky-full .so-label{font-size:15px;}
-.night-scene.sky-full .so-const{font-size:13px;letter-spacing:0.14em;}
+.night-scene.sky-full .so-const{font-size:13px;letter-spacing:0.14em;background:rgba(7,11,26,0.5);padding:1px 7px;border-radius:7px;}
+.night-scene.sky-full .so-glyph{width:18px;height:18px;}
 .night-scene.sky-full .so-icon{font-size:34px;}
-.night-scene.sky-full .so-mark{width:9px;height:9px;}
-.night-scene.sky-full .so-deep{width:11px;height:11px;}
-.night-scene.sky-full .sky-compass-btn{top:calc(env(safe-area-inset-top,0px) + 12px);width:44px;height:40px;font-size:19px;}
+.night-scene.sky-full .sky-compass-btn{top:calc(env(safe-area-inset-top,0px) + 12px);right:12px;width:44px;height:40px;font-size:19px;}
 .night-scene.sky-full .sky-center-tick{height:24px;}
-.sky-full-exit{position:absolute;top:calc(env(safe-area-inset-top,0px) + 14px);left:14px;z-index:2100;display:none;align-items:center;gap:5px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:8px 13px;cursor:pointer;}
-.sky-full-exit:active{transform:scale(0.95);}
-/* In-overlay sky controls (depth toggle + filter dropdown), fullscreen only. Sits
-   bottom-centre, clear of the busy top row (exit/facing/compass) and the compass strip. */
+/* In-overlay sky controls (depth · filter · weather), fullscreen only — a compact
+   vertical stack tucked top-right UNDER the compass button, so the centre of the sky
+   stays clear and the controls no longer sit over the phenomena along the horizon.
+   The compass button itself is the exit (tap it again to leave the immersive view). */
 .sky-full-controls{display:none;}
-.night-scene.sky-full .sky-full-controls{display:flex;gap:8px;align-items:center;position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);transform:translateX(-50%);z-index:2100;}
-.sky-fc-depth,.sky-fc-filter,.sky-fc-wx{height:38px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:10px;color:#dbe6ff;font-family:var(--mono);font-size:13px;padding:0 12px;cursor:pointer;}
+.night-scene.sky-full .sky-full-controls{display:flex;flex-direction:column;align-items:flex-end;gap:7px;position:absolute;top:calc(env(safe-area-inset-top,0px) + 60px);right:12px;left:auto;bottom:auto;transform:none;z-index:2100;}
+.sky-fc-depth,.sky-fc-filter,.sky-fc-wx{height:32px;background:rgba(16,22,43,0.82);border:1px solid rgba(143,184,232,0.4);border-radius:9px;color:#dbe6ff;font-family:var(--mono);font-size:12px;padding:0 11px;cursor:pointer;white-space:nowrap;}
 .sky-fc-depth:active,.sky-fc-wx:active{transform:scale(0.96);}
 .sky-fc-wx{opacity:0.62;}
 .sky-fc-wx.on{opacity:1;background:rgba(90,169,240,0.26);border-color:rgba(143,184,232,0.85);color:#fff;}
-.sky-fc-filter{appearance:none;-webkit-appearance:none;padding-right:28px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23aec6f0' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;}
 .sky-fc-filter option{background:#101630;color:#dbe6ff;}
 .sky-fc-filterwrap{position:relative;display:flex;align-items:center;}
 .sky-fc-filter{display:flex;align-items:center;justify-content:center;white-space:nowrap;}
 .sky-fc-filter:active{transform:scale(0.96);}
 .sky-fc-filter.open{background:rgba(90,169,240,0.26);border-color:rgba(143,184,232,0.85);color:#fff;}
 .sky-fc-backdrop{position:fixed;inset:0;z-index:2250;}
-.sky-fc-pop{position:absolute;bottom:calc(100% + 10px);left:50%;transform:translateX(-50%);display:flex;flex-direction:column;gap:3px;min-width:172px;background:rgba(12,18,38,0.97);border:1px solid rgba(143,184,232,0.5);border-radius:12px;padding:7px;z-index:2300;box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+.sky-fc-pop{position:absolute;top:0;right:calc(100% + 8px);left:auto;bottom:auto;transform:none;display:flex;flex-direction:column;gap:3px;min-width:178px;background:rgba(12,18,38,0.97);border:1px solid rgba(143,184,232,0.5);border-radius:12px;padding:7px;z-index:2300;box-shadow:0 10px 30px rgba(0,0,0,0.6);}
+.sky-fc-pop-h{font-family:var(--mono);font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;color:#7f93c0;padding:2px 9px 5px;}
 .sky-fc-opt{display:flex;align-items:center;gap:9px;height:36px;padding:0 13px;background:transparent;border:1px solid transparent;border-radius:8px;color:#cdd9f5;font-family:var(--mono);font-size:13px;text-align:left;cursor:pointer;}
 .sky-fc-opt:active{transform:scale(0.97);}
 .sky-fc-opt.on{background:rgba(90,169,240,0.22);border-color:rgba(143,184,232,0.7);color:#fff;}
@@ -379,11 +367,17 @@ body.sky-full-on{overflow:hidden;}
 .acard-art{flex:none;width:64px;height:64px;position:relative;border-radius:12px;overflow:hidden;background:radial-gradient(circle at 50% 38%,rgba(255,255,255,0.05),rgba(8,12,28,0.55) 72%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 28%,transparent),0 0 14px -7px var(--ac);}
 .acard-art .ca-layer{position:absolute;inset:0;width:100%;height:100%;display:block;}
 /* List card shows ONE static graphic — the lit "highlighted" design. The
-   realistic↔heroic morph now lives only in the detail crest (crestMorph). */
+   realistic↔heroic morph loop lives only in the opened sheet (crest + hero stage). */
 .acard-art .ca-outline{display:none;}
 .acard-art .ca-heroic{opacity:1;}
+/* One-shot morph (kept for any single-play use). */
 @keyframes crestOutline{0%,30%{opacity:1;}68%,100%{opacity:0;}}
 @keyframes crestHeroic{0%,30%{opacity:0;}68%,100%{opacity:1;}}
+/* Looping morph: the opened card breathes star-chart ↔ astral-heroic and back,
+   forever. Symmetric holds (25% each end) + a slow 50% fade so each side reads
+   before it morphs; run `infinite alternate` so it ping-pongs without a jump. */
+@keyframes morphChart{0%,25%{opacity:1;}75%,100%{opacity:0;}}
+@keyframes morphHero{0%,25%{opacity:0;}75%,100%{opacity:1;}}
 /* Rarity word-pill + upcoming tag in the card head */
 .acard-rar{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.14em;text-transform:uppercase;color:var(--ac);border:1px solid color-mix(in srgb,var(--ac) 55%,transparent);border-radius:5px;padding:1.5px 5px;line-height:1.3;}
 .acard-soon{font-family:var(--mono);font-size:8px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#0a0e1f;background:var(--ac);border-radius:5px;padding:1.5px 5px;line-height:1.3;box-shadow:0 0 9px -2px var(--ac);}
@@ -416,11 +410,11 @@ body.sky-full-on{overflow:hidden;}
    ↔ Astral Heroic layers as the list cards, scaled up. */
 .sky-modal-crest{position:relative;width:150px;height:150px;margin:16px auto 2px;border-radius:18px;overflow:hidden;background:radial-gradient(circle at 50% 40%,color-mix(in srgb,var(--ac) 14%,transparent),rgba(8,12,28,0.5) 72%);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 30%,transparent),0 0 26px -10px var(--ac);}
 .sky-modal-crest .ca-layer{position:absolute;inset:0;width:100%;height:100%;}
-/* Plays once when the sheet opens (innerHTML is rebuilt each time, so the fresh
-   nodes restart the animation): hold the realistic chart, then morph into the
-   heroic crest and stay there — "see why it's named that". */
-.sky-modal-crest .ca-outline{animation:crestOutline 2.6s ease-in-out .25s both;}
-.sky-modal-crest .ca-heroic{opacity:0;animation:crestHeroic 2.6s ease-in-out .25s both;}
+/* Loops while the sheet is open (innerHTML is rebuilt each time, so the fresh
+   nodes restart it): hold the realistic chart, morph into the heroic crest, hold,
+   then morph back — "see why it's named that", over and over. */
+.sky-modal-crest .ca-outline{animation:morphChart 3.6s ease-in-out .3s infinite alternate;}
+.sky-modal-crest .ca-heroic{opacity:0;animation:morphHero 3.6s ease-in-out .3s infinite alternate;}
 @media(prefers-reduced-motion:reduce){.sky-modal-crest .ca-outline{animation:none;opacity:0;}.sky-modal-crest .ca-heroic{animation:none;opacity:1;}}
 /* Constellation hero stage — the prominent panel whose real star chart morphs once
    into the illustrated "astral heroic" figure (night-heroes/<slug>.png) when art
@@ -430,8 +424,8 @@ body.sky-full-on{overflow:hidden;}
 .sky-hero-stage .ca-outline,.sky-hero-stage .sky-hero-img{position:absolute;inset:0;width:100%;height:100%;}
 .sky-hero-stage .ca-outline svg{display:block;width:100%;height:100%;}
 .sky-hero-stage .sky-hero-img{object-fit:cover;opacity:0;}
-.sky-hero-stage.has-hero .ca-outline{animation:crestOutline 3s ease-in-out .4s both;}
-.sky-hero-stage.has-hero .sky-hero-img{animation:crestHeroic 3s ease-in-out .4s both;}
+.sky-hero-stage.has-hero .ca-outline{animation:morphChart 4s ease-in-out .4s infinite alternate;}
+.sky-hero-stage.has-hero .sky-hero-img{animation:morphHero 4s ease-in-out .4s infinite alternate;}
 @media(prefers-reduced-motion:reduce){.sky-hero-stage.has-hero .ca-outline{animation:none;opacity:0;}.sky-hero-stage.has-hero .sky-hero-img{animation:none;opacity:1;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
@@ -1046,7 +1040,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <button class="sky-compass-btn" id="compass-btn" onclick="toggleCompass()" aria-pressed="false" aria-label="Point the sky map in the direction you are facing">🧭</button>
         <div class="sky-facing" id="sky-facing" style="display:none;"></div>
         <div class="sky-center-tick" id="sky-center-tick" style="display:none;" aria-hidden="true"></div>
-        <button class="sky-full-exit" id="sky-full-exit" style="display:none;" onclick="toggleCompass()" aria-label="Exit full-screen sky">✕ exit</button>
         <div class="sky-full-controls" id="sky-full-controls" aria-label="Sky depth and filter"></div>
       </div>
       <div class="night-info">
@@ -3090,10 +3083,16 @@ function buildStarField(lat,lng){
   if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){ cv.width=Math.round(W*dpr); cv.height=Math.round(H*dpr); }
   _skyCanvas=cv; _skyW=W; _skyH=H;
   const date=nowDate(), c=skyViewCenter(), fov=_skyFov, full=fov>=360;
+  // Set the conformal vertical span/centre (read by skyAltFrac, shared with the DOM
+  // objects). Detail view: span = the same deg/px as the horizontal axis, so shapes
+  // are true; the band is centred a touch above mid-sky to favour the rich southern
+  // marquee, clamped to stay fully on-sky. Overview keeps the full 0–90 squeeze.
+  if(full){ _skyVSpan=90; _skyAltC=46; }
+  else { _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov)); _skyAltC=Math.max(_skyVSpan/2,Math.min(90-_skyVSpan/2,48)); }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
-  // objects), scaled to pixels; alt→y matches buildSkyObjects' pos().
+  // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
   const px=(az)=>{ const d=((az-c+540)%360)-180; return (d/fov+0.5)*W; };
-  const py=(alt)=>((4+(1-Math.min(alt,90)/90)*88)/100)*H;
+  const py=(alt)=>skyAltFrac(alt)*H;
   const proj=(s)=>{ const aa=altAz(s[0],s[1],lat,lng,date); return aa.alt<-1?null:{x:px(aa.az),y:py(aa.alt)}; };
   // Constellation lines — always the curated seed figures, so they stay correct
   // whether or not the dense catalog has loaded. Hidden when the (detail-view) filter
@@ -3113,7 +3112,7 @@ function buildStarField(lat,lng){
   if(showStars) for(const e of SKY_SEED.lines){
     const a=seedP[e[0]],b=seedP[e[1]]; if(!a||!b) continue;
     if(Math.abs(a.x-b.x)>W*0.5) continue;                        // straddles the seam — skip
-    const em=figBand?(figBand.has(e[2])?1.5:0.4):1;
+    const em=figBand?(figBand.has(e[2])?1.6:0.62):1;   // focus pops; others stay visible (not near-invisible) so panning isn't flickery
     lines.push([a.x,a.y,b.x,b.y,em]);
     if(full){ if(a.x<W*0.08||b.x<W*0.08) lines.push([a.x+W,a.y,b.x+W,b.y,em]);
               else if(a.x>W*0.92||b.x>W*0.92) lines.push([a.x-W,a.y,b.x-W,b.y,em]); }
@@ -3125,9 +3124,10 @@ function buildStarField(lat,lng){
   // detail: a ~120° slice across the full width has room for the deepest field we
   // have, so show it all (toggle disabled there — see toggleCompass).
   const preset=STAR_MAG_PRESETS[_starMagIdx], binoc=preset.k==='binoc';
-  // Depth now gates the detail view too: naked eye keeps the field light, binoculars
-  // pulls the deep catalog and the faintest stars.
-  const magCap=full?preset.mag:(binoc?7.0:5.5);
+  // Depth gates the detail view too, with a deliberately wide gap so the two read
+  // differently: naked eye is a clean bright field (mag ≤ 5.4), binoculars pulls the
+  // deep catalog and the faintest stars (≤ 7.5) for a visibly denser sky.
+  const magCap=full?preset.mag:(binoc?7.5:5.4);
   const field=(!full&&binoc&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
             :(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars
             :SKY_SEED.stars;
@@ -3135,7 +3135,7 @@ function buildStarField(lat,lng){
   for(const s of field){
     if(s[2]>magCap) continue;
     const p=proj(s); if(!p) continue;
-    if(!full && (p.x<-2||p.x>W+2)) continue;                     // off the zoomed edge
+    if(!full && (p.x<-2||p.x>W+2||p.y<-4||p.y>H+4)) continue;    // off the zoomed/conformal edge
     const mag=s[2], cx=s[3];
     const hsh=Math.sin(s[0]*12.9898+s[1]*78.233)*43758.5, j=hsh-Math.floor(hsh);  // 0..1
     const hsh2=Math.sin(s[0]*4.137+s[1]*19.71)*9277.31, j2=hsh2-Math.floor(hsh2); // 0..1
@@ -3165,12 +3165,19 @@ function paintSky(){
   const dpr=Math.min(2,window.devicePixelRatio||1);
   const ctx=cv.getContext('2d'); ctx.setTransform(dpr,0,0,dpr,0,0); ctx.clearRect(0,0,W,H);
   if(_skyLines.length){
-    // Two passes so the figures read clearly without drowning the stars: a soft
-    // blue glow underlay, then a crisp brighter core on top. Both step up in the
-    // compass detail view, where there's room and the constellations are the point.
+    // Three passes so the figures read clearly without drowning the stars: a wide
+    // soft halo, a tighter blue glow, then a crisp brighter core on top — the halo
+    // gives the lines a starry, slightly nebulous shimmer. All step up in the compass
+    // detail view, where there's room and the constellations are the point.
     // Each line's 5th value (em) scales its emphasis — focus band glows, others dim.
     const detail=_skyFov<360;
     ctx.lineCap='round'; ctx.lineJoin='round';
+    // Pass 0 — wide, faint halo behind the sinew (the "glow behind the lines").
+    ctx.shadowColor='rgba(135,180,255,0.9)'; ctx.shadowBlur=detail?15:10;
+    for(const L of _skyLines){ const em=L[4]==null?1:L[4];
+      ctx.strokeStyle='rgba(125,170,255,'+(0.07*em).toFixed(3)+')';
+      ctx.lineWidth=(detail?6.5:4.5)*(em>1.2?1.18:1);
+      ctx.beginPath(); ctx.moveTo(L[0],L[1]); ctx.lineTo(L[2],L[3]); ctx.stroke(); }
     ctx.shadowColor='rgba(120,165,255,0.6)'; ctx.shadowBlur=detail?6:4;
     for(const L of _skyLines){ const em=L[4]==null?1:L[4];
       ctx.strokeStyle='rgba(120,165,255,'+(0.16*em).toFixed(3)+')';
@@ -3372,6 +3379,18 @@ function skyAzX(az){
   const d=((az-c+540)%360)-180;          // signed degrees from centre, −180..180
   return (d/_skyFov+0.5)*100;            // centre → 50%; ±fov/2 → 0 / 100%
 }
+// Vertical (altitude) mapping. The OVERVIEW (360° strip) keeps the old full 0–90
+// squeeze — it's a deliberately squished panorama. The DETAIL view is CONFORMAL:
+// the same degrees-per-pixel as the horizontal axis, so constellations keep their
+// true shape (no more stretched/squished Scorpius). Because a wide landscape can't
+// show 0–90 at true scale, the detail view shows a band centred on _skyAltC — the
+// altitude you're pointing at (live compass) or a comfortable mid-sky default. Both
+// the canvas and the labelled objects read this, so they stay pixel-aligned.
+let _skyVSpan=90,_skyAltC=46;            // detail-view vertical span (deg) + centre altitude
+function skyAltFrac(alt){
+  if(_skyFov>=360) return (4+(1-Math.min(alt,90)/90)*88)/100;   // overview: full sky, squished by design
+  return 0.5-(Math.min(alt,90)-_skyAltC)/_skyVSpan;             // detail: true-scale band around _skyAltC
+}
 function renderCompassStrip(){
   const el=document.getElementById('sky-compass'); if(!el)return;
   const pts=[[0,'N',0],[45,'NE',1],[90,'E',0],[135,'SE',1],[180,'S',0],[225,'SW',1],[270,'W',0],[315,'NW',1]];
@@ -3380,6 +3399,44 @@ function renderCompassStrip(){
     html+=wrapX(skyAzX(az), x=>`<span${minor?' class="minor"':''} style="left:${x.toFixed(1)}%">${n}</span>`);
   }
   el.innerHTML=html;
+}
+// Compact per-category sky-map glyph. The SHAPE encodes the type (so a galaxy reads
+// differently from a planet, a nebula from a cluster, at a glance); the colour (col)
+// still carries loot rarity or the planet's own tint, and .so-glyph adds a matching
+// glow + the fullscreen size-bump. Pure inline SVG, drawn in a 16-unit box.
+function skyMark(type,col){
+  const o=(b)=>`<svg class="so-glyph sm-${type}" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" style="--mk:${col}">${b}</svg>`;
+  switch(type){
+    case 'star':                       // constellation anchor — a 4-point sparkle
+      return o(`<path d="M8 0.6 L9.5 6.5 L15.4 8 L9.5 9.5 L8 15.4 L6.5 9.5 L0.6 8 L6.5 6.5 Z" fill="${col}"/><circle cx="8" cy="8" r="1.7" fill="#fff"/>`);
+    case 'planet':                     // a lit orb (clearly not a galaxy/cluster)
+      return o(`<circle cx="8" cy="8" r="5" fill="${col}"/><circle cx="6.1" cy="6.1" r="1.7" fill="#fff" opacity="0.6"/>`);
+    case 'nebula':                     // a soft glowing cloud
+      return o(`<g fill="${col}" opacity="0.8"><circle cx="5.8" cy="8.6" r="3.4"/><circle cx="10" cy="7.4" r="3.1"/><circle cx="8" cy="10" r="2.8"/></g><circle cx="8" cy="8" r="1.5" fill="#fff" opacity="0.9"/>`);
+    case 'globular':                   // dense ball — ringed circle + a faint cross
+      return o(`<circle cx="8" cy="8" r="5" fill="${col}" opacity="0.28"/><circle cx="8" cy="8" r="5" fill="none" stroke="${col}" stroke-width="1.3"/><path d="M8 1.6 V14.4 M1.6 8 H14.4" stroke="${col}" stroke-width="1" opacity="0.85"/>`);
+    case 'open':                       // loose cluster — dashed ring + scattered suns
+      return o(`<circle cx="8" cy="8" r="5.4" fill="none" stroke="${col}" stroke-width="1.2" stroke-dasharray="2.2 2.4"/><g fill="#fff"><circle cx="6.3" cy="6.6" r="1"/><circle cx="9.6" cy="6.9" r="1"/><circle cx="7.7" cy="9.6" r="1"/><circle cx="10" cy="9.7" r="0.8"/></g>`);
+    case 'galaxy':                     // tilted spiral ellipse with a bright core
+      return o(`<g transform="rotate(-28 8 8)"><ellipse cx="8" cy="8" rx="6.6" ry="2.6" fill="none" stroke="${col}" stroke-width="1.2"/><ellipse cx="8" cy="8" rx="3" ry="1.3" fill="${col}" opacity="0.45"/></g><circle cx="8" cy="8" r="1.6" fill="#fff"/>`);
+    case 'dark':                       // dark nebula — a void notched into the field
+      return o(`<circle cx="8" cy="8" r="5.2" fill="rgba(4,6,15,0.82)" stroke="${col}" stroke-width="1.1" stroke-dasharray="2 2.4"/>`);
+    default:
+      return o(`<circle cx="8" cy="8" r="4.4" fill="${col}"/>`);
+  }
+}
+// Moon glyph — a real phase, not an emoji: a pale disc with a dark terminator carved
+// by an offset shadow circle (clipped to the disc). age = days since new moon.
+function moonMark(age){
+  const ph=((age%29.530588)+29.530588)%29.530588/29.530588;     // 0..1 (0/1 = new)
+  const f=(1-Math.cos(2*Math.PI*ph))/2;                          // lit fraction 0..1
+  const R=5.2, off=(2*R)*f, waxing=ph<0.5;                       // shadow slides off as it fills
+  const sx=(8+(waxing?1:-1)*off).toFixed(2);
+  return `<svg class="so-glyph sm-moon" viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg">`
+    +`<defs><clipPath id="moonclip"><circle cx="8" cy="8" r="${R}"/></clipPath></defs>`
+    +`<circle cx="8" cy="8" r="${R}" fill="#e6ecfb"/>`
+    +`<circle cx="${sx}" cy="8" r="${R}" fill="#0a1024" clip-path="url(#moonclip)"/>`
+    +`<circle cx="8" cy="8" r="${R}" fill="none" stroke="rgba(222,231,255,0.5)" stroke-width="0.7"/></svg>`;
 }
 // Render an element at x%, plus a wrapped copy when it sits near either edge —
 // objects crossing the panorama seam fade across instead of popping sides. Only
@@ -3396,9 +3453,11 @@ function wrapX(x,fn){
 function buildSkyObjects(lat,lng){
   const layer=document.getElementById('night-sky'); if(!layer)return;
   const date=nowDate();
-  // Star field + constellation lines live on the canvas behind this layer
+  // Star field + constellation lines live on the canvas behind this layer.
+  // (buildStarField runs first so it sets the conformal _skyVSpan/_skyAltC that
+  // pos() reads below — keeps the markers aligned with the stars/lines.)
   buildStarField(lat,lng);
-  const pos=(az,alt)=>({x:skyAzX(az), y:4+(1-Math.min(alt,90)/90)*88});
+  const pos=(az,alt)=>({x:skyAzX(az), y:skyAltFrac(alt)*100});
   // Depth + filter only bite in the fullscreen detail view (skyShows()); the overview
   // is unchanged. binocDepth also gates binocular-only deep-sky, matching the cards.
   const binocDepth=(STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc';
@@ -3415,8 +3474,14 @@ function buildSkyObjects(lat,lng){
     if(!_compassOn && f.slug!=='crux') continue;
     const a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
     if(aa.alt<(f.info.vis||6)) continue;
-    const p=pos(aa.az,aa.alt), off=f.slug==='crux'?8:0, mk=rarCol(f.info.rar||'common');
-    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${20+RR(f.info.rar)}" data-key="c-${f.slug}" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+off).toFixed(1)}%;--mk:${mk}"><span class="so-mark"></span><span class="so-label so-const" style="color:${mk}">${f.n}</span><span class="so-star">${a[0]}</span></div>`);
+    // Pin the name+marker just BELOW the figure's footprint (its lowest on-screen
+    // star) rather than on the anchor, so the name stops landing across the lines.
+    // Horizontal stays at the anchor (stable, seam-free); the real bright star is
+    // still drawn on the canvas inside the figure.
+    const p=pos(aa.az,aa.alt); let ymax=p.y;
+    for(const s of f.s){ const sa=altAz(s[1],s[2],lat,lng,date); if(sa.alt<-2) continue; const yy=Math.min(92,pos(sa.az,sa.alt).y); if(yy>ymax) ymax=yy; }
+    const ay=Math.min(93,ymax+4), mk=rarCol(f.info.rar||'common');
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${20+RR(f.info.rar)}" data-key="c-${f.slug}" style="left:${x.toFixed(1)}%;top:${ay.toFixed(1)}%;--mk:${mk}">${skyMark('star',mk)}<span class="so-label so-const" style="color:${mk}">${f.n}</span><span class="so-star">${a[0]}</span></div>`);
   }
   // Deep-sky showpieces — rarity-tinted markers, detail (compass) view only so
   // the 360° overview stays uncluttered. Binocular-only targets need binoc depth.
@@ -3425,12 +3490,12 @@ function buildSkyObjects(lat,lng){
     const aa=altAz(d.ra,d.dec,lat,lng,date);
     if(aa.alt<(d.vis||8)) continue;
     const p=pos(aa.az,aa.alt), mk=rarCol(d.rar);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}"><span class="so-deep${d.type?(' dso-'+d.type):''}"></span><span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}">${skyMark(d.type||'deep',mk)}<span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
   }
   if(skyShows('planets')) for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt<3)continue;
     const p=pos(pl.az,pl.alt);
-    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${pl.az.toFixed(1)}" data-prio="10" data-key="p-${pl.key}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;color:${pl.dot}"><div class="so-dot" style="background:${pl.dot}"></div><span class="so-label">${pl.label}</span></div>`);
+    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${pl.az.toFixed(1)}" data-prio="10" data-key="p-${pl.key}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${pl.dot};color:${pl.dot}">${skyMark('planet',pl.dot)}<span class="so-label">${pl.label}</span></div>`);
   }
   if(skyShows('deep')){
     const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
@@ -3449,7 +3514,7 @@ function buildSkyObjects(lat,lng){
     const m=moonAltAz(lat,lng,date);
     if(m.alt>0){
       const mp=moonPhase(date), p=pos(m.az,m.alt);
-      html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="5" data-key="moon" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"><span class="so-icon">${mp.icon}</span><span class="so-label">Moon</span></div>`);
+      html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="5" data-key="moon" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%">${moonMark(mp.age)}<span class="so-label">Moon</span></div>`);
     }
   }
   layer.innerHTML=html;
@@ -3485,7 +3550,11 @@ function declutterSkyLabels(){
   candidates.sort((a,b)=>(+a.getAttribute('data-prio'))-(+b.getAttribute('data-prio')));
   const hit=(a,b)=>!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom);
   // seed the collision set with every marker, so a label never lands on a marker
-  const markers=nodes.map(n=>{const mk=n.querySelector('.so-mark,.so-deep,.so-dot,.so-icon');return mk?{n,r:mk.getBoundingClientRect()}:null;}).filter(Boolean);
+  const markers=nodes.map(n=>{const mk=n.querySelector('.so-glyph,.so-icon');return mk?{n,r:mk.getBoundingClientRect()}:null;}).filter(Boolean);
+  // …and with the corner controls (compass btn + control stack + facing chip), so a
+  // name is never hidden behind them — the starfield fills the screen, but phenomena
+  // labels stay clear of the UI (n:null so the m.n!==n test always keeps these).
+  for(const id of ['compass-btn','sky-full-controls','sky-facing']){ const el=document.getElementById(id); if(el && el.offsetWidth){ markers.push({n:null,r:el.getBoundingClientRect()}); } }
   const placed=[];
   for(const n of candidates){
     const lab=n.querySelector('.so-label'); if(!lab) continue;
@@ -3562,12 +3631,14 @@ function _skyFullRepaint(){ buildSkyObjects(window._gpsLat??-27.4698, window._gp
 let _skyFullT=null;
 function _skyFullResize(){ clearTimeout(_skyFullT); _skyFullT=setTimeout(_skyFullRepaint,150); }
 // Build/refresh the in-overlay control bar (depth toggle + filter menu + weather).
-// The filter is a button that opens an upward popover of toggles (lens + the four
-// categories) — a popover, not a <select>, so the categories are multi-select and
-// mirror the same _skyNowOnly / _skyCats state the night cards use.
+// The filter is a button that opens a popover of the four category toggles — a
+// popover, not a <select>, so they're multi-select and mirror the _skyCats state the
+// night cards use. The "Visible now" lens is NOT offered here: the map only ever
+// draws objects that are actually up, so the lens has no effect in this view (it
+// stays a card-list control, on the chips outside fullscreen).
 function skyFilterSummary(){
-  const n=_skyCats.size, lens=_skyNowOnly?'🌙 ':'';
-  return lens + (n===0 ? 'none' : n===SKY_CATS.length ? 'all sky' : n+' type'+(n===1?'':'s'));
+  const n=_skyCats.size;
+  return n===0 ? 'none' : n===SKY_CATS.length ? 'all sky' : n+' type'+(n===1?'':'s');
 }
 function syncSkyFullControls(){
   const bar=document.getElementById('sky-full-controls'); if(!bar) return;
@@ -3575,8 +3646,7 @@ function syncSkyFullControls(){
   const pop = _skyFcOpen
     ? `<div class="sky-fc-backdrop" onclick="toggleSkyFcMenu()" aria-hidden="true"></div>`
       +`<div class="sky-fc-pop" role="menu">`
-      +`<button class="sky-fc-opt lens${_skyNowOnly?' on':''}" role="menuitemcheckbox" aria-checked="${_skyNowOnly}" onclick="toggleSkyNow()">🌙 Visible now</button>`
-      +`<div class="sky-fc-pop-sep" aria-hidden="true"></div>`
+      +`<div class="sky-fc-pop-h" aria-hidden="true">Show in the sky</div>`
       +SKY_CATS.map(c=>`<button class="sky-fc-opt${_skyCats.has(c.k)?' on':''}" role="menuitemcheckbox" aria-checked="${_skyCats.has(c.k)}" onclick="toggleSkyCat('${c.k}')">${c.icon} ${c.label}</button>`).join('')
       +`</div>`
     : '';
@@ -3587,7 +3657,6 @@ function syncSkyFullControls(){
 function enterSkyFullscreen(){
   const sc=document.getElementById('night-scene'); if(!sc) return;
   sc.classList.add('sky-full'); document.body.classList.add('sky-full-on');
-  const x=document.getElementById('sky-full-exit'); if(x) x.style.display='flex';
   const ns=document.getElementById('night-sky'); if(ns) ns.addEventListener('click',_onSkyTap);
   syncSkyFullControls();
   const fs=sc.requestFullscreen||sc.webkitRequestFullscreen;
@@ -3603,7 +3672,6 @@ function exitSkyFullscreen(){
   const sc=document.getElementById('night-scene');
   if(sc) sc.classList.remove('sky-full');
   document.body.classList.remove('sky-full-on');
-  const x=document.getElementById('sky-full-exit'); if(x) x.style.display='none';
   window.removeEventListener('resize',_skyFullResize);
   try{ if(screen.orientation&&screen.orientation.unlock) screen.orientation.unlock(); }catch(e){}
   try{ if(document.fullscreenElement&&document.exitFullscreen) document.exitFullscreen(); }catch(e){}
