@@ -3178,10 +3178,10 @@ function buildStarField(lat,lng){
   // detail: a ~120° slice across the full width has room for the deepest field we
   // have, so show it all (toggle disabled there — see toggleCompass).
   const preset=STAR_MAG_PRESETS[_starMagIdx], binoc=preset.k==='binoc';
-  // Depth gates the detail view too, with a deliberately wide gap so the two read
-  // differently: naked eye is a clean bright field (mag ≤ 5.4), binoculars pulls the
-  // deep catalog and the faintest stars (≤ 7.5) for a visibly denser sky.
-  const magCap=full?preset.mag:(binoc?7.5:5.4);
+  // Depth gates the detail view: naked eye now shows the WHOLE naked-eye catalog (mag
+  // ≤ 6.5 — a much richer field than before), and binoculars layers on the faintest deep
+  // stars (≤ 7.0, the limit of the baked catalog) on top, so it's denser still.
+  const magCap=full?preset.mag:(binoc?7.5:6.5);
   const field=(!full&&binoc&&STAR_DEEP&&STAR_DEEP.stars&&STAR_DEEP.stars.length)?STAR_DEEP.stars
             :(STAR_CATALOG&&STAR_CATALOG.stars&&STAR_CATALOG.stars.length)?STAR_CATALOG.stars
             :SKY_SEED.stars;
@@ -3644,7 +3644,7 @@ function _onSkyTap(e){
 let _compassOn=false,_headingSm=null,_pitchSm=null,_lastSkyPaint=0,_orientHandler=null,_orientEvent=null;
 let _skyPitch=null;          // applied pointing altitude (°) — drives the conformal band centre
 let _tiltPan=true;           // tilt-to-pan vertical; set window._tiltPan=false (console) to pin the band
-let _lastOrientT=0,_paintedH=null,_paintedP=null;
+let _lastOrientT=0,_paintedH=null,_paintedP=null,_iosAzOffset=0;
 // Ease one angle toward a target with a TIME-BASED low-pass (tau seconds, so the feel
 // is identical whatever rate the sensor fires at — the main cure for jumpy tilt), plus
 // a per-second slew cap so a momentary sensor flip eases instead of snapping. `circular`
@@ -3656,29 +3656,56 @@ function _easeAngle(cur,target,circular,tau,dt,maxRate){
   let v=cur+step; if(circular)v=((v%360)+360)%360;
   return v;
 }
+// Where the BACK of the phone (its camera) points, as {az,alt} in the sky — from the
+// FULL device-orientation matrix, so it's right however you hold the phone. The old code
+// used the top-EDGE heading for azimuth, which reads ~90° off in landscape (you aim the
+// camera at the sky, but the top edge points sideways) — that was the "wrong direction"
+// bug. camera = −(device Z) in world coords (X=East, Y=North, Z=Up): az = atan2(E,N)
+// clockwise from north, alt = asin(Up) (same value the old pitch used). North reference:
+//   • Android / absolute: alpha is north-referenced, so az is true immediately.
+//   • iOS: alpha is relative, so calibrate az with webkitCompassHeading (the true heading
+//     of the top edge), refreshing the offset only while the phone is level enough for
+//     that to be reliable (|cosβ|>0.25) and holding it as you tilt up.
+function _camOrientation(e){
+  if(e.beta==null||e.gamma==null) return null;
+  const a=(e.alpha||0)*RAD,b=e.beta*RAD,g=e.gamma*RAD;
+  const ca=Math.cos(a),sa=Math.sin(a),cb=Math.cos(b),sb=Math.sin(b),cg=Math.cos(g),sg=Math.sin(g);
+  const alt=Math.asin(Math.max(-1,Math.min(1,-cb*cg)))*DEG;
+  const camE=-(ca*sg+sa*sb*cg), camN=ca*sb*cg-sa*sg;
+  let az=null;
+  if(e.webkitCompassHeading!=null&&!isNaN(e.webkitCompassHeading)){
+    if(Math.abs(cb)>0.25){ const topAzRel=Math.atan2(-cb*sa,ca*cb)*DEG; _iosAzOffset=e.webkitCompassHeading-topAzRel; }
+    az=Math.atan2(camE,camN)*DEG+_iosAzOffset;
+  } else if(e.absolute===true||_orientEvent==='deviceorientationabsolute'){
+    az=Math.atan2(camE,camN)*DEG;
+  }
+  if(az!=null) az=((az%360)+360)%360;
+  return {az,alt};
+}
 function _onOrient(e){
   const now=performance.now();
   let dt=_lastOrientT?(now-_lastOrientT)/1000:0.016; _lastOrientT=now;
   dt=Math.max(0.002,Math.min(0.1,dt));
-  // Pointing altitude of the BACK of the phone = asin(−cosβ·cosγ): the up-component of
-  // the device −Z axis. Screen-orientation independent and EVEN in β/γ (iOS/Android sign
-  // quirks don't matter), accelerometer-based so it works with no compass.
-  if(e.beta!=null&&e.gamma!=null){
-    const b=e.beta*RAD,g=e.gamma*RAD;
-    const pRaw=Math.asin(Math.max(-1,Math.min(1,-Math.cos(b)*Math.cos(g))))*DEG;
-    _pitchSm=(_pitchSm==null)?pRaw:_easeAngle(_pitchSm,pRaw,false,0.20,dt,150);
+  // Aim from the camera direction (matrix). window._camAz=false drops back to the old
+  // top-edge heading if a device ever misbehaves.
+  let h=null,pRaw=null;
+  if(window._camAz!==false){ const cam=_camOrientation(e); if(cam){ h=cam.az; pRaw=cam.alt; } }
+  if(pRaw==null && e.beta!=null && e.gamma!=null){
+    const b=e.beta*RAD,g=e.gamma*RAD; pRaw=Math.asin(Math.max(-1,Math.min(1,-Math.cos(b)*Math.cos(g))))*DEG;
   }
-  let h=null;
-  if(e.webkitCompassHeading!=null&&!isNaN(e.webkitCompassHeading)) h=e.webkitCompassHeading;            // iOS: compass heading
-  else if(e.absolute===true&&e.alpha!=null) h=((360-e.alpha)+(screen.orientation?.angle||0))%360;        // Android absolute
-  else if(_orientEvent==='deviceorientationabsolute'&&e.alpha!=null) h=((360-e.alpha)+(screen.orientation?.angle||0))%360;
+  if(h==null){
+    if(e.webkitCompassHeading!=null&&!isNaN(e.webkitCompassHeading)) h=e.webkitCompassHeading;
+    else if(e.absolute===true&&e.alpha!=null) h=((360-e.alpha)+(screen.orientation?.angle||0))%360;
+    else if(_orientEvent==='deviceorientationabsolute'&&e.alpha!=null) h=((360-e.alpha)+(screen.orientation?.angle||0))%360;
+  }
+  if(pRaw!=null) _pitchSm=(_pitchSm==null)?pRaw:_easeAngle(_pitchSm,pRaw,false,0.20,dt,150);
   if(h!=null&&!isNaN(h)){
     h=((h%360)+360)%360;
     if(_headingSm==null) _headingSm=h;
     else {
-      // Zenith hold: azimuth is ill-defined as you point overhead, so fade the heading's
-      // pull (and its slew cap) to ~0 above ~65° altitude — lifting the phone up or doing
-      // a fast 360 near the top no longer spins the view.
+      // Zenith hold: azimuth is ill-defined as you point overhead (the camera vector goes
+      // vertical), so fade the heading's pull (and its slew cap) to ~0 above ~65° altitude
+      // — lifting the phone up or doing a fast 360 near the top no longer spins the view.
       const alt=_pitchSm!=null?_pitchSm:0, wAz=Math.max(0.04,Math.min(1,(80-alt)/15));
       _headingSm=_easeAngle(_headingSm,h,true,0.18/wAz,dt,300*wAz);
     }
@@ -3774,7 +3801,7 @@ async function toggleCompass(){
     // off → leave immersive view, back to the full-sky overview (S centred)
     if(_orientHandler)window.removeEventListener(_orientEvent,_orientHandler,true);
     _compassOn=false;_orientHandler=null;_headingSm=null;skyHeading=null;
-    _pitchSm=null;_skyPitch=null;_lastOrientT=0;_paintedH=null;_paintedP=null;   // drop tilt-to-pan state
+    _pitchSm=null;_skyPitch=null;_lastOrientT=0;_paintedH=null;_paintedP=null;_iosAzOffset=0;   // drop tilt-to-pan state
     _skyFov=360;_skyCenter=180;
     _figBandState.clear();_objBandState.clear();   // drop focus-band memory
     if(btn){btn.classList.remove('on');btn.setAttribute('aria-pressed','false');}
@@ -3788,7 +3815,7 @@ async function toggleCompass(){
   // a live one pans the sky as you turn, otherwise it's a big static southern sky.
   _compassOn=true;
   _skyFov=SKY_FOV_DETAIL;_skyCenter=180;skyHeading=null;   // ~120° detail slice
-  _pitchSm=null;_skyPitch=null;_lastOrientT=0;_paintedH=null;_paintedP=null;   // start at the default band, then track tilt
+  _pitchSm=null;_skyPitch=null;_lastOrientT=0;_paintedH=null;_paintedP=null;_iosAzOffset=0;   // start at the default band, then track tilt
   _figBandState.clear();_objBandState.clear();
   if((STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc') loadDeepCatalog();  // deep field only at binoc depth
   if(btn){btn.classList.add('on');btn.setAttribute('aria-pressed','true');}
