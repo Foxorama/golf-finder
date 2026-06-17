@@ -294,6 +294,14 @@ body.sky-full-on{overflow:hidden;}
    explicitly to the same inset box as .night-sky so stars/lines stay aligned with
    the object markers (buildStarField re-measures on the fullscreen repaint). */
 .night-scene.sky-full .sky-canvas{left:12px;top:0;right:auto;bottom:auto;width:calc(100% - 24px);height:calc(100% - (env(safe-area-inset-bottom,0px) + 92px));}
+/* Fullscreen sky is tappable: tap a marker to reveal its name when a crowd hid it
+   (declutter), tap again or tap empty sky to clear. Bigger invisible hit pad over
+   each marker; the revealed label gets a chip background so it reads over others. */
+.night-scene.sky-full .night-sky{pointer-events:auto;}
+.night-scene.sky-full .sky-obj{cursor:pointer;}
+.night-scene.sky-full .sky-obj::after{content:"";position:absolute;left:50%;top:0;width:34px;height:30px;transform:translateX(-50%);}
+.night-scene.sky-full .sky-obj.so-reveal{z-index:5;}
+.night-scene.sky-full .sky-obj.so-reveal .so-label{background:rgba(8,12,28,0.86);padding:1px 7px;border-radius:7px;box-shadow:0 2px 8px rgba(0,0,0,0.55);}
 .night-scene.sky-full .sky-compass{height:22px;bottom:6px;}
 .night-scene.sky-full .sky-compass span{font-size:14px;}
 .night-scene.sky-full .sky-compass span.minor{font-size:12px;}
@@ -3297,16 +3305,23 @@ function buildSkyObjects(lat,lng){
 }
 // Fullscreen-compass declutter. Live compass: only the focus band (where you point)
 // keeps its label + emphasis; everything else shows just its marker, so figures read
-// one at a time as you pan. No sensor: show every label, trimming overlaps. Collision
-// order is fixed (priority), never heading-derived, so a hand-wobble can't reshuffle
-// what's on screen; band membership uses hysteresis (see bandMember) against jitter.
+// one at a time as you pan. No sensor: show every label, then trim. Labels are placed
+// in fixed priority order (never heading-derived, so a hand-wobble can't reshuffle
+// what's on screen) and a label is dropped if it would cover an already-placed label
+// OR any *other* object's marker — that's what stops the dense-cluster pile-up. Wide
+// labels that run off the frame edge are nudged back inside. A tapped object
+// (_revealKey, see _onSkyTap) always shows its name on top, so you can read anything
+// the declutter hid in a crowd. Band membership uses hysteresis (bandMember).
+let _revealKey=null;
 function declutterSkyLabels(){
   const layer=document.getElementById('night-sky'); if(!layer) return;
   const nodes=[...layer.querySelectorAll('.sky-obj[data-az]')];
   if(!nodes.length) return;
+  const bounds=layer.getBoundingClientRect();
   const c=skyViewCenter(), live=skyHeading!=null, candidates=[];
   for(const n of nodes){
     const lab=n.querySelector('.so-label');
+    n.classList.remove('so-reveal');
     if(live){
       const az=+n.getAttribute('data-az'), dist=Math.abs(((az-c+540)%360)-180);
       const inB=bandMember('o'+(n.getAttribute('data-key')||az), dist, _objBandState);
@@ -3315,14 +3330,35 @@ function declutterSkyLabels(){
     }else{ n.classList.remove('so-focus'); candidates.push(n); }
   }
   candidates.sort((a,b)=>(+a.getAttribute('data-prio'))-(+b.getAttribute('data-prio')));
+  const hit=(a,b)=>!(a.right<b.left||a.left>b.right||a.bottom<b.top||a.top>b.bottom);
+  // seed the collision set with every marker, so a label never lands on a marker
+  const markers=nodes.map(n=>{const mk=n.querySelector('.so-mark,.so-deep,.so-dot,.so-icon');return mk?{n,r:mk.getBoundingClientRect()}:null;}).filter(Boolean);
   const placed=[];
   for(const n of candidates){
     const lab=n.querySelector('.so-label'); if(!lab) continue;
-    lab.style.display='';
-    const r=lab.getBoundingClientRect();
-    if(placed.some(p=>!(r.right<p.left||r.left>p.right||r.bottom<p.top||r.top>p.bottom))) lab.style.display='none';
+    lab.style.display=''; lab.style.transform='';
+    let r=lab.getBoundingClientRect();
+    let dx=0;                                  // keep a wide label inside the frame
+    if(r.left<bounds.left+3) dx=(bounds.left+3)-r.left;
+    else if(r.right>bounds.right-3) dx=(bounds.right-3)-r.right;
+    if(dx){ lab.style.transform='translateX('+Math.round(dx)+'px)'; r=lab.getBoundingClientRect(); }
+    if(placed.some(p=>hit(r,p)) || markers.some(m=>m.n!==n&&hit(r,m.r))) lab.style.display='none';
     else placed.push(r);
   }
+  if(_revealKey){                              // a tapped object always shows its name
+    const sel=(window.CSS&&CSS.escape)?CSS.escape(_revealKey):_revealKey;
+    const n=layer.querySelector('.sky-obj[data-key="'+sel+'"]');
+    if(n){ const lab=n.querySelector('.so-label'); if(lab){ lab.style.display=''; } n.classList.add('so-reveal','so-focus'); }
+  }
+}
+// Tap a marker to reveal its name (handy in a crowd where declutter hid it); tap it
+// again, or tap empty sky, to clear. Delegated on #night-sky, which is only tappable
+// in the fullscreen view (see the .sky-full pointer-events rule).
+function _onSkyTap(e){
+  const obj=e.target.closest&&e.target.closest('.sky-obj');
+  const k=obj?obj.getAttribute('data-key'):null;
+  _revealKey=(k&&k===_revealKey)?null:k;
+  declutterSkyLabels();
 }
 
 // ── Device compass plumbing ──────────────────────────────────
@@ -3399,6 +3435,7 @@ function enterSkyFullscreen(){
   const sc=document.getElementById('night-scene'); if(!sc) return;
   sc.classList.add('sky-full'); document.body.classList.add('sky-full-on');
   const x=document.getElementById('sky-full-exit'); if(x) x.style.display='flex';
+  const ns=document.getElementById('night-sky'); if(ns) ns.addEventListener('click',_onSkyTap);
   syncSkyFullControls();
   const fs=sc.requestFullscreen||sc.webkitRequestFullscreen;
   const lock=()=>{ try{ if(screen.orientation&&screen.orientation.lock) screen.orientation.lock('landscape').catch(()=>{}); }catch(e){} };
@@ -3408,7 +3445,8 @@ function enterSkyFullscreen(){
   requestAnimationFrame(()=>requestAnimationFrame(_skyFullRepaint));
 }
 function exitSkyFullscreen(){
-  _skyFcOpen=false;
+  _skyFcOpen=false; _revealKey=null;
+  const ns=document.getElementById('night-sky'); if(ns) ns.removeEventListener('click',_onSkyTap);
   const sc=document.getElementById('night-scene');
   if(sc) sc.classList.remove('sky-full');
   document.body.classList.remove('sky-full-on');
