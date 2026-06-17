@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-label="Chiron the centaur — Centaurus astral heroic figure">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#0c1b40"/>
+      <stop offset="45%" stop-color="#0a1430"/>
+      <stop offset="100%" stop-color="#05070f"/>
+    </linearGradient>
+    <radialGradient id="mw" cx="48%" cy="36%" r="62%">
+      <stop offset="0%" stop-color="rgba(125,165,240,0.22)"/>
+      <stop offset="100%" stop-color="rgba(125,165,240,0)"/>
+    </radialGradient>
+    <linearGradient id="bodyFill" x1="0.25" y1="0" x2="0.7" y2="1">
+      <stop offset="0%" stop-color="rgba(180,238,255,0.36)"/>
+      <stop offset="50%" stop-color="rgba(115,195,255,0.20)"/>
+      <stop offset="100%" stop-color="rgba(70,130,220,0.06)"/>
+    </linearGradient>
+    <linearGradient id="shade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="rgba(0,0,0,0)"/>
+      <stop offset="100%" stop-color="rgba(2,8,22,0.55)"/>
+    </linearGradient>
+    <filter id="glow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="softGlow" x="-80%" y="-80%" width="260%" height="260%">
+      <feGaussianBlur stdDeviation="13"/>
+    </filter>
+    <filter id="starGlow" x="-400%" y="-400%" width="900%" height="900%">
+      <feGaussianBlur stdDeviation="4" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- sky -->
+  <rect width="1200" height="800" fill="url(#sky)"/>
+  <rect width="1200" height="800" fill="url(#mw)"/>
+  <g opacity="0.45" filter="url(#softGlow)">
+    <path d="M-40 220 C 340 350, 800 280, 1240 460 L 1240 590 C 800 410, 340 470, -40 380 Z" fill="rgba(150,180,240,0.12)"/>
+  </g>
+
+  <!-- star dust -->
+  <g fill="#cfe0ff">
+    <circle cx="70" cy="90" r="1.4" opacity=".5"/><circle cx="150" cy="220" r="1" opacity=".4"/><circle cx="250" cy="120" r="1.6" opacity=".6"/>
+    <circle cx="120" cy="420" r="1.2" opacity=".45"/><circle cx="60" cy="560" r="1.5" opacity=".5"/><circle cx="380" cy="80" r="1.1" opacity=".5"/>
+    <circle cx="470" cy="180" r="1" opacity=".4"/><circle cx="560" cy="100" r="1.7" opacity=".6"/><circle cx="760" cy="80" r="1.3" opacity=".5"/>
+    <circle cx="900" cy="160" r="1" opacity=".4"/><circle cx="1000" cy="90" r="1.6" opacity=".55"/><circle cx="1080" cy="230" r="1.1" opacity=".45"/>
+    <circle cx="1150" cy="130" r="1.3" opacity=".5"/><circle cx="1030" cy="370" r="1" opacity=".35"/><circle cx="1130" cy="520" r="1.4" opacity=".5"/>
+    <circle cx="980" cy="470" r="1" opacity=".4"/><circle cx="1090" cy="650" r="1.2" opacity=".45"/><circle cx="180" cy="660" r="1.3" opacity=".5"/>
+    <circle cx="330" cy="560" r="1" opacity=".35"/><circle cx="40" cy="300" r="1.2" opacity=".45"/><circle cx="650" cy="60" r="1" opacity=".4"/>
+    <circle cx="430" cy="350" r="1" opacity=".3"/><circle cx="1180" cy="320" r="1.2" opacity=".45"/><circle cx="240" cy="700" r="1.1" opacity=".4"/>
+  </g>
+
+  <!-- ===================== Chiron — single-silhouette astral centaur, facing right ===================== -->
+  <g transform="translate(70 6)">
+    <!-- tail (behind) — flowing strands, thick to wispy -->
+    <g filter="url(#glow)" fill="none" stroke-linecap="round">
+      <path d="M360 422 C 338 466, 320 514, 306 562" stroke="rgba(190,232,255,0.78)" stroke-width="11"/>
+      <path d="M368 430 C 350 474, 334 520, 322 566" stroke="rgba(202,236,255,0.65)" stroke-width="6"/>
+      <path d="M352 430 C 334 470, 322 516, 314 556" stroke="rgba(170,220,255,0.5)" stroke-width="3.5"/>
+    </g>
+
+    <!-- far legs (behind, dimmer) -->
+    <g opacity="0.45" filter="url(#glow)" fill="url(#bodyFill)" stroke="rgba(170,220,255,0.65)" stroke-width="2">
+      <path d="M566 532 C 560 590, 556 650, 558 700 L 584 700 C 586 650, 582 590, 578 540 Z"/>
+      <path d="M664 470 C 660 540, 658 620, 660 700 L 686 700 C 688 620, 686 548, 680 482 Z"/>
+    </g>
+
+    <!-- MAIN BODY — one continuous silhouette: head, torso, near legs, belly, rump, back -->
+    <g filter="url(#glow)">
+      <path d="M700 148
+               C 722 152, 730 170, 728 190
+               C 726 204, 718 212, 708 214
+               C 710 228, 710 244, 706 256
+               C 714 286, 716 320, 708 364
+               C 716 386, 726 402, 726 428
+               C 726 480, 720 560, 716 632
+               C 714 664, 712 684, 712 700
+               L 740 702
+               C 740 668, 742 596, 744 536
+               C 745 510, 742 500, 738 496
+               C 660 528, 580 536, 512 532
+               C 506 560, 498 632, 494 700
+               L 522 702
+               C 524 660, 522 596, 520 540
+               C 480 524, 420 500, 366 462
+               C 340 446, 330 420, 338 396
+               C 346 376, 380 364, 424 366
+               C 510 370, 596 368, 658 356
+               C 676 322, 682 292, 684 264
+               C 686 236, 684 200, 686 182
+               C 688 160, 690 150, 700 148 Z"
+            fill="url(#bodyFill)" stroke="rgba(202,240,255,0.95)" stroke-width="2.6" stroke-linejoin="round"/>
+      <!-- underside shading for volume (no outline) -->
+      <path d="M512 532 C 580 536, 660 528, 738 500 C 724 526, 660 542, 580 548 C 548 549, 522 544, 512 532 Z"
+            fill="url(#shade)" opacity="0.65"/>
+      <path d="M712 700 C 714 660, 720 580, 724 520 C 718 580, 712 660, 712 700 Z" fill="url(#shade)" opacity="0.4"/>
+    </g>
+
+    <!-- interior definition: muscle + mane (thin, no heavy outline) -->
+    <g fill="none" stroke="rgba(150,205,255,0.4)" stroke-width="1.6" stroke-linecap="round">
+      <path d="M404 396 C 430 440, 432 490, 414 524"/>
+      <path d="M648 384 C 666 420, 662 462, 642 496"/>
+      <path d="M706 296 C 714 314, 714 332, 706 350"/>
+      <path d="M686 196 C 700 214, 704 240, 698 266" stroke="rgba(180,225,255,0.5)"/>
+    </g>
+    <!-- hair — a single lock swept down the back of the head -->
+    <g filter="url(#glow)" fill="none" stroke-linecap="round">
+      <path d="M683 166 C 668 182, 660 210, 666 240 C 676 222, 682 200, 690 184" stroke="rgba(190,230,255,0.6)" stroke-width="5"/>
+    </g>
+
+    <!-- ARMS holding the spear (in front of torso) -->
+    <g filter="url(#glow)" fill="url(#bodyFill)" stroke="rgba(202,240,255,0.92)" stroke-width="2.2">
+      <!-- raised arm -->
+      <path d="M698 250 C 724 238, 758 224, 788 214 C 795 218, 797 227, 792 235 C 762 247, 730 262, 706 274 C 700 268, 696 258, 698 250 Z"/>
+      <!-- lower arm steadying the shaft -->
+      <path d="M704 262 C 716 290, 720 322, 712 352 C 706 356, 698 354, 695 348 C 702 320, 700 292, 696 268 C 698 264, 701 262, 704 262 Z"/>
+    </g>
+
+    <!-- spear -->
+    <g filter="url(#glow)">
+      <line x1="684" y1="384" x2="876" y2="116" stroke="rgba(214,242,255,0.95)" stroke-width="4.2" stroke-linecap="round"/>
+      <path d="M876 116 L 862 150 L 898 140 Z" fill="rgba(225,246,255,0.96)"/>
+      <circle cx="786" cy="222" r="5.5" fill="none" stroke="rgba(214,242,255,0.7)" stroke-width="2.4"/>
+    </g>
+
+    <!-- rim light on the lit topline + back -->
+    <g filter="url(#glow)" fill="none" stroke="rgba(238,250,255,0.85)" stroke-width="1.5" stroke-linecap="round">
+      <path d="M340 404 C 348 378, 382 364, 424 366 C 510 370, 596 368, 658 356"/>
+      <path d="M658 356 C 676 322, 682 292, 685 220"/>
+    </g>
+
+    <!-- faint constellation lines tying figure to real stars -->
+    <g stroke="rgba(178,218,255,0.5)" stroke-width="1.4" stroke-dasharray="2 6" stroke-linecap="round" fill="none">
+      <path d="M392 420 L 540 442 L 656 372 L 708 300 L 700 160 L 786 222"/>
+      <path d="M656 372 L 726 700"/>
+      <path d="M540 442 L 672 700"/>
+      <path d="M540 442 L 470 470 L 508 700"/>
+    </g>
+
+    <!-- bright stars on the body + Omega Centauri -->
+    <g filter="url(#starGlow)" fill="#ffffff">
+      <circle cx="470" cy="470" r="11" fill="rgba(200,230,255,0.28)"/>
+      <g fill="rgba(228,242,255,0.92)">
+        <circle cx="467" cy="467" r="1.6"/><circle cx="474" cy="469" r="1.4"/><circle cx="470" cy="474" r="1.5"/>
+        <circle cx="465" cy="473" r="1.2"/><circle cx="476" cy="464" r="1.2"/><circle cx="471" cy="462" r="1.3"/><circle cx="463" cy="469" r="1.1"/>
+      </g>
+      <!-- the Pointers at the front hooves -->
+      <circle cx="726" cy="700" r="7"/>
+      <circle cx="672" cy="700" r="6"/>
+      <!-- body / torso / arm stars -->
+      <circle cx="540" cy="442" r="4.2"/>
+      <circle cx="392" cy="420" r="3.4"/>
+      <circle cx="656" cy="372" r="4.4"/>
+      <circle cx="708" cy="300" r="3.6"/>
+      <circle cx="700" cy="160" r="3.4"/>
+      <circle cx="786" cy="222" r="4.6"/>
+      <circle cx="508" cy="700" r="3"/>
+      <circle cx="558" cy="700" r="2.6"/>
+    </g>
+  </g>
+
+  <!-- horizon -->
+  <path d="M0 772 C 240 744, 520 762, 760 750 C 980 740, 1100 758, 1200 748 L 1200 800 L 0 800 Z" fill="#04060d"/>
+
+  <!-- sparkles -->
+  <g fill="#eaf4ff">
+    <path d="M905 250 l3 7 l7 3 l-7 3 l-3 7 l-3 -7 l-7 -3 l7 -3 Z" opacity="0.9"/>
+    <path d="M360 180 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 Z" opacity="0.75"/>
+    <path d="M1010 560 l2 5 l5 2 l-5 2 l-2 5 l-2 -5 l-5 -2 l5 -2 Z" opacity="0.7"/>
+  </g>
+</svg>
