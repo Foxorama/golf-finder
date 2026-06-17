@@ -75,8 +75,17 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   mid-sky default (alt 48°); `window._tiltPan=false` pins it. Heading + pitch share one
   throttled repaint (`_sensorPaint`). The overview (compass off) keeps the squished 360°
   strip. Constellation names are pinned **below** each figure (not on the anchor) so
-  they don't overlay the lines, and `declutterSkyLabels` keeps labels clear of the
-  corner controls.
+  they don't overlay the lines; `declutterSkyLabels` names **every** up-figure that
+  fits (collision-decluttered, reads then writes in separate batches to avoid layout
+  thrash) — the live focus band only adds *emphasis* (brighter label + revealed anchor
+  star), it no longer gates which names show. The **"Visible now"** lens is in the
+  fullscreen filter too (default on = curated viewing altitudes; off shows everything
+  just above the horizon). **Perf:** `altAz()` depends only on time+location, so the
+  star field / seed lines / figure footprints are projected **once per ~15s** into
+  `fieldBase`/`seedBase`/`figMeta` caches and only re-mapped to x/y each repaint — do
+  **not** reintroduce per-paint `altAz` over the catalog (that was the pan "chug"). The
+  constellation lines are drawn as a soft glow (wide halo + faint thread), not a hard
+  line, to blend into the field.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
