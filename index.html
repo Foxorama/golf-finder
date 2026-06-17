@@ -3088,7 +3088,15 @@ function buildStarField(lat,lng){
   // are true; the band is centred a touch above mid-sky to favour the rich southern
   // marquee, clamped to stay fully on-sky. Overview keeps the full 0–90 squeeze.
   if(full){ _skyVSpan=90; _skyAltC=46; }
-  else { _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov)); _skyAltC=Math.max(_skyVSpan/2,Math.min(90-_skyVSpan/2,48)); }
+  else {
+    _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov));
+    // Tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch),
+    // so raising the phone walks the view up toward the zenith and lowering it drops to
+    // the horizon. No tilt signal → a comfortable mid-sky default. Clamp so the band
+    // stays fully on-sky (you can reach the horizon and the zenith, nothing wasted).
+    const cen=(_tiltPan&&window._tiltPan!==false&&_skyPitch!=null)?_skyPitch:48;
+    _skyAltC=Math.max(_skyVSpan/2,Math.min(90-_skyVSpan/2,cen));
+  }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
   // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
   const px=(az)=>{ const d=((az-c+540)%360)-180; return (d/fov+0.5)*W; };
@@ -3589,23 +3597,40 @@ function _onSkyTap(e){
 // 360 − alpha, compensated for screen rotation. Headings are smoothed with a
 // circular low-pass filter and the scene repaints at most ~6×/sec on ≥1.5°
 // of real movement, so sensor jitter doesn't make the stars shiver.
-let _compassOn=false,_headingSm=null,_lastSkyPaint=0,_orientHandler=null,_orientEvent=null;
-function _applyHeading(h){
+let _compassOn=false,_headingSm=null,_pitchSm=null,_lastSkyPaint=0,_orientHandler=null,_orientEvent=null;
+let _skyPitch=null;          // applied pointing altitude (°) — drives the conformal band centre
+let _tiltPan=true;           // tilt-to-pan vertical; set window._tiltPan=false (console) to pin the band
+// Smooth a new compass heading into _headingSm (circular low-pass). Repaint is shared
+// with pitch via _sensorPaint, so turning AND tilting both move the sky at ~6×/sec.
+function _smoothHeading(h){
   if(h==null||isNaN(h))return;
   h=((h%360)+360)%360;
   if(_headingSm==null)_headingSm=h;
-  else{
-    const diff=((h-_headingSm+540)%360)-180;
-    _headingSm=((_headingSm+diff*0.25)%360+360)%360;
-  }
+  else{ const diff=((h-_headingSm+540)%360)-180; _headingSm=((_headingSm+diff*0.25)%360+360)%360; }
+}
+// Smooth the pointing altitude into _pitchSm (linear low-pass). The raw value is the
+// altitude the BACK of the phone points at — see _onOrient.
+function _smoothPitch(a){
+  if(a==null||isNaN(a))return;
+  a=Math.max(-90,Math.min(90,a));
+  if(_pitchSm==null)_pitchSm=a; else _pitchSm+=(a-_pitchSm)*0.18;
+}
+// Repaint when the smoothed heading or pitch has moved enough (and not too often).
+function _sensorPaint(){
   const t=Date.now();
-  const moved=skyHeading==null?999:Math.abs(((_headingSm-skyHeading+540)%360)-180);
-  if(moved>=1.5&&t-_lastSkyPaint>=160){
+  const hMoved=(_headingSm==null)?0:(skyHeading==null?999:Math.abs(((_headingSm-skyHeading+540)%360)-180));
+  const pMoved=(!(_tiltPan&&window._tiltPan!==false)||_pitchSm==null)?0:(_skyPitch==null?999:Math.abs(_pitchSm-_skyPitch));
+  if((hMoved>=1.5||pMoved>=1.0)&&t-_lastSkyPaint>=160){
     _lastSkyPaint=t;
-    skyHeading=_headingSm;
+    if(_headingSm!=null) skyHeading=_headingSm;
+    if(_tiltPan&&window._tiltPan!==false&&_pitchSm!=null) _skyPitch=_pitchSm;
     buildSkyObjects(window._gpsLat??-27.4698, window._gpsLng??153.0251);
     const f=document.getElementById('sky-facing');
-    if(f)f.textContent=`facing ${compass16(skyHeading)} · ${String(Math.round(skyHeading)).padStart(3,'0')}°`;
+    if(f){
+      const alt=_skyPitch!=null?`${Math.round(_skyPitch)>=0?'+':''}${Math.round(_skyPitch)}° alt`:'';
+      if(skyHeading!=null) f.textContent=`facing ${compass16(skyHeading)} · ${String(Math.round(skyHeading)).padStart(3,'0')}°${alt?(' · '+alt):''}`;
+      else if(alt) f.textContent=alt;
+    }
   }
 }
 function _onOrient(e){
@@ -3618,7 +3643,16 @@ function _onOrient(e){
   }else if(_orientEvent==='deviceorientationabsolute'&&e.alpha!=null){
     h=(360-e.alpha+(screen.orientation?.angle||0))%360;
   }
-  _applyHeading(h);
+  _smoothHeading(h);
+  // Pointing altitude of the BACK of the phone = asin(−cosβ·cosγ): the up-component of
+  // the device −Z axis. Screen-orientation independent (the back points where it points
+  // regardless of the locked landscape) and EVEN in β/γ, so iOS/Android sign quirks
+  // don't matter. Comes from the accelerometer, so it's reliable even with no compass.
+  if(e.beta!=null&&e.gamma!=null){
+    const b=e.beta*RAD, g=e.gamma*RAD;
+    _smoothPitch(Math.asin(Math.max(-1,Math.min(1,-Math.cos(b)*Math.cos(g))))*DEG);
+  }
+  _sensorPaint();
 }
 function _compassMsg(txt){
   const f=document.getElementById('sky-facing');
@@ -3691,6 +3725,7 @@ async function toggleCompass(){
     // off → leave immersive view, back to the full-sky overview (S centred)
     if(_orientHandler)window.removeEventListener(_orientEvent,_orientHandler,true);
     _compassOn=false;_orientHandler=null;_headingSm=null;skyHeading=null;
+    _pitchSm=null;_skyPitch=null;                   // drop tilt-to-pan state
     _skyFov=360;_skyCenter=180;
     _figBandState.clear();_objBandState.clear();   // drop focus-band memory
     if(btn){btn.classList.remove('on');btn.setAttribute('aria-pressed','false');}
@@ -3704,6 +3739,7 @@ async function toggleCompass(){
   // a live one pans the sky as you turn, otherwise it's a big static southern sky.
   _compassOn=true;
   _skyFov=SKY_FOV_DETAIL;_skyCenter=180;skyHeading=null;   // ~120° detail slice
+  _pitchSm=null;_skyPitch=null;                            // start at the default band, then track tilt
   _figBandState.clear();_objBandState.clear();
   if((STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc') loadDeepCatalog();  // deep field only at binoc depth
   if(btn){btn.classList.add('on');btn.setAttribute('aria-pressed','true');}

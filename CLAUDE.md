@@ -66,8 +66,14 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   spiral galaxy, cloud nebula, ringed globular, dashed open cluster, void dark nebula;
   + a real phase `moonMark()`), still tinted by rarity (`--mk`); and the detail-view
   projection is **conformal** (`skyAltFrac` — equal deg/px both axes, so constellations
-  keep their true shape instead of squishing) showing a true-scale altitude band
-  centred a touch above mid-sky. The overview (compass off) keeps the squished 360°
+  keep their true shape instead of squishing) showing a true-scale altitude band. That
+  band is **tilt-to-pan**: `_onOrient` derives the pointing altitude of the back of the
+  phone as `asin(−cosβ·cosγ)` (screen-orientation independent, even in β/γ so iOS/Android
+  signs don't matter, accelerometer-based so it works with no compass), low-passes it
+  into `_skyPitch`, and `buildStarField` centres the band there (clamped on-sky) — raise
+  the phone to walk up toward the zenith, lower it to the horizon. No tilt signal → a
+  mid-sky default (alt 48°); `window._tiltPan=false` pins it. Heading + pitch share one
+  throttled repaint (`_sensorPaint`). The overview (compass off) keeps the squished 360°
   strip. Constellation names are pinned **below** each figure (not on the anchor) so
   they don't overlay the lines, and `declutterSkyLabels` keeps labels clear of the
   corner controls.
