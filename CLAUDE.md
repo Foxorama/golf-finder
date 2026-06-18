@@ -56,12 +56,28 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   **Star Outline ↔ Astral Heroic morph loops** (chart→hero→chart, a slow `infinite
   alternate` ping-pong via the `morphChart`/`morphHero` keyframes) the whole time the
   story modal is open. For **constellations** the modal uses a full-width **hero stage**
-  (`.sky-hero-stage`) where the real star chart morphs into an illustrated figure (and
-  back) when one exists in the **`HERO_ART`** map (`night-heroes/<slug>.svg|png`, lazy +
-  SW-cached, chart fallback if missing); see `night-heroes/HERO-ART-SPEC.md`. The whole
+  (`.sky-hero-stage`) that **layers three things in one 3:2 box** instead of crossfading:
+  the illustrated **Flux painting** (`HERO_ART[slug]` → `night-heroes/<slug>.jpg`) is
+  demoted to a **dim background AURA** (`.sky-hero-aura`, brightness ~0.7 / opacity ~0.62)
+  under a vignette veil, and the **registered star-FIGURE** (`figureSVG(slug,ac)`) sits on
+  top. That figure draws the constellation's **full real-star list** as two pixel-aligned
+  layers — `.fig-chart` (faint astral chart) crossfading into `.fig-hero` (the same stars
+  lit into a glowing rarity figure) — **both from one `projFigure` projection, so the stars
+  never move between phases**. That shared, locked skeleton is the whole point: the same
+  star-points ride on top of the painting (the "exact match" — see why the Teapot *is* the
+  archer). The painting's own painted anatomy only roughly aligns (it's fixed raster — can't
+  register pixel-exact), which is why it's the aura and the crisp figure carries the meaning;
+  Orion happens to line up beautifully, Sagittarius is looser. If the `<img>` 404s, `.has-hero`
+  drops and the figure shows on the dark bg. See `night-heroes/HERO-ART-SPEC.md`. The whole
   visual style — and how to add a new card so it matches — is documented in the
   **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords
-  real (J2000): wrong coords draw the wrong outline. **Visible now**
+  real (J2000): wrong coords draw the wrong outline. **The astral chart shows the FULL
+  figure, not a bright sub-asterism** — e.g. Sagittarius is the whole archer (bow + arrow +
+  body + legs), not just the Teapot. Verify every added star's coords against
+  `star-catalog-deep.json` (nearest-neighbour ≤0.05° + matching mag) before committing — a
+  PowerShell pass over the catalog catches the fainter Bayer stars you'll get wrong from
+  memory. Figures that are already their complete standard figure (Crux, Corvus, Triangulum
+  Australe, Lyra, the Vela pentagon, Leo, Gemini, Scorpius…) are left unpadded. **Visible now**
   also respects the naked-eye/binoculars depth button — `eye:'binoc'` cards only
   count as visible-now at binocular depth. Tapping the **compass** (🧭) opens an
   immersive full-viewport landscape sky (`enterSkyFullscreen`; best-effort

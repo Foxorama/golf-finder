@@ -52,12 +52,18 @@ the heroic frame.
   *crest*, not a literal photo — invent the heroic form, do not trace a reference.
 
 **In the modal the heroic frame depends on the object type:**
-- **Constellations** get a prominent full-width **hero stage** (`.sky-hero-stage`, 3:2):
-  the improved star chart (`figureSVG`) morphs into an **illustrated figure** when one
-  exists in the **`HERO_ART`** map (`night-heroes/<slug>.svg|png`), else it just holds
-  the chart. The illustration is a real asset (hand-authored luminous SVG today, a
-  painted raster drop-in later — the loader is source-agnostic, lazy on open, SW-cached,
-  and falls back to the chart if the file is missing/offline). See
+- **Constellations** get a prominent full-width **hero stage** (`.sky-hero-stage`, 3:2)
+  that **layers** rather than swaps: the **`HERO_ART`** illustration (`night-heroes/<slug>.jpg`)
+  is a **dim background aura** (`.sky-hero-aura`) under a vignette, and the registered
+  star-figure (`figureSVG(slug,ac)`) sits **on top**. That figure renders the constellation's
+  **full real-star list** as two pixel-aligned layers — `.fig-chart` (faint chart) ↔ `.fig-hero`
+  (the same stars lit into a glowing rarity figure) — from **one `projFigure` projection, so the
+  stars never move between phases**. The shared locked skeleton is the design: the identical
+  star-points ride over the painting (the "exact match" — see why the asterism *is* the figure).
+  The fixed raster can't register pixel-exact, so it's the aura and the crisp figure carries the
+  meaning; missing/404 art drops `.has-hero` and the figure shows on the dark bg. The astral
+  chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
+  not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See
   `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
 - **Planets / deep sky / events** keep the small crest (`.sky-modal-crest`), the same
   64×64 `cardArt` pair scaled up, morphing once on open.

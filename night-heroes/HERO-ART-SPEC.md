@@ -14,9 +14,15 @@ do not trace or copy any existing image. Web sources are for **confirming the ri
 figure, pose and stars** for a constellation only, never for lifting artwork.
 
 > Where it shows: the modal's full-width **hero stage** (`.sky-hero-stage`,
-> 3:2 landscape). The chart fades out, the illustration fades in over ~3 s and holds.
-> The list cards stay pure SVG — these images are **only** fetched when a card is
-> opened (lazy + service-worker cached), so default users never download them.
+> 3:2 landscape). The illustration is **not** the focal layer any more — it blooms in as a
+> **dim background aura** (`.sky-hero-aura`, brightness ~0.7 / opacity ~0.62) behind the
+> app-drawn **registered star-figure**, which rides on top with the constellation's real
+> star-points locked in place. So the art's job is mood/flesh behind the figure; the crisp
+> star skeleton carries the "these stars *are* the figure" read. The closer your figure's
+> own anatomy + painted stars sit to where the real stars actually project (centred, similar
+> scale/orientation), the better it registers — Orion lines up almost perfectly. The list
+> cards stay pure SVG — these images are **only** fetched when a card is opened (lazy +
+> service-worker cached), so default users never download them.
 
 ---
 
