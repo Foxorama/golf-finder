@@ -934,7 +934,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       var swing=club.animate([
         {transform:'rotate(183deg)',opacity:1,offset:0},
         {transform:'rotate(183deg)',opacity:1,offset:0.12,easing:'ease-in'},
-        {transform:'rotate(0deg)',opacity:1,offset:0.34,easing:'ease-out'},
+        {transform:'rotate(0deg)',opacity:1,offset:0.34},                    /* impact: club head meets the ball */
+        {transform:'rotate(0deg)',opacity:1,offset:0.4,easing:'ease-out'},   /* hold ON the ball as it launches, so the strike reads (else the ball pops up while the club whips away and it looks like a whiff) */
         {transform:'rotate(-72deg)',opacity:1,offset:0.5},
         {transform:'rotate(-72deg)',opacity:1,offset:0.66},
         {transform:'rotate(-72deg)',opacity:0,offset:0.74},
