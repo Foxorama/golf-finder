@@ -2326,6 +2326,21 @@ function moonEvents(lat,lng,from){
   }
   return out;
 }
+// Moon distance (km) — truncated ELP series, plenty accurate to rank perigees and
+// flag supermoons (the dominant −20905·cos M' term swings 357k↔406k km).
+function moonDist(date){
+  const d=jdays(date);
+  const Mp=(134.963+13.064993*d)*RAD;   // Moon mean anomaly
+  const M =(357.529+0.985600*d)*RAD;    // Sun mean anomaly
+  const D =(297.850+12.190749*d)*RAD;   // mean elongation
+  return 385000.56
+    -20905.355*Math.cos(Mp)
+    -3699.111*Math.cos(2*D-Mp)
+    -2955.968*Math.cos(2*D)
+    -569.925*Math.cos(2*Mp)
+    -204.586*Math.cos(2*D-M)
+    -170.733*Math.cos(2*D+Mp);
+}
 // JPL approximate elements: [value, rate/century] — a(au) e I(°) L(°) ϖ(°) Ω(°)
 const PLANETS={
   mercury:{label:'Mercury',dot:'#b9b3a8',a:[0.38709927,0.00000037],e:[0.20563593,0.00001906],I:[7.00497902,-0.00594749],L:[252.25032350,149472.67411175],w:[77.45779628,0.16047689],O:[48.33076593,-0.12534081],note:'Low in twilight — hardest naked-eye planet'},
@@ -3234,20 +3249,56 @@ const SEASON_MARKERS=[
    note:'The Sun climbs highest at noon — the longest day and shortest night in the south.',
    star:'Short nights, but Orion, the Pleiades and brilliant summer stars dominate the evening sky.'}
 ];
-// Curated headline one-offs (eclipses, etc.) — surfaced only inside their 14-day window.
+// Curated headline one-offs (eclipses, the Apophis flyby) — surfaced only inside
+// their 14-day window. Every entry here is genuinely visible from Australia. The
+// `locus` field picks the locator-map renderer; `photo` (optional) names a shared
+// Flux hero in night-photos/ (so e.g. all lunar eclipses reuse one blood-moon shot).
 const SKY_EVENTS=[
-  {slug:'evt-ple-2026-08',name:'Partial Lunar Eclipse',date:[2026,8,28],icon:'🌗',rar:'epic',
-   blurb:'The Moon clips into Earth’s shadow — a dark bite out of the lunar disc, seen across the Americas, Europe and Africa. Not visible from Australia.',
+  {slug:'evt-ple-2026-08',name:'Penumbral Lunar Eclipse',date:[2026,8,28],icon:'🌖',rar:'rare',locus:'eclipse-lunar',photo:'eclipse-lunar',
+   blurb:'The full Moon glides through the soft outer fringe of Earth’s shadow — a faint dusky shading rather than a dark bite. Visible right across Australia, high in the sky.',
    rows:[
-     ['What you’re seeing','Part of the Moon passes through the umbra, Earth’s deep shadow, dimming and reddening that edge of the disc.'],
-     ['Where','The night side of Earth during the eclipse — the Americas, the Atlantic, Europe and Africa. Australia is in daylight, so the Moon is below the horizon here.'],
-     ['From SEQ','Not visible from here — one to catch on a live stream. Eastern Australia’s best recent lunar eclipse was the total one back in March 2026.']]},
-  {slug:'evt-tse-2027-08',name:'Total Solar Eclipse',date:[2027,8,2],icon:'🌑',rar:'legendary',
-   blurb:'The “eclipse of the century” — over six minutes of totality across North Africa and the Middle East. Not visible from Australia.',
+     ['What you’re seeing','The Moon passes through the penumbra, Earth’s pale outer shadow, so one side of the disc looks slightly smudged and grey. No red, no chunk missing — subtle but real.'],
+     ['From Australia','Well placed across the whole country, with the Moon high overhead near mid-eclipse. No equipment needed, though the dimming is gentle — compare the shaded edge with the bright limb.'],
+     ['Tip','A penumbral eclipse is the quietest kind. If you want drama, the partial and total eclipses later in this list are the ones to wait for.']]},
+  {slug:'evt-ple-2027-02',name:'Penumbral Lunar Eclipse',date:[2027,2,20],icon:'🌖',rar:'rare',locus:'eclipse-lunar',photo:'eclipse-lunar',
+   blurb:'A second gentle penumbral eclipse — the full Moon brushing the edge of Earth’s shadow. Visible across Australia.',
    rows:[
-     ['What you’re seeing','The Moon completely covers the Sun, revealing its pearly corona — the longest totality on land until 2114.'],
-     ['Where','Spain, North Africa, Egypt and the Arabian Peninsula. Australia misses this one entirely.'],
-     ['Stay safe','Never look at a partial Sun without certified eclipse glasses.']]}
+     ['What you’re seeing','Only Earth’s faint outer shadow touches the Moon, so the disc dims slightly on one side without turning red.'],
+     ['From Australia','Visible nationwide, weather permitting. Best appreciated by eye over the hour or so around greatest eclipse.'],
+     ['Tip','Photograph the Moon before and during — side by side, the subtle shading is far easier to spot.']]},
+  {slug:'evt-pl-2027-08',name:'Partial Lunar Eclipse',date:[2027,8,17],icon:'🌗',rar:'epic',locus:'eclipse-lunar',photo:'eclipse-lunar',
+   blurb:'A dark, curved bite is taken out of the full Moon as it enters Earth’s deep shadow — and this one is well placed for Australia.',
+   rows:[
+     ['What you’re seeing','Part of the Moon crosses into the umbra, Earth’s true shadow, so a sharp dark edge — sometimes tinged copper — creeps across the disc.'],
+     ['From Australia','Visible across the country with the Moon clear of the horizon. Naked-eye easy; binoculars show the shadow’s curved edge beautifully.'],
+     ['Why it’s red at the edge','The dim umbra is lit only by sunlight bent through Earth’s atmosphere — every sunrise and sunset on Earth, projected onto the Moon.']]},
+  {slug:'evt-pl-2028-07',name:'Partial Lunar Eclipse',date:[2028,7,6],icon:'🌗',rar:'epic',locus:'eclipse-lunar',photo:'eclipse-lunar',
+   blurb:'The full Moon dips a third of the way into Earth’s shadow — a clear dark bite, visible across Australia, two weeks before the great solar eclipse.',
+   rows:[
+     ['What you’re seeing','About 39% of the Moon’s diameter slides into the umbra at greatest eclipse, giving an obvious shadowed segment along one limb.'],
+     ['From Australia','Well placed nationwide. The pairing is no accident — this lunar eclipse and the 22 July total solar eclipse are two halves of the same eclipse season, a fortnight apart.'],
+     ['Watch for','A coppery tint along the shadowed edge as the umbra deepens.']]},
+  {slug:'evt-tse-2028-07',name:'Total Solar Eclipse',date:[2028,7,22],icon:'🌑',rar:'legendary',locus:'eclipse-solar',photo:'eclipse-solar',
+   blurb:'The big one — the Moon’s shadow sweeps right across Australia, with up to 5 minutes of totality through the NT, Queensland and New South Wales (Sydney sits in the path). The rest of the country sees a deep partial eclipse.',
+   rows:[
+     ['What you’re seeing','For a few minutes inside the path of totality the Moon completely hides the Sun, revealing the pearly corona, planets and stars in a darkened daytime sky. Elsewhere in Australia the Sun becomes a brilliant crescent.'],
+     ['The path','The umbra crosses the Kimberley coast and tracks south-east through the Northern Territory, Queensland, the corner of South Australia and New South Wales — across Sydney near sunset. Outside that line, the whole continent gets a large partial eclipse.'],
+     ['Stay safe','Never look at the partial Sun without certified solar-eclipse glasses. Only during the brief total phase, inside the path, is it safe to look with the naked eye.']]},
+  {slug:'evt-apophis-2029',name:'Asteroid Apophis Flyby',date:[2029,4,13],icon:'🪨',rar:'legendary',locus:'asteroid',photo:'asteroid',
+   blurb:'A 375-metre asteroid skims closer than our communications satellites — and shines at naked-eye brightness. It’s first seen from the southern hemisphere, crossing the Australian sky as a moving “star”.',
+   rows:[
+     ['What you’re seeing','Asteroid 99942 Apophis passes within about 32,000 km of Earth’s surface — nearer than geostationary satellites — glowing around magnitude 3–4, like a moderately bright star drifting visibly against the constellations over a few minutes.'],
+     ['From Australia','The southern hemisphere gets the front-row seat: Apophis becomes naked-eye visible first over Australia, tracking roughly from the east coast toward the west. No telescope needed, though binoculars help you catch its motion.'],
+     ['Why it matters','The first time in recorded history a known asteroid this large becomes an easy naked-eye object — a once-in-a-lifetime sight, and completely harmless.']]}
+];
+// Curated comet apparitions (real, southern-hemisphere visible). Like showers but
+// with absolute dates (a given apparition happens once). `mag` ~ peak brightness;
+// eye:'binoc' for fainter ones. Add a new one by appending its window here. Declared
+// before the lore builder below (which reads it) and cometStatus() further down.
+const COMETS=[
+  {slug:'comet-tempel2',n:'Comet 10P/Tempel 2',icon:'☄️',rar:'epic',eye:'binoc',
+   start:[2026,7,1],peak:[2026,8,3],end:[2026,9,20],mag:8,
+   note:'A periodic comet near magnitude 8 — too faint for the naked eye but an easy binocular target, riding high in the evening sky for southern observers'}
 ];
 // Build story-sheet lore for the deep-sky + dated events from their own data.
 (function(){
@@ -3256,7 +3307,37 @@ const SKY_EVENTS=[
   for(const e of SKY_EVENTS) SKY_LORE[e.slug]={icon:e.icon,title:e.name,tag:'Event',blurb:e.blurb,rows:e.rows};
   for(const s of SEASON_MARKERS) SKY_LORE[s.slug]={icon:s.icon,title:s.name,tag:'Event',blurb:s.note,
     rows:[['For stargazers',s.star],['Why it happens','It marks a turning point in Earth’s year-long orbit — the tilt of our axis swinging the Sun’s path higher or lower in the sky.']]};
+  for(const c of COMETS) SKY_LORE[c.slug]={icon:c.icon,title:c.n,tag:'Event',blurb:c.note+'.',
+    rows:[
+      ['What you’re seeing',`A comet — a city-sized ball of ice and dust that sprouts a glowing coma and tail as the Sun warms it. ${c.n} peaks near magnitude ${c.mag}${c.eye==='binoc'?', so it needs binoculars or a small telescope rather than the naked eye.':', bright enough to glimpse with the naked eye under dark skies.'}`],
+      ['From Australia','Well placed for southern observers — it rides higher in our sky than it does up north. Look on a clear, moonless night well away from city lights.'],
+      ['Worth knowing','Comet brightness is notoriously hard to predict — some fizzle, some flare up unexpectedly. It’s worth checking back across the apparition window.']]};
+  const _oppLore={
+    mars:['Mars at Opposition','Once every couple of years Earth sweeps past Mars on the inside track, bringing the red planet its closest and brightest — a fiery orange beacon up all night.',
+      [['What you’re seeing','Mars directly opposite the Sun, so it rises at sunset and sets at sunrise. Around opposition it’s at its largest and most brilliant, far outshining the surrounding stars.'],
+       ['From Australia','Visible all night from anywhere in the country. To the eye it’s an unmistakable orange “star”; a telescope can show its disc, a polar cap and dark surface markings.'],
+       ['Why it’s special','Mars oppositions come only every ~26 months, so this is the best window for the next couple of years.']]],
+    jupiter:['Jupiter at Opposition','The giant planet sits opposite the Sun — biggest, brightest and visible all night long.',
+      [['What you’re seeing','Jupiter at its closest for the year, blazing as the brightest “star” in the sky after Venus, rising as the Sun sets.'],
+       ['From Australia','Up all night and easy from anywhere. Steady binoculars reveal its four large moons; a small telescope shows the cloud belts.'],
+       ['Tip','The moons shift visibly from night to night as they orbit — a mini solar system in your binoculars.']]],
+    saturn:['Saturn at Opposition','The ringed planet reaches opposition — its brightest and best-placed night of the year, up from dusk till dawn.',
+      [['What you’re seeing','Saturn opposite the Sun, a steady pale-gold point that rises at sunset and stays up all night. Around opposition the rings can briefly brighten (the Seeliger effect).'],
+       ['From Australia','Visible all night nationwide. The rings need a small telescope — but there’s no better night all year to look.'],
+       ['Tip','Even 30× magnification will show the rings as a distinct loop around the planet.']]]
+  };
+  for(const k in _oppLore) SKY_LORE['opp-'+k]={icon:'🪐',title:_oppLore[k][0],tag:'Event',blurb:_oppLore[k][1],rows:_oppLore[k][2]};
   Object.assign(SKY_LORE,{
+    flare:{icon:'☀️',title:'Solar Flare',tag:'Event',blurb:'The Sun unleashes a sudden burst of radiation from a magnetic storm on its surface — strong flares can disrupt radio and, a day or two later, light up the aurora.',
+      rows:[
+        ['What you’re seeing','A flare is an explosive release of energy above a sunspot, measured by its X-ray brightness: C (minor), M (medium) and X (major). The figure on the card is the live class from NOAA’s GOES satellites.'],
+        ['What it can do','Strong M- and X-class flares ionise the upper atmosphere and can cause short-wave radio blackouts on Earth’s daylit side. If the flare hurls out a cloud of plasma (a CME) aimed our way, it can trigger geomagnetic storms and aurora 1–3 days later.'],
+        ['Stay safe','Never look at the Sun directly or through binoculars/telescopes without proper solar filters — flares are tracked by spacecraft, not by eye.']]},
+    supermoon:{icon:'🌕',title:'Supermoon',tag:'Event',blurb:'A full Moon that falls near perigee — its closest point to Earth — so it appears larger and brighter than usual.',
+      rows:[
+        ['What you’re seeing','The Moon’s orbit is slightly oval, so its distance varies by about 50,000 km. When a full Moon coincides with the near point, it looks up to ~7% wider and ~15% brighter than an average full Moon.'],
+        ['How to watch','The size difference is hard to judge overhead, but striking as the Moon rises — catch it low on the horizon next to trees or buildings for the famous “moon illusion” boost.'],
+        ['For stargazers','Beautiful, but the bright Moon washes out faint stars and the Milky Way — save deep-sky viewing for the dark nights around new moon.']]},
     fullmoon:{icon:'🌕',title:'Full Moon',tag:'Event',blurb:'The Moon stands opposite the Sun and shines all night — brilliant, but it floods out the fainter sky.',
       rows:[
         ['What you’re seeing','The whole sunlit face turned toward Earth, rising around sunset and setting around sunrise.'],
@@ -3297,6 +3378,13 @@ function skyLocus(slug){
   if(slug==='iss')        return {kind:'arc'};
   if(slug==='conjunction')return {kind:'pair'};
   if(slug==='aurora')     return {kind:'aurora'};
+  if(slug==='flare')      return {kind:'flare'};
+  if(slug==='supermoon')  return {kind:'moonphase',phase:'super'};
+  if(slug.indexOf('opp-')===0) return {kind:'opposition',planet:slug.slice(4)};
+  // Curated dated events carry their own locus kind (eclipse-lunar/solar, asteroid).
+  const ev=SKY_EVENTS.find(x=>x.slug===slug); if(ev&&ev.locus) return {kind:ev.locus};
+  if(COMETS.some(c=>c.slug===slug)) return {kind:'comet'};
+  if(SEASON_MARKERS.some(s=>s.slug===slug)) return {kind:'season',slug};
   return null;
 }
 function _locRng(seed){ let h=_hashStr(seed)||1; return ()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; }; }
@@ -3412,7 +3500,7 @@ function _locSolar(active,W,H,ac,lit,thumb){
 }
 function _locMoonPhase(W,H,ac,lit,phase,rng){
   let s='';
-  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.24;
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*(phase==='super'?0.30:0.24);
   if(phase==='new'){
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#0b1020" stroke="#33425f" stroke-width="1"/>`;
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.45)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.65:0.4}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
@@ -3420,6 +3508,8 @@ function _locMoonPhase(W,H,ac,lit,phase,rng){
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.4)}" fill="${ac}" opacity="${lit?0.22:0.1}" style="filter:blur(${_F1(R*0.4)}px)"/>`;
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#eef1f6"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px ${ac})"`:''}/>`;
     for(let i=0;i<5;i++){ const a=rng()*6.283, rr=rng()*R*0.7; s+=`<circle cx="${_F1(cx+Math.cos(a)*rr)}" cy="${_F1(cy+Math.sin(a)*rr)}" r="${(R*0.06+rng()*R*0.06).toFixed(1)}" fill="#cdd3dd" opacity="0.7"/>`; }
+    // Supermoon: a dashed "average Moon" ring shows how much bigger the big disc is.
+    if(phase==='super') s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.86)}" fill="none" stroke="${ac}" stroke-width="${lit?1.1:0.8}" opacity="${lit?0.7:0.4}" stroke-dasharray="4 4"/>`;
   }
   return s;
 }
@@ -3466,6 +3556,119 @@ function _locAurora(W,H,ac,lit,rng){
   s+=`<rect x="0" y="${_F1(H*0.86)}" width="${_F1(W)}" height="${_F1(H*0.14)}" fill="#04060f"/>`;
   return s;
 }
+// Shared dashed "you-are-here" reticle.
+function _locReticle(cx,cy,r,ac,lit){ return `<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(r)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.75:0.45}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`; }
+// Solar flare: the Sun with a bright active region, looping prominences and a burst
+// of rays off one limb — a flare erupting. Reticle marks the active region.
+function _locFlare(W,H,ac,lit,rng){
+  const cx=W*0.42, cy=H*0.56, R=Math.min(W,H)*0.24, id='fl'+(_locUid++), glow=lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px #ffd27a)"`:'';
+  let s=`<defs><radialGradient id="${id}" cx="42%" cy="40%" r="64%"><stop offset="0%" stop-color="#fff6da"/><stop offset="55%" stop-color="#ffcb55"/><stop offset="100%" stop-color="#ff7d1f"/></radialGradient></defs>`;
+  s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.9)}" fill="#ff9b3d" opacity="${lit?0.20:0.10}" style="filter:blur(${_F1(R*0.6)}px)"/>`;
+  s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.4)}" fill="#ffb347" opacity="${lit?0.28:0.14}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
+  s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="url(#${id})"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.4)}px #ffb347)"`:''}/>`;
+  for(let i=0;i<(lit?5:3);i++){ const a=rng()*6.283, rr=rng()*R*0.7; s+=`<circle cx="${_F1(cx+Math.cos(a)*rr)}" cy="${_F1(cy+Math.sin(a)*rr)}" r="${(R*0.06+rng()*R*0.05).toFixed(1)}" fill="#d2660f" opacity="0.45"/>`; }
+  // eruption off the upper-right limb
+  const ea=-0.7, ex=cx+Math.cos(ea)*R, ey=cy+Math.sin(ea)*R;
+  for(let i=0;i<3;i++){ const base=R*(0.32+i*0.2), apex=R*(0.7+i*0.55);
+    const f1x=ex+Math.cos(ea+1.6)*base, f1y=ey+Math.sin(ea+1.6)*base;
+    const f2x=ex+Math.cos(ea-1.6)*base, f2y=ey+Math.sin(ea-1.6)*base;
+    const mx=ex+Math.cos(ea)*apex, my=ey+Math.sin(ea)*apex;
+    s+=`<path d="M ${_F1(f1x)} ${_F1(f1y)} Q ${_F1(mx)} ${_F1(my)} ${_F1(f2x)} ${_F1(f2y)}" fill="none" stroke="#ffd884" stroke-width="${lit?1.4:1}" opacity="${(0.8-i*0.22).toFixed(2)}"${lit?` style="filter:drop-shadow(0 0 2px ${ac})"`:''}/>`; }
+  for(let i=0;i<(lit?6:4);i++){ const a=ea+(rng()-0.5)*1.5, len=R*(1.2+rng()*0.9), x1=ex+Math.cos(a)*R*0.3, y1=ey+Math.sin(a)*R*0.3;
+    s+=`<line x1="${_F1(x1)}" y1="${_F1(y1)}" x2="${_F1(ex+Math.cos(a)*len)}" y2="${_F1(ey+Math.sin(a)*len)}" stroke="#fff0c0" stroke-width="${(0.5+rng()*0.8).toFixed(2)}" opacity="${(0.4+rng()*0.4).toFixed(2)}"/>`; }
+  s+=`<circle cx="${_F1(ex)}" cy="${_F1(ey)}" r="${lit?2.6:1.8}" fill="#fff"${glow}/>`;
+  return s+_locReticle(ex,ey,R*0.55,ac,lit);
+}
+// Planetary opposition: Sun — Earth — planet in a line, the planet sitting opposite
+// the Sun from Earth (so it's up all night). Reticle on the highlighted planet.
+function _locOpposition(planet,W,H,ac,lit){
+  const cy=H*0.5, sunX=W*0.13, earthX=W*0.5, plX=W*0.87, min=Math.min(W,H);
+  const ECOL={mercury:'#b9b3a8',venus:'#f3ecd2',mars:'#e0795a',jupiter:'#e8d9b8',saturn:'#ded2a8'};
+  const pcol=ECOL[planet]||'#e8d9b8';
+  let s=`<line x1="${_F1(sunX)}" y1="${_F1(cy)}" x2="${_F1(plX)}" y2="${_F1(cy)}" stroke="${ac}" stroke-width="${lit?1.1:0.8}" opacity="${lit?0.55:0.3}" stroke-dasharray="5 5"/>`;
+  // Sun
+  s+=`<circle cx="${_F1(sunX)}" cy="${_F1(cy)}" r="${_F1(min*0.085)}" fill="#ffd27a"${lit?` style="filter:drop-shadow(0 0 ${_F1(min*0.06)}px #ffb347)"`:''}/>`;
+  // Earth (with a hint of its orbit)
+  s+=`<circle cx="${_F1(earthX)}" cy="${_F1(cy)}" r="${_F1(min*0.05)}" fill="#6fa8ff"${lit?` style="filter:drop-shadow(0 0 3px #6fa8ff)"`:''}/>`;
+  s+=`<circle cx="${_F1(earthX-min*0.085)}" cy="${_F1(cy-min*0.03)}" r="${_F1(min*0.018)}" fill="#dfe6ef"/>`;
+  // Planet — highlighted, opposite the Sun
+  const pr=min*(planet==='jupiter'?0.085:planet==='saturn'?0.07:0.06);
+  if(planet==='saturn') s+=`<ellipse cx="${_F1(plX)}" cy="${_F1(cy)}" rx="${_F1(pr*1.8)}" ry="${_F1(pr*0.5)}" fill="none" stroke="${pcol}" stroke-width="${lit?2:1.3}" opacity="0.85" transform="rotate(-16 ${_F1(plX)} ${_F1(cy)})"/>`;
+  s+=`<circle cx="${_F1(plX)}" cy="${_F1(cy)}" r="${_F1(pr)}" fill="${pcol}"${lit?` style="filter:drop-shadow(0 0 ${_F1(pr*0.8)}px ${ac})"`:''}/>`;
+  return s+_locReticle(plX,cy,pr*1.9,ac,lit);
+}
+// Comet: nucleus with a glowing coma and a fanned tail swept away from the Sun, plus
+// a dashed path arc showing its drift. Sits on the starry backdrop.
+function _locComet(W,H,ac,lit,rng){
+  const nx=W*0.64, ny=H*0.42, R=Math.min(W,H)*0.10, id='cm'+(_locUid++);
+  const tx=-0.62, ty=-0.45, tl=Math.hypot(W,H)*0.42;           // tail direction (up-left, away from sun)
+  // dashed drift path
+  let s=`<path d="M ${_F1(nx-W*0.5)} ${_F1(ny+H*0.22)} Q ${_F1(nx)} ${_F1(ny-H*0.04)} ${_F1(nx+W*0.32)} ${_F1(ny-H*0.18)}" fill="none" stroke="rgba(160,190,240,0.30)" stroke-width="0.8" stroke-dasharray="4 4"/>`;
+  // tail: a soft fan
+  s+=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="${_F1(tx)}" y2="${_F1(ty)}"><stop offset="0%" stop-color="${ac}" stop-opacity="${lit?0.55:0.28}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></linearGradient></defs>`;
+  const wpar=Math.atan2(ty,tx)+Math.PI/2, tw=R*1.6;
+  const exx=nx+tx*tl, eyy=ny+ty*tl;
+  s+=`<path d="M ${_F1(nx)} ${_F1(ny)} L ${_F1(exx+Math.cos(wpar)*tw)} ${_F1(eyy+Math.sin(wpar)*tw)} L ${_F1(exx-Math.cos(wpar)*tw)} ${_F1(eyy-Math.sin(wpar)*tw)} Z" fill="url(#${id})" style="filter:blur(${_F1(R*0.4)}px)"/>`;
+  // thin straight ion tail
+  s+=`<line x1="${_F1(nx)}" y1="${_F1(ny)}" x2="${_F1(nx+tx*tl*0.8)}" y2="${_F1(ny+ty*tl*0.8)}" stroke="#bfe0ff" stroke-width="${lit?1:0.7}" opacity="${lit?0.55:0.3}"/>`;
+  // coma + nucleus
+  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*1.3)}" fill="#eaf2ff" opacity="${lit?0.28:0.14}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
+  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*0.42)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.5)}px ${ac})"`:''}/>`;
+  return s+_locReticle(nx,ny,R*1.7,ac,lit);
+}
+// Asteroid flyby: Earth's limb at the lower-left, an irregular rock skimming past on a
+// curved path with a short motion trail. Reticle on the asteroid.
+function _locAsteroid(W,H,ac,lit,rng){
+  const min=Math.min(W,H), ex=W*0.10, ey=H*0.92, ER=min*0.34;
+  // Earth limb
+  let s=`<circle cx="${_F1(ex)}" cy="${_F1(ey)}" r="${_F1(ER)}" fill="#1d3a6b"/>`;
+  s+=`<circle cx="${_F1(ex)}" cy="${_F1(ey)}" r="${_F1(ER)}" fill="none" stroke="#6fa8ff" stroke-width="${lit?1.4:1}" opacity="${lit?0.8:0.45}"${lit?` style="filter:drop-shadow(0 0 3px #6fa8ff)"`:''}/>`;
+  // flyby path
+  s+=`<path d="M ${_F1(W*0.16)} ${_F1(H*0.12)} Q ${_F1(W*0.5)} ${_F1(H*0.30)} ${_F1(W*0.92)} ${_F1(H*0.36)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.55:0.3}" stroke-dasharray="5 5"/>`;
+  // asteroid at mid-path with a motion trail
+  const ax=W*0.56, ay=H*0.255, r=min*0.07;
+  for(let i=1;i<=4;i++){ const t=i*0.07; s+=`<circle cx="${_F1(ax-W*t)}" cy="${_F1(ay-H*t*0.18)}" r="${_F1(r*(0.5-i*0.08))}" fill="#cbb9a6" opacity="${(0.4-i*0.08).toFixed(2)}"/>`; }
+  // irregular rock
+  s+=`<path d="M ${_F1(ax-r)} ${_F1(ay)} L ${_F1(ax-r*0.4)} ${_F1(ay-r*0.9)} L ${_F1(ax+r*0.6)} ${_F1(ay-r*0.7)} L ${_F1(ax+r)} ${_F1(ay+r*0.2)} L ${_F1(ax+r*0.3)} ${_F1(ay+r*0.9)} L ${_F1(ax-r*0.7)} ${_F1(ay+r*0.6)} Z" fill="#b7a690"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+  s+=`<circle cx="${_F1(ax-r*0.3)}" cy="${_F1(ay-r*0.2)}" r="${_F1(r*0.22)}" fill="#8d8070" opacity="0.6"/>`;
+  return s+_locReticle(ax,ay,r*1.9,ac,lit);
+}
+// Eclipse: lunar = the Moon sliding into Earth's coppery shadow; solar = the Moon
+// disc over the Sun with a corona ring. Reticle marks the eclipsed body.
+function _locEclipse(kind,W,H,ac,lit,rng){
+  const cx=W*0.5, cy=H*0.5, R=Math.min(W,H)*0.24;
+  let s='';
+  if(kind==='lunar'){
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.35)}" fill="${ac}" opacity="${lit?0.18:0.08}" style="filter:blur(${_F1(R*0.4)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#dfe3ea"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.25)}px ${ac})"`:''}/>`;
+    for(let i=0;i<4;i++){ const a=rng()*6.283, rr=rng()*R*0.6; s+=`<circle cx="${_F1(cx+Math.cos(a)*rr)}" cy="${_F1(cy+Math.sin(a)*rr)}" r="${(R*0.07).toFixed(1)}" fill="#b9bfc9" opacity="0.6"/>`; }
+    // Earth's umbra creeping in from the right, coppery
+    const ux=cx+R*0.7;
+    s+=`<clipPath id="ec${_locUid}"><circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}"/></clipPath>`;
+    s+=`<g clip-path="url(#ec${_locUid})"><circle cx="${_F1(ux)}" cy="${_F1(cy-R*0.15)}" r="${_F1(R*1.05)}" fill="#5a1f17" opacity="${lit?0.9:0.6}"/><circle cx="${_F1(ux)}" cy="${_F1(cy-R*0.15)}" r="${_F1(R*1.05)}" fill="#8a2f22" opacity="${lit?0.45:0.3}"/></g>`;
+    _locUid++;
+  }else{
+    // Sun corona
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.7)}" fill="#fff" opacity="${lit?0.10:0.05}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.45)}" fill="#ffe9b0" opacity="${lit?0.30:0.16}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
+    for(let i=0;i<(lit?16:10);i++){ const a=(i/(lit?16:10))*6.283, l=R*(1.25+rng()*0.6); s+=`<line x1="${_F1(cx+Math.cos(a)*R*1.05)}" y1="${_F1(cy+Math.sin(a)*R*1.05)}" x2="${_F1(cx+Math.cos(a)*l)}" y2="${_F1(cy+Math.sin(a)*l)}" stroke="#fff4d6" stroke-width="${lit?1:0.7}" opacity="${(0.3+rng()*0.4).toFixed(2)}"/>`; }
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.02)}" fill="#fff7df"/>`;
+    // Moon disc covering the Sun
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#0b0e16"/>`;
+  }
+  return s+_locReticle(cx,cy,R*1.6,ac,lit);
+}
+// Solstice / equinox: the Sun's daily arc over the horizon — high in the southern
+// summer (Dec), low in winter (Jun), midway at the equinoxes.
+function _locSeason(slug,W,H,ac,lit){
+  const horizon=H*0.78, hi = slug==='dec-solstice'?0.16 : slug==='jun-solstice'?0.56 : 0.36;
+  const apexY=H*hi, sx=W*0.5;
+  let s=`<line x1="0" y1="${_F1(horizon)}" x2="${_F1(W)}" y2="${_F1(horizon)}" stroke="rgba(150,180,235,0.5)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  s+=`<rect x="0" y="${_F1(horizon)}" width="${_F1(W)}" height="${_F1(H-horizon)}" fill="#0a1326" opacity="0.6"/>`;
+  s+=`<path d="M ${_F1(W*0.06)} ${_F1(horizon)} Q ${_F1(sx)} ${_F1(apexY*2-horizon)} ${_F1(W*0.94)} ${_F1(horizon)}" fill="none" stroke="${ac}" stroke-width="${lit?1.4:1}" opacity="${lit?0.7:0.4}" stroke-dasharray="4 5"/>`;
+  s+=`<circle cx="${_F1(sx)}" cy="${_F1(apexY)}" r="${_F1(Math.min(W,H)*0.09)}" fill="#ffd27a"${lit?` style="filter:drop-shadow(0 0 ${_F1(Math.min(W,H)*0.07)}px #ffb347)"`:''}/>`;
+  return s+_locReticle(sx,apexY,Math.min(W,H)*0.16,ac,lit);
+}
 // Compose the inner SVG markup for a card's locator map. `null` → no locus (the
 // caller falls back to the emblem crest, so unhandled cards never regress).
 function _locInner(slug,W,H,ac,opts){
@@ -3481,6 +3684,13 @@ function _locInner(slug,W,H,ac,opts){
   if(L.kind==='aurora')    return bg+_locAurora(W,H,ac,lit,rng);
   if(L.kind==='arc')       return bg+_locArc(W,H,ac,lit,rng);
   if(L.kind==='pair')      return bg+_locPair(W,H,ac,lit,rng);
+  if(L.kind==='flare')        return bg+_locFlare(W,H,ac,lit,rng);
+  if(L.kind==='opposition')   return bg+_locOpposition(L.planet,W,H,ac,lit);
+  if(L.kind==='comet')        return bg+_locComet(W,H,ac,lit,rng);
+  if(L.kind==='asteroid')     return bg+_locAsteroid(W,H,ac,lit,rng);
+  if(L.kind==='eclipse-lunar')return bg+_locEclipse('lunar',W,H,ac,lit,rng);
+  if(L.kind==='eclipse-solar')return bg+_locEclipse('solar',W,H,ac,lit,rng);
+  if(L.kind==='season')       return bg+_locSeason(L.slug,W,H,ac,lit);
   // sky-patch family (real coords + auto constellation context)
   let ra0,dec0,span=thumb?30:52;
   if(L.kind==='sky'){ ra0=L.ra; dec0=L.dec; }
@@ -3849,6 +4059,21 @@ function showerStatus(date){
   }
   return best;
 }
+function cometStatus(date){
+  let best=null;
+  for(const c of COMETS){
+    const start=new Date(c.start[0],c.start[1]-1,c.start[2]);
+    const end  =new Date(c.end[0],c.end[1]-1,c.end[2],23,59);
+    const peak =new Date(c.peak[0],c.peak[1]-1,c.peak[2],12);
+    const active=date>=start&&date<=end;
+    const daysToStart=(start-date)/86400000, daysToPeak=(peak-date)/86400000;
+    if(active||(daysToStart>0&&daysToStart<=14)){
+      const score=active?Math.abs(daysToPeak):daysToStart+100;
+      if(!best||score<best.score) best={c,active,daysToStart,daysToPeak,score};
+    }
+  }
+  return best;
+}
 // Next time the Moon reaches full / new, scanning hourly out to ~31 days.
 function nextPhaseDate(from,kind){
   const syn=29.530588853; let prev=moonPhase(from).age;
@@ -3868,6 +4093,49 @@ function nextSeasonMarker(from){
     if(days>=0 && (!best||days<best.days)) best={...s,date:dt,days};
   }
   return best;
+}
+// Planetary opposition: an outer planet sits opposite the Sun (Earth between the
+// two), so it's up all night and at its biggest and brightest. Detected when the
+// planet's heliocentric longitude matches Earth's. Returns the nearest opposition
+// for each of the bright outer planets within a sensible window. eye:'naked' bodies
+// only (Mars, Jupiter, Saturn) — Uranus/Neptune oppositions aren't naked-eye events.
+function _oppLonDiff(key,t){
+  const T=jdays(t)/36525, E=planetHelio(PLANETS.earth,T), h=planetHelio(PLANETS[key],T);
+  let dl=(Math.atan2(h.y,h.x)-Math.atan2(E.y,E.x))*DEG;
+  return ((dl+540)%360)-180;                 // 0 at opposition
+}
+function planetOppositions(from){
+  const out=[];
+  for(const key of ['mars','jupiter','saturn']){
+    let prev=_oppLonDiff(key,new Date(from.getTime()-20*86400000));
+    for(let i=-19;i<=45;i++){
+      const t=new Date(from.getTime()+i*86400000), cur=_oppLonDiff(key,t);
+      // Earth orbits faster, so the longitude difference falls through 0 at opposition
+      // (a downward crossing); the <180 guard rejects the ±180 conjunction wrap.
+      if(prev>=0&&cur<0&&(prev-cur)<180){
+        const t0=new Date(t.getTime()-86400000), frac=prev/(prev-cur);
+        const oppDate=new Date(t0.getTime()+frac*86400000);
+        out.push({key,date:oppDate,days:(oppDate-from)/86400000});
+        break;
+      }
+      prev=cur;
+    }
+  }
+  return out;
+}
+// Solar flare activity from NOAA GOES X-ray flux (window._xray, W/m²). Classes:
+// C ≥1e-6, M ≥1e-5, X ≥1e-4. We surface M-class and above as a "solar storm" event.
+function flareClass(flux){
+  if(flux>=1e-4) return 'X'+(flux/1e-4).toFixed(1);
+  if(flux>=1e-5) return 'M'+(flux/1e-5).toFixed(1);
+  if(flux>=1e-6) return 'C'+(flux/1e-6).toFixed(1);
+  return 'B'+Math.max(1,flux/1e-7).toFixed(1);
+}
+function flareStatus(){
+  const x=window._xray; if(!x||!(x.flux>0)) return null;
+  const cls=flareClass(x.flux), band=cls[0];
+  const level = band==='X'?'extreme' : band==='M'?'strong' : null;  // only M/X are "events"
+  return {flux:x.flux, cls, band, level, time:x.time};
 }
 // Closest naked-eye planet pairing over the next 14 evenings (true angular sep).
 function upcomingConjunction(lat,lng,from){
@@ -4416,6 +4684,13 @@ function astroCards(lat,lng){
       name:'Aurora Australis',icon:'🌌',glyph:'🌌',pos:`Kp ${au.kp.toFixed(1)} live`,sortAlt:50,
       note:`${txt} <span style="opacity:0.65">Rough estimate — NOAA SWPC data.</span>`});
   }
+  // Solar storm — live GOES X-ray flare activity (M-class and above)
+  const fl=flareStatus();
+  if(fl&&fl.level){
+    cards.push({slug:'flare',cat:'events',rar:fl.band==='X'?'legendary':'epic',vis:'now',cls:fl.band==='X'?'alert':'',
+      name:`Solar Flare ${fl.cls}`,icon:'☀️',glyph:'☀️',pos:`${fl.cls}-class live`,sortAlt:49,
+      note:`The Sun let off ${fl.band==='X'?'an extreme X-class':'a strong M-class'} flare (${fl.cls}) — a burst of radiation that can spark radio blackouts and, if a cloud of plasma follows, geomagnetic storms and aurora a day or two later. <span style="opacity:0.65">Live NOAA SWPC GOES data.</span>`});
+  }
   // Meteor showers — active now, or peaking within the next fortnight
   const ss=showerStatus(date);
   if(ss && (ss.active || (ss.daysToPeak>0 && ss.daysToPeak<=14))){
@@ -4427,6 +4702,16 @@ function astroCards(lat,lng){
     cards.push({slug:'meteors',cat:'events',rar:'epic',vis,name:ss.sh.n,icon:'☄️',glyph:'☄️',
       pos:when,soonTxt:vis==='soon'?`in ${Math.round(ss.daysToPeak)}d`:'',sortAlt:radUp?rad.alt:0,
       note:`Up to ~${ss.sh.zhr}/hr under dark skies. ${radTxt} ${ss.sh.note}.`});
+  }
+  // Comet apparitions — currently visible, or starting within the fortnight
+  const cm=cometStatus(date);
+  if(cm){
+    const dawnEvt=cm.active; const vis=cm.active?'now':'soon';
+    const peakTxt=Math.abs(cm.daysToPeak)<=2?'near its brightest now':cm.daysToPeak>0?`brightest in ${Math.round(cm.daysToPeak)}d`:'fading now';
+    cards.push({slug:cm.c.slug,cat:'events',rar:cm.c.rar||'epic',vis,eye:cm.c.eye||'naked',name:cm.c.n,icon:cm.c.icon||'☄️',glyph:cm.c.icon||'☄️',
+      pos:cm.active?`mag ~${cm.c.mag} · ${peakTxt}`:fmtSkyDate(new Date(cm.c.start[0],cm.c.start[1]-1,cm.c.start[2])),
+      soonTxt:cm.active?'':`in ${Math.max(1,Math.round(cm.daysToStart))}d`,sortAlt:cm.active?20:0,
+      note:`${cm.c.note}. ${cm.active?peakTxt.charAt(0).toUpperCase()+peakTxt.slice(1)+'.':'Begins its apparition soon.'} Comets brighten unpredictably — worth a look on any clear, dark night in the window.`});
   }
   // ISS (live position)
   const el=issElevation(lat,lng);
@@ -4493,9 +4778,15 @@ function astroCards(lat,lng){
   // ── Upcoming dated events (next 2 weeks) ──
   const day=86400000;
   const fm=nextPhaseDate(date,'full');
-  if(fm){ const dd=(fm-date)/day; if(dd<=14) cards.push({slug:'fullmoon',cat:'events',rar:'common',vis:'soon',name:'Full Moon',icon:'🌕',glyph:'🌕',
-    pos:fmtSkyDate(fm),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
-    note:`The Moon reaches full on ${fmtSkyDate(fm)} — brilliant all night, but it floods out fainter stars and the Milky Way.`}); }
+  if(fm){ const dd=(fm-date)/day; if(dd<=14){
+    const dist=moonDist(fm), bigPct=Math.round((384400/dist-1)*100);
+    if(dist<=361500) cards.push({slug:'supermoon',cat:'events',rar:'epic',vis:'soon',name:'Supermoon',icon:'🌕',glyph:'🌕',
+      pos:fmtSkyDate(fm),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
+      note:`The full Moon on ${fmtSkyDate(fm)} falls near perigee — its closest approach to Earth (~${Math.round(dist).toLocaleString()} km) — so it looks about ${bigPct}% larger and noticeably brighter than an average full Moon. Best appreciated as it rises, low against the horizon.`});
+    else cards.push({slug:'fullmoon',cat:'events',rar:'common',vis:'soon',name:'Full Moon',icon:'🌕',glyph:'🌕',
+      pos:fmtSkyDate(fm),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
+      note:`The Moon reaches full on ${fmtSkyDate(fm)} — brilliant all night, but it floods out fainter stars and the Milky Way.`});
+  }}
   const nmoon=nextPhaseDate(date,'new');
   if(nmoon){ const dd=(nmoon-date)/day; if(dd<=14) cards.push({slug:'newmoon',cat:'events',rar:'rare',vis:'soon',name:'New Moon',icon:'🌑',glyph:'🌑',
     pos:fmtSkyDate(nmoon),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
@@ -4507,6 +4798,18 @@ function astroCards(lat,lng){
   if(cj) cards.push({slug:'conjunction',cat:'events',rar:'epic',vis:'soon',name:`${cj.a.label}–${cj.b.label} Conjunction`,icon:'🪐',glyph:'🪐',
     pos:fmtSkyDate(cj.date),soonTxt:cj.day===0?'tonight':`in ${cj.day}d`,sortAlt:0,
     note:`${cj.a.label} and ${cj.b.label} pass within ~${cj.sep.toFixed(1)}° of each other around ${fmtSkyDate(cj.date)} — a striking close pairing low in the twilight.`});
+  // Planetary oppositions — biggest & brightest, up all night (~3-week window)
+  const oppTip={mars:' A perfect time to catch its orange disc and dark markings in a telescope.',jupiter:' Binoculars show its four bright Galilean moons strung out beside it.',saturn:' The ideal night to aim a small telescope at the rings.'};
+  for(const op of planetOppositions(date)){
+    if(op.days<-7||op.days>21) continue;
+    const pl=planetPositions(lat,lng,date).find(p=>p.key===op.key), up=pl&&pl.alt>=5;
+    const lbl=PLANETS[op.key].label;
+    cards.push({slug:'opp-'+op.key,cat:'events',rar:op.key==='mars'?'legendary':'epic',
+      vis:up?'now':(op.days>0?'soon':'later'),name:`${lbl} at Opposition`,icon:'🪐',glyph:'🪐',
+      pos:up?`${Math.round(pl.alt)}° · ${compass16(pl.az)}`:(op.days>0?fmtSkyDate(op.date):'below horizon'),
+      soonTxt:(!up&&op.days>0)?`in ${Math.max(1,Math.round(op.days))}d`:'',sortAlt:up?pl.alt:0,
+      note:`${lbl} reaches opposition around ${fmtSkyDate(op.date)} — Earth sweeps directly between it and the Sun, so it rises at sunset, stays up all night and shines at its biggest and brightest of the year.${oppTip[op.key]||''}`});
+  }
   for(const e of SKY_EVENTS){
     const ed=new Date(e.date[0],e.date[1]-1,e.date[2],20), dd=(ed-date)/day;
     if(dd>0 && dd<=14) cards.push({slug:e.slug,cat:'events',rar:e.rar,vis:'soon',name:e.name,icon:e.icon,glyph:e.icon,
@@ -4597,11 +4900,13 @@ function toggleSkyFcMenu(){ _skyFcOpen=!_skyFcOpen; syncSkyFullControls(); }
 // Rarity for any story slug (mirrors the loot grade shown on its list card).
 const SKY_RARITY={milkyway:'rare',magellanic:'rare',moon:'common',aurora:'legendary',meteors:'epic',
   iss:'epic',venus:'common',jupiter:'common',mars:'rare',saturn:'rare',mercury:'rare',
-  fullmoon:'common',newmoon:'rare',conjunction:'epic'};
+  fullmoon:'common',newmoon:'rare',conjunction:'epic',flare:'epic',supermoon:'epic',
+  'opp-mars':'legendary','opp-jupiter':'epic','opp-saturn':'epic'};
 function skyRarity(slug){
   if(FIG_BY_SLUG[slug]) return FIG_BY_SLUG[slug].info.rar||'common';
   const d=DEEPSKY.find(x=>x.slug===slug); if(d) return d.rar;
   const e=SKY_EVENTS.find(x=>x.slug===slug); if(e) return e.rar;
+  const c=COMETS.find(x=>x.slug===slug); if(c) return c.rar||'epic';
   if(SEASON_MARKERS.some(x=>x.slug===slug)) return 'rare';
   return SKY_RARITY[slug]||'common';
 }
@@ -4647,9 +4952,16 @@ const CARD_PHOTO=Object.fromEntries([
   'milkyway','magellanic',
   // planets + Moon
   'jupiter','saturn','mars','venus','mercury','moon',
-  // phenomena
-  'aurora','meteors'
+  // phenomena + events
+  'aurora','meteors','comet','flare','supermoon','eclipse-lunar','eclipse-solar','asteroid'
 ].map(s=>[s,'night-photos/'+s+'.jpg']));
+// Curated dated events + oppositions reuse the shared phenomenon / planet photos
+// (one blood-moon shot serves every lunar eclipse; an opposition shows its planet).
+for(const e of SKY_EVENTS) if(e.photo) CARD_PHOTO[e.slug]='night-photos/'+e.photo+'.jpg';
+for(const c of COMETS) CARD_PHOTO[c.slug]='night-photos/comet.jpg';
+CARD_PHOTO['opp-mars']='night-photos/mars.jpg';
+CARD_PHOTO['opp-jupiter']='night-photos/jupiter.jpg';
+CARD_PHOTO['opp-saturn']='night-photos/saturn.jpg';
 // Build + open the story sheet for a sky object (constellation or phenomenon).
 function renderStoryBody(slug,lat,lng){
   const L=SKY_LORE[slug]; if(!L) return '';
@@ -4724,7 +5036,7 @@ function closeSkyStory(){
 }
 window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=document.getElementById('sky-modal'); if(m&&m.style.display==='block') closeSkyStory(); const pp=document.getElementById('play-panel'); if(pp&&pp.style.display==='block') closePlay(); } });
 
-// ── Space weather: live Kp (NOAA SWPC) + ISS position — both keyless, both optional ──
+// ── Space weather: live Kp + GOES X-ray flares (NOAA SWPC) + ISS — all keyless/optional ──
 async function fetchSpaceWx(){
   try{
     const r=await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
@@ -4732,6 +5044,14 @@ async function fetchSpaceWx(){
     const last=d[d.length-1];
     window._kp={kp:parseFloat(last[1]),time:last[0]};
   }catch(e){ window._kp=null; }
+  try{
+    // GOES long-band (0.1–0.8 nm) X-ray flux → peak over the last 6 h = current flare level
+    const r=await fetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json');
+    const d=await r.json();
+    let best=null;
+    for(const s of d){ if(s.energy==='0.1-0.8nm' && s.flux>0 && (!best||s.flux>best.flux)) best=s; }
+    window._xray = best?{flux:best.flux,time:best.time_tag}:null;
+  }catch(e){ window._xray=null; }
   try{
     const r=await fetch('https://api.wheretheiss.at/v1/satellites/25544');
     const d=await r.json();

@@ -119,13 +119,19 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   = a **Solar-System schematic** (`_locSolar`, six orbits, the body at its real current
   heliocentric angle, Earth+Moon for the Moon); meteors = radiant + diverging streaks, ISS =
   horizon arc, conjunction = pair on the ecliptic, aurora = southern curtains, full/new moon =
-  phase disc. Every highlight carries a dashed **reticle** "you-are-here" motif. The maps are
+  phase disc; **solar flare = Sun with prominence loops (`_locFlare`), opposition =
+  Sun–Earth–planet line (`_locOpposition`), supermoon = big disc + dashed average-size ring,
+  comet = nucleus + swept tail + drift path (`_locComet`), asteroid = rock + motion trail past
+  Earth's limb (`_locAsteroid`), lunar/solar eclipse = `_locEclipse('lunar'|'solar')` (coppery
+  shadow on the Moon / corona-ringed black disc), solstice & equinox = `_locSeason` (the Sun's
+  daily arc high in the southern summer, low in winter)**. Every highlight carries a dashed
+  **reticle** "you-are-here" motif. The maps are
   *looser* than the registered figures (the user signed off on this) — they locate, they don't
   pixel-register. In the **modal** the full-width 3:2 **`.sky-photo-stage`** now layers a
   `.sky-loc` map under the photo and, once the photo loads (`.photo-in`), **cross-fades
   map ↔ photo on one 4.4 s clock** (`morphChart`/`locPhoto`, `infinite alternate`) — the same
   phasing as constellation cards. A card with no `CARD_PHOTO` gets `.loc-only` and just holds the
-  map; a card `skyLocus` doesn't recognise (e.g. solstice/equinox) falls back to the old emblem
+  map; a card `skyLocus` doesn't recognise falls back to the old emblem
   crest, so nothing regresses. The Flux photos themselves are pure text-to-image (no
   skeleton/registration — a nebula photo just has to look like that nebula), generated
   `flux2_max` 1536×1024 with prompts like
@@ -191,6 +197,28 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   draws a **dotted horizon line** at alt 0 with a **dimmed ground** gradient beneath it
   (no faux stars — there are none below the horizon), and the field/seed culls (`alt<0`)
   keep stars + figure lines above it.
+- **Night *events* — how they're picked up + how to add one.** `astroCards(lat,lng)` is the
+  single producer of the night list; the **Events** category is everything it pushes with
+  `cat:'events'`. Three sources feed it: **(1) live** — aurora (NOAA Kp), **solar flares**
+  (NOAA GOES X-ray, `window._xray` via `fetchSpaceWx`; M/X-class only) and ISS; **(2) computed**
+  — meteor showers (`SHOWERS`/`showerStatus`), full/new moon, **supermoon** (`moonDist` ≤ ~361 500 km
+  at the next full moon), **planetary oppositions** (`planetOppositions` — Earth between Sun and an
+  outer planet; ±~3-week window), conjunctions, solstices/equinoxes; **(3) curated dated lists** —
+  comet apparitions (`COMETS`/`cometStatus`) and headline one-offs (`SKY_EVENTS`: eclipses + the
+  Apophis flyby). Curated entries surface only inside their window (≤14 days out, or `start..end`
+  for comets), so they don't clutter off-season. **Everything is real and Australia-visible** — the
+  events deliberately use a southern-hemisphere / "from Australia" framing, *not* SEQ-specific. The
+  default **Visible now** lens shows only `vis:'now'`, so most dated events sit under `vis:'soon'`
+  (upcoming pill) and appear when you toggle the lens off — that behaviour is intentional/correct,
+  the fix for "too few events" was **coverage**, not the filter. To **add an event type**: push a
+  descriptor in `astroCards` (`{slug,cat:'events',rar,vis,name,icon,glyph,pos,soonTxt?,sortAlt,
+  note,eye?}`), register `SKY_LORE[slug]` (blurb + rows) — or let the `SKY_EVENTS`/`COMETS` lore
+  loops build it — add a `skyLocus(slug)` branch (+ a `_loc*` renderer) for its locator-map art,
+  add the slug to `SKY_RARITY`/the curated arrays so `skyRarity()` resolves it, and optionally a
+  `CARD_PHOTO[slug]` Flux photo (shared photos like `eclipse-lunar.jpg` are mapped via each event's
+  `photo:` field). **Ordering gotcha:** the `SKY_LORE` builder IIFE reads `COMETS`, so `COMETS`
+  **must be declared above that IIFE** (a later `const` trips the temporal-dead-zone and silently
+  halts the whole script — symptom: no app globals, loader never hides).
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
