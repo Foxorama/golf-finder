@@ -96,8 +96,12 @@ the heroic frame.
   brighter scattered stars, nebula = soft cloud, dark = void; `band`/`clouds` = Milky-Way swath /
   Magellanic blobs; planets+Moon = a **Solar-System schematic** (`_locSolar` — six orbits, the
   body at its real heliocentric angle); meteors = radiant streaks, ISS = horizon arc, conjunction
-  = pair on the ecliptic, aurora = curtains, full/new moon = phase disc. Every highlight wears a
-  dashed **reticle** "you-are-here" ring. These maps are deliberately **looser** than the
+  = pair on the ecliptic, aurora = curtains, full/new moon = phase disc, supermoon = big disc +
+  dashed average-size ring; **solar flare = Sun + prominence loops (`_locFlare`), opposition =
+  Sun–Earth–planet line (`_locOpposition`), comet = nucleus + swept tail + drift path
+  (`_locComet`), asteroid = rock + trail past Earth's limb (`_locAsteroid`), eclipse =
+  `_locEclipse('lunar'|'solar')`, solstice/equinox = `_locSeason` (Sun's daily arc)**. Every
+  highlight wears a dashed **reticle** "you-are-here" ring. These maps are deliberately **looser** than the
   registered figures — they locate, not pixel-register. In the modal the full-width 3:2
   **`.sky-photo-stage`** layers the `.sky-loc` map under the Flux photo; once the photo loads
   (`.photo-in`) it **cross-fades map ↔ photo on one 4.4 s clock** (`morphChart`/`locPhoto`,
