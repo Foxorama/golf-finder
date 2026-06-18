@@ -890,10 +890,11 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     else{ var mx,my,k=0; do{ mx=rnd(150,380); my=groundY(mx)+rnd(2,15); k++; }while(k<12 && Math.hypot(mx-HOLE.x,my-HOLE.y)<26); t={x:mx,y:my}; }
     var ball=newBall(),
         dx=t.x-LAUNCH.x, dy=t.y-LAUNCH.y, peak=Math.min(150,55+Math.hypot(dx,dy)*0.5),
-        span=Math.min(0.98-IMPACT,(650+Math.hypot(dx,dy)*1.5)/SWING),   /* same flight speed as before, placed after impact */
-        kf=[{transform:'translate(0px,0px)',offset:0},{transform:'translate(0px,0px)',offset:IMPACT}], i, tt;
+        launch=IMPACT+144/SWING,   /* ball leaves the tee 144ms AFTER the club's impact (offset 0.34) — the swing stays smooth, the ball just departs a beat later so the club is seen reaching it first */
+        span=Math.min(0.98-launch,(650+Math.hypot(dx,dy)*1.5)/SWING),
+        kf=[{transform:'translate(0px,0px)',offset:0},{transform:'translate(0px,0px)',offset:launch}], i, tt;
     for(i=1;i<=10;i++){ tt=i/10;
-      kf.push({offset:IMPACT+span*tt,transform:'translate('+(dx*tt).toFixed(1)+'px,'+(dy*tt-peak*Math.sin(Math.PI*tt)).toFixed(1)+'px)'}); }
+      kf.push({offset:launch+span*tt,transform:'translate('+(dx*tt).toFixed(1)+'px,'+(dy*tt-peak*Math.sin(Math.PI*tt)).toFixed(1)+'px)'}); }
     kf.push({offset:1,transform:'translate('+dx.toFixed(1)+'px,'+dy.toFixed(1)+'px)'});  /* hold at the landing spot to the swing's end — WAAPI otherwise synthesizes an offset-1 keyframe at the underlying value (no transform), rubber-banding the ball back to the tee */
     var a=ball.animate(kf,{duration:SWING,easing:'linear',fill:'forwards'});
     a.finished.then(function(){
@@ -934,8 +935,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       var swing=club.animate([
         {transform:'rotate(183deg)',opacity:1,offset:0},
         {transform:'rotate(183deg)',opacity:1,offset:0.12,easing:'ease-in'},
-        {transform:'rotate(0deg)',opacity:1,offset:0.34},                    /* impact: club head meets the ball */
-        {transform:'rotate(0deg)',opacity:1,offset:0.4,easing:'ease-out'},   /* hold ON the ball as it launches, so the strike reads (else the ball pops up while the club whips away and it looks like a whiff) */
+        {transform:'rotate(0deg)',opacity:1,offset:0.34,easing:'ease-out'},
         {transform:'rotate(-72deg)',opacity:1,offset:0.5},
         {transform:'rotate(-72deg)',opacity:1,offset:0.66},
         {transform:'rotate(-72deg)',opacity:0,offset:0.74},
