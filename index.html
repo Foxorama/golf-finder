@@ -415,17 +415,26 @@ body.sky-full-on{overflow:hidden;}
 .sky-modal-crest .ca-outline{animation:morphChart 3.6s ease-in-out .3s infinite alternate;}
 .sky-modal-crest .ca-heroic{opacity:0;animation:morphHero 3.6s ease-in-out .3s infinite alternate;}
 @media(prefers-reduced-motion:reduce){.sky-modal-crest .ca-outline{animation:none;opacity:0;}.sky-modal-crest .ca-heroic{animation:none;opacity:1;}}
-/* Constellation hero stage — the prominent panel whose real star chart morphs once
-   into the illustrated "astral heroic" figure (night-heroes/<slug>.png) when art
-   exists; without art it just shows the chart. The <img> is lazy + SW-cached; if it
-   fails (missing/offline) .has-hero is dropped and the chart simply stays. */
+/* Constellation hero stage — the prominent panel that layers three things in one
+   3:2 box: the illustrated "astral heroic" Flux painting (night-heroes/<slug>.jpg)
+   demoted to a DIM BACKGROUND AURA, a soft vignette veil, and the registered
+   star-FIGURE on top (figureSVG: the full real-star chart that lights up into a
+   glowing figure). The figure's two layers share one projection so the stars never
+   move — that exact shared skeleton is what makes the painting behind read as the
+   figure ("see why the Teapot IS the archer"). The <img> is SW-cached; if it fails
+   (missing/offline) .has-hero is dropped and the figure simply shows on the dark bg. */
 .sky-hero-stage{position:relative;margin:16px 16px 4px;border-radius:16px;overflow:hidden;aspect-ratio:3/2;background:#070c1e;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 26%,transparent),0 0 28px -12px var(--ac);}
-.sky-hero-stage .ca-outline,.sky-hero-stage .sky-hero-img{position:absolute;inset:0;width:100%;height:100%;}
-.sky-hero-stage .ca-outline svg{display:block;width:100%;height:100%;}
-.sky-hero-stage .sky-hero-img{object-fit:cover;opacity:0;}
-.sky-hero-stage.has-hero .ca-outline{animation:morphChart 4s ease-in-out .4s infinite alternate;}
-.sky-hero-stage.has-hero .sky-hero-img{animation:morphHero 4s ease-in-out .4s infinite alternate;}
-@media(prefers-reduced-motion:reduce){.sky-hero-stage.has-hero .ca-outline{animation:none;opacity:0;}.sky-hero-stage.has-hero .sky-hero-img{animation:none;opacity:1;}}
+.sky-hero-stage .sky-hero-aura,.sky-hero-stage .sky-hero-veil,.sky-hero-stage .sky-hero-fig{position:absolute;inset:0;width:100%;height:100%;}
+.sky-hero-stage .sky-hero-fig svg{display:block;width:100%;height:100%;}
+.sky-hero-stage .sky-hero-aura{object-fit:cover;opacity:0;filter:brightness(0.7) saturate(1) contrast(1.02);}
+.sky-hero-stage .sky-hero-veil{background:radial-gradient(120% 92% at 50% 40%,transparent 44%,rgba(6,10,26,0.52) 100%);pointer-events:none;}
+/* The "shift": the faint chart lights into the glowing figure while the painting
+   blooms in behind it — the stars hold position throughout (exact match). */
+.sky-hero-stage .fig-chart{animation:morphChart 4.4s ease-in-out .3s infinite alternate;}
+.sky-hero-stage .fig-hero{opacity:0;animation:morphHero 4.4s ease-in-out .3s infinite alternate;}
+.sky-hero-stage.has-hero .sky-hero-aura{animation:heroAura 4.4s ease-in-out .3s infinite alternate;}
+@keyframes heroAura{0%,16%{opacity:0;}70%,100%{opacity:0.62;}}
+@media(prefers-reduced-motion:reduce){.sky-hero-stage .fig-chart{animation:none;opacity:0;}.sky-hero-stage .fig-hero{animation:none;opacity:1;}.sky-hero-stage.has-hero .sky-hero-aura{animation:none;opacity:0.62;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
 .sky-sec{margin:14px 20px 0;}
@@ -2378,8 +2387,11 @@ const STAR_FIGURES=[
     ['Betelgeuse',88.793,7.407,0.5],['Rigel',78.634,-8.202,0.1],
     ['Bellatrix',81.283,6.350,1.6],['Saiph',86.939,-9.670,2.1],
     ['Alnitak',85.190,-1.943,1.8],['Alnilam',84.053,-1.202,1.7],
-    ['Mintaka',83.002,-0.299,2.2]],
-   l:[[0,2],[4,5],[5,6],[2,6],[0,4],[1,6],[3,4]]},
+    ['Mintaka',83.002,-0.299,2.2],
+    // The head (λ Meissa) and the hanging sword (ι Hatysa) — the hunter, not just
+    // the shoulders+belt+knees. Real J2000, catalog-checked.
+    ['Meissa',83.784,9.934,3.5],['Hatysa',83.858,-5.910,2.8]],
+   l:[[0,2],[4,5],[5,6],[2,6],[0,4],[1,6],[3,4],[0,7],[2,7],[5,8]]},
   {n:'Canis Major',s:[
     ['Sirius',101.287,-16.716,-1.5],['Mirzam',95.674,-17.956,2.0],
     ['Wezen',107.098,-26.393,1.8],['Adhara',104.656,-28.972,1.5],
@@ -2398,8 +2410,16 @@ const STAR_FIGURES=[
     ['Kaus Australis',276.043,-34.385,1.8],['Kaus Media',275.249,-29.828,2.7],
     ['Kaus Borealis',276.993,-25.421,2.8],['Nunki',283.816,-26.297,2.0],
     ['Ascella',285.653,-29.880,2.6],['Phi Sgr',281.414,-26.990,3.2],
-    ['Alnasl',271.452,-30.424,3.0],['Tau Sgr',286.735,-27.670,3.3]],
-   l:[[1,0],[0,4],[4,5],[5,1],[1,2],[2,5],[1,6],[6,0],[5,3],[3,7],[7,4]]},
+    ['Alnasl',271.452,-30.424,3.0],['Tau Sgr',286.735,-27.670,3.3],
+    // Beyond the Teapot: the archer/centaur. Head (μ Polis), back & croup
+    // (ξ² · π Albaldah · ρ¹), a shoulder (ο), the front leg (η) and the hind
+    // legs (α Rukbat → β Arkab). Real J2000, checked against the HYG catalog.
+    ['Polis',273.440,-21.059,3.9],['Eta Sgr',274.407,-36.762,3.1],
+    ['Albaldah',287.441,-21.024,2.9],['Xi2 Sgr',284.432,-21.107,3.5],
+    ['Omicron Sgr',286.170,-21.741,3.8],['Rukbat',290.970,-40.616,4.0],
+    ['Arkab',290.660,-44.459,4.0],['Rho1 Sgr',290.420,-17.847,3.9]],
+   l:[[1,0],[0,4],[4,5],[5,1],[1,2],[2,5],[1,6],[6,0],[5,3],[3,7],[7,4],
+      [2,8],[3,11],[11,12],[11,10],[10,15],[7,10],[0,9],[4,13],[13,14]]},
   {n:'Leo',s:[
     ['Regulus',152.093,11.967,1.4],['Eta Leo',151.833,16.763,3.5],
     ['Algieba',154.993,19.842,2.0],['Adhafera',154.173,23.417,3.4],
@@ -2423,8 +2443,11 @@ const STAR_FIGURES=[
   {n:'Carina',s:[
     ['Canopus',95.988,-52.696,-0.7],['Avior',125.628,-59.509,1.9],
     ['Aspidiske',139.273,-59.275,2.2],['Miaplacidus',138.300,-69.717,1.7],
-    ['Theta Carinae',160.739,-64.394,2.7]],
-   l:[[0,1],[1,2],[2,3],[3,4]]},
+    ['Theta Carinae',160.739,-64.394,2.7],
+    // The Diamond Cross hung off θ Car (υ · ω · p Car) — the keel's other half.
+    ['Upsilon Car',146.780,-65.072,2.9],['Omega Car',153.434,-70.038,3.3],
+    ['p Car',158.000,-61.685,3.3]],
+   l:[[0,1],[1,2],[2,3],[3,4],[7,4],[4,6],[6,5],[5,7]]},
   {n:'Triangulum Australe',s:[
     ['Atria',252.166,-69.028,1.9],['Beta TrA',238.787,-63.431,2.8],
     ['Gamma TrA',229.726,-68.679,2.9]],
@@ -2462,8 +2485,11 @@ const STAR_FIGURES=[
   {n:'Virgo',s:[
     ['Spica',201.298,-11.161,1.0],['Porrima',190.415,-1.449,2.7],
     ['Vindemiatrix',195.544,10.959,2.8],['Delta Vir',193.901,3.398,3.4],
-    ['Zeta Vir',203.673,-0.596,3.4],['Beta Vir',177.674,1.765,3.6]],
-   l:[[0,4],[4,1],[1,3],[3,2],[1,5]]}
+    ['Zeta Vir',203.673,-0.596,3.4],['Beta Vir',177.674,1.765,3.6],
+    // The maiden's arms/leg: η Zaniah (west arm), ι Syrma + 109 Vir (east).
+    ['Zaniah',184.976,-0.667,3.9],['Syrma',214.004,-6.000,4.1],
+    ['109 Vir',221.562,1.893,3.7]],
+   l:[[0,4],[4,1],[1,3],[3,2],[5,6],[6,1],[4,7],[7,8]]}
 ];
 const STAR_LOOSE=[
   ['Canopus',95.988,-52.696,-0.7],['Achernar',24.429,-57.237,0.5],
@@ -2636,38 +2662,36 @@ function figureAnchor(f){
   let best=f.s[0]; for(const s of f.s) if(s[3]<best[3]) best=s;
   return (f._anc=best);
 }
-// Stylised single-constellation diagram for the story sheet: project the figure's
-// own stars (cos-dec-corrected RA, north up) and normalise into the box.
-function figureSVG(slug){
+// Registered figure for the hero stage. Projects the figure's FULL real-star list
+// (cos-dec-corrected RA, north up) into the 3:2 stage box and draws it as two
+// pixel-aligned layers over a TRANSPARENT backdrop (so the Flux aura shows through):
+//   · fig-chart — the faint "astral" star chart (thin lines, plain white dots)
+//   · fig-hero  — the same stars lit into a glowing rarity-coloured figure
+// Both share one projection, so a star sits at the same x/y in both phases: the
+// chart→hero crossfade reads as the Teapot's own stars being adopted by the archer,
+// not a swap. `ac` is the resolved rarity colour (presentation attrs can't take a
+// CSS var()).
+function figureSVG(slug,ac){
   const f=FIG_BY_SLUG[slug]; if(!f) return '';
-  const W=300,H=190,pad=34;
-  const decMid=f.s.reduce((a,s)=>a+s[2],0)/f.s.length;
-  const raMid =f.s.reduce((a,s)=>a+s[1],0)/f.s.length;
-  const k=Math.cos(decMid*RAD);
-  const pts=f.s.map(s=>{ const dra=((s[1]-raMid+540)%360)-180; return {x:-dra*k, y:s[2]-decMid, mag:s[3], n:s[0]}; });
-  const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
-  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
-  const sc=Math.min((W-2*pad)/Math.max(0.01,maxx-minx),(H-2*pad)/Math.max(0.01,maxy-miny));
-  const cx=(minx+maxx)/2, cy=(miny+maxy)/2;
-  const X=p=>(W/2+(p.x-cx)*sc), Y=p=>(H/2-(p.y-cy)*sc);
-  const anc=figureAnchor(f), col=f.cx?'#bcd8ff':'#ffffff', id='fm'+_hashStr(slug);
-  let s=`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star map">`;
-  // Nebula-tinted sky + faint star-dust behind the figure — closer to a real chart.
-  s+=`<defs><radialGradient id="${id}" cx="50%" cy="42%" r="75%"><stop offset="0%" stop-color="#16244e"/><stop offset="48%" stop-color="#0e1838"/><stop offset="100%" stop-color="#070c1e"/></radialGradient>`
-    +`<radialGradient id="${id}n" cx="46%" cy="40%" r="40%"><stop offset="0%" stop-color="rgba(90,140,225,0.28)"/><stop offset="100%" stop-color="rgba(90,140,225,0)"/></radialGradient></defs>`;
-  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#${id})"/>`;
-  s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#${id}n)"/>`;
-  let h=_hashStr(slug)||1; const rnd=()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; };
-  let dust=''; for(let i=0;i<48;i++){ const dx=(rnd()*W).toFixed(1), dy=(rnd()*H).toFixed(1), dr=(0.3+rnd()*0.9).toFixed(2); dust+=`<circle cx="${dx}" cy="${dy}" r="${dr}" fill="#cfe0ff" opacity="${(0.12+rnd()*0.33).toFixed(2)}"/>`; }
-  s+=`<g>${dust}</g>`;
-  for(const e of (f.l||[])){ const a=pts[e[0]],b=pts[e[1]]; s+=`<line x1="${X(a).toFixed(1)}" y1="${Y(a).toFixed(1)}" x2="${X(b).toFixed(1)}" y2="${Y(b).toFixed(1)}" stroke="rgba(190,215,255,0.62)" stroke-width="1.1" stroke-linecap="round" style="filter:drop-shadow(0 0 2px rgba(150,185,255,0.5))"/>`; }
-  for(const p of pts){
-    const r=Math.max(1.6,4.4-p.mag*0.62), x=X(p).toFixed(1), y=Y(p).toFixed(1);
-    const glow=p.mag<3.2?` style="filter:drop-shadow(0 0 ${(r*1.6).toFixed(1)}px ${f.cx?'rgba(159,212,255,0.9)':'rgba(255,255,255,0.85)'})"`:'';
-    s+=`<circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="${col}"${glow}/>`;
-    if(p.n===anc[0]){ const ty=Math.max(11,Y(p)-r-5); s+=`<text x="${x}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${p.n}</text>`; }
-  }
-  return s+`</svg>`;
+  const W=300,H=200,pad=30;
+  const {pts,lines}=projFigure(f,W,H,pad);
+  const anc=figureAnchor(f); let ai=0; for(let i=0;i<f.s.length;i++){ if(f.s[i][0]===anc[0]){ ai=i; break; } }
+  const ap=pts[ai];
+  // Astral chart layer (the "before").
+  let chart='<g class="fig-chart">';
+  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; chart+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(190,215,255,0.5)" stroke-width="1" stroke-linecap="round"/>`; }
+  for(const p of pts){ const r=Math.max(1,2.4-p.mag*0.32); chart+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#eaf2ff" opacity="0.92"/>`; }
+  chart+='</g>';
+  // Heroic figure layer (the "after"): soft halo + bright sinew + glowing orbs.
+  let hero='<g class="fig-hero">';
+  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; hero+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${ac}" stroke-width="5" stroke-linecap="round" opacity="0.16"/>`; }
+  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; hero+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${ac}" stroke-width="1.7" stroke-linecap="round" opacity="0.95" style="filter:drop-shadow(0 0 3px ${ac})"/>`; }
+  for(const p of pts){ const r=Math.max(1.5,3-p.mag*0.34); hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" style="filter:drop-shadow(0 0 ${(r*1.8).toFixed(1)}px ${ac})"/>`; }
+  hero+='</g>';
+  // Persistent anchor label (names the brightest star so the figure stays legible).
+  let lab='';
+  if(ap){ const ty=Math.max(11,ap.y-6); lab=`<text x="${ap.x.toFixed(1)}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${anc[0]}</text>`; }
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star figure">${chart}${hero}${lab}</svg>`;
 }
 // ── Loot-grade rarity + two-phase "astral heroic" card art ──────────────────
 // Every night card carries a rarity (loot colours: common→green, rare→blue,
@@ -4134,11 +4158,15 @@ function renderStoryBody(slug,lat,lng){
     // Constellation: prominent full-width hero stage. The real star chart morphs
     // once into the illustrated figure (when HERO_ART exists), else just the chart.
     const art=HERO_ART[slug], cls=art?' has-hero':'';
-    s+=`<div class="sky-hero-stage${cls}" style="--ac:${ac};" aria-hidden="true"><div class="ca-outline">${figureSVG(slug)}</div>`;
-    // No loading="lazy": the modal (and this <img>) only exist once the card is
-    // tapped, so the fetch is already on-demand; lazy would stop it loading inside
-    // the fixed-position sheet. The SW runtime-caches it after the first open.
-    if(art) s+=`<img class="sky-hero-img" src="${art}" alt="${L.title} — astral heroic figure" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();">`;
+    s+=`<div class="sky-hero-stage${cls}" style="--ac:${ac};" aria-hidden="true">`;
+    // Flux painting as the dim background AURA + a vignette veil (only when art
+    // exists). No loading="lazy": the modal (and this <img>) only exist once the
+    // card is tapped, so the fetch is already on-demand; lazy would stop it loading
+    // inside the fixed-position sheet. The SW runtime-caches it after the first open.
+    if(art) s+=`<img class="sky-hero-aura" src="${art}" alt="" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();"><div class="sky-hero-veil"></div>`;
+    // Registered star-figure on top — same projection both phases, so the stars
+    // stay locked over the aura (exact match).
+    s+=`<div class="sky-hero-fig">${figureSVG(slug,ac)}</div>`;
     s+=`</div>`;
   }else{
     // Planet / deep sky / event: the small phasing emblem crest (chart → SVG heroic).
