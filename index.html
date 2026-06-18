@@ -399,9 +399,18 @@ body.sky-full-on{overflow:hidden;}
 .sky-hint{font-family:var(--mono);font-size:10.5px;color:var(--tx3);margin:0 2px 11px;}
 /* ── Sky-object story modal (constellations + phenomena) ── */
 #sky-modal{display:none;position:fixed;inset:0;background:rgba(4,7,18,0.8);z-index:1000;overflow-y:auto;-webkit-overflow-scrolling:touch;backdrop-filter:blur(2px);}
-.sky-modal-card{position:relative;max-width:480px;margin:26px auto 0;background:linear-gradient(180deg,#0c1330,#0a0f22);border:1px solid rgba(124,148,210,0.28);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,0.6);padding:0 0 22px;overflow:hidden;animation:skyCardUp .26s cubic-bezier(.2,.8,.2,1);}
+.sky-modal-card{position:relative;display:flex;flex-direction:column;max-width:480px;height:min(86vh,760px);margin:max(4vh,16px) auto;background:linear-gradient(180deg,#0c1330,#0a0f22);border:1px solid rgba(124,148,210,0.28);border-radius:20px;box-shadow:0 18px 50px rgba(0,0,0,0.6);padding:0;overflow:hidden;animation:skyCardUp .26s cubic-bezier(.2,.8,.2,1);}
+/* The card is a fixed-size frame; only the body scrolls, which keeps the close
+   button (a card child, not a body child) permanently pinned in the corner. */
+.sky-modal-body{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;padding-bottom:24px;}
+/* Phones: the card becomes a full-screen sheet so every card is the same size;
+   long content scrolls inside it, the X stays sticky, and swipe dismisses it. */
+@media (max-width:640px){
+  #sky-modal{overflow:hidden;}
+  .sky-modal-card{max-width:none;width:auto;height:100vh;height:100dvh;margin:0;border-radius:0;border-left:none;border-right:none;}
+}
 @keyframes skyCardUp{from{transform:translateY(20px);opacity:0;}to{transform:translateY(0);opacity:1;}}
-.sky-modal-x{position:absolute;top:12px;right:12px;z-index:3;width:34px;height:34px;border-radius:50%;background:rgba(20,28,52,0.85);border:1px solid rgba(124,148,210,0.3);color:var(--tx2);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.sky-modal-x{position:absolute;top:12px;right:12px;z-index:5;width:38px;height:38px;border-radius:50%;background:rgba(20,28,52,0.85);border:1px solid rgba(124,148,210,0.3);color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
 .sky-modal-x:active{transform:scale(0.92);}
 .sky-modal-hd{display:flex;align-items:center;gap:12px;padding:20px 52px 6px 20px;}
 .sky-modal-icon{font-size:30px;line-height:1;flex:none;}
@@ -472,7 +481,6 @@ body.sky-full-on{overflow:hidden;}
 .sky-sec{margin:14px 20px 0;}
 .sky-sec-h{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:var(--tx3);margin-bottom:4px;}
 .sky-sec-b{font-family:var(--mono);font-size:12px;color:var(--tx2);line-height:1.65;}
-.sky-modal-foot{text-align:center;color:var(--tx3);font-size:10.5px;font-family:var(--mono);margin:18px 20px 0;}
 /* Real star field + constellation lines — drawn on one canvas behind the
    labelled objects (#night-sky), positioned by the same altAz projection. */
 /* width/height:100% is load-bearing, not cosmetic: a <canvas> is a replaced
@@ -2669,175 +2677,182 @@ const SKY_SEED=(()=>{
 // Constellation lore — keyed by the figure name in STAR_FIGURES. Powers the
 // tappable story cards, the in-sky labels and the full-screen detail sheet.
 // vis = minimum altitude (°) of the brightest star before we surface the
-// card/label; content is plain naked-eye guidance with a southern (SEQ) slant.
+// card/label; content is plain naked-eye guidance with a Southern-Hemisphere slant.
 const CONST_INFO={
   'Crux':{slug:'crux',abbr:'Cru',icon:'✚',vis:6,rar:'common',
     meaning:'The Southern Cross — smallest of the 88 constellations, but the most famous in the southern sky.',
     culture:'A navigation beacon for thousands of years and a deep presence in First Nations Australian astronomy, where the cross and the dark Coalsack beside it form part of the great Emu in the Sky. It flies on the flags of Australia, New Zealand, Brazil, Samoa and Papua New Guinea.',
     find:'The two bright Pointers (Alpha and Beta Centauri) aim straight at it. Extend the long axis of the cross about 4½ times its length and you reach the south celestial pole — true south.',
-    season:'Circumpolar from SEQ — up every clear night, riding highest on autumn–winter evenings (Apr–Jul).',
-    bright:'Acrux (Alpha Crucis), a brilliant blue-white double at the foot of the cross.'},
+    season:'Circumpolar from southern latitudes — up every clear night, riding highest on autumn–winter evenings (Apr–Jul).',
+    bright:'Acrux (Alpha Crucis), a brilliant blue-white double at the foot of the cross.',
+    fun:'There is no bright “south star” marking the pole the way Polaris marks the north — which is exactly why generations of southern navigators steered by the Cross instead.'},
   'Centaurus':{slug:'centaurus',abbr:'Cen',icon:'🐎',vis:6,rar:'common',
     meaning:'The Centaur — a vast constellation wrapping around the Southern Cross, home to our nearest neighbouring star.',
     culture:'In Greek myth this is Chiron, the wise centaur who tutored heroes like Heracles and Achilles, set among the stars after his death. Its two brightest stars stand guard as the Pointers to the Cross.',
     find:'Find the two Pointers just east of the Southern Cross. The nearer one, Alpha Centauri, is the closest star system to the Sun — 4.4 light-years away.',
-    season:'Circumpolar from SEQ, highest on autumn–winter evenings.',
-    bright:'Rigil Kentaurus (Alpha Centauri) — our Sun’s nearest stellar neighbour.'},
+    season:'Circumpolar from southern latitudes, highest on autumn–winter evenings.',
+    bright:'Rigil Kentaurus (Alpha Centauri) — our Sun’s nearest stellar neighbour.',
+    fun:'Alpha Centauri is really a triple system, and its faintest member — Proxima Centauri — is the closest star to the Sun of all, yet far too dim to see with the naked eye.'},
   'Orion':{slug:'orion',abbr:'Ori',icon:'🗡️',vis:5,rar:'common',
     meaning:'The Hunter — the most recognisable constellation on Earth, sitting astride the celestial equator.',
     culture:'The Greek hunter Orion, placed in the sky opposite Scorpius — the scorpion that killed him — so the two never share the sky. Seen from Australia he stands “upside down”, and his Belt and Sword make the asterism Aussies call the Saucepan, or the Pot.',
     find:'Three evenly spaced stars in a short row form the Belt; blue Rigel and orange Betelgeuse mark opposite corners of his body.',
-    season:'Summer evenings from SEQ (Dec–Mar), high in the north.',
-    bright:'Rigel (a blue supergiant) and Betelgeuse (a red supergiant that will one day go supernova).'},
+    season:'Summer evenings from southern latitudes (Dec–Mar), high in the north.',
+    bright:'Rigel (a blue supergiant) and Betelgeuse (a red supergiant that will one day go supernova).',
+    fun:'Betelgeuse is so vast that, dropped where the Sun sits, it would swallow the orbit of Jupiter — and despite being the “alpha” star, it is usually outshone by blue Rigel.'},
   'Canis Major':{slug:'canis-major',abbr:'CMa',icon:'🐕',vis:5,rar:'common',
     meaning:'The Greater Dog — home to Sirius, the brightest star in all the night sky.',
     culture:'One of Orion’s two hunting dogs, forever at his heels. Its dawn rising in late summer gave the ancient “dog days” their name.',
     find:'Run the line of Orion’s Belt down to the dazzling white star Sirius; the dog’s body fans out from there.',
-    season:'Summer from SEQ (Dec–Mar), passing high overhead.',
+    season:'Summer from southern latitudes (Dec–Mar), passing high overhead.',
     bright:'Sirius — just 8.6 light-years away, so close it flashes through every colour as it twinkles low down.'},
   'Scorpius':{slug:'scorpius',abbr:'Sco',icon:'🦂',vis:6,rar:'common',
     meaning:'The Scorpion — one of the rare constellations that genuinely looks like its name.',
     culture:'The scorpion that stung Orion; the gods set them at opposite ends of the sky. In Māori and Polynesian tradition its curved tail is Maui’s fish-hook. Its red heart, Antares, means “rival of Mars”.',
     find:'A bright fish-hook curving through the southern Milky Way, with ruddy Antares glowing at its heart.',
-    season:'Winter (Jun–Aug) from SEQ — passes almost overhead, the finest view on Earth.',
-    bright:'Antares — a red supergiant some 700 times the Sun’s diameter.'},
+    season:'Winter (Jun–Aug) from southern latitudes — passes almost overhead, the finest view on Earth.',
+    bright:'Antares — a red supergiant some 700 times the Sun’s diameter.',
+    fun:'Antares is so enormous that, set in the Sun’s place, its surface would reach out past the orbit of Mars — apt for a star whose name means “rival of Mars”.'},
   'Sagittarius':{slug:'sagittarius',abbr:'Sgr',icon:'🏹',vis:6,rar:'common',
     meaning:'The Archer — and the direction of the very heart of our galaxy.',
     culture:'A centaur drawing his bow at Scorpius. Its central stars form the modern “Teapot”, and on winter nights the Milky Way seems to steam from its spout — that glow is the galactic centre, 26,000 light-years away.',
     find:'Look just east of Scorpius for the Teapot shape; the Milky Way is at its thickest and brightest right here.',
-    season:'Winter (Jun–Aug) from SEQ, high in the sky.',
-    bright:'Kaus Australis (Epsilon Sagittarii), at the base of the Teapot.'},
+    season:'Winter (Jun–Aug) from southern latitudes, high in the sky.',
+    bright:'Kaus Australis (Epsilon Sagittarii), at the base of the Teapot.',
+    fun:'Right where the Milky Way steams from the Teapot’s spout lies Sagittarius A*, our galaxy’s central supermassive black hole — about four million times the mass of the Sun.'},
   'Leo':{slug:'leo',abbr:'Leo',icon:'🦁',vis:6,rar:'common',
     meaning:'The Lion — a zodiac constellation that really does look like its namesake.',
     culture:'The Nemean Lion slain by Heracles in the first of his twelve labours. The backwards-question-mark “Sickle” traces the lion’s mane and head.',
     find:'Spot the Sickle (a reversed question mark) ending at bright Regulus for the head; a triangle to the east marks the hindquarters and the tail star Denebola.',
-    season:'Autumn to early-winter evenings from SEQ (Mar–Jun), seen to the north.',
+    season:'Autumn to early-winter evenings from southern latitudes (Mar–Jun), seen to the north.',
     bright:'Regulus — “the little king”, sitting right on the ecliptic.'},
   'Taurus':{slug:'taurus',abbr:'Tau',icon:'🐂',vis:5,rar:'common',
     meaning:'The Bull — charging at Orion, and carrying two of the sky’s most famous star clusters.',
     culture:'Zeus disguised as a white bull in Greek myth. Its face is the Hyades, the nearest star cluster to us, and on its shoulder rides the Pleiades — the “Seven Sisters”, one of the oldest recorded star groups, with stories on every inhabited continent, including many across Aboriginal Australia.',
     find:'Look for an orange eye (Aldebaran) at the point of a V-shaped face, with the small, glittering knot of the Pleiades nearby.',
-    season:'Summer evenings from SEQ (Dec–Feb), to the north.',
-    bright:'Aldebaran — an orange giant that happens to lie in front of the more distant Hyades.'},
+    season:'Summer evenings from southern latitudes (Dec–Feb), to the north.',
+    bright:'Aldebaran — an orange giant that happens to lie in front of the more distant Hyades.',
+    fun:'The tip of the bull’s southern horn marks the Crab Nebula, the wreckage of a supernova so brilliant that Chinese and Japanese skywatchers recorded it in broad daylight in 1054 AD.'},
   'Gemini':{slug:'gemini',abbr:'Gem',icon:'👯',vis:5,rar:'common',
     meaning:'The Twins — headed by two bright stars side by side.',
     culture:'Castor and Pollux, the inseparable twin brothers of Greek myth — one mortal, one immortal — set together in the heavens and honoured as protectors of sailors.',
     find:'Find two bright stars close together (golden Pollux and white Castor); two parallel stick-figure bodies trail from them toward Orion.',
-    season:'Summer evenings from SEQ (Jan–Mar), to the north.',
+    season:'Summer evenings from southern latitudes (Jan–Mar), to the north.',
     bright:'Pollux (an orange giant) and Castor (a remarkable system of six stars).'},
   'Carina':{slug:'carina',abbr:'Car',icon:'⛵',vis:6,rar:'common',
     meaning:'The Keel — the hull of the mythical ship Argo, and home to brilliant Canopus.',
     culture:'Once part of the enormous ship Argo Navis that carried Jason and the Argonauts; astronomers later split that unwieldy constellation into the Keel (Carina), the Sails (Vela) and the Stern (Puppis). It hosts the vast, glowing Eta Carinae Nebula.',
     find:'Dazzling Canopus, the second-brightest star in the sky, anchors it. Nearby lies the False Cross — often mistaken for the real Southern Cross.',
-    season:'Circumpolar from SEQ; highest on summer–autumn evenings.',
-    bright:'Canopus — a white supergiant roughly 10,000 times more luminous than the Sun.'},
+    season:'Circumpolar from southern latitudes; highest on summer–autumn evenings.',
+    bright:'Canopus — a white supergiant roughly 10,000 times more luminous than the Sun.',
+    fun:'Canopus is such a dependable beacon that spacecraft — from the Apollo missions to deep-space probes — have navigated by it, taking a “star fix” on it to find their bearings.'},
   'Triangulum Australe':{slug:'triangulum-australe',abbr:'TrA',icon:'🔺',vis:6,rar:'rare',
     meaning:'The Southern Triangle — a neat, bright triangle tucked in beside the Pointers.',
     culture:'Charted by the Dutch navigators Keyser and de Houtman in the 1590s on voyages to the East Indies — one of a dozen new southern constellations they brought back to the star charts.',
     find:'A compact, almost-equilateral triangle of three similar stars, just south of Alpha and Beta Centauri (the Pointers).',
-    season:'Circumpolar from SEQ; rides high on winter evenings.',
+    season:'Circumpolar from southern latitudes; rides high on winter evenings.',
     bright:'Atria (Alpha Trianguli Australis), an orange giant.'},
   'Grus':{slug:'grus',abbr:'Gru',icon:'🦢',vis:6,rar:'rare',
     meaning:'The Crane — a graceful southern water-bird in mid-flight.',
     culture:'One of the “southern birds” introduced by Keyser and de Houtman in the 1590s, alongside the Peacock, Phoenix and Toucan. To the ancient Egyptians the crane was an emblem of the star-watcher.',
     find:'Look south of bright Fomalhaut for a bent line of stars; the two leaders, Alnair and Tiaki, mark the crane’s body.',
-    season:'Spring evenings from SEQ (Sep–Nov), to the south.',
+    season:'Spring evenings from southern latitudes (Sep–Nov), to the south.',
     bright:'Alnair (Alpha Gruis), a hot blue-white star.'},
   'Vela':{slug:'vela',abbr:'Vel',icon:'⛵',vis:6,rar:'common',
     meaning:'The Sails — the billowing canvas of the great ship Argo, riding the southern Milky Way.',
     culture:'Carved with Carina and Puppis out of the unwieldy ancient constellation Argo Navis, the ship of Jason and the Argonauts. Its stars helped southern navigators long before they were formally charted.',
     find:'Two of its stars (κ and δ Velorum) join two of Carina’s to make the False Cross — larger and dimmer than the real Southern Cross, and a classic trap for newcomers.',
-    season:'Circumpolar-ish from SEQ; highest on summer–autumn evenings, high in the south.',
+    season:'Circumpolar-ish from southern latitudes; highest on summer–autumn evenings, high in the south.',
     bright:'Regor (Gamma Velorum) — a brilliant multiple star wrapped in a hot Wolf–Rayet wind.'},
   'Corvus':{slug:'corvus',abbr:'Crv',icon:'🐦‍⬛',vis:8,rar:'rare',
     meaning:'The Crow — a small, neat quadrilateral that punches above its size.',
     culture:'In Greek myth the crow sent by Apollo to fetch water dawdled, eating figs, and was flung into the sky beside the Cup (Crater) and the water-snake (Hydra) — forever thirsty, never able to drink. Sailors knew its box of stars as “Spica’s Spanker”.',
     find:'A compact four-star sail just west of bright Spica in Virgo; the line from the cross points the way to Spica.',
-    season:'Autumn–early winter evenings from SEQ (Apr–Jun), to the north.',
+    season:'Autumn–early winter evenings from southern latitudes (Apr–Jun), to the north.',
     bright:'Gienah (Gamma Corvi), a blue-white giant at the sail’s leading corner.'},
   'Cygnus':{slug:'cygnus',abbr:'Cyg',icon:'🦢',vis:8,rar:'rare',
     meaning:'The Swan, flying down the Milky Way — its bright stars also form the Northern Cross.',
     culture:'Zeus in the guise of a swan in Greek myth. The long axis (Deneb to Albireo) is the swan’s neck; the cross-bar is its outstretched wings. Albireo, at the beak, is a gorgeous gold-and-blue double in any small telescope.',
-    find:'Low in the north on winter evenings from SEQ — look for brilliant Deneb leading a large cross laid over the Milky Way.',
-    season:'Winter evenings from SEQ (Jun–Aug), low across the northern horizon.',
+    find:'Low in the north on winter evenings from southern latitudes — look for brilliant Deneb leading a large cross laid over the Milky Way.',
+    season:'Winter evenings from southern latitudes (Jun–Aug), low across the northern horizon.',
     bright:'Deneb — a blue-white supergiant so luminous it shines at first magnitude from ~1,400 light-years.'},
   'Lyra':{slug:'lyra',abbr:'Lyr',icon:'🎵',vis:8,rar:'rare',
     meaning:'The Lyre — a tiny constellation crowned by Vega, one of the sky’s brightest stars.',
     culture:'The harp of Orpheus, whose music could charm stone and beast. Vega was the northern pole star ~12,000 years ago and will be again — the slow wobble of Earth’s axis carries the pole back to it.',
     find:'Spot brilliant blue-white Vega low in the north; a small, neat parallelogram of fainter stars hangs just below it.',
-    season:'Winter evenings from SEQ (Jun–Aug), low in the north.',
+    season:'Winter evenings from southern latitudes (Jun–Aug), low in the north.',
     bright:'Vega — the zero-point against which star brightnesses were long measured.'},
   'Aquila':{slug:'aquila',abbr:'Aql',icon:'🦅',vis:7,rar:'rare',
     meaning:'The Eagle — Zeus’s thunderbolt-bearer, soaring along the Milky Way.',
     culture:'The eagle that carried the youth Ganymede up to Olympus. Its brightest star Altair, with Vega and Deneb, forms the Summer Triangle of the north — which rides low here through the winter.',
     find:'Look north for Altair, flanked closely by two fainter stars (Tarazed and Alshain) — a distinctive little row that names the eagle’s wingspan.',
-    season:'Winter evenings from SEQ (Jun–Aug), low to mid in the north.',
+    season:'Winter evenings from southern latitudes (Jun–Aug), low to mid in the north.',
     bright:'Altair — only 16.7 light-years away and spinning so fast it bulges into an oval.'},
   'Virgo':{slug:'virgo',abbr:'Vir',icon:'🌾',vis:7,rar:'rare',
     meaning:'The Maiden — the second-largest constellation, holding a sky full of distant galaxies.',
     culture:'Linked to harvest goddesses across cultures; her brightest star Spica means “ear of wheat”. Toward her bowl lies the Virgo Cluster, a swarm of over a thousand galaxies tens of millions of light-years away.',
     find:'Find blue-white Spica to the north, then trace the faint Y of stars curving up and west from it.',
-    season:'Autumn–winter evenings from SEQ (Apr–Jul), to the north.',
+    season:'Autumn–winter evenings from southern latitudes (Apr–Jul), to the north.',
     bright:'Spica — a close pair of hot blue stars whirling around each other every four days.'},
   'Musca':{slug:'musca',abbr:'Mus',icon:'🪰',vis:6,rar:'rare',
     meaning:'The Fly — a small, bright constellation tucked just south of the Southern Cross.',
     culture:'One of the dozen southern constellations charted by the Dutch navigators Keyser and de Houtman in the 1590s; first drawn as “Apis” the Bee, it is the only insect among the 88 constellations.',
     find:'Look just south of Crux for a compact kite of stars, led by Alpha and Beta Muscae, below the foot of the Southern Cross.',
-    season:'Circumpolar from SEQ — up every clear night, highest on autumn–winter evenings.',
+    season:'Circumpolar from southern latitudes — up every clear night, highest on autumn–winter evenings.',
     bright:'Alpha Muscae, a hot blue-white star about 300 light-years away.'},
   'Lupus':{slug:'lupus',abbr:'Lup',icon:'🐺',vis:6,rar:'rare',
     meaning:'The Wolf — a knot of bright stars on the Milky Way, between Centaurus and Scorpius.',
     culture:'An ancient constellation the Greeks saw as a wild beast speared by the neighbouring Centaur and carried toward the altar (Ara) just to the south.',
     find:'Between the Pointers of Centaurus and the head of Scorpius — a scatter of second- and third-magnitude stars with no single bright leader.',
-    season:'Winter evenings from SEQ (Jun–Aug), high in the south.',
+    season:'Winter evenings from southern latitudes (Jun–Aug), high in the south.',
     bright:'Alpha Lupi, a blue giant in the nearby Scorpius–Centaurus stellar association.'},
   'Ara':{slug:'ara',abbr:'Ara',icon:'🔥',vis:6,rar:'rare',
     meaning:'The Altar — two upright rows of stars just below the sting of Scorpius.',
     culture:'In Greek myth the altar where the gods swore their alliance before overthrowing the Titans; the rising smoke was said to form the Milky Way. One of Ptolemy’s original 48 constellations.',
     find:'Directly south of the curled tail of Scorpius — two short parallel lines of stars marking the altar’s sides.',
-    season:'Winter evenings from SEQ (Jun–Aug), riding high in the south.',
+    season:'Winter evenings from southern latitudes (Jun–Aug), riding high in the south.',
     bright:'Beta Arae, an orange supergiant that just outshines Alpha.'},
   'Tucana':{slug:'tucana',abbr:'Tuc',icon:'🐦',vis:6,rar:'rare',
     meaning:'The Toucan — a faint southern bird, but the keeper of two deep-sky treasures.',
     culture:'A “southern bird” introduced by Keyser and de Houtman in the 1590s, alongside Grus, Pavo and Phoenix.',
     find:'Deep in the south toward the celestial pole. Its real draw is what it holds: the Small Magellanic Cloud and the brilliant globular cluster 47 Tucanae.',
-    season:'Circumpolar from SEQ; highest on spring evenings.',
+    season:'Circumpolar from southern latitudes; highest on spring evenings.',
     bright:'Alpha Tucanae, an orange giant — though 47 Tuc beside the SMC is the real prize.'},
   'Phoenix':{slug:'phoenix',abbr:'Phe',icon:'🔥',vis:6,rar:'rare',
     meaning:'The Phoenix — the mythical firebird reborn from its ashes, set low in the southern sky.',
     culture:'Charted by Keyser and de Houtman in the 1590s; the immortal bird appears in Greek, Egyptian, Persian and Chinese lore alike.',
     find:'South of bright Fomalhaut and west of Achernar — a small bird-shape led by Ankaa, its one bright star.',
-    season:'Spring–summer evenings from SEQ (Oct–Dec), to the south.',
+    season:'Spring–summer evenings from southern latitudes (Oct–Dec), to the south.',
     bright:'Ankaa (Alpha Phoenicis), an orange giant about 85 light-years away.'},
   'Puppis':{slug:'puppis',abbr:'Pup',icon:'🚢',vis:6,rar:'common',
     meaning:'The Stern — the poop deck of the great ship Argo, set in a rich field of the Milky Way.',
     culture:'The largest fragment of the ancient ship Argo Navis, which astronomers broke into Carina (Keel), Vela (Sails) and Puppis (Stern). Its stars still carry Greek letters out of order, inherited from the original Argo.',
     find:'East of brilliant Canopus and below Sirius — a wide spread led by hot blue Naos, awash with star clusters in binoculars.',
-    season:'Summer–autumn evenings from SEQ (Jan–Apr), high overhead.',
+    season:'Summer–autumn evenings from southern latitudes (Jan–Apr), high overhead.',
     bright:'Naos (Zeta Puppis), one of the hottest, most luminous stars the naked eye can see.'},
   'Columba':{slug:'columba',abbr:'Col',icon:'🕊️',vis:7,rar:'rare',
     meaning:'The Dove — a small, gentle constellation just south of Orion and the Hare.',
     culture:'Devised around 1600 for the dove Noah released from the Ark — or the dove that guided Jason’s Argo, fittingly placed near the old ship’s stars.',
     find:'Below and right of Orion’s brilliant Rigel: a faint little bird led by Phact, between Canis Major and Eridanus.',
-    season:'Summer evenings from SEQ (Dec–Mar), passing high overhead.',
+    season:'Summer evenings from southern latitudes (Dec–Mar), passing high overhead.',
     bright:'Phact (Alpha Columbae), a hot blue-white “runaway” star flung from the Orion region.'},
   'Pegasus':{slug:'pegasus',abbr:'Peg',icon:'🐴',vis:7,rar:'common',
     meaning:'The Winged Horse — its body marked by the huge, near-empty Great Square.',
     culture:'The immortal winged stallion of Greek myth, sprung from the blood of Medusa and tamed by the hero Bellerophon. Seen from Australia the horse hangs upside-down low in the north.',
     find:'Look north for the Great Square — four medium stars in a large, conspicuously empty box; the nose star Enif trails off to one side.',
-    season:'Spring evenings from SEQ (Sep–Nov), low to mid in the north.',
+    season:'Spring evenings from southern latitudes (Sep–Nov), low to mid in the north.',
     bright:'Enif (Epsilon Pegasi), an orange supergiant marking the horse’s muzzle.'},
   'Canis Minor':{slug:'canis-minor',abbr:'CMi',icon:'🐶',vis:7,rar:'common',
     meaning:'The Lesser Dog — barely more than two stars, but headed by brilliant Procyon.',
     culture:'Orion’s smaller hunting hound, trailing Canis Major at the hunter’s heel. Procyon means “before the dog” — it rises just ahead of Sirius, the Dog Star.',
     find:'A simple pair: dazzling Procyon and its fainter companion Gomeisa, north-east of Orion and east of Gemini.',
-    season:'Summer evenings from SEQ (Jan–Mar), to the north.',
+    season:'Summer evenings from southern latitudes (Jan–Mar), to the north.',
     bright:'Procyon — the eighth-brightest star in the sky, only 11 light-years away.'},
   'Capricornus':{slug:'capricornus',abbr:'Cap',icon:'🐐',vis:6,rar:'rare',
     meaning:'The Sea-Goat — an ancient zodiac figure, half goat and half fish.',
     culture:'One of the oldest constellations, tied to the god Pan, who leapt into a river to escape the monster Typhon and grew a fish’s tail. The Sun’s southernmost point — the Tropic of Capricorn — takes its name.',
     find:'A large, faint triangle between Sagittarius and Aquarius — best traced as a wide grin under a dark sky.',
-    season:'Winter–spring evenings from SEQ (Aug–Oct), to the north.',
+    season:'Winter–spring evenings from southern latitudes (Aug–Oct), to the north.',
     bright:'Deneb Algedi (Delta Capricorni), an eclipsing binary at the goat’s tail.'}
 };
 // Attach slug/info onto each figure + index figures by slug for the mini-map.
@@ -3055,31 +3070,31 @@ const SKY_LORE={};
 (function(){
   for(const f of STAR_FIGURES){ const ci=f.info; if(!ci) continue;
     SKY_LORE[ci.slug]={icon:ci.icon,title:f.n,tag:'Constellation',sub:'· '+ci.abbr,fig:ci.slug,blurb:ci.meaning,
-      rows:[['Origin & culture',ci.culture],['How to find it',ci.find],['Best from SEQ',ci.season],['Brightest star',ci.bright]]};
+      rows:[['Origin & culture',ci.culture],['How to find it',ci.find],['Best seen',ci.season],['Brightest star',ci.bright]].concat(ci.fun?[['Fun fact',ci.fun]]:[])};
   }
   Object.assign(SKY_LORE,{
     milkyway:{icon:'🌠',title:'The Milky Way',tag:'Deep sky',blurb:'Our home galaxy seen edge-on — a faint river made of a hundred billion stars.',
       rows:[
         ['What you’re seeing','The blended glow of countless distant stars in the disc of our spiral galaxy, threaded with dark lanes of dust. The bright bulge toward Sagittarius is the galactic centre, about 26,000 light-years away.'],
         ['How to find it','You need a dark site away from city lights and 10–15 minutes for your eyes to adapt. Trace a soft band arching across the sky; it is brightest and broadest through Scorpius and Sagittarius.'],
-        ['Best from SEQ','Winter (Jun–Aug), when the bright core rides high overhead on moonless nights.'],
+        ['Best seen','Winter (Jun–Aug), when the bright core rides high overhead on moonless nights.'],
         ['Watch out for','Moonlight and light pollution wash it out completely — check the Moon is down first.']]},
     magellanic:{icon:'☁️',title:'The Magellanic Clouds',tag:'Deep sky',blurb:'Two dwarf galaxies orbiting our own — naked-eye only from the southern hemisphere.',
       rows:[
         ['What you’re seeing','The Large and Small Magellanic Clouds, satellite galaxies about 160,000 and 200,000 light-years away. They look like two detached, misty fragments of the Milky Way.'],
         ['Origin & culture','Logged by Ferdinand Magellan’s crew in 1519, though southern peoples knew them for millennia; they appear in many Aboriginal Australian sky-stories.'],
         ['How to find it','Look toward the south celestial pole on a dark night. The larger, brighter LMC sits near Dorado; the fainter SMC near Tucana.'],
-        ['Best from SEQ','Circumpolar — up every clear, dark night, highest on summer evenings.']]},
+        ['Best seen','Circumpolar — up every clear, dark night, highest on summer evenings.']]},
     moon:{icon:'🌙',title:'The Moon',tag:'Solar System',blurb:'Earth’s only natural satellite, and the brightest thing in the night sky.',
       rows:[
         ['What you’re seeing','A 3,474 km rocky world about 384,000 km away, lit by the Sun. The phase depends on the angle between the Sun, Moon and Earth.'],
         ['Through the month','It cycles new → crescent → first quarter → full → last quarter → new every 29.5 days. The terminator — the day/night line — is where craters throw their longest, sharpest shadows and the best place to look.'],
         ['For stargazers','A bright Moon floods the sky and hides faint stars, meteors and the Milky Way. Darkest skies come near new moon, or once the Moon has set.'],
-        ['Did you know','The Moon drifts about 3.8 cm farther from Earth each year, and always keeps the same face turned toward us.']]},
+        ['Fun fact','The Moon drifts about 3.8 cm farther from Earth each year, and always keeps the same face turned toward us.']]},
     aurora:{icon:'🌌',title:'Aurora Australis',tag:'Event',blurb:'The Southern Lights — curtains of colour where solar particles strike the upper atmosphere.',
       rows:[
         ['What causes it','Charged particles from the Sun funnel down Earth’s magnetic field near the poles and excite oxygen and nitrogen 100–300 km up, which glow green, red and purple.'],
-        ['Seeing it from SEQ','Rare this far north — it takes a strong geomagnetic storm (high Kp). When it happens the glow hugs the southern horizon rather than sitting overhead, so a clear, dark view south is essential.'],
+        ['Where to see it','From high southern latitudes — Tasmania, southern New Zealand, southern Chile and Argentina — the Southern Lights are a regular treat on stormy nights, sometimes dancing high overhead. From lower latitudes (most of mainland Australia, southern Africa) it takes a strong geomagnetic storm (high Kp), and the glow hugs the southern horizon rather than sitting overhead — so a clear, dark view to the south is essential.'],
         ['Improve your odds','Get away from city lights, look south, and be patient — auroras pulse and fade over minutes. A camera often catches colour the eye cannot.'],
         ['The numbers','The Kp index (0–9) measures geomagnetic activity. The card shows the live value from NOAA and roughly what is needed to reach your latitude.']]},
     meteors:{icon:'☄️',title:'Meteor Showers',tag:'Event',blurb:'“Shooting stars” — specks of comet and asteroid dust burning up overhead.',
@@ -3087,7 +3102,7 @@ const SKY_LORE={};
         ['What you’re seeing','Grains no bigger than sand hitting the air at tens of kilometres per second and vaporising in a streak about 80 km up. A shower happens when Earth ploughs through the debris trail left by a comet.'],
         ['The radiant','Shower meteors appear to stream out from one point — the radiant — named for the constellation it lies in. The show is best when that radiant is high.'],
         ['How to watch','No telescope needed: dark skies, a reclining view of as much sky as possible, and patience. The quoted rate (ZHR) is an ideal maximum; expect fewer in real conditions.'],
-        ['Best from SEQ','After midnight and before dawn are usually richest, when your side of Earth faces into the stream.']]},
+        ['Best seen','After midnight and before dawn are usually richest, when your side of Earth faces into the stream.']]},
     iss:{icon:'🛰',title:'The Space Station',tag:'Event',blurb:'The International Space Station — a crewed laboratory orbiting 400 km up.',
       rows:[
         ['What you’re seeing','A football-field-sized spacecraft circling Earth every ~90 minutes at 28,000 km/h. It shines by reflected sunlight — a steady, bright point gliding across the sky in a few minutes, and it never blinks.'],
@@ -3099,30 +3114,33 @@ const SKY_LORE={};
         ['About','A rocky world nearly Earth’s twin in size, wrapped in thick CO₂ clouds that trap a furnace-like 460°C surface — the hottest planet.'],
         ['How to spot it','Unmistakable: the brightest thing in the sky after the Sun and Moon, low in the west after sunset or the east before sunrise. Never far from the Sun.'],
         ['Through binoculars','It shows phases like the Moon — Galileo’s view of these helped overturn the Earth-centred universe.'],
+        ['Fun fact','A day on Venus lasts longer than its entire year — the planet spins so slowly, and backwards, that from its surface the Sun would rise in the west.'],
         ['Best viewing','Around “greatest elongation”, when it stands highest above the twilight.']]},
     jupiter:{title:'Jupiter',tag:'Planet',dot:'#e8d9b8',blurb:'The largest planet — a steady, brilliant cream-coloured “star”.',
       rows:[
         ['About','A gas giant 11 times Earth’s width, with a centuries-old storm — the Great Red Spot — and at least 95 moons.'],
         ['How to spot it','Very bright and steady (planets barely twinkle). Outshines every star except Sirius, and Sirius flickers.'],
         ['Through binoculars','Its four big Galilean moons — Io, Europa, Ganymede, Callisto — appear as tiny stars in a line, shifting night to night.'],
+        ['Fun fact','The Great Red Spot is a single storm wider than the whole Earth — and it has been spinning for at least 350 years, ever since the first astronomers turned telescopes on it.'],
         ['Best viewing','Around opposition, when it rises at sunset and is up all night.']]},
     mars:{title:'Mars',tag:'Planet',dot:'#e0795a',blurb:'The Red Planet — a distinctly orange point that flares near opposition.',
       rows:[
         ['About','A cold desert world half Earth’s size, with the Solar System’s tallest volcano (Olympus Mons) and clear signs of ancient water.'],
         ['How to spot it','Its rusty-orange colour gives it away. Brightness swings hugely with distance — sometimes modest, sometimes outshining all but Venus and Jupiter.'],
-        ['Did you know','Its colour is iron oxide — literally rust — coating the surface.'],
+        ['Fun fact','Its colour is iron oxide — literally rust — coating the surface.'],
         ['Best viewing','Around opposition (roughly every 26 months), when it is closest and brightest.']]},
     saturn:{title:'Saturn',tag:'Planet',dot:'#ded2a8',blurb:'The ringed planet — a calm, pale-gold point to the naked eye.',
       rows:[
         ['About','A gas giant famous for its broad, bright rings of ice and rock, with over 140 known moons including hazy Titan.'],
         ['How to spot it','Looks like a steady, faintly yellow star — less bright than Jupiter, but unmistakable once a telescope is on it.'],
         ['Through a telescope','Even a small scope reveals the rings — one of the most jaw-dropping sights in all of amateur astronomy.'],
+        ['Fun fact','Saturn is the only planet less dense than water — given a bathtub big enough to hold it, the whole world would float.'],
         ['Best viewing','Around opposition, high in a dark sky.']]},
     mercury:{title:'Mercury',tag:'Planet',dot:'#b9b3a8',blurb:'The innermost planet — a fleeting glimpse low in bright twilight.',
       rows:[
         ['About','The smallest planet and closest to the Sun: a cratered, airless world of extreme heat and cold.'],
         ['How to spot it','The hardest naked-eye planet — it never strays far from the Sun, so catch it very low in the west just after sunset, or the east before sunrise, during its brief appearances.'],
-        ['Did you know','A day on Mercury (sunrise to sunrise) lasts about 176 Earth days — longer than its year.'],
+        ['Fun fact','A day on Mercury (sunrise to sunrise) lasts about 176 Earth days — longer than its year.'],
         ['Best viewing','At greatest elongation, when it stands farthest from the Sun in twilight.']]}
   });
 })();
@@ -3136,103 +3154,107 @@ const DEEPSKY=[
    rows:[
      ['What you’re seeing','An enormous cloud of gas lit by hot young stars, wrapped around the unstable supergiant Eta Carinae — a doomed star that may go supernova in the astronomically near future.'],
      ['How to find it','A bright, distinct patch of the Milky Way in Carina, between the Southern Cross and the False Cross. Naked-eye from a dark site; spectacular in binoculars.'],
-     ['Best from SEQ','Summer–autumn evenings, when Carina rides high in the south.']]},
+     ['Fun fact','In the 1840s the unstable star at its heart briefly flared into the second-brightest star in the whole sky — a “supernova impostor” outburst it somehow survived.'],
+     ['Best seen','Summer–autumn evenings, when Carina rides high in the south.']]},
   {slug:'omegacen',type:'globular',n:'Omega Centauri',icon:'🔆',ra:201.697,dec:-47.479,vis:10,rar:'epic',
    blurb:'The grandest globular cluster in the sky — ten million ancient stars packed into a ball you can see with the naked eye.',
    rows:[
      ['What you’re seeing','Around 10 million stars bound by gravity into a sphere ~150 light-years across, 17,000 light-years away. Possibly the stripped core of a galaxy our Milky Way swallowed.'],
      ['How to find it','A fuzzy “star” to the naked eye in Centaurus. Binoculars show a round glow; a telescope shatters it into countless pinpoints.'],
-     ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
+     ['Fun fact','Near its core the stars crowd a hundred times closer together than they do around the Sun — so close that, on a world there, the night would never truly grow dark.'],
+     ['Best seen','Autumn–winter evenings, high in the south.']]},
   {slug:'jewelbox',type:'open',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',eye:'binoc',
    blurb:'A glittering young star cluster beside the Southern Cross, its suns tinted blue, white and one ruby-red.',
    rows:[
      ['What you’re seeing','A few hundred hot young stars only ~14 million years old (NGC 4755). John Herschel named it for looking like “a casket of variously coloured precious stones”.'],
      ['How to find it','Right beside Mimosa (Beta Crucis), the left-hand star of the Southern Cross. A hazy point to the eye; binoculars reveal the colours.'],
-     ['Best from SEQ','Circumpolar — up every clear night, highest on autumn–winter evenings.']]},
+     ['Best seen','Circumpolar — up every clear night, highest on autumn–winter evenings.']]},
   {slug:'47tuc',type:'globular',n:'47 Tucanae',icon:'✴️',ra:6.024,dec:-72.081,vis:8,rar:'rare',
    blurb:'The second-finest globular cluster in the sky, a naked-eye glow right next to the Small Magellanic Cloud.',
    rows:[
      ['What you’re seeing','A dense swarm of hundreds of thousands of stars, 13,000 light-years away — close enough to look as big as the full Moon.'],
      ['How to find it','Near the Small Magellanic Cloud, deep in the south toward Tucana. Naked-eye from dark skies; a jewel in any telescope.'],
-     ['Best from SEQ','Circumpolar; highest on spring–summer evenings.']]},
+     ['Fun fact','At roughly 13 billion years old it is nearly as ancient as the universe itself — its stars were already old when the Sun was born.'],
+     ['Best seen','Circumpolar; highest on spring–summer evenings.']]},
   {slug:'tarantula',type:'nebula',n:'Tarantula Nebula',icon:'🕷️',ra:84.679,dec:-69.100,vis:8,rar:'epic',eye:'binoc',
    blurb:'A monster nebula inside the Large Magellanic Cloud — so luminous that, set where Orion’s nebula is, it would cast shadows.',
    rows:[
      ['What you’re seeing','The largest, most active star-forming region known (NGC 2070), 160,000 light-years away in a neighbouring galaxy, yet bright enough to glimpse unaided.'],
      ['How to find it','A knotted bright spot on the eastern edge of the Large Magellanic Cloud. Binoculars show its tangled, leggy shape.'],
-     ['Best from SEQ','Circumpolar; highest on summer evenings.']]},
+     ['Best seen','Circumpolar; highest on summer evenings.']]},
   {slug:'orionneb',type:'nebula',n:'Orion Nebula',icon:'🌫️',ra:83.822,dec:-5.391,vis:8,rar:'epic',
    blurb:'The middle “star” of Orion’s Sword is no star at all — a glowing nursery of newborn suns, faintly green to the eye.',
    rows:[
      ['What you’re seeing','A cloud of gas 1,300 light-years away where stars are being born right now (M42). The four hot Trapezium stars at its heart light the whole nebula.'],
      ['How to find it','Look at the row of stars below Orion’s Belt (the Sword, or the handle of the “Saucepan”); the middle one looks fuzzy. Stunning in binoculars.'],
-     ['Best from SEQ','Summer evenings (Dec–Mar), high in the north.']]},
+     ['Best seen','Summer evenings (Dec–Mar), high in the north.']]},
   {slug:'pleiades',type:'open',n:'The Pleiades',icon:'✨',ra:56.871,dec:24.105,vis:6,rar:'rare',
    blurb:'The Seven Sisters — a tight, icy-blue knot of stars and one of the most storied objects in the sky.',
    rows:[
      ['What you’re seeing','A young open cluster ~440 light-years away (M45). Most people see six or seven stars; binoculars show dozens veiled in faint blue nebulosity.'],
      ['Origin & culture','Known on every inhabited continent — the Seven Sisters of Greek myth, and across Aboriginal Australia a group of women pursued by the hunter of Orion.'],
-     ['Best from SEQ','Summer evenings (Nov–Mar), to the north.']]},
+     ['Fun fact','Its Japanese name is Subaru — and the six blue stars on the carmaker’s badge are these very Seven Sisters.'],
+     ['Best seen','Summer evenings (Nov–Mar), to the north.']]},
   {slug:'coalsack',type:'dark',n:'The Coalsack',icon:'🌑',ra:186.0,dec:-63.0,vis:8,rar:'rare',
    blurb:'A dark nebula notched into the bright Milky Way beside the Southern Cross — the head of the Emu in the Sky.',
    rows:[
      ['What you’re seeing','A dense cloud of cold dust ~600 light-years away, blotting out the stars behind it — one of the most obvious dark nebulae in the sky.'],
      ['Origin & culture','The starting point of the great Emu in the Sky, a dark-cloud constellation central to many First Nations Australian traditions.'],
-     ['Best from SEQ','Circumpolar; needs a dark sky to show against the Milky Way.']]},
+     ['Best seen','Circumpolar; needs a dark sky to show against the Milky Way.']]},
   {slug:'centaurusa',type:'galaxy',n:'Centaurus A',icon:'🌀',ra:201.365,dec:-43.019,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright peculiar galaxy split by a dark dust lane — one of the nearest active galaxies, with a supermassive black hole firing jets across space.',
    rows:[
      ['What you’re seeing','An elliptical galaxy ~12 million light-years away (NGC 5128), crossed by the wreckage of a spiral it is swallowing. Its black hole launches jets millions of light-years long.'],
      ['How to find it','Just north of Omega Centauri. A faint round glow in binoculars; a small telescope starts to show the dark lane cutting across it.'],
-     ['Best from SEQ','Autumn–winter evenings, high in the south.']]},
+     ['Best seen','Autumn–winter evenings, high in the south.']]},
   {slug:'lagoon',type:'nebula',n:'Lagoon Nebula',icon:'🌫️',ra:270.924,dec:-24.386,vis:8,rar:'rare',eye:'binoc',
    blurb:'A big, bright star-forming cloud in Sagittarius, sitting right on the glowing core of the Milky Way.',
    rows:[
      ['What you’re seeing','A vast cloud of glowing hydrogen (M8) ~4,000 light-years away, cradling a newborn star cluster, with a dark “lagoon” channel down the middle.'],
      ['How to find it','Just above the spout of the Sagittarius “Teapot”. A misty patch to the naked eye from dark skies; lovely in binoculars.'],
-     ['Best from SEQ','Winter evenings (Jun–Aug), riding high overhead.']]},
+     ['Best seen','Winter evenings (Jun–Aug), riding high overhead.']]},
   {slug:'sculptor',type:'galaxy',n:'Sculptor Galaxy',icon:'🌀',ra:11.888,dec:-25.288,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright, dust-streaked starburst galaxy seen nearly edge-on — one of the finest galaxies for binoculars in the southern sky.',
    rows:[
      ['What you’re seeing','A spiral galaxy ~11 million light-years away (NGC 253), bursting with new stars and thick with dust — an elongated silver sliver of light.'],
      ['How to find it','In the dim constellation Sculptor, below Cetus. An easy oval glow in binoculars from a dark site.'],
-     ['Best from SEQ','Spring–summer evenings, high in the south.']]},
+     ['Best seen','Spring–summer evenings, high in the south.']]},
   {slug:'m83',type:'galaxy',n:'Southern Pinwheel',icon:'🌀',ra:204.254,dec:-29.866,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright, face-on spiral galaxy on the Hydra–Centaurus border — a swirl of star-forming arms.',
    rows:[
      ['What you’re seeing','A grand-design spiral ~15 million light-years away (M83), a prolific maker of supernovae, turned face-on so its pinwheel arms show.'],
      ['How to find it','Between Hydra and Centaurus, near the star Menkent. A round, soft glow in binoculars; its arms emerge in a telescope.'],
-     ['Best from SEQ','Autumn–winter evenings.']]},
+     ['Best seen','Autumn–winter evenings.']]},
   {slug:'m7',type:'open',n:'Ptolemy Cluster',icon:'✨',ra:268.45,dec:-34.79,vis:8,rar:'rare',
    blurb:'A big, bright naked-eye star cluster in the sting of Scorpius — catalogued by Ptolemy almost 2,000 years ago.',
    rows:[
      ['What you’re seeing','A loose swarm of around 80 hot young stars (M7 / NGC 6475), about 980 light-years away, sprawled across nearly the width of the full Moon.'],
      ['How to find it','Just off the stinger of Scorpius, in one of the richest parts of the Milky Way. An obvious misty patch to the naked eye; a glittering field in binoculars.'],
-     ['Best from SEQ','Winter evenings (Jun–Aug), riding high overhead.']]},
+     ['Best seen','Winter evenings (Jun–Aug), riding high overhead.']]},
   {slug:'ic2602',type:'open',n:'Southern Pleiades',icon:'💫',ra:160.6,dec:-64.4,vis:8,rar:'rare',
    blurb:'The “Southern Pleiades” — a brilliant naked-eye cluster wrapped around the star Theta Carinae.',
    rows:[
      ['What you’re seeing','A bright young open cluster (IC 2602) about 480 light-years away, its leading star Theta Carinae shining at third magnitude amid a scatter of blue suns.'],
      ['How to find it','High in the Carina Milky Way, not far from the Southern Cross and the Eta Carinae Nebula. Easy naked-eye; lovely in binoculars.'],
-     ['Best from SEQ','Summer–autumn evenings, high in the south.']]},
+     ['Best seen','Summer–autumn evenings, high in the south.']]},
   {slug:'ngc3532',type:'open',n:'Wishing Well Cluster',icon:'🌟',ra:166.4,dec:-58.75,vis:8,rar:'rare',
    blurb:'A dazzling river of stars in Carina — and the very first object observed by the Hubble Space Telescope.',
    rows:[
      ['What you’re seeing','One of the finest open clusters in the sky (NGC 3532), around 400 stars some 1,300 light-years away, said to look like silver coins shimmering at the bottom of a wishing well.'],
      ['How to find it','In a brilliant stretch of the Carina Milky Way near the Eta Carinae Nebula. A bright elongated glow to the eye; superb in binoculars.'],
-     ['Best from SEQ','Summer–autumn evenings, high in the south.']]},
+     ['Best seen','Summer–autumn evenings, high in the south.']]},
   {slug:'helix',type:'nebula',n:'Helix Nebula',icon:'👁️',ra:337.41,dec:-20.84,vis:10,rar:'epic',eye:'binoc',
    blurb:'The “Eye of God” — one of the closest and largest planetary nebulae, a dying Sun-like star’s last gasp.',
    rows:[
      ['What you’re seeing','Glowing shells of gas (NGC 7293) thrown off by a dying star ~650 light-years away, with the hot white-dwarf core at the centre — nearly the width of the full Moon, but faint.'],
      ['How to find it','In dim Aquarius, below the Capricornus stars. A large, ghostly ring — it needs a dark sky and binoculars or a low-power telescope; tricky but rewarding.'],
-     ['Best from SEQ','Spring evenings (Sep–Nov), high in the north.']]},
+     ['Best seen','Spring evenings (Sep–Nov), high in the north.']]},
   {slug:'sombrero',type:'galaxy',n:'Sombrero Galaxy',icon:'🌀',ra:189.998,dec:-11.623,vis:10,rar:'epic',eye:'binoc',
    blurb:'A bright edge-on galaxy crossed by a dark dust lane — the brim of a cosmic hat.',
    rows:[
      ['What you’re seeing','A spiral galaxy (M104) about 30 million light-years away, seen nearly edge-on, with a huge glowing bulge, a sharp lane of dust, and a billion-solar-mass black hole at its heart.'],
      ['How to find it','On the Virgo–Corvus border, west of bright Spica. A small oval glow in binoculars; the dust lane shows in a telescope under a dark sky.'],
-     ['Best from SEQ','Autumn–winter evenings, high in the north.']]}
+     ['Best seen','Autumn–winter evenings, high in the north.']]}
 ];
 // Solstices & equinoxes (approx fixed dates — ample for a two-week heads-up).
 const SEASON_MARKERS=[
@@ -3310,20 +3332,20 @@ const COMETS=[
   for(const c of COMETS) SKY_LORE[c.slug]={icon:c.icon,title:c.n,tag:'Event',blurb:c.note+'.',
     rows:[
       ['What you’re seeing',`A comet — a city-sized ball of ice and dust that sprouts a glowing coma and tail as the Sun warms it. ${c.n} peaks near magnitude ${c.mag}${c.eye==='binoc'?', so it needs binoculars or a small telescope rather than the naked eye.':', bright enough to glimpse with the naked eye under dark skies.'}`],
-      ['From Australia','Well placed for southern observers — it rides higher in our sky than it does up north. Look on a clear, moonless night well away from city lights.'],
+      ['From the Southern Hemisphere','Well placed for southern observers — it rides higher in our sky than it does up north. Look on a clear, moonless night well away from city lights.'],
       ['Worth knowing','Comet brightness is notoriously hard to predict — some fizzle, some flare up unexpectedly. It’s worth checking back across the apparition window.']]};
   const _oppLore={
     mars:['Mars at Opposition','Once every couple of years Earth sweeps past Mars on the inside track, bringing the red planet its closest and brightest — a fiery orange beacon up all night.',
       [['What you’re seeing','Mars directly opposite the Sun, so it rises at sunset and sets at sunrise. Around opposition it’s at its largest and most brilliant, far outshining the surrounding stars.'],
-       ['From Australia','Visible all night from anywhere in the country. To the eye it’s an unmistakable orange “star”; a telescope can show its disc, a polar cap and dark surface markings.'],
+       ['From the Southern Hemisphere','Visible all night from anywhere south of the equator. To the eye it’s an unmistakable orange “star”; a telescope can show its disc, a polar cap and dark surface markings.'],
        ['Why it’s special','Mars oppositions come only every ~26 months, so this is the best window for the next couple of years.']]],
     jupiter:['Jupiter at Opposition','The giant planet sits opposite the Sun — biggest, brightest and visible all night long.',
       [['What you’re seeing','Jupiter at its closest for the year, blazing as the brightest “star” in the sky after Venus, rising as the Sun sets.'],
-       ['From Australia','Up all night and easy from anywhere. Steady binoculars reveal its four large moons; a small telescope shows the cloud belts.'],
+       ['From the Southern Hemisphere','Up all night and easy from anywhere south of the equator. Steady binoculars reveal its four large moons; a small telescope shows the cloud belts.'],
        ['Tip','The moons shift visibly from night to night as they orbit — a mini solar system in your binoculars.']]],
     saturn:['Saturn at Opposition','The ringed planet reaches opposition — its brightest and best-placed night of the year, up from dusk till dawn.',
       [['What you’re seeing','Saturn opposite the Sun, a steady pale-gold point that rises at sunset and stays up all night. Around opposition the rings can briefly brighten (the Seeliger effect).'],
-       ['From Australia','Visible all night nationwide. The rings need a small telescope — but there’s no better night all year to look.'],
+       ['From the Southern Hemisphere','Visible all night across southern skies. The rings need a small telescope — but there’s no better night all year to look.'],
        ['Tip','Even 30× magnification will show the rings as a distinct loop around the planet.']]]
   };
   for(const k in _oppLore) SKY_LORE['opp-'+k]={icon:'🪐',title:_oppLore[k][0],tag:'Event',blurb:_oppLore[k][1],rows:_oppLore[k][2]};
@@ -4030,15 +4052,15 @@ function bestViewingWindow(lat,lng){
 
 // Annual meteor showers (approximate peaks; southern-hemisphere notes)
 const SHOWERS=[
-  {n:'Quadrantids',peak:[1,4],start:[12,28],end:[1,12],zhr:110,ra:230,dec:49,note:'Radiant too far north — poor from SEQ'},
-  {n:'Lyrids',peak:[4,22],start:[4,14],end:[4,30],zhr:18,ra:271,dec:34,note:'Low northern radiant — modest from SEQ, pre-dawn'},
+  {n:'Quadrantids',peak:[1,4],start:[12,28],end:[1,12],zhr:110,ra:230,dec:49,note:'Radiant too far north — poor from southern latitudes'},
+  {n:'Lyrids',peak:[4,22],start:[4,14],end:[4,30],zhr:18,ra:271,dec:34,note:'Low northern radiant — modest from southern latitudes, pre-dawn'},
   {n:'η Aquariids',peak:[5,6],start:[4,19],end:[5,28],zhr:50,ra:338,dec:-1,note:'One of the best southern showers — pre-dawn east'},
   {n:'δ Aquariids',peak:[7,30],start:[7,12],end:[8,23],zhr:25,ra:340,dec:-16,note:'Good from the south — best after midnight'},
   {n:'α Capricornids',peak:[7,31],start:[7,3],end:[8,15],zhr:5,ra:307,dec:-10,note:'Few but famously bright slow fireballs'},
-  {n:'Perseids',peak:[8,13],start:[7,17],end:[8,24],zhr:100,ra:48,dec:58,note:'Radiant barely rises from SEQ — largely a northern show'},
-  {n:'Orionids',peak:[10,21],start:[10,2],end:[11,7],zhr:20,ra:95,dec:16,note:'Halley\u2019s comet debris — pre-dawn, decent from SEQ'},
+  {n:'Perseids',peak:[8,13],start:[7,17],end:[8,24],zhr:100,ra:48,dec:58,note:'Radiant barely rises from southern latitudes — largely a northern show'},
+  {n:'Orionids',peak:[10,21],start:[10,2],end:[11,7],zhr:20,ra:95,dec:16,note:'Halley\u2019s comet debris — pre-dawn, decent from southern latitudes'},
   {n:'Leonids',peak:[11,17],start:[11,6],end:[11,30],zhr:15,ra:152,dec:22,note:'Pre-dawn northeast'},
-  {n:'Geminids',peak:[12,14],start:[12,4],end:[12,17],zhr:150,ra:112,dec:32,note:'Best shower of the year, strong even from SEQ'}
+  {n:'Geminids',peak:[12,14],start:[12,4],end:[12,17],zhr:150,ra:112,dec:32,note:'Best shower of the year, strong even from southern latitudes'}
 ];
 function showerStatus(date){
   // Returns {sh, daysToPeak, active} for the most relevant shower, or null
@@ -5026,15 +5048,41 @@ function openSkyStory(slug){
   const m=document.getElementById('sky-modal'), b=document.getElementById('sky-modal-body');
   if(!m||!b) return;
   b.innerHTML=renderStoryBody(slug, window._gpsLat??-27.4698, window._gpsLng??153.0251);
-  m.style.display='block'; m.setAttribute('aria-hidden','false'); m.scrollTop=0;
+  m.style.display='block'; m.setAttribute('aria-hidden','false'); b.scrollTop=0;
+  _skyResetCard(); _skyTouchInit();
   document.body.style.overflow='hidden';
 }
 function closeSkyStory(){
   const m=document.getElementById('sky-modal'); if(!m) return;
-  m.style.display='none'; m.setAttribute('aria-hidden','true');
+  m.style.display='none'; m.setAttribute('aria-hidden','true'); _skyResetCard();
   document.body.style.overflow='';
 }
-window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const m=document.getElementById('sky-modal'); if(m&&m.style.display==='block') closeSkyStory(); const pp=document.getElementById('play-panel'); if(pp&&pp.style.display==='block') closePlay(); } });
+// Reset any swipe transform left on the card so the next open starts clean.
+function _skyResetCard(){ const c=document.getElementById('sky-modal-card'); if(c){ c.style.transition='none'; c.style.transform=''; c.style.opacity=''; } }
+// Touch gestures: pull the card down (from the top of its scroll) or swipe it
+// right to dismiss and return to the night list. Behind window._skySwipe (default on).
+function _skyTouchInit(){
+  const card=document.getElementById('sky-modal-card'), body=document.getElementById('sky-modal-body');
+  if(!card||card._swipeWired) return; card._swipeWired=true;
+  let x0=0,y0=0,dx=0,dy=0,drag=false,axis='',top0=0; const TH=90;
+  card.addEventListener('touchstart',e=>{
+    if(window._skySwipe===false||e.touches.length!==1){ drag=false; return; }
+    const t=e.touches[0]; x0=t.clientX; y0=t.clientY; dx=dy=0; axis=''; drag=true;
+    top0=body?body.scrollTop:0; card.style.transition='none';
+  },{passive:true});
+  card.addEventListener('touchmove',e=>{
+    if(!drag) return; const t=e.touches[0]; dx=t.clientX-x0; dy=t.clientY-y0;
+    if(!axis){ if(Math.abs(dx)>10||Math.abs(dy)>10) axis=Math.abs(dx)>Math.abs(dy)?'x':'y'; else return; }
+    if(axis==='y'){
+      if(dy>0&&top0<=0){ e.preventDefault(); const d=dy*0.6; card.style.transform='translateY('+d+'px)'; card.style.opacity=String(Math.max(0.4,1-d/600)); }
+      else { drag=false; card.style.transform=''; card.style.opacity=''; }
+    } else if(dx>0){ const d=dx*0.7; card.style.transform='translateX('+d+'px)'; card.style.opacity=String(Math.max(0.4,1-d/600)); }
+  },{passive:false});
+  const end=()=>{ if(!drag) return; drag=false; card.style.transition='transform .22s ease,opacity .22s ease';
+    if((axis==='y'&&dy>TH&&top0<=0)||(axis==='x'&&dx>TH)) closeSkyStory(); else { card.style.transform=''; card.style.opacity=''; } };
+  card.addEventListener('touchend',end,{passive:true}); card.addEventListener('touchcancel',end,{passive:true});
+}
+window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const pp=document.getElementById('play-panel'); if(pp&&pp.style.display==='block') closePlay(); } });
 
 // ── Space weather: live Kp + GOES X-ray flares (NOAA SWPC) + ISS — all keyless/optional ──
 async function fetchSpaceWx(){
@@ -6110,11 +6158,10 @@ showTestBanner();
 </div>
 
 <!-- Sky-object story sheet (constellations + phenomena) -->
-<div id="sky-modal" onclick="closeSkyStory()" aria-hidden="true" role="dialog" aria-modal="true">
-  <div class="sky-modal-card" onclick="event.stopPropagation()">
+<div id="sky-modal" aria-hidden="true" role="dialog" aria-modal="true">
+  <div class="sky-modal-card" id="sky-modal-card">
     <button class="sky-modal-x" onclick="closeSkyStory()" aria-label="Close">✕</button>
     <div class="sky-modal-body" id="sky-modal-body"></div>
-    <p class="sky-modal-foot">Tap outside or press Esc to close</p>
   </div>
 </div></body>
 </html>
