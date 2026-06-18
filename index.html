@@ -456,10 +456,17 @@ body.sky-full-on{overflow:hidden;}
    missing/offline image adds .no-photo and removes itself, leaving the emblem. */
 .sky-photo-stage{position:relative;margin:16px 16px 4px;border-radius:16px;overflow:hidden;aspect-ratio:3/2;background:#070c1e;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 26%,transparent),0 0 28px -12px var(--ac);}
 .sky-photo-stage .sky-modal-crest{margin:0;width:128px;height:128px;}
+.sky-photo-stage .sky-loc{position:absolute;inset:0;width:100%;height:100%;}
+.sky-photo-stage .sky-loc svg{display:block;width:100%;height:100%;}
 .sky-photo-stage .sky-photo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1s ease,transform 1.5s cubic-bezier(.16,.7,.3,1);}
 .sky-photo-stage .sky-photo-img.loaded{opacity:1;transform:scale(1);}
+/* Locator map present: once the hero photo loads (.photo-in), ping-pong the
+   map ↔ photo on one shared 4.4s clock — the same phasing as the constellations. */
+.sky-photo-stage.photo-in .sky-loc{animation:morphChart 4.4s ease-in-out .3s infinite alternate;}
+.sky-photo-stage.photo-in .sky-photo-img{transition:none;animation:locPhoto 4.4s ease-in-out .3s infinite alternate;}
+@keyframes locPhoto{0%,25%{opacity:0;transform:scale(1.06);}75%,100%{opacity:1;transform:scale(1);}}
 .sky-photo-stage .sky-photo-veil{position:absolute;inset:0;background:radial-gradient(125% 100% at 50% 42%,transparent 55%,rgba(6,10,26,0.5) 100%);pointer-events:none;}
-@media(prefers-reduced-motion:reduce){.sky-photo-stage .sky-photo-img{transition:opacity .01s;}}
+@media(prefers-reduced-motion:reduce){.sky-photo-stage .sky-photo-img{transition:opacity .01s;}.sky-photo-stage.photo-in .sky-loc{animation:none;opacity:0;}.sky-photo-stage.photo-in .sky-photo-img{animation:none;opacity:1;transform:none;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
 .sky-sec{margin:14px 20px 0;}
@@ -2991,6 +2998,10 @@ function planetHeroicSVG(dot,sz,ac,ring,seed){
 function cardArt(o){
   const sz=64, ac=rarCol(o.rar), figKey=o.fig||o.slug, f=FIG_BY_SLUG[figKey];
   if(f) return figOutlineSVG(f,sz)+figHeroicSVG(f,sz,ac,o.glyph||(f.info&&f.info.icon)||'✦');
+  // Non-constellation cards: a category-specific locator star-map (where it sits),
+  // unique to the card. Falls back to the emblem for anything skyLocus doesn't know.
+  const lh=locatorHeroicSVG(o.slug,sz,ac);
+  if(lh){ const lo=locatorOutlineSVG(o.slug,sz,ac); return (lo||'')+lh; }
   if(o.art==='planet') return planetOutlineSVG(o.dot,sz,o.ring)+planetHeroicSVG(o.dot,sz,ac,o.ring,o.slug);
   const g=o.glyph||o.icon||'✦';
   return glyphOutlineSVG(g,sz)+glyphHeroicSVG(g,sz,ac,o.slug);
@@ -3263,6 +3274,234 @@ const SKY_EVENTS=[
         ['Tip','Binoculars often frame both planets in one view, and sometimes a moon or two of Jupiter alongside.']]}
   });
 })();
+// ════ Locator star-maps for the non-constellation cards ═════════════════════
+// A planet / deep-sky / event card's "regular" image is a naked-eye-style star
+// map of WHERE the object sits. In the story modal it cross-fades to the Flux
+// hero photo and back — the same phasing the constellation cards use, but
+// SVG-map ↔ photo instead of SVG-chart ↔ SVG-figure. Deep-sky maps plot the
+// object's real J2000 coords against the embedded seed field (+ the naked-eye
+// catalog when loaded) and auto-draw any seed constellation lines that fall in
+// frame, so you see the genuine patch of sky; planet maps draw the solar system
+// with the body at its real current orbital angle. Looser than the registered
+// figures, but genuinely locating — and unique to each card.
+const DEEPSKY_BY_SLUG={}; for(const _d of DEEPSKY) DEEPSKY_BY_SLUG[_d.slug]=_d;
+function skyLocus(slug){
+  if(PLANETS[slug]&&slug!=='earth') return {kind:'solar',planet:slug};
+  if(slug==='moon') return {kind:'solar',planet:'moon'};
+  if(slug==='fullmoon') return {kind:'moonphase',phase:'full'};
+  if(slug==='newmoon')  return {kind:'moonphase',phase:'new'};
+  const d=DEEPSKY_BY_SLUG[slug]; if(d) return {kind:'sky',ra:d.ra,dec:d.dec,marker:d.type};
+  if(slug==='milkyway')   return {kind:'band'};
+  if(slug==='magellanic') return {kind:'clouds'};
+  if(slug==='meteors')    return {kind:'radiant'};
+  if(slug==='iss')        return {kind:'arc'};
+  if(slug==='conjunction')return {kind:'pair'};
+  if(slug==='aurora')     return {kind:'aurora'};
+  return null;
+}
+function _locRng(seed){ let h=_hashStr(seed)||1; return ()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; }; }
+const _F1=n=>(+n).toFixed(1);
+let _locUid=0;  // unique gradient ids (many locator SVGs can share one page DOM)
+// Project a patch of sky centred on ra0/dec0 (north up, RA increasing left — same
+// convention as projFigure) into a WxH box. Returns the projector plus the
+// seed/catalog stars and any seed figure-lines that land inside the box.
+function _locPatch(ra0,dec0,span,W,H,useCat,cap){
+  const k=Math.cos(dec0*RAD), sc=Math.min(W,H)/span;
+  const proj=(ra,dec)=>{ let dra=((ra-ra0+540)%360)-180; return {x:W/2-dra*k*sc, y:H/2-(dec-dec0)*sc}; };
+  const inBox=p=>p.x>=-3&&p.x<=W+3&&p.y>=-3&&p.y<=H+3;
+  let stars=[];
+  const add=(ra,dec,mag)=>{ const p=proj(ra,dec); if(inBox(p)) stars.push({x:p.x,y:p.y,mag}); };
+  for(const s of SKY_SEED.stars) add(s[0],s[1],s[2]);
+  const cat=useCat&&(STAR_DEEP||STAR_CATALOG); if(cat) for(const s of cat.stars){ if(s[2]<=6.3) add(s[0],s[1],s[2]); }
+  stars.sort((a,b)=>a.mag-b.mag);
+  if(cap&&stars.length>cap) stars=stars.slice(0,cap);
+  const lines=[];
+  for(const e of SKY_SEED.lines){ const a=SKY_SEED.stars[e[0]],b=SKY_SEED.stars[e[1]]; const pa=proj(a[0],a[1]),pb=proj(b[0],b[1]); if(inBox(pa)&&inBox(pb)) lines.push([pa,pb]); }
+  return {proj,stars,lines};
+}
+function _locField(stars){ let g='<g>'; for(const s of stars){ const r=Math.max(0.4,2.2-s.mag*0.30), op=Math.max(0.16,0.95-s.mag*0.12); g+=`<circle cx="${_F1(s.x)}" cy="${_F1(s.y)}" r="${r.toFixed(2)}" fill="#dde8ff" opacity="${op.toFixed(2)}"/>`; } return g+'</g>'; }
+function _locLines(lines,ac,lit){ if(!lines.length) return ''; const col=lit?ac:'rgba(160,190,240,0.32)',op=lit?0.30:0.45,sw=lit?1:0.8; let g='<g>'; for(const l of lines) g+=`<line x1="${_F1(l[0].x)}" y1="${_F1(l[0].y)}" x2="${_F1(l[1].x)}" y2="${_F1(l[1].y)}" stroke="${col}" stroke-width="${sw}" opacity="${op}" stroke-linecap="round"/>`; return g+'</g>'; }
+// A deterministic faint deep-space starfield behind every map (density ∝ area), so
+// even sparse-region / non-patch maps (solar, aurora, arc…) read as "in space".
+function _locBackdrop(W,H,rng,mult){
+  const n=Math.max(10,Math.round(W*H/700*(mult||1))); let g='<g>';
+  for(let i=0;i<n;i++){ const x=rng()*W, y=rng()*H, q=rng(), r=(0.3+q*1.0).toFixed(2), op=(0.1+rng()*0.45).toFixed(2);
+    g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#cdddff" opacity="${op}"/>`;
+    if(q>0.92) g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(+r*2.3).toFixed(2)}" fill="#9fc0ff" opacity="0.10"/>`; }
+  return g+'</g>';
+}
+// The category-specific highlight drawn at the object's projected position.
+function _locMarker(kind,cx,cy,R,ac,lit,rng){
+  const reticle=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.7)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:1}" opacity="${lit?0.75:0.45}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
+  const halo=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.5)}" fill="${ac}" opacity="${lit?0.22:0.10}" style="filter:blur(${_F1(R*0.45)}px)"/>`;
+  const glow=lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.35)}px ${ac})"`:'';
+  let s=halo;
+  if(kind==='galaxy'){
+    // A little tilted spiral: luminous disc + bright core + two dotted star-arms.
+    const gid='gx'+(_locUid++), sq=0.46, per=15;
+    s+=`<defs><radialGradient id="${gid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.95:0.55}"/><stop offset="30%" stop-color="${ac}" stop-opacity="${lit?0.7:0.32}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<g transform="rotate(-24 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R*1.2)}" ry="${_F1(R*0.52)}" fill="url(#${gid})"${lit?` style="filter:blur(${_F1(R*0.1)}px)"`:''}/>`;
+    for(let a=0;a<2;a++){ const ph=a*Math.PI;
+      for(let i=1;i<=per;i++){ const t=i/per, th=ph+t*2.5, rr=R*0.2+t*R*1.0, x=cx+Math.cos(th)*rr, y=cy+Math.sin(th)*rr*sq;
+        s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.5+(1-t)*1.0).toFixed(2)}" fill="#eaf2ff" opacity="${(0.35+(1-t)*0.55).toFixed(2)}"/>`; } }
+    s+='</g>';
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.34)}" fill="${ac}" opacity="${lit?0.4:0.2}" style="filter:blur(${_F1(R*0.12)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.17)}" fill="#fff"${glow}/>`;
+  } else if(kind==='globular'){
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.95)}" fill="${ac}" opacity="${lit?0.30:0.14}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
+    const N=lit?34:22; let dots='';
+    for(let i=0;i<N;i++){ const a=rng()*6.283, rr=Math.sqrt(rng())*R*0.95, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr; dots+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.5+rng()*0.7).toFixed(2)}" fill="#fff" opacity="${(0.5+rng()*0.5).toFixed(2)}"/>`; }
+    s+=dots+`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.18)}" fill="#fff"${glow}/>`;
+  } else if(kind==='open'){
+    const N=lit?11:8; let dots='';
+    for(let i=0;i<N;i++){ const a=rng()*6.283, rr=Math.pow(rng(),0.7)*R, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr, br=0.9+rng()*1.3; dots+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${br.toFixed(2)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 2px ${ac})"`:''}/>`; }
+    s+=dots;
+  } else if(kind==='nebula'){
+    s+=`<g style="filter:blur(${_F1(R*0.28)}px)">`;
+    for(let i=0;i<(lit?5:3);i++){ const x=cx+(rng()-0.5)*R, y=cy+(rng()-0.5)*R*0.8, rr=R*(0.5+rng()*0.5); s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${_F1(rr)}" fill="${ac}" opacity="${lit?0.26:0.12}"/>`; }
+    s+='</g>'+`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="1" fill="#fff"${glow}/>`;
+  } else if(kind==='dark'){
+    return `<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#05070f" opacity="0.92" style="filter:blur(${_F1(R*0.18)}px)"/>`
+      +`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.6:0.35}" stroke-dasharray="3 4"/>`;
+  }
+  return s+reticle;
+}
+function _locCloud(x,y,R,ac,lit){
+  return `<g style="filter:blur(${_F1(R*0.3)}px)"><ellipse cx="${_F1(x)}" cy="${_F1(y)}" rx="${_F1(R)}" ry="${_F1(R*0.7)}" fill="#e7eeff" opacity="${lit?0.30:0.16}"/></g>`
+    +`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${_F1(R*1.25)}" fill="none" stroke="${ac}" stroke-width="${lit?1.1:0.9}" opacity="${lit?0.6:0.35}" stroke-dasharray="${lit?'4 4':'2 3'}"/>`;
+}
+function _locBandSwath(W,H,ac,lit){
+  const id='mwb'+(W*7+H), b=(Math.min(W,H)*0.06).toFixed(1);
+  return `<defs><linearGradient id="${id}" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#dfe8ff" stop-opacity="0"/><stop offset="50%" stop-color="#eaf0ff" stop-opacity="${lit?0.22:0.12}"/><stop offset="100%" stop-color="#dfe8ff" stop-opacity="0"/></linearGradient></defs>`
+    +`<g transform="rotate(32 ${_F1(W/2)} ${_F1(H/2)})" style="filter:blur(${b}px)"><rect x="${_F1(-W*0.2)}" y="${_F1(H*0.30)}" width="${_F1(W*1.4)}" height="${_F1(H*0.4)}" fill="url(#${id})"/></g>`;
+}
+function _locRadiant(){ try{ const ss=showerStatus(nowDate()); if(ss&&ss.sh) return {ra:ss.sh.ra,dec:ss.sh.dec}; }catch(e){} return {ra:338,dec:-1}; }
+function _locRadiantMark(cx,cy,R,ac,lit,rng){
+  let s=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.4)}" fill="${ac}" opacity="${lit?0.18:0.08}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
+  const N=lit?7:5;
+  for(let i=0;i<N;i++){ const a=(i/N)*6.283+rng()*0.4, len=R*(2.2+rng()*2.5);
+    const x0=cx+Math.cos(a)*R*0.5, y0=cy+Math.sin(a)*R*0.5, x1=cx+Math.cos(a)*len, y1=cy+Math.sin(a)*len;
+    s+=`<line x1="${_F1(x0)}" y1="${_F1(y0)}" x2="${_F1(x1)}" y2="${_F1(y1)}" stroke="#fff" stroke-width="${lit?1.3:0.9}" opacity="${lit?0.85:0.5}" stroke-linecap="round"${lit?` style="filter:drop-shadow(0 0 2px ${ac})"`:''}/>`;
+    s+=`<circle cx="${_F1(x1)}" cy="${_F1(y1)}" r="${lit?1.4:1}" fill="#fff"/>`; }
+  return s+`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${lit?2:1.5}" fill="${ac}"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+}
+// Solar System schematic — Sun centred, six equally-spaced orbits, every body at
+// its real current heliocentric angle; the card's planet (or Earth, for the Moon)
+// is highlighted with a reticle. Compressed radii so all six fit.
+function _locSolar(active,W,H,ac,lit,thumb){
+  const cx=W/2, cy=H/2, min=Math.min(W,H);
+  const order=['mercury','venus','earth','mars','jupiter','saturn'];
+  const maxR=min*0.42, R0=min*(thumb?0.11:0.085), step=(maxR-R0)/5;
+  const T=jdays(nowDate())/36525;
+  const ECOL={mercury:'#b9b3a8',venus:'#f3ecd2',earth:'#6fa8ff',mars:'#e0795a',jupiter:'#e8d9b8',saturn:'#ded2a8'};
+  let s=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(min*0.07)}" fill="#ffd27a"${lit?` style="filter:drop-shadow(0 0 ${_F1(min*0.06)}px #ffb347)"`:''}/>`;
+  order.forEach((key,i)=>{
+    const rad=R0+i*step, ry=rad*0.9, isA=(key===active)||(active==='moon'&&key==='earth');
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(rad)}" ry="${_F1(ry)}" fill="none" stroke="${isA?ac:'rgba(150,180,235,0.32)'}" stroke-width="${isA?(lit?1.6:1.2):0.8}" opacity="${isA?(lit?0.9:0.6):0.5}"/>`;
+    const h=planetHelio(PLANETS[key],T), ang=Math.atan2(h.y,h.x);
+    const px=cx+Math.cos(ang)*rad, py=cy-Math.sin(ang)*ry;
+    const pr=isA?min*(thumb?0.055:0.04):min*0.022;
+    s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr)}" fill="${ECOL[key]}"${isA&&lit?` style="filter:drop-shadow(0 0 ${_F1(pr*1.8)}px ${ac})"`:''}/>`;
+    if(isA){
+      s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr*2)}" fill="none" stroke="${ac}" stroke-width="1" opacity="${lit?0.8:0.5}" stroke-dasharray="${lit?'4 4':'2 3'}"/>`;
+      if(active==='moon') s+=`<circle cx="${_F1(px+pr*1.7)}" cy="${_F1(py-pr*0.7)}" r="${_F1(pr*0.5)}" fill="#dfe6ef"/>`;
+    }
+  });
+  return s;
+}
+function _locMoonPhase(W,H,ac,lit,phase,rng){
+  let s='';
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*0.24;
+  if(phase==='new'){
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#0b1020" stroke="#33425f" stroke-width="1"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.45)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.65:0.4}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
+  } else {
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.4)}" fill="${ac}" opacity="${lit?0.22:0.1}" style="filter:blur(${_F1(R*0.4)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#eef1f6"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px ${ac})"`:''}/>`;
+    for(let i=0;i<5;i++){ const a=rng()*6.283, rr=rng()*R*0.7; s+=`<circle cx="${_F1(cx+Math.cos(a)*rr)}" cy="${_F1(cy+Math.sin(a)*rr)}" r="${(R*0.06+rng()*R*0.06).toFixed(1)}" fill="#cdd3dd" opacity="0.7"/>`; }
+  }
+  return s;
+}
+function _locArc(W,H,ac,lit,rng){
+  let s='';
+  s+=`<line x1="0" y1="${_F1(H*0.86)}" x2="${_F1(W)}" y2="${_F1(H*0.86)}" stroke="rgba(150,180,235,0.4)" stroke-width="1" stroke-dasharray="3 3"/>`;
+  s+=`<path d="M ${_F1(W*0.06)} ${_F1(H*0.86)} Q ${_F1(W*0.5)} ${_F1(-H*0.1)} ${_F1(W*0.94)} ${_F1(H*0.86)}" fill="none" stroke="${ac}" stroke-width="${lit?1.6:1}" opacity="${lit?0.8:0.45}" stroke-dasharray="4 5"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+  s+=`<circle cx="${_F1(W*0.5)}" cy="${_F1(H*0.16)}" r="${lit?2.6:1.8}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 4px ${ac})"`:''}/>`;
+  return s;
+}
+function _locPair(W,H,ac,lit,rng){
+  let s='';
+  s+=`<line x1="${_F1(W*0.1)}" y1="${_F1(H*0.62)}" x2="${_F1(W*0.9)}" y2="${_F1(H*0.45)}" stroke="rgba(160,190,240,0.3)" stroke-width="0.8" stroke-dasharray="4 4"/>`;
+  const cx=W*0.5, cy=H*0.5;
+  s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy-H*0.015)}" rx="${_F1(W*0.12)}" ry="${_F1(H*0.11)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:1}" opacity="${lit?0.7:0.4}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
+  s+=`<circle cx="${_F1(cx-W*0.045)}" cy="${_F1(cy)}" r="${lit?3.2:2.2}" fill="#e8d9b8"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+  s+=`<circle cx="${_F1(cx+W*0.045)}" cy="${_F1(cy-H*0.03)}" r="${lit?2.4:1.6}" fill="#f3ecd2"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+  return s;
+}
+// Aurora AUSTRALIS as seen from southern Australia: from our low magnetic latitude
+// we mostly catch the red/magenta CROWN (the curtain tops), with green only as a low
+// glow near the horizon — so it's crimson-over-green, not the green walls of the north.
+// Drawn as wavy, rayed, blurred drapery (not bars).
+function _locAurora(W,H,ac,lit,rng){
+  const id='aur'+(W*5+H), baseY=H*0.20, botY=H*0.84;
+  // userSpaceOnUse so the crimson→magenta→green vertical wash applies to the thin
+  // rays too (a zero-width line can't take an objectBoundingBox gradient).
+  let s=`<defs><linearGradient id="${id}" x1="0" y1="${_F1(baseY)}" x2="0" y2="${_F1(botY)}" gradientUnits="userSpaceOnUse">`
+    +`<stop offset="0%" stop-color="#ff5b8a" stop-opacity="0"/>`
+    +`<stop offset="16%" stop-color="#ff4d7d" stop-opacity="${lit?0.9:0.4}"/>`
+    +`<stop offset="48%" stop-color="#c763e0" stop-opacity="${lit?0.68:0.3}"/>`
+    +`<stop offset="100%" stop-color="#3ef0a0" stop-opacity="${lit?0.68:0.3}"/></linearGradient></defs>`;
+  // low green airglow along the horizon
+  s+=`<rect x="0" y="${_F1(H*0.56)}" width="${_F1(W)}" height="${_F1(H*0.32)}" fill="#2fe39a" opacity="${lit?0.14:0.07}" style="filter:blur(${_F1(H*0.06)}px)"/>`;
+  // soft broad draped folds (rounded tops, wide bases) — heavily blurred
+  s+=`<g style="filter:blur(${_F1(H*0.045)}px)">`;
+  for(let c=0;c<3;c++){ const cx=W*(0.22+c*0.28)+(rng()-0.5)*W*0.09, w=W*(0.24+rng()*0.12), topJ=baseY+rng()*H*0.12;
+    s+=`<path d="M ${_F1(cx-w/2)} ${_F1(botY)} C ${_F1(cx-w/2)} ${_F1(topJ+H*0.10)} ${_F1(cx-w*0.2)} ${_F1(topJ)} ${_F1(cx)} ${_F1(topJ)} C ${_F1(cx+w*0.2)} ${_F1(topJ)} ${_F1(cx+w/2)} ${_F1(topJ+H*0.10)} ${_F1(cx+w/2)} ${_F1(botY)} Z" fill="url(#${id})" opacity="${(0.5+0.12*c).toFixed(2)}"/>`; }
+  s+=`</g>`;
+  // signature rays: many fine, slightly-slanted vertical streaks of varying height
+  const NR=lit?Math.round(W/8):Math.round(W/13);
+  for(let i=0;i<NR;i++){ const x=rng()*W, h0=baseY+rng()*H*0.24, h1=botY-rng()*H*0.10, ox=(rng()-0.5)*W*0.025;
+    s+=`<line x1="${_F1(x)}" y1="${_F1(h0)}" x2="${_F1(x+ox)}" y2="${_F1(h1)}" stroke="url(#${id})" stroke-width="${(0.6+rng()*1.2).toFixed(2)}" opacity="${(0.4+rng()*0.5).toFixed(2)}" style="filter:blur(0.6px)"/>`; }
+  s+=`<rect x="0" y="${_F1(H*0.86)}" width="${_F1(W)}" height="${_F1(H*0.14)}" fill="#04060f"/>`;
+  return s;
+}
+// Compose the inner SVG markup for a card's locator map. `null` → no locus (the
+// caller falls back to the emblem crest, so unhandled cards never regress).
+function _locInner(slug,W,H,ac,opts){
+  opts=opts||{}; const lit=opts.lit!==false, thumb=!!opts.thumb, useCat=!!opts.useCat;
+  const L=skyLocus(slug); if(!L) return null;
+  const rng=_locRng(slug), min=Math.min(W,H);
+  // starry deep-space backdrop on every map; galaxies / Milky Way / clouds get a
+  // richer field so they read as deep sky rather than a marked spot on a bare panel.
+  const dense=(L.kind==='sky'||L.kind==='band'||L.kind==='clouds')?1.7:1.2;
+  const bg=_locBackdrop(W,H,_locRng(slug+'bg'),dense);
+  if(L.kind==='solar')     return bg+_locSolar(L.planet,W,H,ac,lit,thumb);
+  if(L.kind==='moonphase') return bg+_locMoonPhase(W,H,ac,lit,L.phase,rng);
+  if(L.kind==='aurora')    return bg+_locAurora(W,H,ac,lit,rng);
+  if(L.kind==='arc')       return bg+_locArc(W,H,ac,lit,rng);
+  if(L.kind==='pair')      return bg+_locPair(W,H,ac,lit,rng);
+  // sky-patch family (real coords + auto constellation context)
+  let ra0,dec0,span=thumb?30:52;
+  if(L.kind==='sky'){ ra0=L.ra; dec0=L.dec; }
+  else if(L.kind==='band'){   ra0=GAL_CORE.ra; dec0=GAL_CORE.dec; span=thumb?44:78; }
+  else if(L.kind==='clouds'){ ra0=47; dec0=-71; span=thumb?42:60; }
+  else if(L.kind==='radiant'){ const r=_locRadiant(); ra0=r.ra; dec0=r.dec; span=thumb?40:64; }
+  const P=_locPatch(ra0,dec0,span,W,H,useCat,thumb?26:450);  // cap = brightest-N (perf)
+  const R=min*(thumb?0.17:0.12);
+  let s=bg+_locField(P.stars)+_locLines(P.lines,ac,lit);
+  if(L.kind==='sky')         s+=_locMarker(L.marker,W/2,H/2,R,ac,lit,rng);
+  else if(L.kind==='band')   s=_locBandSwath(W,H,ac,lit)+s+_locMarker('nebula',W/2,H/2,R*1.1,ac,lit,rng);
+  else if(L.kind==='clouds'){ const lmc=P.proj(MAGELLANIC[0].ra,MAGELLANIC[0].dec), smc=P.proj(MAGELLANIC[1].ra,MAGELLANIC[1].dec); s+=_locCloud(lmc.x,lmc.y,R*1.3,ac,lit)+_locCloud(smc.x,smc.y,R*0.9,ac,lit); }
+  else if(L.kind==='radiant') s+=_locRadiantMark(W/2,H/2,R,ac,lit,rng);
+  return s;
+}
+// Thumbnail layers (mirror figOutline/figHeroic). The card list shows only the
+// lit "heroic" layer; the outline twin is emitted for the morphing modal crest.
+function locatorOutlineSVG(slug,sz,ac){ const i=_locInner(slug,sz,sz,ac,{lit:false,thumb:true}); return i==null?null:`<svg class="ca-layer ca-outline" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">${i}</svg>`; }
+function locatorHeroicSVG(slug,sz,ac){ const i=_locInner(slug,sz,sz,ac,{lit:true,thumb:true}); return i==null?null:`<svg class="ca-layer ca-heroic" viewBox="0 0 ${sz} ${sz}" xmlns="http://www.w3.org/2000/svg">${i}</svg>`; }
+// Modal full map — the "regular" image that cross-fades to the Flux hero photo.
+function locatorStageSVG(slug,ac){ const i=_locInner(slug,300,200,ac,{lit:true,useCat:true}); return i==null?null:`<svg viewBox="0 0 300 200" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">${i}</svg>`; }
 // Optional dense field: star-catalog.json = {stars:[[ra°,dec°,mag],…]} baked by
 // CI from a public-domain catalogue (Yale BSC / HYG) to mag ~5. Constellation
 // LINES always come from the curated seed figures above (accurate + licence-clean),
@@ -4442,8 +4681,16 @@ function renderStoryBody(slug,lat,lng){
     // one: just the small phasing emblem crest (chart → SVG heroic).
     const ao={slug,rar,glyph:L.icon,icon:L.icon};
     if(L.dot){ ao.art='planet'; ao.dot=L.dot; ao.ring=(slug==='saturn'); }
-    const photo=CARD_PHOTO[slug];
-    if(photo){
+    const photo=CARD_PHOTO[slug], locMap=locatorStageSVG(slug,ac);
+    if(locMap){
+      // The "regular" image is the locator star-map; when a hero photo exists it
+      // eases in and the two ping-pong (map ↔ photo), the constellation phasing.
+      // No photo → the map just holds as the card's art.
+      s+=`<div class="sky-photo-stage${photo?'':' loc-only'}" style="--ac:${ac};" aria-hidden="true">`
+        +`<div class="sky-loc">${locMap}</div>`;
+      if(photo) s+=`<img class="sky-photo-img" src="${photo}" alt="" decoding="async" onload="var st=this.closest('.sky-photo-stage'); if(st) st.classList.add('photo-in');" onerror="var st=this.closest('.sky-photo-stage'); if(st) st.classList.add('no-photo'); this.remove();">`;
+      s+=`<div class="sky-photo-veil"></div></div>`;
+    }else if(photo){
       s+=`<div class="sky-photo-stage" style="--ac:${ac};" aria-hidden="true">`
         +`<div class="sky-modal-crest">${cardArt(ao)}</div>`
         +`<img class="sky-photo-img" src="${photo}" alt="" decoding="async" onload="this.classList.add('loaded')" onerror="var st=this.closest('.sky-photo-stage'); if(st) st.classList.add('no-photo'); this.remove();">`
