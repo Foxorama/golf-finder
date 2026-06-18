@@ -152,7 +152,20 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   memory. Figures that are already their complete standard figure (Crux, Corvus, Triangulum
   Australe, Lyra, the Vela pentagon, Leo, Gemini, Scorpius…) are left unpadded. **Visible now**
   also respects the naked-eye/binoculars depth button — `eye:'binoc'` cards only
-  count as visible-now at binocular depth. Tapping the **compass** (🧭) opens an
+  count as visible-now at binocular depth. **Story modal close model
+  (`#sky-modal` / `renderStoryBody`):** the card is a fixed-size frame whose **body
+  scrolls internally**, so the close **✕** (a card child, not a body child) stays
+  pinned — a full-screen `100dvh` sheet on phones (so every card is the same size),
+  a consistent `min(86vh,760px)` centred panel on desktop. It closes **only** via the
+  ✕ or a touch gesture: **swipe down** (from the top of the scroll) or **swipe right**
+  dismisses / goes back (`_skyTouchInit` — live drag feedback + snap-back below the
+  ~90 px `TH`; tune `TH`/the 0.6/0.7 drag multipliers there). There is **no
+  tap-outside and no Esc close** (Esc still closes the *play* panel). Swipe sits behind
+  the `window._skySwipe` escape-hatch (default on; `=false` disables — a sibling of
+  `window._tiltPan`/`window._camAz`), so its *feel* must be tested on a real phone.
+  Card lore stays in labelled `rows`; an optional **`fun:`** field on `CONST_INFO`
+  (or a `['Fun fact',…]` row on the deep-sky/planet data) adds a fact **only where it
+  isn't already covered** by another row. Tapping the **compass** (🧭) opens an
   immersive full-viewport landscape sky (`enterSkyFullscreen`; best-effort
   Fullscreen API + `screen.orientation.lock('landscape')`, with a CSS `.sky-full`
   overlay that works everywhere else). The compass button is also the **exit** (no
