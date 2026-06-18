@@ -3301,6 +3301,7 @@ function skyLocus(slug){
 }
 function _locRng(seed){ let h=_hashStr(seed)||1; return ()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; }; }
 const _F1=n=>(+n).toFixed(1);
+let _locUid=0;  // unique gradient ids (many locator SVGs can share one page DOM)
 // Project a patch of sky centred on ra0/dec0 (north up, RA increasing left — same
 // convention as projFigure) into a WxH box. Returns the projector plus the
 // seed/catalog stars and any seed figure-lines that land inside the box.
@@ -3311,7 +3312,7 @@ function _locPatch(ra0,dec0,span,W,H,useCat,cap){
   let stars=[];
   const add=(ra,dec,mag)=>{ const p=proj(ra,dec); if(inBox(p)) stars.push({x:p.x,y:p.y,mag}); };
   for(const s of SKY_SEED.stars) add(s[0],s[1],s[2]);
-  if(useCat&&STAR_CATALOG) for(const s of STAR_CATALOG.stars){ if(s[2]<=5.2) add(s[0],s[1],s[2]); }
+  const cat=useCat&&(STAR_DEEP||STAR_CATALOG); if(cat) for(const s of cat.stars){ if(s[2]<=6.3) add(s[0],s[1],s[2]); }
   stars.sort((a,b)=>a.mag-b.mag);
   if(cap&&stars.length>cap) stars=stars.slice(0,cap);
   const lines=[];
@@ -3322,11 +3323,11 @@ function _locField(stars){ let g='<g>'; for(const s of stars){ const r=Math.max(
 function _locLines(lines,ac,lit){ if(!lines.length) return ''; const col=lit?ac:'rgba(160,190,240,0.32)',op=lit?0.30:0.45,sw=lit?1:0.8; let g='<g>'; for(const l of lines) g+=`<line x1="${_F1(l[0].x)}" y1="${_F1(l[0].y)}" x2="${_F1(l[1].x)}" y2="${_F1(l[1].y)}" stroke="${col}" stroke-width="${sw}" opacity="${op}" stroke-linecap="round"/>`; return g+'</g>'; }
 // A deterministic faint deep-space starfield behind every map (density ∝ area), so
 // even sparse-region / non-patch maps (solar, aurora, arc…) read as "in space".
-function _locBackdrop(W,H,rng){
-  const n=Math.max(8,Math.round(W*H/1200)); let g='<g>';
-  for(let i=0;i<n;i++){ const x=rng()*W, y=rng()*H, q=rng(), r=(0.3+q*1.1).toFixed(2), op=(0.12+rng()*0.5).toFixed(2);
+function _locBackdrop(W,H,rng,mult){
+  const n=Math.max(10,Math.round(W*H/700*(mult||1))); let g='<g>';
+  for(let i=0;i<n;i++){ const x=rng()*W, y=rng()*H, q=rng(), r=(0.3+q*1.0).toFixed(2), op=(0.1+rng()*0.45).toFixed(2);
     g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#cdddff" opacity="${op}"/>`;
-    if(q>0.93) g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(+r*2.3).toFixed(2)}" fill="#9fc0ff" opacity="0.10"/>`; }
+    if(q>0.92) g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(+r*2.3).toFixed(2)}" fill="#9fc0ff" opacity="0.10"/>`; }
   return g+'</g>';
 }
 // The category-specific highlight drawn at the object's projected position.
@@ -3336,12 +3337,17 @@ function _locMarker(kind,cx,cy,R,ac,lit,rng){
   const glow=lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.35)}px ${ac})"`:'';
   let s=halo;
   if(kind==='galaxy'){
-    s+=`<g transform="rotate(-26 ${_F1(cx)} ${_F1(cy)})">`;
-    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R)}" ry="${_F1(R*0.4)}" fill="${ac}" opacity="${lit?0.45:0.18}"${glow}/>`;
-    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R*0.58)}" ry="${_F1(R*0.24)}" fill="#fff" opacity="${lit?0.85:0.5}"/>`;
-    s+=`<path d="M${_F1(cx-R)} ${_F1(cy)} A ${_F1(R)} ${_F1(R*0.4)} 0 0 1 ${_F1(cx+R)} ${_F1(cy)}" fill="none" stroke="#eaf2ff" stroke-width="0.7" opacity="${lit?0.6:0.3}"/>`;
-    s+=`<path d="M${_F1(cx+R)} ${_F1(cy)} A ${_F1(R)} ${_F1(R*0.4)} 0 0 1 ${_F1(cx-R)} ${_F1(cy)}" fill="none" stroke="#eaf2ff" stroke-width="0.7" opacity="${lit?0.5:0.25}"/>`;
+    // A little tilted spiral: luminous disc + bright core + two dotted star-arms.
+    const gid='gx'+(_locUid++), sq=0.46, per=15;
+    s+=`<defs><radialGradient id="${gid}" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.95:0.55}"/><stop offset="30%" stop-color="${ac}" stop-opacity="${lit?0.7:0.32}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<g transform="rotate(-24 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R*1.2)}" ry="${_F1(R*0.52)}" fill="url(#${gid})"${lit?` style="filter:blur(${_F1(R*0.1)}px)"`:''}/>`;
+    for(let a=0;a<2;a++){ const ph=a*Math.PI;
+      for(let i=1;i<=per;i++){ const t=i/per, th=ph+t*2.5, rr=R*0.2+t*R*1.0, x=cx+Math.cos(th)*rr, y=cy+Math.sin(th)*rr*sq;
+        s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.5+(1-t)*1.0).toFixed(2)}" fill="#eaf2ff" opacity="${(0.35+(1-t)*0.55).toFixed(2)}"/>`; } }
     s+='</g>';
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.34)}" fill="${ac}" opacity="${lit?0.4:0.2}" style="filter:blur(${_F1(R*0.12)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.17)}" fill="#fff"${glow}/>`;
   } else if(kind==='globular'){
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.95)}" fill="${ac}" opacity="${lit?0.30:0.14}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
     const N=lit?34:22; let dots='';
@@ -3466,7 +3472,10 @@ function _locInner(slug,W,H,ac,opts){
   opts=opts||{}; const lit=opts.lit!==false, thumb=!!opts.thumb, useCat=!!opts.useCat;
   const L=skyLocus(slug); if(!L) return null;
   const rng=_locRng(slug), min=Math.min(W,H);
-  const bg=_locBackdrop(W,H,_locRng(slug+'bg'));  // starry deep-space backdrop, every map
+  // starry deep-space backdrop on every map; galaxies / Milky Way / clouds get a
+  // richer field so they read as deep sky rather than a marked spot on a bare panel.
+  const dense=(L.kind==='sky'||L.kind==='band'||L.kind==='clouds')?1.7:1.2;
+  const bg=_locBackdrop(W,H,_locRng(slug+'bg'),dense);
   if(L.kind==='solar')     return bg+_locSolar(L.planet,W,H,ac,lit,thumb);
   if(L.kind==='moonphase') return bg+_locMoonPhase(W,H,ac,lit,L.phase,rng);
   if(L.kind==='aurora')    return bg+_locAurora(W,H,ac,lit,rng);
@@ -3478,7 +3487,7 @@ function _locInner(slug,W,H,ac,opts){
   else if(L.kind==='band'){   ra0=GAL_CORE.ra; dec0=GAL_CORE.dec; span=thumb?44:78; }
   else if(L.kind==='clouds'){ ra0=47; dec0=-71; span=thumb?42:60; }
   else if(L.kind==='radiant'){ const r=_locRadiant(); ra0=r.ra; dec0=r.dec; span=thumb?40:64; }
-  const P=_locPatch(ra0,dec0,span,W,H,useCat,thumb?26:0);
+  const P=_locPatch(ra0,dec0,span,W,H,useCat,thumb?26:450);  // cap = brightest-N (perf)
   const R=min*(thumb?0.17:0.12);
   let s=bg+_locField(P.stars)+_locLines(P.lines,ac,lit);
   if(L.kind==='sky')         s+=_locMarker(L.marker,W/2,H/2,R,ac,lit,rng);
