@@ -65,7 +65,11 @@ the heroic frame.
   stars is fed to Flux (which DOES register when given a creature, not bare dots), and the
   resulting spectral painting (a luminous cyan-white creature + Milky-Way/horizon) shows at
   **full strength** (`.reg`, `heroAuraFull`) with `.fig-hero` empty — the real stars (white
-  4-point sparkles) overlay on top via the matched **`REG_SKEL_PAD` (35.156)** inset. The dim-aura
+  4-point sparkles) overlay on top via the matched **`REG_SKEL_PAD` (35.156)** inset.
+  **Exception:** `centaurus`, `sagittarius` and `carina` were later rebuilt to accurate
+  standard star charts and have **no `HERO_ART` entry** — they render the clean static chart
+  (`.sky-hero-stage:not(.has-hero) .fig-chart` holds the lines) while their astral form is
+  sourced separately; re-add the slug to `HERO_ART` to overlay art. The dim-aura
   + enriched-`.fig-hero` + **`HERO_AURA_ADJ`** path is the now-unused legacy fallback. Full
   pipeline + verify recipe (incl. the registration-varies caveat) in
   `CLAUDE.md`; missing/404 art drops `.has-hero` and the figure shows on the dark bg.

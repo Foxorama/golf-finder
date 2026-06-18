@@ -434,6 +434,8 @@ body.sky-full-on{overflow:hidden;}
 .sky-hero-stage .fig-field,.sky-hero-stage .fig-stars{opacity:1;}
 .sky-hero-stage .fig-chart{animation:morphChart 4.4s ease-in-out .3s infinite alternate;}
 .sky-hero-stage .fig-hero{opacity:0;animation:morphHero 4.4s ease-in-out .3s infinite alternate;}
+/* No hero art (Centaurus/Sagittarius/Carina): hold the accurate chart static, don't morph it away. */
+.sky-hero-stage:not(.has-hero) .fig-chart{animation:none;opacity:1;}
 .sky-hero-stage.has-hero .sky-hero-aura{animation:heroAura 4.4s ease-in-out .3s infinite alternate;}
 @keyframes heroAura{0%,16%{opacity:0;}70%,100%{opacity:0.62;}}
 /* Registered spectral hero (Flux creature built on the real stars): shown at FULL
@@ -2386,12 +2388,21 @@ const STAR_FIGURES=[
     ['Ginan',185.340,-60.401,3.6]],
    l:[[2,0],[1,3]]},
   {n:'Centaurus',s:[
+    // The full centaur (Chiron), connections per the standard Sky & Telescope figure
+    // (supplied by the user). J2000; every star nearest-neighbour-checked against
+    // star-catalog-deep.json (≤0.01°). μ/ν Cen are a real close pair (the front torso).
     ['Rigil Kent',219.902,-60.834,-0.3],['Hadar',210.956,-60.373,0.6],
     ['Epsilon Cen',204.972,-53.466,2.3],['Zeta Cen',208.885,-47.288,2.5],
-    ['Eta Cen',218.877,-42.158,2.3],['Menkent',211.671,-36.370,2.1],
-    ['Muhlifain',190.379,-48.960,2.2],['Delta Cen',182.090,-50.722,2.6],
-    ['Iota Cen',200.149,-36.712,2.7]],
-   l:[[0,1],[1,3],[3,2],[2,7],[7,6],[6,3],[3,4],[4,5],[4,8]]},
+    ['Mu Cen',207.404,-42.474,3.5],['Nu Cen',207.376,-41.688,3.4],
+    ['d Cen',202.761,-39.407,3.9],['Iota Cen',200.149,-36.712,2.7],
+    ['Menkent',211.671,-36.370,2.1],['Eta Cen',218.877,-42.158,2.3],
+    ['Kappa Cen',224.790,-42.104,3.1],['Muhlifain',190.379,-48.960,2.2],
+    ['Delta Cen',182.090,-50.722,2.6],['Pi Cen',170.252,-54.491,3.9],
+    ['Lambda Cen',173.945,-63.020,3.1]],
+   // α/β Pointers → ε (front legs); ε-ζ-μ torso triangle; μ-ν-d-ι neck; ι-θ head;
+   // θ-η-κ arm; μ&ε-γ-δ hindquarters; δ-π-λ sealed rear-leg box toward Crux.
+   l:[[0,2],[1,2],[2,3],[3,4],[4,2],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],
+      [4,11],[2,11],[11,12],[12,13],[12,14],[14,13]]},
   {n:'Orion',s:[
     ['Betelgeuse',88.793,7.407,0.5],['Rigel',78.634,-8.202,0.1],
     ['Bellatrix',81.283,6.350,1.6],['Saiph',86.939,-9.670,2.1],
@@ -2416,19 +2427,21 @@ const STAR_FIGURES=[
     ['Shaula',263.402,-37.104,1.6],['Lesath',262.691,-37.296,2.7]],
    l:[[1,0],[0,2],[0,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,10],[10,11],[11,12],[12,13]]},
   {n:'Sagittarius',s:[
+    // The Teapot + the full archer (matched to the user's labelled reference). Vessel
+    // δ/ε/ζ/φ, lid λ, spout γ, handle σ/τ; bow λ-δ-ε up to μ Polis & down to η; the
+    // head/back arc σ-ξ²-ο-π-ρ¹; hind legs ζ→α Rukbat→β¹ Arkab Prior→β² Arkab Posterior.
+    // J2000, catalog-checked (≤0.01°).
     ['Kaus Australis',276.043,-34.385,1.8],['Kaus Media',275.249,-29.828,2.7],
     ['Kaus Borealis',276.993,-25.421,2.8],['Nunki',283.816,-26.297,2.0],
     ['Ascella',285.653,-29.880,2.6],['Phi Sgr',281.414,-26.990,3.2],
     ['Alnasl',271.452,-30.424,3.0],['Tau Sgr',286.735,-27.670,3.3],
-    // Beyond the Teapot: the archer/centaur. Head (μ Polis), back & croup
-    // (ξ² · π Albaldah · ρ¹), a shoulder (ο), the front leg (η) and the hind
-    // legs (α Rukbat → β Arkab). Real J2000, checked against the HYG catalog.
-    ['Polis',273.440,-21.059,3.9],['Eta Sgr',274.407,-36.762,3.1],
-    ['Albaldah',287.441,-21.024,2.9],['Xi2 Sgr',284.432,-21.107,3.5],
-    ['Omicron Sgr',286.170,-21.741,3.8],['Rukbat',290.970,-40.616,4.0],
-    ['Arkab',290.660,-44.459,4.0],['Rho1 Sgr',290.420,-17.847,3.9]],
-   l:[[1,0],[0,4],[4,5],[5,1],[1,2],[2,5],[1,6],[6,0],[5,3],[3,7],[7,4],
-      [2,8],[3,11],[11,12],[11,10],[10,15],[7,10],[0,9],[4,13],[13,14]]},
+    ['Polis',273.441,-21.059,3.8],['Eta Sgr',274.407,-36.762,3.1],
+    ['Albaldah',287.412,-21.024,2.9],['Xi2 Sgr',284.432,-21.107,3.5],
+    ['Omicron Sgr',286.170,-21.741,3.8],['Rukbat',290.972,-40.616,4.0],
+    ['Arkab Prior',290.659,-44.459,4.0],['Rho1 Sgr',290.418,-17.847,3.9],
+    ['Arkab Posterior',290.804,-44.799,4.3]],
+   l:[[2,1],[1,0],[0,4],[4,5],[5,2],[1,6],[5,3],[3,7],[7,4],[2,8],[0,9],
+      [3,11],[11,12],[12,10],[10,15],[4,13],[13,14],[14,16]]},
   {n:'Leo',s:[
     ['Regulus',152.093,11.967,1.4],['Eta Leo',151.833,16.763,3.5],
     ['Algieba',154.993,19.842,2.0],['Adhafera',154.173,23.417,3.4],
@@ -2450,13 +2463,13 @@ const STAR_FIGURES=[
     ['Alzirr',101.322,12.896,3.4],['Lambda Gem',109.523,16.540,3.6]],
    l:[[0,1],[0,5],[5,6],[6,7],[1,2],[2,3],[3,4],[2,9],[9,8],[5,2]]},
   {n:'Carina',s:[
+    // The keel: Canopus→Avior→Aspidiske curving into the Diamond Cross, which is the
+    // real β(Miaplacidus)/θ/υ/ω Car (not p Car — that was wrong). J2000, catalog-checked.
     ['Canopus',95.988,-52.696,-0.7],['Avior',125.628,-59.509,1.9],
     ['Aspidiske',139.273,-59.275,2.2],['Miaplacidus',138.300,-69.717,1.7],
-    ['Theta Carinae',160.739,-64.394,2.7],
-    // The Diamond Cross hung off θ Car (υ · ω · p Car) — the keel's other half.
-    ['Upsilon Car',146.780,-65.072,2.9],['Omega Car',153.434,-70.038,3.3],
-    ['p Car',158.000,-61.685,3.3]],
-   l:[[0,1],[1,2],[2,3],[3,4],[7,4],[4,6],[6,5],[5,7]]},
+    ['Theta Carinae',160.739,-64.394,2.7],['Upsilon Car',146.780,-65.072,2.9],
+    ['Omega Car',153.434,-70.038,3.3]],
+   l:[[0,1],[1,2],[2,5],[4,5],[5,3],[3,6],[6,4]]},
   {n:'Triangulum Australe',s:[
     ['Atria',252.166,-69.028,1.9],['Beta TrA',238.787,-63.431,2.8],
     ['Gamma TrA',229.726,-68.679,2.9]],
@@ -4186,11 +4199,15 @@ function skyRarity(slug){
 // when a card is opened (lazy) and runtime-cached by the service worker, so default
 // users never download them — and a missing/offline image just reveals the SVG beneath.
 const HERO_ART={
-  centaurus:'night-heroes/centaurus.jpg', crux:'night-heroes/crux.jpg',
+  // Centaurus, Sagittarius & Carina deliberately have NO entry: their charts were
+  // rebuilt to the accurate standard figures, so they show the clean star chart on its
+  // own (the old Flux creatures illustrated the wrong charts). The astral form for these
+  // is being sourced separately — re-add a slug here to overlay it once it exists.
+  crux:'night-heroes/crux.jpg',
   orion:'night-heroes/orion.jpg', 'canis-major':'night-heroes/canis-major.jpg',
-  scorpius:'night-heroes/scorpius.jpg', sagittarius:'night-heroes/sagittarius.jpg',
+  scorpius:'night-heroes/scorpius.jpg',
   leo:'night-heroes/leo.jpg', taurus:'night-heroes/taurus.jpg',
-  gemini:'night-heroes/gemini.jpg', carina:'night-heroes/carina.jpg',
+  gemini:'night-heroes/gemini.jpg',
   'triangulum-australe':'night-heroes/triangulum-australe.jpg', grus:'night-heroes/grus.jpg',
   vela:'night-heroes/vela.jpg', corvus:'night-heroes/corvus.jpg',
   cygnus:'night-heroes/cygnus.jpg', lyra:'night-heroes/lyra.jpg',

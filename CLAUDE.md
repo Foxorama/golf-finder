@@ -95,7 +95,16 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   **(Legacy fallback, now unused by any figure)** the dim aura + enriched `.fig-hero` luminous
   form + **`HERO_AURA_ADJ[slug]`** (a per-figure `scaleX(-1)`/`scale`/`translate` to orient the old
   painting roughly behind the figure — Orion & Leo line up well, Sagittarius needed a flip).
-  If the `<img>` 404s, `.has-hero` drops and the figure shows on the dark bg. See
+  If the `<img>` 404s, `.has-hero` drops and the figure shows on the dark bg.
+  **Exceptions (PR after #141): `centaurus`, `sagittarius` and `carina` have NO `HERO_ART`
+  entry on purpose** — their star charts were rebuilt to the accurate standard figures
+  (Centaurus per the user's Sky&Tel connection spec; Sagittarius the full labelled archer;
+  Carina the real Diamond Cross β/θ/υ/ω, not p Car), so the old Flux creatures (which
+  illustrated the *wrong* charts) are retired and these three render the **clean static star
+  chart** (the `.sky-hero-stage:not(.has-hero) .fig-chart` rule holds the lines instead of
+  morphing them away). The astral form for them is being sourced separately — re-add the slug
+  to `HERO_ART` to overlay it. Every figure star is nearest-neighbour-checked against
+  `star-catalog-deep.json` (≤0.01°). See
   `night-heroes/HERO-ART-SPEC.md`. The whole
   visual style — and how to add a new card so it matches — is documented in the
   **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords
