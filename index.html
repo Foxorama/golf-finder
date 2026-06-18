@@ -428,13 +428,22 @@ body.sky-full-on{overflow:hidden;}
 .sky-hero-stage .sky-hero-fig svg{display:block;width:100%;height:100%;}
 .sky-hero-stage .sky-hero-aura{object-fit:cover;opacity:0;filter:brightness(0.7) saturate(1) contrast(1.02);}
 .sky-hero-stage .sky-hero-veil{background:radial-gradient(120% 92% at 50% 40%,transparent 44%,rgba(6,10,26,0.52) 100%);pointer-events:none;}
-/* The "shift": the faint chart lights into the glowing figure while the painting
-   blooms in behind it — the stars hold position throughout (exact match). */
+/* The "shift": the starfield + bright stars persist; the constellation lines fade
+   out as the ghostly form (built through those same stars) rises over them, so the
+   viewer sees why the stars trace that creature. Painting (when present) blooms behind. */
+.sky-hero-stage .fig-field,.sky-hero-stage .fig-stars{opacity:1;}
 .sky-hero-stage .fig-chart{animation:morphChart 4.4s ease-in-out .3s infinite alternate;}
 .sky-hero-stage .fig-hero{opacity:0;animation:morphHero 4.4s ease-in-out .3s infinite alternate;}
 .sky-hero-stage.has-hero .sky-hero-aura{animation:heroAura 4.4s ease-in-out .3s infinite alternate;}
 @keyframes heroAura{0%,16%{opacity:0;}70%,100%{opacity:0.62;}}
-@media(prefers-reduced-motion:reduce){.sky-hero-stage .fig-chart{animation:none;opacity:0;}.sky-hero-stage .fig-hero{animation:none;opacity:1;}.sky-hero-stage.has-hero .sky-hero-aura{animation:none;opacity:0.62;}}
+/* Registered spectral hero (Flux creature built on the real stars): shown at FULL
+   strength — it's the hero, not a dim backdrop — blooming up from the star-chart while
+   the lines fade and the real stars hold their exact positions on top. */
+.sky-hero-stage.reg .sky-hero-aura{filter:brightness(0.96) saturate(1.05) contrast(1.02);}
+.sky-hero-stage.reg .sky-hero-veil{background:radial-gradient(130% 100% at 50% 42%,transparent 56%,rgba(6,10,26,0.42) 100%);}
+.sky-hero-stage.reg.has-hero .sky-hero-aura{animation:heroAuraFull 4.4s ease-in-out .3s infinite alternate;}
+@keyframes heroAuraFull{0%,14%{opacity:0.12;}68%,100%{opacity:0.96;}}
+@media(prefers-reduced-motion:reduce){.sky-hero-stage .fig-chart{animation:none;opacity:0;}.sky-hero-stage .fig-hero{animation:none;opacity:1;}.sky-hero-stage.has-hero .sky-hero-aura{animation:none;opacity:0.62;}.sky-hero-stage.reg.has-hero .sky-hero-aura{animation:none;opacity:0.96;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
 .sky-sec{margin:14px 20px 0;}
@@ -2662,6 +2671,16 @@ function figureAnchor(f){
   let best=f.s[0]; for(const s of f.s) if(s[3]<best[3]) best=s;
   return (f._anc=best);
 }
+// ── Registered spectral heroes ───────────────────────────────────────────────
+// The hero pipeline: build a CREATURE-skeleton from a figure's real projected stars,
+// let Flux paint the spectral creature over it (keeping the shape AND star positions),
+// save as night-heroes/<slug>.jpg, then in-app draw the real bright stars + lines on
+// top so they land EXACTLY on the painting's stars. `REG_HERO` marks figures wired this
+// way; `REG_PAD` is the projection inset (in the 300-px box) matching the skeleton the
+// painting was built from, so the overlay registers pixel-exact. Scorpius is the proof.
+const REG_HERO={scorpius:1};
+const REG_PAD={scorpius:35.16}; // = skeleton pad 180 / (1536/300)
+function isRegHero(slug){ return !!REG_HERO[slug]; }
 // Registered figure for the hero stage. Projects the figure's FULL real-star list
 // (cos-dec-corrected RA, north up) into the 3:2 stage box and draws it as two
 // pixel-aligned layers over a TRANSPARENT backdrop (so the Flux aura shows through):
@@ -2673,37 +2692,45 @@ function figureAnchor(f){
 // CSS var()).
 function figureSVG(slug,ac){
   const f=FIG_BY_SLUG[slug]; if(!f) return '';
-  const W=300,H=200,pad=30;
+  const reg=isRegHero(slug);
+  // Registered-hero figures use the projection inset the Flux painting was built from,
+  // so the overlaid real stars land exactly on the painting's stars.
+  const W=300,H=200,pad=REG_PAD[slug]||30;
   const {pts,lines}=projFigure(f,W,H,pad);
   const anc=figureAnchor(f); let ai=0; for(let i=0;i<f.s.length;i++){ if(f.s[i][0]===anc[0]){ ai=i; break; } }
   const ap=pts[ai];
-  // Astral chart layer (the "before").
+  // Scattered starfield so the astral layer reads like a real chart of the sky.
+  let h=_hashStr(slug)||1; const rnd=()=>{ h=(h*1103515245+12345)&0x7fffffff; return h/0x7fffffff; };
+  let field='<g class="fig-field">';
+  for(let i=0;i<78;i++){ const dx=(rnd()*W).toFixed(1), dy=(rnd()*H).toFixed(1), dr=(0.3+rnd()*0.8).toFixed(2); field+=`<circle cx="${dx}" cy="${dy}" r="${dr}" fill="#cfe0ff" opacity="${(0.10+rnd()*0.30).toFixed(2)}"/>`; }
+  field+='</g>';
+  // Astral constellation LINES (the "before") — fade out as the creature/figure rises.
   let chart='<g class="fig-chart">';
-  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; chart+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(190,215,255,0.5)" stroke-width="1" stroke-linecap="round"/>`; }
-  for(const p of pts){ const r=Math.max(1,2.4-p.mag*0.32); chart+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#eaf2ff" opacity="0.92"/>`; }
+  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; chart+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(190,215,255,0.55)" stroke-width="1" stroke-linecap="round"/>`; }
   chart+='</g>';
-  // Heroic figure layer (the "after"): the constellation drawn as a luminous astral
-  // FORM sitting exactly on the real stars — rarity-coloured limbs given volume by a
-  // stack of blurred strokes (outer aura → volume → body) under a bright starlight
-  // core, with radiant orbs at each star. This is the registered figure that always
-  // matches; the painting behind it is only mood.
-  const strokeLayer=(w,col,op,blur,glow)=>{ let t='';
-    for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; t+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`; }
-    const f=[]; if(blur)f.push(`blur(${blur}px)`); if(glow)f.push(`drop-shadow(0 0 3px ${ac})`);
-    return `<g opacity="${op}"${f.length?` style="filter:${f.join(' ')}"`:''}>${t}</g>`; };
+  // The "after": for registered figures the creature IS the Flux painting behind, so the
+  // hero layer stays empty; legacy figures still light their lines into a luminous form.
   let hero='<g class="fig-hero">';
-  hero+=strokeLayer(15,ac,0.10,4,false);   // outer aura
-  hero+=strokeLayer(8,ac,0.20,1.5,false);  // volume
-  hero+=strokeLayer(3.4,ac,0.60,0,false);  // body
-  hero+=strokeLayer(1.4,'#eaf6ff',0.95,0,true); // bright starlight core
-  for(const p of pts){ const r=Math.max(1.6,3.1-p.mag*0.34);
-    hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(r*2.2).toFixed(1)}" fill="${ac}" opacity="0.5" style="filter:blur(2px)"/>`;
-    hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" style="filter:drop-shadow(0 0 ${(r*1.6).toFixed(1)}px ${ac})"/>`; }
+  if(!reg){
+    const strokeLayer=(w,col,op,blur,glow)=>{ let t='';
+      for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; t+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`; }
+      const fl=[]; if(blur)fl.push(`blur(${blur}px)`); if(glow)fl.push(`drop-shadow(0 0 3px ${ac})`);
+      return `<g opacity="${op}"${fl.length?` style="filter:${fl.join(' ')}"`:''}>${t}</g>`; };
+    hero+=strokeLayer(15,ac,0.10,4,false)+strokeLayer(8,ac,0.20,1.5,false)+strokeLayer(3.4,ac,0.60,0,false)+strokeLayer(1.4,'#eaf6ff',0.95,0,true);
+  }
   hero+='</g>';
+  // Bright highlighted stars — persistent, ON TOP of both phases (the registration
+  // anchors you always see, brighter than the background starfield). Glows share ONE
+  // blur group + layered circles (no per-star filters) so the stage stays light.
+  let glows='',cores='';
+  for(const p of pts){ const r=Math.max(1.6,3.1-p.mag*0.34), x=p.x.toFixed(1), y=p.y.toFixed(1);
+    glows+=`<circle cx="${x}" cy="${y}" r="${(r*2.6).toFixed(1)}" fill="${ac}" opacity="0.4"/>`;
+    cores+=`<circle cx="${x}" cy="${y}" r="${(r*1.5).toFixed(1)}" fill="${ac}" opacity="0.55"/><circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="#fff"/>`; }
+  let stars=`<g class="fig-stars"><g style="filter:blur(2.5px)">${glows}</g>${cores}</g>`;
   // Persistent anchor label (names the brightest star so the figure stays legible).
   let lab='';
   if(ap){ const ty=Math.max(11,ap.y-6); lab=`<text x="${ap.x.toFixed(1)}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${anc[0]}</text>`; }
-  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star figure">${chart}${hero}${lab}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${f.n} star figure">${field}${chart}${hero}${stars}${lab}</svg>`;
 }
 // ── Loot-grade rarity + two-phase "astral heroic" card art ──────────────────
 // Every night card carries a rarity (loot colours: common→green, rare→blue,
@@ -4176,15 +4203,18 @@ function renderStoryBody(slug,lat,lng){
   if(FIG_BY_SLUG[slug]){
     // Constellation: prominent full-width hero stage. The real star chart morphs
     // once into the illustrated figure (when HERO_ART exists), else just the chart.
-    const art=HERO_ART[slug], cls=art?' has-hero':'';
+    // Registered-hero figures show their spectral Flux creature at FULL strength (it's
+    // built ON the real stars, so it's the hero, not a dim mismatched aura) and skip the
+    // per-figure flip/scale. Legacy figures keep the dim, orientation-nudged aura.
+    const reg=isRegHero(slug), art=HERO_ART[slug], cls=art?(reg?' has-hero reg':' has-hero'):'';
     s+=`<div class="sky-hero-stage${cls}" style="--ac:${ac};" aria-hidden="true">`;
-    // Flux painting as the dim background AURA + a vignette veil (only when art
-    // exists). No loading="lazy": the modal (and this <img>) only exist once the
-    // card is tapped, so the fetch is already on-demand; lazy would stop it loading
-    // inside the fixed-position sheet. The SW runtime-caches it after the first open.
-    if(art){ const adj=HERO_AURA_ADJ[slug], ast=adj?` style="transform:${adj};transform-origin:center;"`:''; s+=`<img class="sky-hero-aura"${ast} src="${art}" alt="" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();"><div class="sky-hero-veil"></div>`; }
-    // Registered star-figure on top — same projection both phases, so the stars
-    // stay locked over the aura (exact match).
+    // Flux painting as the background creature/aura + a vignette veil. No loading="lazy":
+    // the modal (and this <img>) only exist once the card is tapped, so the fetch is
+    // already on-demand; lazy would stop it loading inside the fixed-position sheet. The
+    // SW runtime-caches it after the first open.
+    if(art){ const adj=reg?'':HERO_AURA_ADJ[slug], ast=adj?` style="transform:${adj};transform-origin:center;"`:''; s+=`<img class="sky-hero-aura"${ast} src="${art}" alt="" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();"><div class="sky-hero-veil"></div>`; }
+    // Registered star-figure on top — the real bright stars + lines land exactly on the
+    // painting's stars (the "identifies the stars" match).
     s+=`<div class="sky-hero-fig">${figureSVG(slug,ac)}</div>`;
     s+=`</div>`;
   }else{

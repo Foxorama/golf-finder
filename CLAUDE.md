@@ -67,20 +67,29 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   limbs given volume by a stack of blurred rarity-coloured strokes (outer aura → volume →
   body) under a bright starlight core, with radiant orbs at each star — so the thing sitting
   exactly on the real stars reads as the figure itself, and it (not the painting) carries the
-  match. **Hard-won finding: Flux text-to-image CANNOT pose a painting onto the exact stars.**
-  Even `flux2_max` fed the real star-skeleton as a structural reference just paints a generic,
-  well-composed figure (often facing the wrong way) — and the real stars don't form a tidy
-  figure anyway (that's the point). So don't regenerate art hoping it'll register; instead the
-  enriched `.fig-hero` is the true match, and the painting is oriented behind it by
-  **`HERO_AURA_ADJ[slug]`** — a per-figure CSS transform on `.sky-hero-aura`
-  (`scaleX(-1)`/`scale`/`translate`) to flip/scale/shift the gross pose into place (most
-  existing paintings already orient fine — Orion & Leo line up beautifully; Sagittarius needed
-  a flip + its art swapped for a cleaner regen). To regenerate a painting anyway: render the
-  figure skeleton with GDI+ in the *exact* `projFigure` framing (1536×1024 = 5.12× the
-  300×200 box, pad 153.6), upload via the Flux MCP `request_upload_url` (PUT works on
-  `app.bfl.ai`; force TLS1.2 in PS5.1), `generate_image(flux2_max)`, download the result
-  (`get_history` → `image_url`) to `night-heroes/<slug>.jpg`. If the `<img>` 404s, `.has-hero`
-  drops and the figure shows on the dark bg. See `night-heroes/HERO-ART-SPEC.md`. The whole
+  match. **THE registered-hero pipeline (`REG_HERO` figures — Scorpius is the first):** the
+  breakthrough is that **Flux *can* pose a painting onto the exact stars if you feed it a
+  CREATURE-shaped skeleton, not bare dots.** (Bare dots/lines → it paints a generic, often
+  mirrored figure — that earlier failure is real, see PR #138; the fix is a recognizable
+  skeleton.) Recipe per figure: (1) render a registered **creature-skeleton** from its real
+  projected stars via GDI+ at 1536×1024 (a glowing body curve through the star spine + the
+  appendages — claws/limbs/wings — with the bright stars marked); (2) `request_upload_url` →
+  PUT (works on `app.bfl.ai`, force TLS1.2 in PS5.1) → `generate_image(flux2_max)` with a
+  prompt to *enhance this exact skeleton, keep the shape and star positions*; (3) `get_history`
+  → download `image_url` to `night-heroes/<slug>.jpg`; (4) add the slug to `REG_HERO` and its
+  projection inset to **`REG_PAD`** (= skeleton-pad ÷ 5.12, so the in-app overlay's real stars
+  land on the painting's stars — verify with `projFigure(f,300,200,REG_PAD)` ×5.12 ≈ the
+  skeleton's `projFigure(f,1536,1024,skelpad)`, error <0.1px). `REG_HERO` figures show the Flux
+  creature at **full strength** (`.reg` class, `heroAuraFull` blooms to ~0.96, no
+  `HERO_AURA_ADJ`) with `.fig-hero` empty (the creature IS the hero); the real stars + lines
+  overlay on top and land exactly on the painting's stars. Verify registration without a
+  screenshot: GDI+-composite red rings at the `projFigure(…,skelpad)` star positions over the
+  downloaded jpg — they must sit on the painted stars. **Legacy (non-`REG_HERO`) figures** keep
+  the dim aura (`brightness ~0.7 / opacity ~0.62`) + the enriched `.fig-hero` luminous form +
+  **`HERO_AURA_ADJ[slug]`** (a per-figure `scaleX(-1)`/`scale`/`translate` to orient the old
+  painting roughly behind the figure — Orion & Leo line up well, Sagittarius needed a flip).
+  If the `<img>` 404s, `.has-hero` drops and the figure shows on the dark bg. See
+  `night-heroes/HERO-ART-SPEC.md`. The whole
   visual style — and how to add a new card so it matches — is documented in the
   **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords
   real (J2000): wrong coords draw the wrong outline. **The astral chart shows the FULL
