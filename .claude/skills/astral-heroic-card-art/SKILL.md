@@ -119,7 +119,10 @@ In `index.html`, in dependency order:
 - `_heroicSparks(sz,ac,seed)` — the shared rarity sparks.
 - `skyLocus(slug)` / `_locInner` / `_locMarker` / `_locSolar` / `locatorOutlineSVG` /
   `locatorHeroicSVG` / `locatorStageSVG` — the locator star-map family (non-constellation
-  cards). `_locPatch` projects a sky patch from `SKY_SEED` (+`STAR_CATALOG`).
+  cards). `_locPatch` projects a sky patch from `SKY_SEED` (+`STAR_CATALOG`); `_locBackdrop`
+  lays a faint deep-space starfield behind **every** map (so even sparse/non-patch ones read
+  as space). Aurora is drawn as draped rays in **australis** colours (crimson crown → green
+  base — what we see from our low southern magnetic latitude), not the green walls of the north.
 - **`cardArt(o)`** — the dispatcher. Returns both `<svg>` layers. Picks the figure
   path if `FIG_BY_SLUG[o.fig||o.slug]` exists; else a **locator map** if `skyLocus(o.slug)`
   is non-null (planets, deep sky, most events); else the planet disc / glyph emblem.

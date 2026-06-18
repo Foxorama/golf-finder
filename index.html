@@ -3320,6 +3320,15 @@ function _locPatch(ra0,dec0,span,W,H,useCat,cap){
 }
 function _locField(stars){ let g='<g>'; for(const s of stars){ const r=Math.max(0.4,2.2-s.mag*0.30), op=Math.max(0.16,0.95-s.mag*0.12); g+=`<circle cx="${_F1(s.x)}" cy="${_F1(s.y)}" r="${r.toFixed(2)}" fill="#dde8ff" opacity="${op.toFixed(2)}"/>`; } return g+'</g>'; }
 function _locLines(lines,ac,lit){ if(!lines.length) return ''; const col=lit?ac:'rgba(160,190,240,0.32)',op=lit?0.30:0.45,sw=lit?1:0.8; let g='<g>'; for(const l of lines) g+=`<line x1="${_F1(l[0].x)}" y1="${_F1(l[0].y)}" x2="${_F1(l[1].x)}" y2="${_F1(l[1].y)}" stroke="${col}" stroke-width="${sw}" opacity="${op}" stroke-linecap="round"/>`; return g+'</g>'; }
+// A deterministic faint deep-space starfield behind every map (density ∝ area), so
+// even sparse-region / non-patch maps (solar, aurora, arc…) read as "in space".
+function _locBackdrop(W,H,rng){
+  const n=Math.max(8,Math.round(W*H/1200)); let g='<g>';
+  for(let i=0;i<n;i++){ const x=rng()*W, y=rng()*H, q=rng(), r=(0.3+q*1.1).toFixed(2), op=(0.12+rng()*0.5).toFixed(2);
+    g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#cdddff" opacity="${op}"/>`;
+    if(q>0.93) g+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(+r*2.3).toFixed(2)}" fill="#9fc0ff" opacity="0.10"/>`; }
+  return g+'</g>';
+}
 // The category-specific highlight drawn at the object's projected position.
 function _locMarker(kind,cx,cy,R,ac,lit,rng){
   const reticle=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.7)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:1}" opacity="${lit?0.75:0.45}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
@@ -3397,7 +3406,6 @@ function _locSolar(active,W,H,ac,lit,thumb){
 }
 function _locMoonPhase(W,H,ac,lit,phase,rng){
   let s='';
-  for(let i=0;i<22;i++){ const x=rng()*W, y=rng()*H, r=(0.4+rng()*1).toFixed(2); s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#dde8ff" opacity="${(0.18+rng()*0.5).toFixed(2)}"/>`; }
   const cx=W/2, cy=H/2, R=Math.min(W,H)*0.24;
   if(phase==='new'){
     s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#0b1020" stroke="#33425f" stroke-width="1"/>`;
@@ -3411,7 +3419,6 @@ function _locMoonPhase(W,H,ac,lit,phase,rng){
 }
 function _locArc(W,H,ac,lit,rng){
   let s='';
-  for(let i=0;i<26;i++){ const x=rng()*W, y=rng()*H*0.82, r=(0.4+rng()*1.1).toFixed(2); s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#dde8ff" opacity="${(0.2+rng()*0.55).toFixed(2)}"/>`; }
   s+=`<line x1="0" y1="${_F1(H*0.86)}" x2="${_F1(W)}" y2="${_F1(H*0.86)}" stroke="rgba(150,180,235,0.4)" stroke-width="1" stroke-dasharray="3 3"/>`;
   s+=`<path d="M ${_F1(W*0.06)} ${_F1(H*0.86)} Q ${_F1(W*0.5)} ${_F1(-H*0.1)} ${_F1(W*0.94)} ${_F1(H*0.86)}" fill="none" stroke="${ac}" stroke-width="${lit?1.6:1}" opacity="${lit?0.8:0.45}" stroke-dasharray="4 5"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
   s+=`<circle cx="${_F1(W*0.5)}" cy="${_F1(H*0.16)}" r="${lit?2.6:1.8}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 4px ${ac})"`:''}/>`;
@@ -3419,7 +3426,6 @@ function _locArc(W,H,ac,lit,rng){
 }
 function _locPair(W,H,ac,lit,rng){
   let s='';
-  for(let i=0;i<18;i++){ const x=rng()*W, y=rng()*H*0.75, r=(0.4+rng()*1).toFixed(2); s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#dde8ff" opacity="${(0.18+rng()*0.5).toFixed(2)}"/>`; }
   s+=`<line x1="${_F1(W*0.1)}" y1="${_F1(H*0.62)}" x2="${_F1(W*0.9)}" y2="${_F1(H*0.45)}" stroke="rgba(160,190,240,0.3)" stroke-width="0.8" stroke-dasharray="4 4"/>`;
   const cx=W*0.5, cy=H*0.5;
   s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy-H*0.015)}" rx="${_F1(W*0.12)}" ry="${_F1(H*0.11)}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:1}" opacity="${lit?0.7:0.4}" stroke-dasharray="${lit?'5 5':'2 3'}"/>`;
@@ -3427,14 +3433,31 @@ function _locPair(W,H,ac,lit,rng){
   s+=`<circle cx="${_F1(cx+W*0.045)}" cy="${_F1(cy-H*0.03)}" r="${lit?2.4:1.6}" fill="#f3ecd2"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
   return s;
 }
+// Aurora AUSTRALIS as seen from southern Australia: from our low magnetic latitude
+// we mostly catch the red/magenta CROWN (the curtain tops), with green only as a low
+// glow near the horizon — so it's crimson-over-green, not the green walls of the north.
+// Drawn as wavy, rayed, blurred drapery (not bars).
 function _locAurora(W,H,ac,lit,rng){
-  let s='';
-  for(let i=0;i<20;i++){ const x=rng()*W, y=rng()*H*0.5, r=(0.4+rng()*1).toFixed(2); s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${r}" fill="#dde8ff" opacity="${(0.2+rng()*0.5).toFixed(2)}"/>`; }
-  const id='aur'+(W*5+H);
-  s+=`<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#8affc0" stop-opacity="0"/><stop offset="55%" stop-color="#5fe39a" stop-opacity="${lit?0.55:0.25}"/><stop offset="100%" stop-color="#3ad6e0" stop-opacity="${lit?0.16:0.07}"/></linearGradient></defs>`;
-  const baseY=H*0.42;
-  for(let i=0;i<6;i++){ const x=W*(0.08+i*0.15)+(rng()-0.5)*8, w=W*0.07, hh=H*(0.42+rng()*0.32); s+=`<rect x="${_F1(x)}" y="${_F1(baseY)}" width="${_F1(w)}" height="${_F1(hh)}" fill="url(#${id})" opacity="${(0.6+rng()*0.4).toFixed(2)}" style="filter:blur(2px)"/>`; }
-  s+=`<rect x="0" y="${_F1(H*0.9)}" width="${_F1(W)}" height="${_F1(H*0.1)}" fill="#05070f"/>`;
+  const id='aur'+(W*5+H), baseY=H*0.20, botY=H*0.84;
+  // userSpaceOnUse so the crimson→magenta→green vertical wash applies to the thin
+  // rays too (a zero-width line can't take an objectBoundingBox gradient).
+  let s=`<defs><linearGradient id="${id}" x1="0" y1="${_F1(baseY)}" x2="0" y2="${_F1(botY)}" gradientUnits="userSpaceOnUse">`
+    +`<stop offset="0%" stop-color="#ff5b8a" stop-opacity="0"/>`
+    +`<stop offset="16%" stop-color="#ff4d7d" stop-opacity="${lit?0.9:0.4}"/>`
+    +`<stop offset="48%" stop-color="#c763e0" stop-opacity="${lit?0.68:0.3}"/>`
+    +`<stop offset="100%" stop-color="#3ef0a0" stop-opacity="${lit?0.68:0.3}"/></linearGradient></defs>`;
+  // low green airglow along the horizon
+  s+=`<rect x="0" y="${_F1(H*0.56)}" width="${_F1(W)}" height="${_F1(H*0.32)}" fill="#2fe39a" opacity="${lit?0.14:0.07}" style="filter:blur(${_F1(H*0.06)}px)"/>`;
+  // soft broad draped folds (rounded tops, wide bases) — heavily blurred
+  s+=`<g style="filter:blur(${_F1(H*0.045)}px)">`;
+  for(let c=0;c<3;c++){ const cx=W*(0.22+c*0.28)+(rng()-0.5)*W*0.09, w=W*(0.24+rng()*0.12), topJ=baseY+rng()*H*0.12;
+    s+=`<path d="M ${_F1(cx-w/2)} ${_F1(botY)} C ${_F1(cx-w/2)} ${_F1(topJ+H*0.10)} ${_F1(cx-w*0.2)} ${_F1(topJ)} ${_F1(cx)} ${_F1(topJ)} C ${_F1(cx+w*0.2)} ${_F1(topJ)} ${_F1(cx+w/2)} ${_F1(topJ+H*0.10)} ${_F1(cx+w/2)} ${_F1(botY)} Z" fill="url(#${id})" opacity="${(0.5+0.12*c).toFixed(2)}"/>`; }
+  s+=`</g>`;
+  // signature rays: many fine, slightly-slanted vertical streaks of varying height
+  const NR=lit?Math.round(W/8):Math.round(W/13);
+  for(let i=0;i<NR;i++){ const x=rng()*W, h0=baseY+rng()*H*0.24, h1=botY-rng()*H*0.10, ox=(rng()-0.5)*W*0.025;
+    s+=`<line x1="${_F1(x)}" y1="${_F1(h0)}" x2="${_F1(x+ox)}" y2="${_F1(h1)}" stroke="url(#${id})" stroke-width="${(0.6+rng()*1.2).toFixed(2)}" opacity="${(0.4+rng()*0.5).toFixed(2)}" style="filter:blur(0.6px)"/>`; }
+  s+=`<rect x="0" y="${_F1(H*0.86)}" width="${_F1(W)}" height="${_F1(H*0.14)}" fill="#04060f"/>`;
   return s;
 }
 // Compose the inner SVG markup for a card's locator map. `null` → no locus (the
@@ -3443,11 +3466,12 @@ function _locInner(slug,W,H,ac,opts){
   opts=opts||{}; const lit=opts.lit!==false, thumb=!!opts.thumb, useCat=!!opts.useCat;
   const L=skyLocus(slug); if(!L) return null;
   const rng=_locRng(slug), min=Math.min(W,H);
-  if(L.kind==='solar')     return _locSolar(L.planet,W,H,ac,lit,thumb);
-  if(L.kind==='moonphase') return _locMoonPhase(W,H,ac,lit,L.phase,rng);
-  if(L.kind==='aurora')    return _locAurora(W,H,ac,lit,rng);
-  if(L.kind==='arc')       return _locArc(W,H,ac,lit,rng);
-  if(L.kind==='pair')      return _locPair(W,H,ac,lit,rng);
+  const bg=_locBackdrop(W,H,_locRng(slug+'bg'));  // starry deep-space backdrop, every map
+  if(L.kind==='solar')     return bg+_locSolar(L.planet,W,H,ac,lit,thumb);
+  if(L.kind==='moonphase') return bg+_locMoonPhase(W,H,ac,lit,L.phase,rng);
+  if(L.kind==='aurora')    return bg+_locAurora(W,H,ac,lit,rng);
+  if(L.kind==='arc')       return bg+_locArc(W,H,ac,lit,rng);
+  if(L.kind==='pair')      return bg+_locPair(W,H,ac,lit,rng);
   // sky-patch family (real coords + auto constellation context)
   let ra0,dec0,span=thumb?30:52;
   if(L.kind==='sky'){ ra0=L.ra; dec0=L.dec; }
@@ -3456,7 +3480,7 @@ function _locInner(slug,W,H,ac,opts){
   else if(L.kind==='radiant'){ const r=_locRadiant(); ra0=r.ra; dec0=r.dec; span=thumb?40:64; }
   const P=_locPatch(ra0,dec0,span,W,H,useCat,thumb?26:0);
   const R=min*(thumb?0.17:0.12);
-  let s=_locField(P.stars)+_locLines(P.lines,ac,lit);
+  let s=bg+_locField(P.stars)+_locLines(P.lines,ac,lit);
   if(L.kind==='sky')         s+=_locMarker(L.marker,W/2,H/2,R,ac,lit,rng);
   else if(L.kind==='band')   s=_locBandSwath(W,H,ac,lit)+s+_locMarker('nebula',W/2,H/2,R*1.1,ac,lit,rng);
   else if(L.kind==='clouds'){ const lmc=P.proj(MAGELLANIC[0].ra,MAGELLANIC[0].dec), smc=P.proj(MAGELLANIC[1].ra,MAGELLANIC[1].dec); s+=_locCloud(lmc.x,lmc.y,R*1.3,ac,lit)+_locCloud(smc.x,smc.y,R*0.9,ac,lit); }
