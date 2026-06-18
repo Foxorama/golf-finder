@@ -20,10 +20,16 @@ Colours live in `:root` as CSS vars and are mirrored in JS:
 
 | Grade       | Colour       | `--rar-*`          | `RARITY_C`   | Meaning (how special to catch it) |
 |-------------|--------------|--------------------|--------------|-----------------------------------|
-| `common`    | green        | `--rar-common`     | `#3fd07f`    | up most clear nights — Moon, marquee constellations, bright planets |
+| `common`    | teal-green   | `--rar-common`     | `#66ccad`    | up most clear nights — Moon, marquee constellations, bright planets |
 | `rare`      | blue         | `--rar-rare`       | `#5aa9f0`    | needs dark skies / a season — Magellanic Clouds, clusters, fainter figures |
-| `epic`      | purple       | `--rar-epic`       | `#b07cff`    | time-limited or showpiece — meteor showers, ISS, big nebulae, conjunctions |
-| `legendary` | orange       | `--rar-legendary`  | `#f5a623`    | once-in-a-while — aurora alert, eclipses, great comets |
+| `epic`      | violet       | `--rar-epic`       | `#865aed`    | time-limited or showpiece — meteor showers, ISS, big nebulae, conjunctions |
+| `legendary` | warm amber   | `--rar-legendary`  | `#ebaf47`    | once-in-a-while — aurora alert, eclipses, great comets |
+
+The four are a **tonal band anchored on the rare blue glow** (`#5aa9f0`): common
+is that blue tinted green, epic tinted purple, legendary a softened warm gold
+(orange is blue's complement, so it can't be pulled into the band — it's muted to
+glow, not shout). Saturations sit below the blue so it stays the anchor and the
+band meshes when cards sit side-by-side.
 
 `rarCol(rarity)` → hex. The card's left accent, rarity pill, art aura and the
 sky-map marker all read from this one value (`--ac` on the card). **Never hand-pick

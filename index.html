@@ -89,9 +89,13 @@
   --bdr:rgba(90,171,53,0.15);--bdr2:rgba(90,171,53,0.25);
   --tx:#e8f5e0;--tx2:#a8c89a;--tx3:#6a9d60;
   --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
-  /* Loot-grade rarity palette for night-sky cards + sky-map highlights:
-     common→green, rare→blue, epic→purple, legendary→orange. */
-  --rar-common:#3fd07f;--rar-rare:#5aa9f0;--rar-epic:#b07cff;--rar-legendary:#f5a623;
+  /* Loot-grade rarity palette for night-sky cards + sky-map highlights.
+     Tonal band anchored on the rare BLUE glow (#5aa9f0): common is the blue
+     tinted green (teal), epic the blue tinted purple (periwinkle), legendary a
+     softened warm gold (true orange is blue's complement, so it can't be pulled
+     into the band — it's muted to glow, not shout). Saturations sit below the
+     blue so it stays the anchor and the band meshes when cards sit together. */
+  --rar-common:#66ccad;--rar-rare:#5aa9f0;--rar-epic:#865aed;--rar-legendary:#ebaf47;
 }
 /* ── Were-mode: at night the whole app sheds its golf greens for moonlight indigo.
    Amber/red stay untouched — they're semantic (alerts), not theme. ── */
@@ -2899,7 +2903,7 @@ function figureSVG(slug,ac){
 // faint "Star Outline" sketch and a glowing "Astral Heroic" crest. The same two
 // builders dress every object, present and future — the house style lives in the
 // astral-heroic-card-art skill. Pure inline SVG: no assets, renders offline.
-const RARITY_C={common:'#3fd07f',rare:'#5aa9f0',epic:'#b07cff',legendary:'#f5a623'};
+const RARITY_C={common:'#66ccad',rare:'#5aa9f0',epic:'#865aed',legendary:'#ebaf47'};
 const RARITY_LBL={common:'Common',rare:'Rare',epic:'Epic',legendary:'Legendary'};
 const RARITY_RANK={legendary:0,epic:1,rare:2,common:3};
 function rarCol(r){ return RARITY_C[r]||RARITY_C.common; }
