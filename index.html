@@ -2722,11 +2722,15 @@ function figureSVG(slug,ac){
   // Bright highlighted stars — persistent, ON TOP of both phases (the registration
   // anchors you always see, brighter than the background starfield). Glows share ONE
   // blur group + layered circles (no per-star filters) so the stage stays light.
+  // Each star is a white 4-point SPARKLE (not a flat dot) over a soft rarity halo, so
+  // the overlay reads as starlight rather than green pips.
+  const _spark=(cx,cy,R)=>{ const i=R*0.28;
+    return `M${cx.toFixed(2)} ${(cy-R).toFixed(2)} L${(cx+i).toFixed(2)} ${(cy-i).toFixed(2)} L${(cx+R).toFixed(2)} ${cy.toFixed(2)} L${(cx+i).toFixed(2)} ${(cy+i).toFixed(2)} L${cx.toFixed(2)} ${(cy+R).toFixed(2)} L${(cx-i).toFixed(2)} ${(cy+i).toFixed(2)} L${(cx-R).toFixed(2)} ${cy.toFixed(2)} L${(cx-i).toFixed(2)} ${(cy-i).toFixed(2)} Z`; };
   let glows='',cores='';
-  for(const p of pts){ const r=Math.max(1.6,3.1-p.mag*0.34), x=p.x.toFixed(1), y=p.y.toFixed(1);
-    glows+=`<circle cx="${x}" cy="${y}" r="${(r*2.6).toFixed(1)}" fill="${ac}" opacity="0.4"/>`;
-    cores+=`<circle cx="${x}" cy="${y}" r="${(r*1.5).toFixed(1)}" fill="${ac}" opacity="0.55"/><circle cx="${x}" cy="${y}" r="${r.toFixed(1)}" fill="#fff"/>`; }
-  let stars=`<g class="fig-stars"><g style="filter:blur(2.5px)">${glows}</g>${cores}</g>`;
+  for(const p of pts){ const r=Math.max(1.7,3.3-p.mag*0.36), R=r*2.2;
+    glows+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(r*2.3).toFixed(1)}" fill="${ac}" opacity="0.33"/>`;
+    cores+=`<path d="${_spark(p.x,p.y,R)}" fill="#fff"/><circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(r*0.55).toFixed(1)}" fill="#fff"/>`; }
+  let stars=`<g class="fig-stars"><g style="filter:blur(2.2px)">${glows}</g>${cores}</g>`;
   // Persistent anchor label (names the brightest star so the figure stays legible).
   let lab='';
   if(ap){ const ty=Math.max(11,ap.y-6); lab=`<text x="${ap.x.toFixed(1)}" y="${ty.toFixed(1)}" fill="#cfe0ff" font-size="10" text-anchor="middle" style="font-family:'DM Mono',monospace">${anc[0]}</text>`; }
