@@ -68,16 +68,24 @@ the heroic frame.
   4-point sparkles) overlay on top via the matched **`REG_SKEL_PAD` (35.156)** inset.
   **Exception:** `centaurus`, `sagittarius` and `carina` were later rebuilt to accurate
   standard star charts and have **no `HERO_ART` entry** — they render the clean static chart
-  (`.sky-hero-stage:not(.has-hero) .fig-chart` holds the lines) while their astral form is
+  (`.sky-hero-stage.chart-only .fig-chart` holds the lines) while their astral form is
   sourced separately; re-add the slug to `HERO_ART` to overlay art. The dim-aura
   + enriched-`.fig-hero` + **`HERO_AURA_ADJ`** path is the now-unused legacy fallback. Full
   pipeline + verify recipe (incl. the registration-varies caveat) in
   `CLAUDE.md`; missing/404 art drops `.has-hero` and the figure shows on the dark bg.
+  **The 10 newer southern/zodiac figures (Musca, Lupus, Ara, Tucana, Phoenix, Puppis, Columba,
+  Pegasus, Canis Minor, Capricornus) are NOT in `REG_HERO`/`HERO_ART`** — they render the
+  original **chart↔luminous-figure crossfade** (no painting); the `chart-only` class is reserved
+  for the retired reg-without-art trio.
   The astral chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
   not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See
   `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
-- **Planets / deep sky / events** keep the small crest (`.sky-modal-crest`), the same
-  64×64 `cardArt` pair scaled up, morphing once on open.
+- **Planets / deep sky / events** with a **`CARD_PHOTO[slug]`** entry get a full-width
+  **`.sky-photo-stage`** (3:2): the Flux astrophotograph (`night-photos/<slug>.jpg`) eases +
+  fades in over the morphing emblem crest, which acts as the placeholder. Without a photo they
+  keep just the small crest (`.sky-modal-crest`), the same 64×64 `cardArt` pair scaled up,
+  morphing once on open. (These photos are pure text-to-image — no skeleton/registration; a
+  nebula photo just has to look like that nebula. Pipeline + foot-guns in `CLAUDE.md`.)
 
 ## 3. The generators (don't fork them)
 
