@@ -60,13 +60,14 @@ the heroic frame.
   (the same stars lit into a glowing rarity figure) — from **one `projFigure` projection, so the
   stars never move between phases**. `.fig-hero` is drawn as a **luminous astral *form*** —
   volumetric glowing limbs (a stack of blurred rarity strokes) + bright starlight core + radiant
-  star-orbs — so the figure ON the real stars carries the match. **Registered-hero figures
-  (`REG_HERO`, Scorpius first)** go further: a creature-shaped skeleton built from the real stars
-  is fed to Flux (which DOES register when given a creature, not bare dots), and the resulting
-  spectral painting shows at **full strength** (`.reg`, `heroAuraFull`) with `.fig-hero` empty —
-  the real stars overlay on top via the matched **`REG_PAD`** inset and land exactly on the
-  painting's stars. Legacy figures keep the **dim aura** oriented behind the enriched `.fig-hero`
-  by **`HERO_AURA_ADJ[slug]`** (a CSS flip/scale/shift). Full pipeline + verify recipe in
+  star-orbs — so the figure ON the real stars carries the match. **ALL 18 constellations now use
+  the registered-hero pipeline (`REG_HERO`):** a creature-shaped skeleton built from the real
+  stars is fed to Flux (which DOES register when given a creature, not bare dots), and the
+  resulting spectral painting (a luminous cyan-white creature + Milky-Way/horizon) shows at
+  **full strength** (`.reg`, `heroAuraFull`) with `.fig-hero` empty — the real stars (white
+  4-point sparkles) overlay on top via the matched **`REG_SKEL_PAD` (35.156)** inset. The dim-aura
+  + enriched-`.fig-hero` + **`HERO_AURA_ADJ`** path is the now-unused legacy fallback. Full
+  pipeline + verify recipe (incl. the registration-varies caveat) in
   `CLAUDE.md`; missing/404 art drops `.has-hero` and the figure shows on the dark bg.
   The astral chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
   not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See

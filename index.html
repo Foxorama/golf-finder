@@ -2678,8 +2678,13 @@ function figureAnchor(f){
 // top so they land EXACTLY on the painting's stars. `REG_HERO` marks figures wired this
 // way; `REG_PAD` is the projection inset (in the 300-px box) matching the skeleton the
 // painting was built from, so the overlay registers pixel-exact. Scorpius is the proof.
-const REG_HERO={scorpius:1};
-const REG_PAD={scorpius:35.16}; // = skeleton pad 180 / (1536/300)
+const REG_HERO={scorpius:1,crux:1,centaurus:1,orion:1,'canis-major':1,sagittarius:1,leo:1,
+  taurus:1,gemini:1,carina:1,'triangulum-australe':1,grus:1,vela:1,corvus:1,cygnus:1,lyra:1,
+  aquila:1,virgo:1};
+// Every skeleton is built at 1536×1024 with pad 180, so the in-app overlay uses the
+// matching inset (180 ÷ 5.12 = 35.156 in the 300-px box) — its real stars then land
+// exactly on the painting's stars for ALL registered figures.
+const REG_SKEL_PAD=35.156;
 function isRegHero(slug){ return !!REG_HERO[slug]; }
 // Registered figure for the hero stage. Projects the figure's FULL real-star list
 // (cos-dec-corrected RA, north up) into the 3:2 stage box and draws it as two
@@ -2695,7 +2700,7 @@ function figureSVG(slug,ac){
   const reg=isRegHero(slug);
   // Registered-hero figures use the projection inset the Flux painting was built from,
   // so the overlaid real stars land exactly on the painting's stars.
-  const W=300,H=200,pad=REG_PAD[slug]||30;
+  const W=300,H=200,pad=reg?REG_SKEL_PAD:30;
   const {pts,lines}=projFigure(f,W,H,pad);
   const anc=figureAnchor(f); let ai=0; for(let i=0;i<f.s.length;i++){ if(f.s[i][0]===anc[0]){ ai=i; break; } }
   const ap=pts[ai];
