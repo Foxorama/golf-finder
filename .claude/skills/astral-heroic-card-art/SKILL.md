@@ -58,11 +58,13 @@ the heroic frame.
   star-figure (`figureSVG(slug,ac)`) sits **on top**. That figure renders the constellation's
   **full real-star list** as two pixel-aligned layers — `.fig-chart` (faint chart) ↔ `.fig-hero`
   (the same stars lit into a glowing rarity figure) — from **one `projFigure` projection, so the
-  stars never move between phases**. The shared locked skeleton is the design: the identical
-  star-points ride over the painting (the "exact match" — see why the asterism *is* the figure).
-  The fixed raster can't register pixel-exact, so it's the aura and the crisp figure carries the
-  meaning; missing/404 art drops `.has-hero` and the figure shows on the dark bg. The astral
-  chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
+  stars never move between phases**. `.fig-hero` is drawn as a **luminous astral *form*** —
+  volumetric glowing limbs (a stack of blurred rarity strokes) + bright starlight core + radiant
+  star-orbs — so the figure ON the real stars carries the match. The painting can't register
+  pixel-exact (fixed raster — and Flux text-to-image won't pose onto exact stars), so it's the
+  aura, oriented behind the figure per-figure by **`HERO_AURA_ADJ[slug]`** (a CSS flip/scale/shift
+  on `.sky-hero-aura`); missing/404 art drops `.has-hero` and the figure shows on the dark bg.
+  The astral chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
   not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See
   `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
 - **Planets / deep sky / events** keep the small crest (`.sky-modal-crest`), the same

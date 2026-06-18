@@ -63,11 +63,23 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   top. That figure draws the constellation's **full real-star list** as two pixel-aligned
   layers — `.fig-chart` (faint astral chart) crossfading into `.fig-hero` (the same stars
   lit into a glowing rarity figure) — **both from one `projFigure` projection, so the stars
-  never move between phases**. That shared, locked skeleton is the whole point: the same
-  star-points ride on top of the painting (the "exact match" — see why the Teapot *is* the
-  archer). The painting's own painted anatomy only roughly aligns (it's fixed raster — can't
-  register pixel-exact), which is why it's the aura and the crisp figure carries the meaning;
-  Orion happens to line up beautifully, Sagittarius is looser. If the `<img>` 404s, `.has-hero`
+  never move between phases**. `.fig-hero` is drawn as a **luminous astral *form*** — the
+  limbs given volume by a stack of blurred rarity-coloured strokes (outer aura → volume →
+  body) under a bright starlight core, with radiant orbs at each star — so the thing sitting
+  exactly on the real stars reads as the figure itself, and it (not the painting) carries the
+  match. **Hard-won finding: Flux text-to-image CANNOT pose a painting onto the exact stars.**
+  Even `flux2_max` fed the real star-skeleton as a structural reference just paints a generic,
+  well-composed figure (often facing the wrong way) — and the real stars don't form a tidy
+  figure anyway (that's the point). So don't regenerate art hoping it'll register; instead the
+  enriched `.fig-hero` is the true match, and the painting is oriented behind it by
+  **`HERO_AURA_ADJ[slug]`** — a per-figure CSS transform on `.sky-hero-aura`
+  (`scaleX(-1)`/`scale`/`translate`) to flip/scale/shift the gross pose into place (most
+  existing paintings already orient fine — Orion & Leo line up beautifully; Sagittarius needed
+  a flip + its art swapped for a cleaner regen). To regenerate a painting anyway: render the
+  figure skeleton with GDI+ in the *exact* `projFigure` framing (1536×1024 = 5.12× the
+  300×200 box, pad 153.6), upload via the Flux MCP `request_upload_url` (PUT works on
+  `app.bfl.ai`; force TLS1.2 in PS5.1), `generate_image(flux2_max)`, download the result
+  (`get_history` → `image_url`) to `night-heroes/<slug>.jpg`. If the `<img>` 404s, `.has-hero`
   drops and the figure shows on the dark bg. See `night-heroes/HERO-ART-SPEC.md`. The whole
   visual style — and how to add a new card so it matches — is documented in the
   **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords

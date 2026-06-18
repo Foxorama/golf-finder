@@ -2682,11 +2682,23 @@ function figureSVG(slug,ac){
   for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; chart+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="rgba(190,215,255,0.5)" stroke-width="1" stroke-linecap="round"/>`; }
   for(const p of pts){ const r=Math.max(1,2.4-p.mag*0.32); chart+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#eaf2ff" opacity="0.92"/>`; }
   chart+='</g>';
-  // Heroic figure layer (the "after"): soft halo + bright sinew + glowing orbs.
+  // Heroic figure layer (the "after"): the constellation drawn as a luminous astral
+  // FORM sitting exactly on the real stars — rarity-coloured limbs given volume by a
+  // stack of blurred strokes (outer aura → volume → body) under a bright starlight
+  // core, with radiant orbs at each star. This is the registered figure that always
+  // matches; the painting behind it is only mood.
+  const strokeLayer=(w,col,op,blur,glow)=>{ let t='';
+    for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; t+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`; }
+    const f=[]; if(blur)f.push(`blur(${blur}px)`); if(glow)f.push(`drop-shadow(0 0 3px ${ac})`);
+    return `<g opacity="${op}"${f.length?` style="filter:${f.join(' ')}"`:''}>${t}</g>`; };
   let hero='<g class="fig-hero">';
-  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; hero+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${ac}" stroke-width="5" stroke-linecap="round" opacity="0.16"/>`; }
-  for(const e of lines){ const a=pts[e[0]],b=pts[e[1]]; if(!a||!b)continue; hero+=`<line x1="${a.x.toFixed(1)}" y1="${a.y.toFixed(1)}" x2="${b.x.toFixed(1)}" y2="${b.y.toFixed(1)}" stroke="${ac}" stroke-width="1.7" stroke-linecap="round" opacity="0.95" style="filter:drop-shadow(0 0 3px ${ac})"/>`; }
-  for(const p of pts){ const r=Math.max(1.5,3-p.mag*0.34); hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" style="filter:drop-shadow(0 0 ${(r*1.8).toFixed(1)}px ${ac})"/>`; }
+  hero+=strokeLayer(15,ac,0.10,4,false);   // outer aura
+  hero+=strokeLayer(8,ac,0.20,1.5,false);  // volume
+  hero+=strokeLayer(3.4,ac,0.60,0,false);  // body
+  hero+=strokeLayer(1.4,'#eaf6ff',0.95,0,true); // bright starlight core
+  for(const p of pts){ const r=Math.max(1.6,3.1-p.mag*0.34);
+    hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${(r*2.2).toFixed(1)}" fill="${ac}" opacity="0.5" style="filter:blur(2px)"/>`;
+    hero+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${r.toFixed(1)}" fill="#fff" style="filter:drop-shadow(0 0 ${(r*1.6).toFixed(1)}px ${ac})"/>`; }
   hero+='</g>';
   // Persistent anchor label (names the brightest star so the figure stays legible).
   let lab='';
@@ -4148,6 +4160,13 @@ const HERO_ART={
   cygnus:'night-heroes/cygnus.jpg', lyra:'night-heroes/lyra.jpg',
   aquila:'night-heroes/aquila.jpg', virgo:'night-heroes/virgo.jpg'
 };
+// Per-figure CSS transform on the painting AURA so its figure sits roughly behind
+// the registered star-figure (the paintings are fixed raster — they can't register
+// pixel-exact, so this just flips/scales/shifts the gross pose into place). Tuned by
+// eye against the overlay. `scaleX(-1)` mirrors a figure that faces the wrong way.
+const HERO_AURA_ADJ={
+  sagittarius:'scaleX(-1) scale(1.04)'
+};
 // Build + open the story sheet for a sky object (constellation or phenomenon).
 function renderStoryBody(slug,lat,lng){
   const L=SKY_LORE[slug]; if(!L) return '';
@@ -4163,7 +4182,7 @@ function renderStoryBody(slug,lat,lng){
     // exists). No loading="lazy": the modal (and this <img>) only exist once the
     // card is tapped, so the fetch is already on-demand; lazy would stop it loading
     // inside the fixed-position sheet. The SW runtime-caches it after the first open.
-    if(art) s+=`<img class="sky-hero-aura" src="${art}" alt="" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();"><div class="sky-hero-veil"></div>`;
+    if(art){ const adj=HERO_AURA_ADJ[slug], ast=adj?` style="transform:${adj};transform-origin:center;"`:''; s+=`<img class="sky-hero-aura"${ast} src="${art}" alt="" decoding="async" onerror="var st=this.closest('.sky-hero-stage'); if(st) st.classList.remove('has-hero'); this.remove();"><div class="sky-hero-veil"></div>`; }
     // Registered star-figure on top — same projection both phases, so the stars
     // stay locked over the aura (exact match).
     s+=`<div class="sky-hero-fig">${figureSVG(slug,ac)}</div>`;
