@@ -60,10 +60,14 @@ the heroic frame.
   (the same stars lit into a glowing rarity figure) — from **one `projFigure` projection, so the
   stars never move between phases**. `.fig-hero` is drawn as a **luminous astral *form*** —
   volumetric glowing limbs (a stack of blurred rarity strokes) + bright starlight core + radiant
-  star-orbs — so the figure ON the real stars carries the match. The painting can't register
-  pixel-exact (fixed raster — and Flux text-to-image won't pose onto exact stars), so it's the
-  aura, oriented behind the figure per-figure by **`HERO_AURA_ADJ[slug]`** (a CSS flip/scale/shift
-  on `.sky-hero-aura`); missing/404 art drops `.has-hero` and the figure shows on the dark bg.
+  star-orbs — so the figure ON the real stars carries the match. **Registered-hero figures
+  (`REG_HERO`, Scorpius first)** go further: a creature-shaped skeleton built from the real stars
+  is fed to Flux (which DOES register when given a creature, not bare dots), and the resulting
+  spectral painting shows at **full strength** (`.reg`, `heroAuraFull`) with `.fig-hero` empty —
+  the real stars overlay on top via the matched **`REG_PAD`** inset and land exactly on the
+  painting's stars. Legacy figures keep the **dim aura** oriented behind the enriched `.fig-hero`
+  by **`HERO_AURA_ADJ[slug]`** (a CSS flip/scale/shift). Full pipeline + verify recipe in
+  `CLAUDE.md`; missing/404 art drops `.has-hero` and the figure shows on the dark bg.
   The astral chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
   not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See
   `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
