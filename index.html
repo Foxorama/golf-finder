@@ -3172,7 +3172,37 @@ const DEEPSKY=[
    rows:[
      ['What you’re seeing','A grand-design spiral ~15 million light-years away (M83), a prolific maker of supernovae, turned face-on so its pinwheel arms show.'],
      ['How to find it','Between Hydra and Centaurus, near the star Menkent. A round, soft glow in binoculars; its arms emerge in a telescope.'],
-     ['Best from SEQ','Autumn–winter evenings.']]}
+     ['Best from SEQ','Autumn–winter evenings.']]},
+  {slug:'m7',type:'open',n:'Ptolemy Cluster',icon:'✨',ra:268.45,dec:-34.79,vis:8,rar:'rare',
+   blurb:'A big, bright naked-eye star cluster in the sting of Scorpius — catalogued by Ptolemy almost 2,000 years ago.',
+   rows:[
+     ['What you’re seeing','A loose swarm of around 80 hot young stars (M7 / NGC 6475), about 980 light-years away, sprawled across nearly the width of the full Moon.'],
+     ['How to find it','Just off the stinger of Scorpius, in one of the richest parts of the Milky Way. An obvious misty patch to the naked eye; a glittering field in binoculars.'],
+     ['Best from SEQ','Winter evenings (Jun–Aug), riding high overhead.']]},
+  {slug:'ic2602',type:'open',n:'Southern Pleiades',icon:'💫',ra:160.6,dec:-64.4,vis:8,rar:'rare',
+   blurb:'The “Southern Pleiades” — a brilliant naked-eye cluster wrapped around the star Theta Carinae.',
+   rows:[
+     ['What you’re seeing','A bright young open cluster (IC 2602) about 480 light-years away, its leading star Theta Carinae shining at third magnitude amid a scatter of blue suns.'],
+     ['How to find it','High in the Carina Milky Way, not far from the Southern Cross and the Eta Carinae Nebula. Easy naked-eye; lovely in binoculars.'],
+     ['Best from SEQ','Summer–autumn evenings, high in the south.']]},
+  {slug:'ngc3532',type:'open',n:'Wishing Well Cluster',icon:'🌟',ra:166.4,dec:-58.75,vis:8,rar:'rare',
+   blurb:'A dazzling river of stars in Carina — and the very first object observed by the Hubble Space Telescope.',
+   rows:[
+     ['What you’re seeing','One of the finest open clusters in the sky (NGC 3532), around 400 stars some 1,300 light-years away, said to look like silver coins shimmering at the bottom of a wishing well.'],
+     ['How to find it','In a brilliant stretch of the Carina Milky Way near the Eta Carinae Nebula. A bright elongated glow to the eye; superb in binoculars.'],
+     ['Best from SEQ','Summer–autumn evenings, high in the south.']]},
+  {slug:'helix',type:'nebula',n:'Helix Nebula',icon:'👁️',ra:337.41,dec:-20.84,vis:10,rar:'epic',eye:'binoc',
+   blurb:'The “Eye of God” — one of the closest and largest planetary nebulae, a dying Sun-like star’s last gasp.',
+   rows:[
+     ['What you’re seeing','Glowing shells of gas (NGC 7293) thrown off by a dying star ~650 light-years away, with the hot white-dwarf core at the centre — nearly the width of the full Moon, but faint.'],
+     ['How to find it','In dim Aquarius, below the Capricornus stars. A large, ghostly ring — it needs a dark sky and binoculars or a low-power telescope; tricky but rewarding.'],
+     ['Best from SEQ','Spring evenings (Sep–Nov), high in the north.']]},
+  {slug:'sombrero',type:'galaxy',n:'Sombrero Galaxy',icon:'🌀',ra:189.998,dec:-11.623,vis:10,rar:'epic',eye:'binoc',
+   blurb:'A bright edge-on galaxy crossed by a dark dust lane — the brim of a cosmic hat.',
+   rows:[
+     ['What you’re seeing','A spiral galaxy (M104) about 30 million light-years away, seen nearly edge-on, with a huge glowing bulge, a sharp lane of dust, and a billion-solar-mass black hole at its heart.'],
+     ['How to find it','On the Virgo–Corvus border, west of bright Spica. A small oval glow in binoculars; the dust lane shows in a telescope under a dark sky.'],
+     ['Best from SEQ','Autumn–winter evenings, high in the north.']]}
 ];
 // Solstices & equinoxes (approx fixed dates — ample for a two-week heads-up).
 const SEASON_MARKERS=[
@@ -3191,12 +3221,12 @@ const SEASON_MARKERS=[
 ];
 // Curated headline one-offs (eclipses, etc.) — surfaced only inside their 14-day window.
 const SKY_EVENTS=[
-  {slug:'evt-ple-2026-08',name:'Partial Lunar Eclipse',date:[2026,8,28],icon:'🌗',rar:'legendary',
-   blurb:'The Moon clips into Earth’s shadow before dawn — a dark bite out of the lunar disc, visible from eastern Australia.',
+  {slug:'evt-ple-2026-08',name:'Partial Lunar Eclipse',date:[2026,8,28],icon:'🌗',rar:'epic',
+   blurb:'The Moon clips into Earth’s shadow — a dark bite out of the lunar disc, seen across the Americas, Europe and Africa. Not visible from Australia.',
    rows:[
      ['What you’re seeing','Part of the Moon passes through the umbra, Earth’s deep shadow, dimming and reddening that edge of the disc.'],
-     ['How to watch','No equipment needed — just a clear view of the Moon. Eclipses unfold slowly over a couple of hours.'],
-     ['From SEQ','Visible low in the west before dawn on the date shown, weather permitting.']]},
+     ['Where','The night side of Earth during the eclipse — the Americas, the Atlantic, Europe and Africa. Australia is in daylight, so the Moon is below the horizon here.'],
+     ['From SEQ','Not visible from here — one to catch on a live stream. Eastern Australia’s best recent lunar eclipse was the total one back in March 2026.']]},
   {slug:'evt-tse-2027-08',name:'Total Solar Eclipse',date:[2027,8,2],icon:'🌑',rar:'legendary',
    blurb:'The “eclipse of the century” — over six minutes of totality across North Africa and the Middle East. Not visible from Australia.',
    rows:[
@@ -4369,6 +4399,7 @@ const CARD_PHOTO=Object.fromEntries([
   // deep sky
   'etacarina','orionneb','pleiades','omegacen','tarantula','lagoon',
   'centaurusa','sculptor','m83','jewelbox','47tuc','coalsack',
+  'm7','ic2602','ngc3532','helix','sombrero',
   // naked-eye galaxies / Milky Way
   'milkyway','magellanic',
   // planets + Moon
