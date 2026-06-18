@@ -435,7 +435,7 @@ body.sky-full-on{overflow:hidden;}
 .sky-hero-stage .fig-chart{animation:morphChart 4.4s ease-in-out .3s infinite alternate;}
 .sky-hero-stage .fig-hero{opacity:0;animation:morphHero 4.4s ease-in-out .3s infinite alternate;}
 /* No hero art (Centaurus/Sagittarius/Carina): hold the accurate chart static, don't morph it away. */
-.sky-hero-stage:not(.has-hero) .fig-chart{animation:none;opacity:1;}
+.sky-hero-stage.chart-only .fig-chart{animation:none;opacity:1;}
 .sky-hero-stage.has-hero .sky-hero-aura{animation:heroAura 4.4s ease-in-out .3s infinite alternate;}
 @keyframes heroAura{0%,16%{opacity:0;}70%,100%{opacity:0.62;}}
 /* Registered spectral hero (Flux creature built on the real stars): shown at FULL
@@ -2420,7 +2420,7 @@ const STAR_FIGURES=[
   {n:'Scorpius',s:[
     ['Dschubba',240.083,-22.622,2.3],['Acrab',241.359,-19.805,2.6],
     ['Pi Sco',239.713,-26.114,2.9],['Antares',247.352,-26.432,1.1],
-    ['Tau Sco',248.971,-28.216,2.8],['Epsilon Sco',252.968,-34.293,2.3],
+    ['Tau Sco',248.971,-28.216,2.8],['Epsilon Sco',252.541,-34.293,2.3],
     ['Mu Sco',253.084,-38.017,3.0],['Zeta Sco',253.648,-42.362,3.6],
     ['Eta Sco',258.038,-43.239,3.3],['Sargas',264.330,-42.998,1.9],
     ['Iota Sco',266.896,-40.127,3.0],['Girtab',265.622,-39.030,2.4],
@@ -2476,8 +2476,8 @@ const STAR_FIGURES=[
    l:[[0,1],[1,2],[2,0]]},
   {n:'Grus',s:[
     ['Alnair',332.058,-46.961,1.7],['Tiaki',340.667,-46.885,2.1],
-    ['Aldhanab',328.483,-37.365,3.0],['Delta Gruis',337.658,-43.495,3.5],
-    ['Epsilon Gruis',343.155,-51.317,3.5]],
+    ['Aldhanab',328.483,-37.365,3.0],['Delta Gruis',337.318,-43.495,4.0],
+    ['Epsilon Gruis',342.139,-51.317,3.5]],
    l:[[2,0],[0,3],[3,1],[1,4]]},
   {n:'Vela',s:[
     ['Regor',122.383,-47.337,1.8],['Delta Vel',131.176,-54.709,1.9],
@@ -2511,7 +2511,76 @@ const STAR_FIGURES=[
     // The maiden's arms/leg: η Zaniah (west arm), ι Syrma + 109 Vir (east).
     ['Zaniah',184.976,-0.667,3.9],['Syrma',214.004,-6.000,4.1],
     ['109 Vir',221.562,1.893,3.7]],
-   l:[[0,4],[4,1],[1,3],[3,2],[5,6],[6,1],[4,7],[7,8]]}
+   l:[[0,4],[4,1],[1,3],[3,2],[5,6],[6,1],[4,7],[7,8]]},
+  {n:'Musca',s:[
+    // The Fly — a small bright kite just south of Crux. J2000, catalog-checked (≤0.01°).
+    ['Alpha Mus',189.296,-69.136,2.7],['Beta Mus',191.570,-68.108,3.0],
+    ['Delta Mus',195.568,-71.549,3.6],['Gamma Mus',188.117,-72.133,3.8],
+    ['Epsilon Mus',184.392,-67.961,4.1],['Lambda Mus',176.400,-66.728,3.6]],
+   // body diamond α-β-δ-γ, with ε and λ trailing west as the head.
+   l:[[4,0],[0,1],[1,2],[2,3],[3,0],[4,5]]},
+  {n:'Lupus',s:[
+    // The Wolf — a bright but tangled figure between Centaurus and Scorpius. J2000.
+    ['Alpha Lup',220.482,-47.388,2.3],['Beta Lup',224.633,-43.134,2.7],
+    ['Gamma Lup',233.785,-41.167,2.8],['Delta Lup',230.343,-40.647,3.2],
+    ['Epsilon Lup',230.670,-44.690,3.4],['Zeta Lup',228.070,-52.099,3.4],
+    ['Eta Lup',240.030,-38.397,3.4]],
+   // back arc α-β-δ-γ-η; body α-ε-γ; ζ the hind leg.
+   l:[[0,1],[1,3],[3,2],[2,6],[0,4],[4,2],[5,0]]},
+  {n:'Ara',s:[
+    // The Altar — two upright sides joined by a bar, below Scorpius. J2000.
+    ['Alpha Ara',262.960,-49.876,2.95],['Beta Ara',261.325,-55.530,2.85],
+    ['Gamma Ara',261.349,-56.378,3.3],['Delta Ara',262.770,-60.684,3.6],
+    ['Epsilon Ara',254.895,-53.160,4.1],['Zeta Ara',254.654,-55.990,3.1],
+    ['Eta Ara',252.446,-59.041,3.8]],
+   // right side α-β-γ-δ, top bar α-ε, left side ε-ζ-η.
+   l:[[0,1],[1,2],[2,3],[0,4],[4,5],[5,6]]},
+  {n:'Tucana',s:[
+    // The Toucan — a faint southern bird carrying 47 Tuc and the SMC. J2000.
+    ['Alpha Tuc',334.625,-60.259,2.9],['Gamma Tuc',349.360,-58.240,4.0],
+    ['Zeta Tuc',5.013,-64.870,4.2],['Beta Tuc',7.886,-62.958,4.4],
+    ['Epsilon Tuc',359.978,-65.577,4.5]],
+   l:[[0,1],[1,3],[3,2],[2,4],[4,0]]},
+  {n:'Phoenix',s:[
+    // The Phoenix — bright Ankaa heads a small southern bird. J2000.
+    ['Ankaa',6.571,-42.306,2.4],['Beta Phe',16.521,-46.718,3.3],
+    ['Gamma Phe',22.091,-43.318,3.4],['Delta Phe',22.810,-49.070,3.9],
+    ['Epsilon Phe',2.350,-45.747,3.9],['Kappa Phe',6.550,-43.680,3.9]],
+   // ε wing, α head, down to κ then body β branching to γ and δ.
+   l:[[4,0],[0,5],[5,1],[1,2],[1,3]]},
+  {n:'Puppis',s:[
+    // The Stern — the third piece of the old ship Argo, riding the Milky Way. J2000.
+    ['Naos',120.896,-40.003,2.2],['Pi Pup',109.286,-37.097,2.7],
+    ['Rho Pup',121.886,-24.304,2.8],['Xi Pup',117.323,-24.860,3.3],
+    ['Tau Pup',102.480,-50.610,2.9],['Nu Pup',99.440,-43.200,3.2],
+    ['Sigma Pup',112.310,-43.300,3.3]],
+   l:[[4,5],[5,6],[6,0],[6,1],[1,3],[3,2],[2,0]]},
+  {n:'Columba',s:[
+    // The Dove — a quiet little bird just south of Orion and Lepus. J2000.
+    ['Phact',84.912,-34.074,2.6],['Wazn',87.740,-35.769,3.1],
+    ['Gamma Col',89.385,-35.283,4.4],['Delta Col',95.528,-33.437,3.9],
+    ['Epsilon Col',82.810,-35.470,3.9],['Eta Col',89.790,-42.820,4.0]],
+   l:[[4,0],[0,1],[1,2],[2,3],[1,5]]},
+  {n:'Pegasus',s:[
+    // The Winged Horse — the Great Square plus the neck to Enif. J2000.
+    ['Markab',346.190,15.205,2.5],['Scheat',345.944,28.083,2.4],
+    ['Algenib',3.309,15.184,2.8],['Alpheratz',2.097,29.090,2.1],
+    ['Enif',326.046,9.875,2.4],['Zeta Peg',340.366,10.831,3.4],
+    ['Theta Peg',332.550,6.198,3.5],['Eta Peg',340.750,30.221,2.9]],
+   // Great Square α-β-Alpheratz-γ; neck α-ζ-θ-ε(Enif); foreleg β-η.
+   l:[[0,1],[1,3],[3,2],[2,0],[0,5],[5,6],[6,4],[1,7]]},
+  {n:'Canis Minor',s:[
+    // The Lesser Dog — just two stars, but one is brilliant Procyon. J2000.
+    ['Procyon',114.825,5.225,0.3],['Gomeisa',111.788,8.289,2.9]],
+   l:[[0,1]]},
+  {n:'Capricornus',s:[
+    // The Sea-Goat — a wide triangular grin of faint zodiac stars. J2000.
+    ['Deneb Algedi',326.760,-16.127,2.9],['Dabih',305.253,-14.781,3.1],
+    ['Algedi',304.514,-12.545,3.6],['Gamma Cap',325.023,-16.662,3.7],
+    ['Zeta Cap',321.667,-22.411,3.8],['Omega Cap',312.955,-26.919,4.1],
+    ['Psi Cap',311.523,-25.271,4.1],['Theta Cap',316.487,-17.232,4.1]],
+   // grin/triangle: left point α-β, top edge β-θ-δ, right tip δ-γ, bottom β-ψ-ω-ζ-δ.
+   l:[[2,1],[1,6],[6,5],[5,4],[4,0],[0,3],[0,7],[7,1]]}
 ];
 const STAR_LOOSE=[
   ['Canopus',95.988,-52.696,-0.7],['Achernar',24.429,-57.237,0.5],
@@ -2673,7 +2742,67 @@ const CONST_INFO={
     culture:'Linked to harvest goddesses across cultures; her brightest star Spica means “ear of wheat”. Toward her bowl lies the Virgo Cluster, a swarm of over a thousand galaxies tens of millions of light-years away.',
     find:'Find blue-white Spica to the north, then trace the faint Y of stars curving up and west from it.',
     season:'Autumn–winter evenings from SEQ (Apr–Jul), to the north.',
-    bright:'Spica — a close pair of hot blue stars whirling around each other every four days.'}
+    bright:'Spica — a close pair of hot blue stars whirling around each other every four days.'},
+  'Musca':{slug:'musca',abbr:'Mus',icon:'🪰',vis:6,rar:'rare',
+    meaning:'The Fly — a small, bright constellation tucked just south of the Southern Cross.',
+    culture:'One of the dozen southern constellations charted by the Dutch navigators Keyser and de Houtman in the 1590s; first drawn as “Apis” the Bee, it is the only insect among the 88 constellations.',
+    find:'Look just south of Crux for a compact kite of stars, led by Alpha and Beta Muscae, below the foot of the Southern Cross.',
+    season:'Circumpolar from SEQ — up every clear night, highest on autumn–winter evenings.',
+    bright:'Alpha Muscae, a hot blue-white star about 300 light-years away.'},
+  'Lupus':{slug:'lupus',abbr:'Lup',icon:'🐺',vis:6,rar:'rare',
+    meaning:'The Wolf — a knot of bright stars on the Milky Way, between Centaurus and Scorpius.',
+    culture:'An ancient constellation the Greeks saw as a wild beast speared by the neighbouring Centaur and carried toward the altar (Ara) just to the south.',
+    find:'Between the Pointers of Centaurus and the head of Scorpius — a scatter of second- and third-magnitude stars with no single bright leader.',
+    season:'Winter evenings from SEQ (Jun–Aug), high in the south.',
+    bright:'Alpha Lupi, a blue giant in the nearby Scorpius–Centaurus stellar association.'},
+  'Ara':{slug:'ara',abbr:'Ara',icon:'🔥',vis:6,rar:'rare',
+    meaning:'The Altar — two upright rows of stars just below the sting of Scorpius.',
+    culture:'In Greek myth the altar where the gods swore their alliance before overthrowing the Titans; the rising smoke was said to form the Milky Way. One of Ptolemy’s original 48 constellations.',
+    find:'Directly south of the curled tail of Scorpius — two short parallel lines of stars marking the altar’s sides.',
+    season:'Winter evenings from SEQ (Jun–Aug), riding high in the south.',
+    bright:'Beta Arae, an orange supergiant that just outshines Alpha.'},
+  'Tucana':{slug:'tucana',abbr:'Tuc',icon:'🐦',vis:6,rar:'rare',
+    meaning:'The Toucan — a faint southern bird, but the keeper of two deep-sky treasures.',
+    culture:'A “southern bird” introduced by Keyser and de Houtman in the 1590s, alongside Grus, Pavo and Phoenix.',
+    find:'Deep in the south toward the celestial pole. Its real draw is what it holds: the Small Magellanic Cloud and the brilliant globular cluster 47 Tucanae.',
+    season:'Circumpolar from SEQ; highest on spring evenings.',
+    bright:'Alpha Tucanae, an orange giant — though 47 Tuc beside the SMC is the real prize.'},
+  'Phoenix':{slug:'phoenix',abbr:'Phe',icon:'🔥',vis:6,rar:'rare',
+    meaning:'The Phoenix — the mythical firebird reborn from its ashes, set low in the southern sky.',
+    culture:'Charted by Keyser and de Houtman in the 1590s; the immortal bird appears in Greek, Egyptian, Persian and Chinese lore alike.',
+    find:'South of bright Fomalhaut and west of Achernar — a small bird-shape led by Ankaa, its one bright star.',
+    season:'Spring–summer evenings from SEQ (Oct–Dec), to the south.',
+    bright:'Ankaa (Alpha Phoenicis), an orange giant about 85 light-years away.'},
+  'Puppis':{slug:'puppis',abbr:'Pup',icon:'🚢',vis:6,rar:'common',
+    meaning:'The Stern — the poop deck of the great ship Argo, set in a rich field of the Milky Way.',
+    culture:'The largest fragment of the ancient ship Argo Navis, which astronomers broke into Carina (Keel), Vela (Sails) and Puppis (Stern). Its stars still carry Greek letters out of order, inherited from the original Argo.',
+    find:'East of brilliant Canopus and below Sirius — a wide spread led by hot blue Naos, awash with star clusters in binoculars.',
+    season:'Summer–autumn evenings from SEQ (Jan–Apr), high overhead.',
+    bright:'Naos (Zeta Puppis), one of the hottest, most luminous stars the naked eye can see.'},
+  'Columba':{slug:'columba',abbr:'Col',icon:'🕊️',vis:7,rar:'rare',
+    meaning:'The Dove — a small, gentle constellation just south of Orion and the Hare.',
+    culture:'Devised around 1600 for the dove Noah released from the Ark — or the dove that guided Jason’s Argo, fittingly placed near the old ship’s stars.',
+    find:'Below and right of Orion’s brilliant Rigel: a faint little bird led by Phact, between Canis Major and Eridanus.',
+    season:'Summer evenings from SEQ (Dec–Mar), passing high overhead.',
+    bright:'Phact (Alpha Columbae), a hot blue-white “runaway” star flung from the Orion region.'},
+  'Pegasus':{slug:'pegasus',abbr:'Peg',icon:'🐴',vis:7,rar:'common',
+    meaning:'The Winged Horse — its body marked by the huge, near-empty Great Square.',
+    culture:'The immortal winged stallion of Greek myth, sprung from the blood of Medusa and tamed by the hero Bellerophon. Seen from Australia the horse hangs upside-down low in the north.',
+    find:'Look north for the Great Square — four medium stars in a large, conspicuously empty box; the nose star Enif trails off to one side.',
+    season:'Spring evenings from SEQ (Sep–Nov), low to mid in the north.',
+    bright:'Enif (Epsilon Pegasi), an orange supergiant marking the horse’s muzzle.'},
+  'Canis Minor':{slug:'canis-minor',abbr:'CMi',icon:'🐶',vis:7,rar:'common',
+    meaning:'The Lesser Dog — barely more than two stars, but headed by brilliant Procyon.',
+    culture:'Orion’s smaller hunting hound, trailing Canis Major at the hunter’s heel. Procyon means “before the dog” — it rises just ahead of Sirius, the Dog Star.',
+    find:'A simple pair: dazzling Procyon and its fainter companion Gomeisa, north-east of Orion and east of Gemini.',
+    season:'Summer evenings from SEQ (Jan–Mar), to the north.',
+    bright:'Procyon — the eighth-brightest star in the sky, only 11 light-years away.'},
+  'Capricornus':{slug:'capricornus',abbr:'Cap',icon:'🐐',vis:6,rar:'rare',
+    meaning:'The Sea-Goat — an ancient zodiac figure, half goat and half fish.',
+    culture:'One of the oldest constellations, tied to the god Pan, who leapt into a river to escape the monster Typhon and grew a fish’s tail. The Sun’s southernmost point — the Tropic of Capricorn — takes its name.',
+    find:'A large, faint triangle between Sagittarius and Aquarius — best traced as a wide grin under a dark sky.',
+    season:'Winter–spring evenings from SEQ (Aug–Oct), to the north.',
+    bright:'Deneb Algedi (Delta Capricorni), an eclipsing binary at the goat’s tail.'}
 };
 // Attach slug/info onto each figure + index figures by slug for the mini-map.
 const FIG_BY_SLUG={};
@@ -4232,7 +4361,9 @@ function renderStoryBody(slug,lat,lng){
     // Registered-hero figures show their spectral Flux creature at FULL strength (it's
     // built ON the real stars, so it's the hero, not a dim mismatched aura) and skip the
     // per-figure flip/scale. Legacy figures keep the dim, orientation-nudged aura.
-    const reg=isRegHero(slug), art=HERO_ART[slug], cls=art?(reg?' has-hero reg':' has-hero'):'';
+    // art → layered hero stage; reg-without-art → clean static chart (chart-only);
+    // plain figure (no reg, no art) → the original chart↔luminous-figure crossfade.
+    const reg=isRegHero(slug), art=HERO_ART[slug], cls=art?(reg?' has-hero reg':' has-hero'):(reg?' chart-only':'');
     s+=`<div class="sky-hero-stage${cls}" style="--ac:${ac};" aria-hidden="true">`;
     // Flux painting as the background creature/aura + a vignette veil. No loading="lazy":
     // the modal (and this <img>) only exist once the card is tapped, so the fetch is
