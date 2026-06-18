@@ -105,7 +105,19 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   morphing them away). The astral form for them is being sourced separately — re-add the slug
   to `HERO_ART` to overlay it. Every figure star is nearest-neighbour-checked against
   `star-catalog-deep.json` (≤0.01°). See
-  `night-heroes/HERO-ART-SPEC.md`. The whole
+  `night-heroes/HERO-ART-SPEC.md`. **Non-constellation cards (deep sky, planets,
+  phenomena) get their own Flux imagery via `CARD_PHOTO[slug]` → `night-photos/<slug>.jpg`:**
+  a full-width 3:2 **`.sky-photo-stage`** that eases + fades a gorgeous AI astrophotograph in
+  (CSS `opacity`/`scale` transition on the `<img>` `load`) over the morphing emblem crest, which
+  serves as the placeholder. These are pure text-to-image (no skeleton/registration — a nebula
+  photo just has to look like that nebula), generated `flux2_max` 1536×1024 with prompts like
+  *"Deep-space astrophotography of <object>: …, no text, no labels, no constellation lines"*; a
+  missing/offline image adds `.no-photo` and removes itself, leaving the emblem. Lazy-fetched on
+  open and SW-runtime-cached (same as `HERO_ART`; they're **not** in the precache `SHELL`, so no
+  `CACHE` bump and default users don't download them). **Foot-gun:** an 8-image `generate_image`
+  batch routinely leaves 2–4 stuck `pending` that never reach `ready` — re-submit just those as a
+  fresh smaller batch; the originals don't complete. Download with `Invoke-WebRequest` forcing
+  TLS1.2 (`app.bfl.ai`). The whole
   visual style — and how to add a new card so it matches — is documented in the
   **`astral-heroic-card-art` skill** (`.claude/skills/`). Keep new figures' star coords
   real (J2000): wrong coords draw the wrong outline. **The astral chart shows the FULL

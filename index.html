@@ -446,6 +446,16 @@ body.sky-full-on{overflow:hidden;}
 .sky-hero-stage.reg.has-hero .sky-hero-aura{animation:heroAuraFull 4.4s ease-in-out .3s infinite alternate;}
 @keyframes heroAuraFull{0%,14%{opacity:0.12;}68%,100%{opacity:0.96;}}
 @media(prefers-reduced-motion:reduce){.sky-hero-stage .fig-chart{animation:none;opacity:0;}.sky-hero-stage .fig-hero{animation:none;opacity:1;}.sky-hero-stage.has-hero .sky-hero-aura{animation:none;opacity:0.62;}.sky-hero-stage.reg.has-hero .sky-hero-aura{animation:none;opacity:0.96;}}
+/* Photo stage — full-width Flux astrophotography for the non-constellation cards
+   (deep sky, planets, phenomena). The morphing emblem crest shows first as a
+   placeholder; the photo eases + fades in over it the moment it loads. A
+   missing/offline image adds .no-photo and removes itself, leaving the emblem. */
+.sky-photo-stage{position:relative;margin:16px 16px 4px;border-radius:16px;overflow:hidden;aspect-ratio:3/2;background:#070c1e;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--ac) 26%,transparent),0 0 28px -12px var(--ac);}
+.sky-photo-stage .sky-modal-crest{margin:0;width:128px;height:128px;}
+.sky-photo-stage .sky-photo-img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transform:scale(1.06);transition:opacity 1s ease,transform 1.5s cubic-bezier(.16,.7,.3,1);}
+.sky-photo-stage .sky-photo-img.loaded{opacity:1;transform:scale(1);}
+.sky-photo-stage .sky-photo-veil{position:absolute;inset:0;background:radial-gradient(125% 100% at 50% 42%,transparent 55%,rgba(6,10,26,0.5) 100%);pointer-events:none;}
+@media(prefers-reduced-motion:reduce){.sky-photo-stage .sky-photo-img{transition:opacity .01s;}}
 .sky-now{margin:11px 20px 2px;font-family:var(--mono);font-size:11.5px;color:#cfe0ff;background:rgba(143,184,232,0.13);border:1px solid rgba(143,184,232,0.26);border-radius:10px;padding:8px 11px;line-height:1.5;}
 .sky-modal-blurb{margin:14px 20px 4px;font-family:var(--sans);font-size:15px;font-weight:600;color:var(--tx);line-height:1.45;}
 .sky-sec{margin:14px 20px 0;}
@@ -4349,6 +4359,23 @@ const HERO_ART={
 const HERO_AURA_ADJ={
   sagittarius:'scaleX(-1) scale(1.04)'
 };
+// ── Flux astrophotography for the NON-constellation cards ────────────────────
+// Deep-sky objects, planets and phenomena have no star-figure, so their story
+// sheet shows a full-width photo stage: a gorgeous AI-rendered astrophotograph
+// (night-photos/<slug>.jpg) that eases + fades in over the morphing emblem the
+// moment it loads. Fetched lazily on open and SW-runtime-cached, so default users
+// don't download them; a missing/offline image just leaves the emblem crest.
+const CARD_PHOTO=Object.fromEntries([
+  // deep sky
+  'etacarina','orionneb','pleiades','omegacen','tarantula','lagoon',
+  'centaurusa','sculptor','m83','jewelbox','47tuc','coalsack',
+  // naked-eye galaxies / Milky Way
+  'milkyway','magellanic',
+  // planets + Moon
+  'jupiter','saturn','mars','venus','mercury','moon',
+  // phenomena
+  'aurora','meteors'
+].map(s=>[s,'night-photos/'+s+'.jpg']));
 // Build + open the story sheet for a sky object (constellation or phenomenon).
 function renderStoryBody(slug,lat,lng){
   const L=SKY_LORE[slug]; if(!L) return '';
@@ -4375,10 +4402,20 @@ function renderStoryBody(slug,lat,lng){
     s+=`<div class="sky-hero-fig">${figureSVG(slug,ac)}</div>`;
     s+=`</div>`;
   }else{
-    // Planet / deep sky / event: the small phasing emblem crest (chart → SVG heroic).
+    // Planet / deep sky / event. With a Flux photo: a full-width photo stage that
+    // eases the astrophotograph in over the morphing emblem placeholder. Without
+    // one: just the small phasing emblem crest (chart → SVG heroic).
     const ao={slug,rar,glyph:L.icon,icon:L.icon};
     if(L.dot){ ao.art='planet'; ao.dot=L.dot; ao.ring=(slug==='saturn'); }
-    s+=`<div class="sky-modal-crest" style="--ac:${ac};" aria-hidden="true">${cardArt(ao)}</div>`;
+    const photo=CARD_PHOTO[slug];
+    if(photo){
+      s+=`<div class="sky-photo-stage" style="--ac:${ac};" aria-hidden="true">`
+        +`<div class="sky-modal-crest">${cardArt(ao)}</div>`
+        +`<img class="sky-photo-img" src="${photo}" alt="" decoding="async" onload="this.classList.add('loaded')" onerror="var st=this.closest('.sky-photo-stage'); if(st) st.classList.add('no-photo'); this.remove();">`
+        +`<div class="sky-photo-veil"></div></div>`;
+    }else{
+      s+=`<div class="sky-modal-crest" style="--ac:${ac};" aria-hidden="true">${cardArt(ao)}</div>`;
+    }
   }
   s+=`<div class="sky-modal-hd">`;
   s+= L.dot ? `<span class="sky-modal-dot" style="background:${L.dot};color:${L.dot}"></span>`
