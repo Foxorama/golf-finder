@@ -86,12 +86,26 @@ the heroic frame.
   The astral chart must draw the **whole figure, not a bright sub-asterism** (Sagittarius = the full archer,
   not just the Teapot); verify any new star's J2000 coords against `star-catalog-deep.json`. See
   `night-heroes/HERO-ART-SPEC.md` for the figure art spec/prompt.
-- **Planets / deep sky / events** with a **`CARD_PHOTO[slug]`** entry get a full-width
-  **`.sky-photo-stage`** (3:2): the Flux astrophotograph (`night-photos/<slug>.jpg`) eases +
-  fades in over the morphing emblem crest, which acts as the placeholder. Without a photo they
-  keep just the small crest (`.sky-modal-crest`), the same 64×64 `cardArt` pair scaled up,
-  morphing once on open. (These photos are pure text-to-image — no skeleton/registration; a
-  nebula photo just has to look like that nebula. Pipeline + foot-guns in `CLAUDE.md`.)
+- **Planets / deep sky / events** use a procedural **locator star-map** as their "regular"
+  image (the non-constellation analogue of the constellation chart) — *where the object sits*,
+  unique per card. `skyLocus(slug)` picks a category, `_locInner` composes the SVG, and
+  `locatorHeroicSVG` (lit 64-px card thumbnail) / `locatorStageSVG` (300×200 modal map) wrap it.
+  Deep-sky maps plot the real J2000 coords against the embedded `SKY_SEED` field (+ naked-eye
+  `STAR_CATALOG` when loaded), auto-draw any seed constellation lines in frame, and add a
+  per-type highlight (`_locMarker`): galaxy = tilted spiral, globular = fuzzy ball, open =
+  brighter scattered stars, nebula = soft cloud, dark = void; `band`/`clouds` = Milky-Way swath /
+  Magellanic blobs; planets+Moon = a **Solar-System schematic** (`_locSolar` — six orbits, the
+  body at its real heliocentric angle); meteors = radiant streaks, ISS = horizon arc, conjunction
+  = pair on the ecliptic, aurora = curtains, full/new moon = phase disc. Every highlight wears a
+  dashed **reticle** "you-are-here" ring. These maps are deliberately **looser** than the
+  registered figures — they locate, not pixel-register. In the modal the full-width 3:2
+  **`.sky-photo-stage`** layers the `.sky-loc` map under the Flux photo; once the photo loads
+  (`.photo-in`) it **cross-fades map ↔ photo on one 4.4 s clock** (`morphChart`/`locPhoto`,
+  `infinite alternate`) — the same phasing as constellation cards. No `CARD_PHOTO` → `.loc-only`,
+  the map just holds. A slug `skyLocus` doesn't know falls back to the old emblem crest
+  (`.sky-modal-crest`, the 64×64 `cardArt` pair scaled up), so nothing regresses. (The Flux
+  photos are pure text-to-image — no skeleton/registration; a nebula photo just has to look like
+  that nebula. Pipeline + foot-guns in `CLAUDE.md`.)
 
 ## 3. The generators (don't fork them)
 
@@ -103,9 +117,12 @@ In `index.html`, in dependency order:
 - `glyphOutlineSVG` / `glyphHeroicSVG` — emoji-glyph phases (deep sky, events, moon).
 - `planetOutlineSVG` / `planetHeroicSVG` — disc (+Saturn ring) phases.
 - `_heroicSparks(sz,ac,seed)` — the shared rarity sparks.
+- `skyLocus(slug)` / `_locInner` / `_locMarker` / `_locSolar` / `locatorOutlineSVG` /
+  `locatorHeroicSVG` / `locatorStageSVG` — the locator star-map family (non-constellation
+  cards). `_locPatch` projects a sky patch from `SKY_SEED` (+`STAR_CATALOG`).
 - **`cardArt(o)`** — the dispatcher. Returns both `<svg>` layers. Picks the figure
-  path if `FIG_BY_SLUG[o.fig||o.slug]` exists, else the planet path if `o.art==='planet'`,
-  else the glyph path.
+  path if `FIG_BY_SLUG[o.fig||o.slug]` exists; else a **locator map** if `skyLocus(o.slug)`
+  is non-null (planets, deep sky, most events); else the planet disc / glyph emblem.
 - **`buildCard(o)`** — the one card template (art + head + rarity pill + optional
   upcoming pill + note). **Every card goes through this** — never emit `.acard`
   HTML by hand.
@@ -128,9 +145,13 @@ In `index.html`, in dependency order:
      targets (faint galaxies, small clusters) so switching depth "unlocks" them.
 3. Give it a rarity from §1 and add the slug to `skyRarity()`'s map if it is not a
    figure / DEEPSKY / SKY_EVENTS entry, so the modal crest is tinted correctly.
-4. That's it — `buildCard`/`cardArt` dress it automatically. Verify with the preview
-   tool (see CLAUDE.md): the loot colour, the phasing crest, and the right
-   visible-now / upcoming behaviour.
+4. That's it — `buildCard`/`cardArt` dress it automatically. A new DEEPSKY entry gets a
+   locator map for free from its `type` + `ra`/`dec`; a new planet/Moon is already covered.
+   A **new *event* kind** with no fixed sky position needs a `skyLocus(slug)` branch returning a
+   `kind` plus a small `_loc*` renderer (follow `_locArc`/`_locPair`), or it just falls back to
+   the emblem crest. Optionally add a `CARD_PHOTO[slug]` Flux photo so the map cross-fades to it.
+   Verify with the preview tool (see CLAUDE.md): the loot colour, the locator map / map↔photo
+   phasing, and the right visible-now / upcoming behaviour.
 
 ## Checklist
 

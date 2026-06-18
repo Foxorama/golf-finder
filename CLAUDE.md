@@ -106,11 +106,29 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   to `HERO_ART` to overlay it. Every figure star is nearest-neighbour-checked against
   `star-catalog-deep.json` (≤0.01°). See
   `night-heroes/HERO-ART-SPEC.md`. **Non-constellation cards (deep sky, planets,
-  phenomena) get their own Flux imagery via `CARD_PHOTO[slug]` → `night-photos/<slug>.jpg`:**
-  a full-width 3:2 **`.sky-photo-stage`** that eases + fades a gorgeous AI astrophotograph in
-  (CSS `opacity`/`scale` transition on the `<img>` `load`) over the morphing emblem crest, which
-  serves as the placeholder. These are pure text-to-image (no skeleton/registration — a nebula
-  photo just has to look like that nebula), generated `flux2_max` 1536×1024 with prompts like
+  phenomena) get their own Flux imagery via `CARD_PHOTO[slug]` → `night-photos/<slug>.jpg`.**
+  **Their "regular" image is now a procedural *locator star-map* of WHERE the object sits**
+  (the non-constellation analogue of the constellation chart): `skyLocus(slug)` dispatches a
+  category, `_locInner()` composes the SVG, and `locatorHeroicSVG()` (the lit 64-px card
+  thumbnail, drawn by `cardArt`) / `locatorStageSVG()` (the 300×200 modal map) wrap it. Each
+  map is **unique to its card** — deep-sky maps plot the object's real J2000 coords against the
+  embedded `SKY_SEED` field (+ the naked-eye `STAR_CATALOG` when loaded) and auto-draw any seed
+  constellation lines that fall in frame, with a per-type highlight (`_locMarker`): galaxy =
+  glowing tilted spiral, globular = dense fuzzy ball, open = brighter scattered stars, nebula =
+  soft cloud, dark = void; `band`/`clouds` = Milky Way swath / Magellanic blobs; planets + Moon
+  = a **Solar-System schematic** (`_locSolar`, six orbits, the body at its real current
+  heliocentric angle, Earth+Moon for the Moon); meteors = radiant + diverging streaks, ISS =
+  horizon arc, conjunction = pair on the ecliptic, aurora = southern curtains, full/new moon =
+  phase disc. Every highlight carries a dashed **reticle** "you-are-here" motif. The maps are
+  *looser* than the registered figures (the user signed off on this) — they locate, they don't
+  pixel-register. In the **modal** the full-width 3:2 **`.sky-photo-stage`** now layers a
+  `.sky-loc` map under the photo and, once the photo loads (`.photo-in`), **cross-fades
+  map ↔ photo on one 4.4 s clock** (`morphChart`/`locPhoto`, `infinite alternate`) — the same
+  phasing as constellation cards. A card with no `CARD_PHOTO` gets `.loc-only` and just holds the
+  map; a card `skyLocus` doesn't recognise (e.g. solstice/equinox) falls back to the old emblem
+  crest, so nothing regresses. The Flux photos themselves are pure text-to-image (no
+  skeleton/registration — a nebula photo just has to look like that nebula), generated
+  `flux2_max` 1536×1024 with prompts like
   *"Deep-space astrophotography of <object>: …, no text, no labels, no constellation lines"*; a
   missing/offline image adds `.no-photo` and removes itself, leaving the emblem. Lazy-fetched on
   open and SW-runtime-cached (same as `HERO_ART`; they're **not** in the precache `SHELL`, so no
