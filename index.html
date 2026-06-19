@@ -2005,8 +2005,8 @@ window._wxForce=(()=>{const p=new URLSearchParams(location.search).get('wx');if(
 window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};window._wxForce=v?(m[(''+v).toLowerCase().trim()]||v):null;window._wxSceneKey=null;window._nightWxKey=null;render();return window._wxForce||'(live weather)';};
 // Night star-map comfort-tilt overrides, settable from the URL so the feel can be A/B'd
 // on a PHONE (no desktop JS console needed): e.g. ?tiltgain=2.6&tiltlift=14&tiltceil=82 .
-// They feed the saturating pitch→centre curve in buildStarField — gain = tilt-friendliness,
-// lift = band centre when held level, ceil = altitude the view eases toward overhead.
+// They feed the saturating pitch→band curve in buildStarField — gain = tilt-friendliness,
+// lift = band centre when held level, ceil = top-of-frame altitude the view eases toward (≈zenith).
 (function initTiltOverride(){
   const q=new URLSearchParams(location.search);
   const num=(k)=>{const v=q.get(k);if(v==null||v==='')return null;const n=parseFloat(v);return isFinite(n)?n:null;};
@@ -2016,12 +2016,12 @@ window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overc
   if(c!=null) window._tiltCeil=Math.max(40,Math.min(90,c));
 })();
 // Console equivalent for live desktop tweaking: setTilt(gain,lift,ceil) sets any of the three
-// (pass null to leave one alone) and repaints; setTilt() with no args restores defaults (2.3/21/80).
+// (pass null to leave one alone) and repaints; setTilt() with no args restores defaults (2.3/21/90).
 window.setTilt=(g,l,c)=>{
   if(g==null&&l==null&&c==null){ delete window._tiltGain; delete window._tiltLift; delete window._tiltCeil; }
   else { if(g!=null) window._tiltGain=Math.max(0.2,Math.min(6,+g)); if(l!=null) window._tiltLift=Math.max(-40,Math.min(60,+l)); if(c!=null) window._tiltCeil=Math.max(40,Math.min(90,+c)); }
   try{ if(typeof buildSkyObjects==='function'&&window._gpsLat!=null) buildSkyObjects(window._gpsLat,window._gpsLng); }catch(e){}
-  return {gain:(typeof window._tiltGain==='number')?window._tiltGain:'default(2.3)', lift:(typeof window._tiltLift==='number')?window._tiltLift:'default(21)', ceil:(typeof window._tiltCeil==='number')?window._tiltCeil:'default(80)'};
+  return {gain:(typeof window._tiltGain==='number')?window._tiltGain:'default(2.3)', lift:(typeof window._tiltLift==='number')?window._tiltLift:'default(21)', ceil:(typeof window._tiltCeil==='number')?window._tiltCeil:'default(90)'};
 };
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
@@ -3899,32 +3899,38 @@ function buildStarField(lat,lng){
   if(full){ _skyVSpan=90; _skyAltC=46; }
   else {
     _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov));
-    // Comfort-tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch),
-    // but via a SMOOTH SATURATING curve (not the raw 1:1 angle, and not a linear ramp into a
-    // hard clamp) so the upper sky is reachable without craning the phone past a viewable angle:
-    //   centre = ceil − (ceil − lift)·e^(−gain·pitch/(ceil − lift))
-    //   • held level (pitch=0) → centre = lift, i.e. sky just above the horizon, not ground;
-    //   • initial slope = gain — the "tilt-friendliness": a relaxed tilt already lifts you into
-    //     real sky (raise gain to need even less tilt);
-    //   • as you tilt overhead the centre EASES toward `ceil` (an asymptote, never a hard clamp),
-    //     so the zenith sits near the top of frame and the view keeps moving the whole way up.
-    // That asymptote is the fix for the old overhead DEAD-SPOT: a hard ceiling clamp used to pin
-    // the band identically across a wide range of high tilts (a frozen "placeholder" starfield);
-    // now it never goes dead. (Past ~vertical the device's own pitch genuinely tips back down the
-    // far side of the arc — inherent to the orientation sensor, not something a clamp can fix.)
-    // It does NOT distort shapes — the band stays conformal (equal deg/px both axes); only the
-    // pan-rate-vs-tilt changes. The "…° alt" readout still reports the TRUE pointing altitude, and
-    // the zenith-hold/azimuth damping (in _onOrient) stay keyed to true altitude. Tune the feel
-    // live on a phone via window._tiltGain / _tiltLift / _tiltCeil (or setTilt(g,l,c)). The floor
-    // sits a little BELOW the horizon (−span·0.4) so the horizon + a dip of ground stay reachable.
-    // No tilt signal → a comfortable mid-sky default.
+    // Comfort-tilt-to-pan: pan the conformal band up as the phone tilts (_skyPitch), via a
+    // SMOOTH SATURATING curve (not the raw 1:1 angle, not a linear ramp into a hard clamp).
+    // KEY: it saturates the band's TOP EDGE toward the zenith (`ceil`≈90°), not the centre
+    // toward a fixed value. centre when held level = `lift`; the top edge eases up to `ceil`:
+    //   topAlt = ceil − (ceil − topLevel)·e^(−gain·pitch/(ceil − topLevel)),  topLevel = lift+span/2
+    //   centre = topAlt − span/2
+    //   • held level (pitch=0) → centre = lift (sky just above the horizon, not ground);
+    //   • initial slope of the centre = gain — the "tilt-friendliness" (raise to need less tilt);
+    //   • tilting up eases the TOP of frame to the zenith and HOLDS there — so the highest sky you
+    //     can see is the zenith sitting at the top edge, and the view never scrolls past it.
+    // Why top-not-centre: saturating the CENTRE pushed it past 90−span/2 once you tilted up, so the
+    // band's top ran ABOVE 90° into empty "above-the-zenith" sky — the top of the screen went blank
+    // and the real high sky bunched/"squished" below it (the "map ends ~60°, top squished" report).
+    // Anchoring the top at the zenith removes that empty gap entirely. (It's still a soft asymptote,
+    // never a hard clamp, so no frozen dead-spot. Past ~vertical the device's own pitch genuinely
+    // tips back down the far side of the arc — inherent to the orientation sensor, not a clamp.)
+    // No shape distortion — the band stays conformal (equal deg/px both axes). The "…° alt" readout
+    // still reports TRUE pointing altitude; zenith-hold/azimuth damping (in _onOrient) stay keyed to
+    // true altitude. Tune live on a phone via window._tiltGain / _tiltLift / _tiltCeil (setTilt()).
+    // Floor stays a little BELOW the horizon (−span·0.4) so the horizon + a dip of ground stay
+    // reachable. No tilt signal → a comfortable mid-sky default.
     const gain=(typeof window._tiltGain==='number')?window._tiltGain:TILT_GAIN;
     const lift=(typeof window._tiltLift==='number')?window._tiltLift:TILT_LIFT;
-    const ceil=(typeof window._tiltCeil==='number')?window._tiltCeil:TILT_CEIL;
+    const ceil=(typeof window._tiltCeil==='number')?window._tiltCeil:TILT_CEIL;  // asymptotic TOP-of-frame altitude (≈zenith)
     const live=_tiltPan&&window._tiltPan!==false&&_skyPitch!=null;
-    const rng=Math.max(1,ceil-lift);
-    const cen=live?(ceil-rng*Math.exp(-gain*_skyPitch/rng)):48;
-    _skyAltC=Math.max(-_skyVSpan*0.4,Math.min(90-_skyVSpan*0.08,cen));
+    const half=_skyVSpan/2;
+    let cen;
+    if(live){ const topLevel=lift+half, rng=Math.max(1,ceil-topLevel);
+      cen=(ceil-rng*Math.exp(-gain*_skyPitch/rng))-half; }
+    else cen=48;
+    // Keep the band top at/below the zenith (no empty above-90 gap) and the floor below the horizon.
+    _skyAltC=Math.max(-_skyVSpan*0.4,Math.min(90-half,cen));
   }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
   // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
@@ -4501,9 +4507,10 @@ let _tiltPan=true;           // tilt-to-pan vertical; set window._tiltPan=false 
 // Comfort-tilt defaults (see buildStarField). The pitch→band-centre map is a SMOOTH saturating
 // curve: _tiltGain = initial steepness near level (higher ⇒ reach high sky with less tilt),
 // _tiltLift = band centre when held level (° above the horizon), _tiltCeil = the altitude the
-// view eases toward as you tilt overhead (an asymptote — no hard clamp, so no frozen dead-spot
-// near the zenith). Override live on a phone via window._tiltGain / _tiltLift / _tiltCeil.
-const TILT_GAIN=2.3, TILT_LIFT=21, TILT_CEIL=80;
+// TOP EDGE of the frame eases toward as you tilt overhead (≈90 = the zenith; an asymptote — no
+// hard clamp, so no frozen dead-spot, and the top never runs past the zenith into empty sky).
+// Override live on a phone via window._tiltGain / _tiltLift / _tiltCeil.
+const TILT_GAIN=2.3, TILT_LIFT=21, TILT_CEIL=90;
 let _lastOrientT=0,_paintedH=null,_paintedP=null,_iosAzOffset=0;
 // Ease one angle toward a target with a TIME-BASED low-pass (tau seconds, so the feel
 // is identical whatever rate the sensor fires at — the main cure for jumpy tilt), plus
