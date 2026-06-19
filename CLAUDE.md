@@ -359,6 +359,20 @@ it with the preview tool:
      locally — the "network is sandboxed" caveat is only about external APIs.
   5. SVG `el.className` is an `SVGAnimatedString` — use `el.getAttribute('class')`
      when checking marker classes in `preview_eval`.
+- **Auditing star/deep-sky coordinate accuracy.** In `preview_eval` (night mode),
+  fetch `star-catalog-deep.json` (15,598 HYG `[ra,dec,mag]` J2000 stars) and
+  nearest-neighbour every `STAR_FIGURES` star, `STAR_LOOSE` star and `DEEPSKY`
+  object against it (haversine; prefilter `|Δdec|<0.5`); flag distance >0.06° or
+  |Δmag|>0.6. A deep-sky object sitting in *empty* sky (no catalog star brighter
+  than ~6.5 within 0.6°) is the tell for a wrong position — that's how the Jewel
+  Box RA error was caught (PR #154). Beware false flags from real doubles (μ Sco
+  is μ¹ vs μ², Sabik is η Oph's two components vs the combined mag). Cards share
+  the data (`projFigure`→`STAR_FIGURES`, `skyLocus`→`DEEPSKY_BY_SLUG`), so a bad
+  datum is wrong in both — fix it once. For **events**, don't trust the existing
+  copy: verify each eclipse's *type* (penumbral vs partial) and **Australian**
+  visibility against an authoritative source (timeanddate/Wikipedia) via
+  WebSearch — an eclipse with the Moon below the horizon across (eastern)
+  Australia is not Australia-visible and should be cut, not just reworded.
 - **Delete `C:\golf-finder\.claude\launch.json` (and any `serve.ps1`) when done.**
   `preview_start` reuses a stale one, so remove it to keep the next session clean.
   Note `.claude/launch.json` is **not** git-ignored (only `settings.local.json`
