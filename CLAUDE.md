@@ -174,8 +174,19 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   draws a **distinct SVG glyph per category** (`skyMark()` — sparkle star, orb planet,
   spiral galaxy, cloud nebula, ringed globular, dashed open cluster, void dark nebula;
   + a real phase `moonMark()`), still tinted by rarity (`--mk`); and the detail-view
-  projection is **conformal** (`skyAltFrac` — equal deg/px both axes, so constellations
-  keep their true shape instead of squishing) showing a true-scale altitude band. The
+  projection is a **dome**: `skyAltFrac` gives equal deg/px vertically (true-scale band) and
+  `skyAzX`/`px` scale the azimuth offset by **`cos(alt)`** horizontally. The horizontal scaling
+  is essential — a plain cylindrical az→x map stretches high-altitude sky by `1/cos(alt)` (≈5.8×
+  at 80°, the "super-squished top" you'll see if you remove it), whereas `cos(alt)` keeps
+  constellations their true shape all the way to the zenith (azimuths converge overhead as they
+  really do). The horizon (alt 0) is unchanged, so the tuned low/level view is identical;
+  `window._skyDome=false` restores the old cylindrical map. The compass strip (`renderCompassStrip`,
+  a horizon heading reference) stays cylindrical (calls `skyAzX(az)` with no alt). Both the canvas
+  field/lines (`px(az,alt)`) and the DOM markers (`pos`→`skyAzX(az,alt)`) use the same dome scale so
+  they stay pixel-aligned. **Only objects whose anchor is inside the frame are drawn** (`inFrame` in
+  `buildSkyObjects` — within the FOV horizontally AND the band vertically); without it, off-screen
+  figures piled their nudged-in names on the screen edge and figures below the band orphaned their
+  labels. The
   view aims with the **back camera**, not the phone's top edge: `_camOrientation` builds
   the device-orientation matrix and takes the **−Z (out-the-back) vector** to get BOTH the
   azimuth (`atan2(E,N)`) and altitude (`asin(Up)` = `asin(−cosβ·cosγ)`) it points at — so
