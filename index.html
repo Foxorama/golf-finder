@@ -3881,9 +3881,9 @@ function figMeta(lat,lng,date){
   if(_figMetaKey===key&&_figMetaC) return _figMetaC;
   _figMetaC=STAR_FIGURES.map((f,fi)=>{
     const a=figureAnchor(f), aa=altAz(a[1],a[2],lat,lng,date);
-    let minAlt=aa.alt;
-    for(const s of f.s){ const sa=altAz(s[1],s[2],lat,lng,date); if(sa.alt<-2) continue; if(sa.alt<minAlt) minAlt=sa.alt; }
-    return {fi,f,anchorName:a[0],az:aa.az,alt:aa.alt,minAlt};
+    let minAlt=aa.alt; const pts=[];                    // pts = az/alt of every up-ish star (for label centring)
+    for(const s of f.s){ const sa=altAz(s[1],s[2],lat,lng,date); if(sa.alt<-2) continue; pts.push([sa.az,sa.alt]); if(sa.alt<minAlt) minAlt=sa.alt; }
+    return {fi,f,anchorName:a[0],az:aa.az,alt:aa.alt,minAlt,pts};
   });
   _figMetaKey=key;return _figMetaC;
 }
@@ -4418,13 +4418,21 @@ function buildSkyObjects(lat,lng){
     if(!_compassOn && f.slug!=='crux') continue;
     if(m.alt<visGate(f.info.vis||6)) continue;
     if(!inFrame(m.az,m.alt)) continue;
-    // Pin the name+marker just BELOW the figure's footprint (its lowest on-screen star,
-    // from figMeta) rather than on the anchor, so the name stops landing across the
-    // lines. Horizontal stays at the anchor (stable, seam-free); the real bright star
-    // is still drawn on the canvas inside the figure.
+    // Place the name-tag under the HORIZONTAL CENTRE of the figure's visible stars (not the
+    // anchor, which can sit at one end → the old "off to the side / weird" placement), and just
+    // BELOW the figure — but FLIP it ABOVE when below would cross the horizon line or fall off the
+    // bottom, so a name never sits in the dimmed ground below the horizon (the Sagittarius case).
     const p=pos(m.az,m.alt);
-    const ay=Math.min(93, Math.min(92,skyAltFrac(m.minAlt)*100)+4), mk=rarCol(f.info.rar||'common');
-    html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="${20+RR(f.info.rar)}" data-key="c-${f.slug}" style="left:${x.toFixed(1)}%;top:${ay.toFixed(1)}%;--mk:${mk}">${skyMark('star',mk)}<span class="so-label so-const" style="color:${mk}">${f.n}</span><span class="so-star">${m.anchorName}</span></div>`);
+    let xs=[],yTop=1e9,yBot=-1e9;
+    for(const q of m.pts){ if(q[1]<0) continue; const sx=skyAzX(q[0],q[1]); if(sx<-6||sx>106) continue;
+      const sy=skyAltFrac(q[1])*100; xs.push(sx); if(sy<yTop)yTop=sy; if(sy>yBot)yBot=sy; }
+    const cx = xs.length ? (Math.min(...xs)+Math.max(...xs))/2 : p.x;     // centre under the figure
+    const horizonY=skyAltFrac(0)*100, floorY=Math.min(94,horizonY-1);    // never below the horizon line
+    let ay=(xs.length?yBot:p.y)+3;                                        // prefer just below the figure
+    if(ay>floorY) ay=(xs.length?yTop:p.y)-7;                              // …else flip above it
+    ay=Math.max(3,Math.min(floorY,ay));
+    const mk=rarCol(f.info.rar||'common');
+    html+=wrapX(cx, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="${20+RR(f.info.rar)}" data-key="c-${f.slug}" style="left:${x.toFixed(1)}%;top:${ay.toFixed(1)}%;--mk:${mk}">${skyMark('star',mk)}<span class="so-label so-const" style="color:${mk}">${f.n}</span><span class="so-star">${m.anchorName}</span></div>`);
   }
   // Deep-sky showpieces — rarity-tinted markers, detail (compass) view only so
   // the 360° overview stays uncluttered. Binocular-only targets need binoc depth.
