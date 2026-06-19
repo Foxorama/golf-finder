@@ -232,11 +232,18 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   *quadratically*, so the jittery 70–80° approach can't snap and pointing overhead / a
   fast 360 near the top doesn't spin the view) and a per-second **slew cap** (a momentary
   sensor flip eases instead of snapping); `_maybePaintSky` repaints at ~18fps with a deadband. The
-  overview (compass off) keeps the squished 360° strip. Constellation names are pinned **below** each figure (not on the anchor) so
-  they don't overlay the lines; `declutterSkyLabels` names **every** up-figure that
+  overview (compass off) keeps the squished 360° strip. Each constellation name-tag is placed
+  under the **horizontal centre of the figure's visible stars** (`figMeta.pts` projected per
+  build — not the anchor, which can sit at one end and looked "off to the side"), just **below**
+  the figure so it doesn't overlay the lines, but **flipped above** when below would cross the
+  horizon line / fall off the bottom — so a name **never sits below the horizon** (was the
+  Sagittarius-label-in-the-ground bug). `declutterSkyLabels` then names **every** up-figure that
   fits (collision-decluttered, reads then writes in separate batches to avoid layout
   thrash) — the live focus band only adds *emphasis* (brighter label + revealed anchor
-  star), it no longer gates which names show. The **"Visible now"** lens is in the
+  star), it no longer gates which names show. In dense regions (Crux/Carina/Centaurus) the
+  declutter hides the lower-priority overlaps, so the survivors don't collide; if that hides too
+  much, the levers are a narrower `_skyFov` (zoom in — but it also re-shapes the tilt/dome band)
+  or label stacking, not a bigger canvas (perf isn't the constraint). The **"Visible now"** lens is in the
   fullscreen filter too (default on = curated viewing altitudes; off shows everything
   just above the horizon). **Perf:** `altAz()` depends only on time+location, so the
   star field / seed lines / figure footprints are projected **once per ~15s** into
