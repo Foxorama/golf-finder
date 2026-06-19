@@ -289,6 +289,22 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   first paint, a region reset, or the 60s re-render tick — don't make the theme-var change
   unconditional or you'll reintroduce the hard one-frame swap. Honours
   `prefers-reduced-motion`.
+- **On-course Play** (`openPlay`/`playRender`, gated to courses in `COURSE_PLAY`) — a
+  full-screen sheet with three tabs (Play / Card / History). The **hole map**
+  (`playHoleSvg`) is drawn **PLAY-LINE-UP** (tee at the bottom, green always up the
+  screen) via a `uv()` rotation onto the tee→green bearing, so wind-vs-hole reads
+  intuitively. It renders **real OSM geometry** from `COURSE_GEOM[slug]` — fairway /
+  green / bunker / water polygons + the hole centreline, baked inline from OpenStreetMap
+  (`scripts`-free; fetched via Overpass, RDP-simplified to ~1–2.5 m, ~28 KB for St Lucia).
+  Features are **cropped to the current hole's frame** (`inFrame`, frame computed from
+  the hole's own tee/green/centreline so neighbours only show at the edges). A **wind
+  compass rose** (bottom-left, near the tee) is oriented to THIS hole: `playWind()` reads
+  the same live weather as the day-hero compass (`window._playWindTest={dir,spd,gust}`
+  overrides it for preview), `windVsHole()` classifies it (d=0 ⇒ DOWNWIND/helping up the
+  screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind), the rose draws an arrow pointing where the
+  wind blows TO + a north tick at `-brgDeg`, and `playWindStripHtml()` adds a worded,
+  colour-coded HTML strip (`.play-windbar wb-help/hurt/cross`) under the map. Both refresh
+  on every GPS tick in `playLiveUpdate`.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
