@@ -204,12 +204,17 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   zenith removes the empty gap entirely while staying a soft asymptote (no frozen dead-spot): the
   highest sky you can see is the zenith at the top edge, and the view never scrolls past it. (Past
   ~vertical the device's own pitch genuinely tips back down the far side of the arc — inherent to
-  the orientation sensor, not a clamp.) Floor stays `−span·0.4` (horizon + a dip of ground
-  reachable); no shape distortion (band stays conformal). No signal → mid-sky
+  the orientation sensor, not a clamp.) The curve is **symmetric about the horizon-hold (pitch 0)**:
+  tilt UP and the top edge eases to the zenith; tilt DOWN and the **centre eases gently toward
+  `floor` (`TILT_FLOOR`, default 16°, its downward asymptote)** rather than dropping 1:1 — because
+  at a natural slightly-forward phone hold the camera sits a few ° *below* the horizon, and the
+  amplified `gain` made even −4° drop to mostly blank ground; saturating downward keeps mostly SKY
+  in frame (ground caps ~19% at the default). Both branches meet at pitch 0 with the same slope
+  `gain` (no kink). No shape distortion (band stays conformal). No signal → mid-sky
   default (alt 48°), `window._tiltPan=false` pins it. **Tunable live on a phone** without a
-  desktop console: `?tiltgain=`/`?tiltlift=`/`?tiltceil=` URL params (`initTiltOverride`) or the
-  `setTilt(gain,lift,ceil)` console helper (`window._tiltGain`/`_tiltLift`/`_tiltCeil`) — so the
-  user can A/B the feel on-device. The astral chart/feel can only be judged on a real phone.
+  desktop console: `?tiltgain=`/`?tiltlift=`/`?tiltceil=`/`?tiltfloor=` URL params (`initTiltOverride`)
+  or the `setTilt(gain,lift,ceil,floor)` console helper (`window._tiltGain`/`_tiltLift`/`_tiltCeil`/
+  `_tiltFloor`) — so the user can A/B the feel on-device. The astral chart/feel can only be judged on a real phone.
   Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
   tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
   **zenith hold** (heading's pull fades to 0 by ~80° altitude and its slew cap drops
