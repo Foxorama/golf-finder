@@ -183,12 +183,25 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   Android/absolute `alpha` is already true; iOS `alpha` is relative, so it's calibrated
   with `webkitCompassHeading` (offset refreshed only while the phone is level enough,
   `|cosβ|>0.25`, and held as you tilt up). `window._camAz=false` falls back to the old
-  top-edge heading. **Tilt-to-pan:** `buildStarField` centres the band on that altitude
-  **1:1** (`_skyAltC=clamp(pitch,−span·0.4,90−span·0.35)`) — the floor sits just BELOW the
-  horizon so pointing at/just-below it and tilting up responds immediately (a floor of 0,
-  or the older `span/2`, left a dead zone there), and only the TOP is clamped so pointing
-  near the zenith holds steady instead of lurching; no signal → mid-sky default (alt 48°),
-  `window._tiltPan=false` pins it.
+  top-edge heading. **Comfort-tilt-to-pan:** `buildStarField` no longer centres the band on
+  the pointing altitude 1:1 (that was *realistic but unusable* — to frame high sky you had to
+  crane the phone past a viewable angle, and at a natural eye-height hold the camera points
+  slightly **below** the horizon, so you got mostly ground). Instead the band centre follows a
+  **smooth saturating curve** of the true pitch: `centre = ceil − (ceil−lift)·e^(−gain·pitch/(ceil−lift))`
+  (`TILT_GAIN`/`TILT_LIFT`/`TILT_CEIL`, defaults `2.3 / 12 / 80`). At level (pitch 0) centre =
+  `lift` (sky just above the horizon, not ground); the **initial slope = `gain`** is the
+  *tilt-friendliness* (a relaxed tilt lifts you into real sky — raise it to need even less tilt);
+  and as you tilt overhead the centre **eases toward `ceil` (an asymptote, never a hard clamp)**.
+  That asymptote is deliberate: the old linear map hit a hard `90−span·0.35` ceiling clamp and
+  **froze the band over a wide range of high tilts** (a "placeholder starfield that doesn't
+  change" dead-spot near the zenith) — the curve never goes dead, the zenith just sits near the
+  top of frame. (Past ~vertical the device's own pitch genuinely tips back down the far side of
+  the arc — inherent to the orientation sensor, not a clamp.) Floor stays `−span·0.4` (horizon +
+  a dip of ground reachable); no shape distortion (band stays conformal). No signal → mid-sky
+  default (alt 48°), `window._tiltPan=false` pins it. **Tunable live on a phone** without a
+  desktop console: `?tiltgain=`/`?tiltlift=`/`?tiltceil=` URL params (`initTiltOverride`) or the
+  `setTilt(gain,lift,ceil)` console helper (`window._tiltGain`/`_tiltLift`/`_tiltCeil`) — so the
+  user can A/B the feel on-device. The astral chart/feel can only be judged on a real phone.
   Heading + pitch are smoothed by a **time-based** low-pass (`_easeAngle`,
   tau in seconds, so the feel is rate-independent — the cure for jumpy tilt) with a
   **zenith hold** (heading's pull fades to 0 by ~80° altitude and its slew cap drops
