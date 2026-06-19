@@ -3163,7 +3163,7 @@ const DEEPSKY=[
      ['How to find it','A fuzzy “star” to the naked eye in Centaurus. Binoculars show a round glow; a telescope shatters it into countless pinpoints.'],
      ['Fun fact','Near its core the stars crowd a hundred times closer together than they do around the Sun — so close that, on a world there, the night would never truly grow dark.'],
      ['Best seen','Autumn–winter evenings, high in the south.']]},
-  {slug:'jewelbox',type:'open',n:'Jewel Box Cluster',icon:'💎',ra:191.483,dec:-60.351,vis:10,rar:'rare',eye:'binoc',
+  {slug:'jewelbox',type:'open',n:'Jewel Box Cluster',icon:'💎',ra:193.417,dec:-60.367,vis:10,rar:'rare',eye:'binoc',
    blurb:'A glittering young star cluster beside the Southern Cross, its suns tinted blue, white and one ruby-red.',
    rows:[
      ['What you’re seeing','A few hundred hot young stars only ~14 million years old (NGC 4755). John Herschel named it for looking like “a casket of variously coloured precious stones”.'],
@@ -3195,7 +3195,7 @@ const DEEPSKY=[
      ['Origin & culture','Known on every inhabited continent — the Seven Sisters of Greek myth, and across Aboriginal Australia a group of women pursued by the hunter of Orion.'],
      ['Fun fact','Its Japanese name is Subaru — and the six blue stars on the carmaker’s badge are these very Seven Sisters.'],
      ['Best seen','Summer evenings (Nov–Mar), to the north.']]},
-  {slug:'coalsack',type:'dark',n:'The Coalsack',icon:'🌑',ra:186.0,dec:-63.0,vis:8,rar:'rare',
+  {slug:'coalsack',type:'dark',n:'The Coalsack',icon:'🌑',ra:190.5,dec:-63.0,vis:8,rar:'rare',
    blurb:'A dark nebula notched into the bright Milky Way beside the Southern Cross — the head of the Emu in the Sky.',
    rows:[
      ['What you’re seeing','A dense cloud of cold dust ~600 light-years away, blotting out the stars behind it — one of the most obvious dark nebulae in the sky.'],
@@ -3276,24 +3276,18 @@ const SEASON_MARKERS=[
 // `locus` field picks the locator-map renderer; `photo` (optional) names a shared
 // Flux hero in night-photos/ (so e.g. all lunar eclipses reuse one blood-moon shot).
 const SKY_EVENTS=[
-  {slug:'evt-ple-2026-08',name:'Penumbral Lunar Eclipse',date:[2026,8,28],icon:'🌖',rar:'rare',locus:'eclipse-lunar',photo:'eclipse-lunar',
-   blurb:'The full Moon glides through the soft outer fringe of Earth’s shadow — a faint dusky shading rather than a dark bite. Visible right across Australia, high in the sky.',
-   rows:[
-     ['What you’re seeing','The Moon passes through the penumbra, Earth’s pale outer shadow, so one side of the disc looks slightly smudged and grey. No red, no chunk missing — subtle but real.'],
-     ['From Australia','Well placed across the whole country, with the Moon high overhead near mid-eclipse. No equipment needed, though the dimming is gentle — compare the shaded edge with the bright limb.'],
-     ['Tip','A penumbral eclipse is the quietest kind. If you want drama, the partial and total eclipses later in this list are the ones to wait for.']]},
   {slug:'evt-ple-2027-02',name:'Penumbral Lunar Eclipse',date:[2027,2,20],icon:'🌖',rar:'rare',locus:'eclipse-lunar',photo:'eclipse-lunar',
-   blurb:'A second gentle penumbral eclipse — the full Moon brushing the edge of Earth’s shadow. Visible across Australia.',
+   blurb:'A gentle penumbral eclipse — the full Moon brushing the faint outer edge of Earth’s shadow. Catchable from western Australia in the pre-dawn sky.',
    rows:[
      ['What you’re seeing','Only Earth’s faint outer shadow touches the Moon, so the disc dims slightly on one side without turning red.'],
-     ['From Australia','Visible nationwide, weather permitting. Best appreciated by eye over the hour or so around greatest eclipse.'],
+     ['From Australia','Best from Western Australia, low in the western sky before dawn; the eastern states largely miss it as the Moon sets too early. A very subtle event even at its peak.'],
      ['Tip','Photograph the Moon before and during — side by side, the subtle shading is far easier to spot.']]},
-  {slug:'evt-pl-2027-08',name:'Partial Lunar Eclipse',date:[2027,8,17],icon:'🌗',rar:'epic',locus:'eclipse-lunar',photo:'eclipse-lunar',
-   blurb:'A dark, curved bite is taken out of the full Moon as it enters Earth’s deep shadow — and this one is well placed for Australia.',
+  {slug:'evt-ple-2027-08',name:'Penumbral Lunar Eclipse',date:[2027,8,17],icon:'🌖',rar:'rare',locus:'eclipse-lunar',photo:'eclipse-lunar',
+   blurb:'The full Moon drifts through the soft outer fringe of Earth’s shadow — a faint dusky shading rather than a dark bite. This one is best placed for eastern Australia.',
    rows:[
-     ['What you’re seeing','Part of the Moon crosses into the umbra, Earth’s true shadow, so a sharp dark edge — sometimes tinged copper — creeps across the disc.'],
-     ['From Australia','Visible across the country with the Moon clear of the horizon. Naked-eye easy; binoculars show the shadow’s curved edge beautifully.'],
-     ['Why it’s red at the edge','The dim umbra is lit only by sunlight bent through Earth’s atmosphere — every sunrise and sunset on Earth, projected onto the Moon.']]},
+     ['What you’re seeing','The Moon passes only through the penumbra, Earth’s pale outer shadow, so one edge of the disc looks faintly smudged and grey — there is no red tint and no chunk missing.'],
+     ['From Australia','Visible from eastern Australia with the Moon above the horizon. The dimming is gentle, so compare the shaded edge against the bright limb.'],
+     ['Tip','A penumbral eclipse is subtle — photograph the Moon before and during, and the slight shading shows up far more clearly side by side.']]},
   {slug:'evt-pl-2028-07',name:'Partial Lunar Eclipse',date:[2028,7,6],icon:'🌗',rar:'epic',locus:'eclipse-lunar',photo:'eclipse-lunar',
    blurb:'The full Moon dips a third of the way into Earth’s shadow — a clear dark bite, visible across Australia, two weeks before the great solar eclipse.',
    rows:[
@@ -3304,13 +3298,13 @@ const SKY_EVENTS=[
    blurb:'The big one — the Moon’s shadow sweeps right across Australia, with up to 5 minutes of totality through the NT, Queensland and New South Wales (Sydney sits in the path). The rest of the country sees a deep partial eclipse.',
    rows:[
      ['What you’re seeing','For a few minutes inside the path of totality the Moon completely hides the Sun, revealing the pearly corona, planets and stars in a darkened daytime sky. Elsewhere in Australia the Sun becomes a brilliant crescent.'],
-     ['The path','The umbra crosses the Kimberley coast and tracks south-east through the Northern Territory, Queensland, the corner of South Australia and New South Wales — across Sydney near sunset. Outside that line, the whole continent gets a large partial eclipse.'],
+     ['The path','The umbra crosses the Kimberley coast and tracks south-east through the Northern Territory, Queensland, the corner of South Australia and New South Wales — directly across Sydney in the early afternoon (totality just before 2 pm). Outside that line, the whole continent gets a large partial eclipse.'],
      ['Stay safe','Never look at the partial Sun without certified solar-eclipse glasses. Only during the brief total phase, inside the path, is it safe to look with the naked eye.']]},
   {slug:'evt-apophis-2029',name:'Asteroid Apophis Flyby',date:[2029,4,13],icon:'🪨',rar:'legendary',locus:'asteroid',photo:'asteroid',
-   blurb:'A 375-metre asteroid skims closer than our communications satellites — and shines at naked-eye brightness. It’s first seen from the southern hemisphere, crossing the Australian sky as a moving “star”.',
+   blurb:'A 375-metre asteroid skims closer than our communications satellites — and briefly reaches naked-eye brightness, drifting across the sky like a slow-moving “star”. The front-row view is from Europe and Africa; from Australia it is a low, marginal catch.',
    rows:[
      ['What you’re seeing','Asteroid 99942 Apophis passes within about 32,000 km of Earth’s surface — nearer than geostationary satellites — glowing around magnitude 3–4, like a moderately bright star drifting visibly against the constellations over a few minutes.'],
-     ['From Australia','The southern hemisphere gets the front-row seat: Apophis becomes naked-eye visible first over Australia, tracking roughly from the east coast toward the west. No telescope needed, though binoculars help you catch its motion.'],
+     ['From Australia','The naked-eye flyby favours Europe and Africa, where Apophis rides a dark sky at closest approach. Australia is poorly placed — the asteroid is brightest around local daybreak — so realistically it is a binocular target, low in the sky, in the dark hours beforehand.'],
      ['Why it matters','The first time in recorded history a known asteroid this large becomes an easy naked-eye object — a once-in-a-lifetime sight, and completely harmless.']]}
 ];
 // Curated comet apparitions (real, southern-hemisphere visible). Like showers but
