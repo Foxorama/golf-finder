@@ -305,6 +305,26 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   wind blows TO + a north tick at `-brgDeg`, and `playWindStripHtml()` adds a worded,
   colour-coded HTML strip (`.play-windbar wb-help/hurt/cross`) under the map. Both refresh
   on every GPS tick in `playLiveUpdate`.
+- **Scorecard, handicap + rounds (Card / History tabs).** Each `COURSE_PLAY` course can
+  carry a white-tee **Scratch (Course) Rating `cr` + `slope`** and a **per-hole stroke
+  index `si`** (St Lucia: real golfpass/18Birdies data — CR 67.5 / Slope 114, front-nine
+  even SIs / back-nine odd). The player enters their **Handicap Index** once
+  (`getHcpIndex`/`setHcpIndex` → `gf_hcp_index`); `courseHandicap()` turns it into a WHS
+  course handicap (`round(idx·slope/113 + (cr−par))`), and `strokesForSI()` allocates
+  strokes hole-by-hole (positive: `floor(ch/18)` everywhere + 1 on the lowest SIs; plus
+  handicaps give one back on the highest SIs). `playTotals()` then yields **net +
+  Stableford** (`max(0,(par−gross)+recv+2)`). The Card shows SI, a stroke-received dot, net
+  and points columns; History shows the entered index, the round-based **form** estimate
+  (`handicapEstimate`, still a personal figure) and per-round net. Rounds save to
+  `gf_rounds` (now incl. `hcpIndex`/`courseHcp`/`net`/`stableford`).
+- **Hole-in-one trophies (`hios` / `gf_hios`).** The global `hios` load was **missing**
+  (the tracker referenced an undeclared var and threw — fixed). Aces are now **auto-
+  registered from the scorecard**: scoring a **1** on any hole calls `playSyncAce(n)` which
+  adds an ace (course + date + hole + par, `auto:true`, keyed `src='round:'+startedAt+'#n'`)
+  and pops `playAceToast`; changing the score away from 1 **removes** it (self-correcting).
+  `playSaveRound` bumps `startedAt` so a new round gets fresh ace keys. The **manual** 🏆
+  tracker (`recordHio`) is unchanged and its entries carry no `src`, so auto-sync never
+  touches them.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow

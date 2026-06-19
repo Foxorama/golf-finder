@@ -807,6 +807,37 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .ph-vp.under{color:var(--gg);} .ph-vp.over{color:var(--al);}
 .ph-del{background:none;border:none;color:var(--tx3);font-size:13px;cursor:pointer;padding:2px 4px;flex-shrink:0;}
 .ph-del:active{color:var(--rl);}
+.ph-net{font-family:var(--mono);font-size:11px;color:var(--gg);margin-top:3px;}
+.ph-net b{color:var(--gg);}
+/* handicap bar on the Card tab */
+.play-hcp-bar{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:11px 14px;margin-bottom:4px;}
+.phb-lbl{font-family:var(--mono);font-size:10px;line-height:1.1;color:var(--tx3);text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;}
+.phb-input{background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:9px 8px;color:var(--tx);font-family:var(--mono);font-size:18px;font-weight:700;width:66px;text-align:center;outline:none;flex-shrink:0;-moz-appearance:textfield;}
+.phb-input::-webkit-outer-spin-button,.phb-input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.phb-input:focus{border-color:var(--gb);}
+.phb-input-wide{width:100%;font-size:15px;margin:6px 0 2px;text-align:left;padding-left:11px;}
+.phb-ch{margin-left:auto;text-align:right;font-family:var(--mono);font-size:11px;color:var(--tx3);line-height:1.25;}
+.phb-ch b{display:block;font-family:var(--sans);font-size:24px;font-weight:800;color:var(--gg);}
+.phb-hint{color:var(--tx3);}
+.phb-meta{font-family:var(--mono);font-size:10px;color:var(--tx3);text-align:center;margin:6px 0 12px;}
+/* scorecard extra columns */
+.cc-si{display:block;font-size:9px;color:var(--tx3);font-weight:400;margin-top:-1px;}
+.cc-si-h{display:block;font-size:8px;color:var(--tx3);font-weight:400;}
+.cc-net{font-weight:700;color:var(--tx);} .cc-pts{color:var(--al);font-weight:600;}
+.cc-recv{color:var(--gg);font-size:8px;vertical-align:super;margin-left:1px;letter-spacing:-1px;} .cc-recv.minus{color:var(--al);}
+.cc-clr{background:none;border:none;color:var(--tx3);font-size:11px;cursor:pointer;padding:0 0 0 3px;vertical-align:middle;}
+.cc-vp{font-size:10px;color:var(--gg);margin-left:4px;font-weight:600;}
+.play-net-sum{text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx2);margin-top:12px;}
+.play-net-sum b{color:var(--gg);font-size:15px;}
+/* auto hole-in-one toast + auto chip */
+.play-ace-toast{position:absolute;left:50%;top:38%;transform:translate(-50%,-50%) scale(0.8);z-index:30;background:linear-gradient(160deg,#2a2410,#1a1606);border:1px solid #d9a441;border-radius:18px;padding:20px 26px;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.55),0 0 26px rgba(217,164,65,0.35);opacity:0;pointer-events:none;transition:opacity .3s ease,transform .3s cubic-bezier(.2,.9,.3,1.3);}
+.play-ace-toast.show{opacity:1;transform:translate(-50%,-50%) scale(1);}
+.pat-emoji{font-size:44px;line-height:1;margin-bottom:6px;animation:patPop 1.2s ease-in-out infinite;}
+@keyframes patPop{0%,100%{transform:scale(1) rotate(-4deg);}50%{transform:scale(1.12) rotate(4deg);}}
+.pat-txt{font-family:var(--sans);font-weight:800;font-size:18px;color:#ffd24a;letter-spacing:0.03em;}
+.pat-sub{font-family:var(--mono);font-size:11px;color:#e8d9b0;margin-top:5px;line-height:1.4;}
+.hio-auto{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#ffd24a;background:rgba(217,164,65,0.16);border:1px solid rgba(217,164,65,0.4);border-radius:5px;padding:0 4px;vertical-align:middle;margin-left:4px;}
+@media (prefers-reduced-motion: reduce){.pat-emoji{animation:none;}}
 
 /* Respect reduced-motion; pause weather animations when the tab is hidden */
 @media (prefers-reduced-motion: reduce){
@@ -1261,26 +1292,26 @@ const COURSES = [
 // (golf=hole/green/pin), fetched + cross-checked 2026-06. Par 69, 18 holes.
 const COURSE_PLAY = {
   'st-lucia-golf-links': {
-    name:'St Lucia Golf Links', par:69, holesN:18,
+    name:'St Lucia Golf Links', par:69, holesN:18, cr:67.5, slope:114,
     holes:[
-      {n:1, par:4, tee:[-27.5029847,152.9933508], cen:[-27.5037660,152.9970244], pin:[-27.5037255,152.9970095], gbb:[-27.5038387,152.9969517,-27.5036933,152.9970970]},
-      {n:2, par:3, tee:[-27.5040517,152.9971996], cen:[-27.5051250,152.9980293], pin:[-27.5050630,152.9979279], gbb:[-27.5052261,152.9979437,-27.5050239,152.9981149]},
-      {n:3, par:4, tee:[-27.5059430,153.0000076], cen:[-27.5078702,152.9992275], pin:[-27.5079039,152.9992419], gbb:[-27.5079654,152.9991428,-27.5077750,152.9993122]},
-      {n:4, par:4, tee:[-27.5082604,152.9992312], cen:[-27.5075332,152.9963793], pin:[-27.5075658,152.9963490], gbb:[-27.5076288,152.9962908,-27.5074376,152.9964677]},
-      {n:5, par:4, tee:[-27.5077781,152.9961569], cen:[-27.5061814,152.9940437], pin:[-27.5061822,152.9939759], gbb:[-27.5062451,152.9939294,-27.5061178,152.9941579]},
-      {n:6, par:5, tee:[-27.5058883,152.9948298], cen:[-27.5071839,152.9987896], pin:null, gbb:[-27.5072972,152.9986889,-27.5070706,152.9988904]},
-      {n:7, par:4, tee:[-27.5061420,152.9980069], cen:[-27.5043450,152.9962281], pin:null, gbb:[-27.5044204,152.9961165,-27.5042696,152.9963397]},
-      {n:8, par:3, tee:[-27.5046626,152.9963461], cen:[-27.5056277,152.9965952], pin:null, gbb:[-27.5057140,152.9965282,-27.5055415,152.9966621]},
-      {n:9, par:4, tee:[-27.5054122,152.9962620], cen:[-27.5034491,152.9934575], pin:null, gbb:[-27.5035362,152.9933534,-27.5033621,152.9935617]},
-      {n:10,par:4, tee:[-27.5037846,152.9934287], cen:[-27.5057615,152.9961138], pin:null, gbb:[-27.5058413,152.9959668,-27.5056817,152.9962607]},
-      {n:11,par:3, tee:[-27.5058947,152.9965542], cen:[-27.5065430,152.9979917], pin:null, gbb:[-27.5066381,152.9978884,-27.5064478,152.9980950]},
-      {n:12,par:4, tee:[-27.5068235,152.9978862], cen:[-27.5054259,152.9946427], pin:null, gbb:[-27.5055087,152.9945270,-27.5053431,152.9947584]},
-      {n:13,par:4, tee:[-27.5058432,152.9945440], cen:[-27.5036735,152.9928307], pin:null, gbb:[-27.5037565,152.9927588,-27.5035905,152.9929026]},
-      {n:14,par:4, tee:[-27.5035977,152.9919090], cen:[-27.5061509,152.9900189], pin:null, gbb:[-27.5062330,152.9899188,-27.5060688,152.9901191]},
-      {n:15,par:4, tee:[-27.5063092,152.9905950], cen:[-27.5089455,152.9885608], pin:null, gbb:[-27.5090478,152.9884541,-27.5088432,152.9886674]},
-      {n:16,par:3, tee:[-27.5091802,152.9886784], cen:[-27.5089251,152.9902215], pin:null, gbb:[-27.5089843,152.9900959,-27.5088660,152.9903470]},
-      {n:17,par:4, tee:[-27.5067927,152.9907456], cen:[-27.5059196,152.9935536], pin:null, gbb:[-27.5059853,152.9934210,-27.5058539,152.9936861]},
-      {n:18,par:4, tee:[-27.5055947,152.9935084], cen:[-27.5037392,152.9923486], pin:null, gbb:[-27.5038197,152.9922632,-27.5036587,152.9924341]},
+      {n:1, par:4, si:12, tee:[-27.5029847,152.9933508], cen:[-27.5037660,152.9970244], pin:[-27.5037255,152.9970095], gbb:[-27.5038387,152.9969517,-27.5036933,152.9970970]},
+      {n:2, par:3, si:16, tee:[-27.5040517,152.9971996], cen:[-27.5051250,152.9980293], pin:[-27.5050630,152.9979279], gbb:[-27.5052261,152.9979437,-27.5050239,152.9981149]},
+      {n:3, par:4, si:18, tee:[-27.5059430,153.0000076], cen:[-27.5078702,152.9992275], pin:[-27.5079039,152.9992419], gbb:[-27.5079654,152.9991428,-27.5077750,152.9993122]},
+      {n:4, par:4, si:4, tee:[-27.5082604,152.9992312], cen:[-27.5075332,152.9963793], pin:[-27.5075658,152.9963490], gbb:[-27.5076288,152.9962908,-27.5074376,152.9964677]},
+      {n:5, par:4, si:14, tee:[-27.5077781,152.9961569], cen:[-27.5061814,152.9940437], pin:[-27.5061822,152.9939759], gbb:[-27.5062451,152.9939294,-27.5061178,152.9941579]},
+      {n:6, par:5, si:8, tee:[-27.5058883,152.9948298], cen:[-27.5071839,152.9987896], pin:null, gbb:[-27.5072972,152.9986889,-27.5070706,152.9988904]},
+      {n:7, par:4, si:10, tee:[-27.5061420,152.9980069], cen:[-27.5043450,152.9962281], pin:null, gbb:[-27.5044204,152.9961165,-27.5042696,152.9963397]},
+      {n:8, par:3, si:6, tee:[-27.5046626,152.9963461], cen:[-27.5056277,152.9965952], pin:null, gbb:[-27.5057140,152.9965282,-27.5055415,152.9966621]},
+      {n:9, par:4, si:2, tee:[-27.5054122,152.9962620], cen:[-27.5034491,152.9934575], pin:null, gbb:[-27.5035362,152.9933534,-27.5033621,152.9935617]},
+      {n:10, par:4, si:1, tee:[-27.5037846,152.9934287], cen:[-27.5057615,152.9961138], pin:null, gbb:[-27.5058413,152.9959668,-27.5056817,152.9962607]},
+      {n:11, par:3, si:11, tee:[-27.5058947,152.9965542], cen:[-27.5065430,152.9979917], pin:null, gbb:[-27.5066381,152.9978884,-27.5064478,152.9980950]},
+      {n:12, par:4, si:5, tee:[-27.5068235,152.9978862], cen:[-27.5054259,152.9946427], pin:null, gbb:[-27.5055087,152.9945270,-27.5053431,152.9947584]},
+      {n:13, par:4, si:3, tee:[-27.5058432,152.9945440], cen:[-27.5036735,152.9928307], pin:null, gbb:[-27.5037565,152.9927588,-27.5035905,152.9929026]},
+      {n:14, par:4, si:17, tee:[-27.5035977,152.9919090], cen:[-27.5061509,152.9900189], pin:null, gbb:[-27.5062330,152.9899188,-27.5060688,152.9901191]},
+      {n:15, par:4, si:13, tee:[-27.5063092,152.9905950], cen:[-27.5089455,152.9885608], pin:null, gbb:[-27.5090478,152.9884541,-27.5088432,152.9886674]},
+      {n:16, par:3, si:9, tee:[-27.5091802,152.9886784], cen:[-27.5089251,152.9902215], pin:null, gbb:[-27.5089843,152.9900959,-27.5088660,152.9903470]},
+      {n:17, par:4, si:15, tee:[-27.5067927,152.9907456], cen:[-27.5059196,152.9935536], pin:null, gbb:[-27.5059853,152.9934210,-27.5058539,152.9936861]},
+      {n:18, par:4, si:7, tee:[-27.5055947,152.9935084], cen:[-27.5037392,152.9923486], pin:null, gbb:[-27.5038197,152.9922632,-27.5036587,152.9924341]},
     ],
   },
 };
@@ -1386,6 +1417,9 @@ let lastLightMins = null;                  // end of civil twilight — the real
 let firstLightMins= SUNRISE_DEFAULT - TWILIGHT_EST; // civil dawn — earliest tee-off
 let activeFilter = localStorage.getItem('gf_filter') || 'all';
 let favourites   = JSON.parse(localStorage.getItem('gf_favs') || '[]');
+// Hole-in-one trophies (manual + auto-registered from the scorecard). This load was
+// missing, so the tracker referenced an undeclared `hios` and threw — fixed here.
+let hios = (()=>{ try{ return JSON.parse(localStorage.getItem('gf_hios')||'[]'); }catch(e){ return []; } })();
 let weatherCache = {};  // zone -> {temp, wind, code, label}
 
 // ── Weather helpers ───────────────────────────────────────────
@@ -5767,9 +5801,9 @@ function renderHioList(){
     <div class="hio-entry">
       <div class="hio-entry-icon" aria-hidden="true">⛳</div>
       <div style="flex:1;min-width:0;">
-        <div class="hio-entry-course">${h.course}</div>
+        <div class="hio-entry-course">${h.course}${h.auto?` <span class="hio-auto">auto</span>`:''}</div>
         <div class="hio-entry-detail">
-          ${h.hole?`Hole ${h.hole} · `:''}${h.date}${h.club?` · ${h.club}`:''}
+          ${h.hole?`Hole ${h.hole}${h.par?` (par ${h.par})`:''} · `:''}${h.date}${h.club?` · ${h.club}`:''}
         </div>
       </div>
       <button class="hio-entry-del" onclick="deleteHio(${h.id})" aria-label="Delete this ace">✕</button>
@@ -5919,13 +5953,17 @@ function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.ho
 function playToggleUnits(){ if(!playS)return; playS.units=playS.units==='yd'?'m':'yd'; localStorage.setItem('gf_units',playS.units); playRender(); }
 
 // ── score steppers ──
-function playBumpScore(n,d){ const par=playS.course.holes[n-1].par; let v=playS.scores[n]; v=(v==null)?par:Math.max(1,Math.min(15,v+d)); playS.scores[n]=v; playPersistDraft(); playRender(); }
-function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playPersistDraft(); playRender(); }
+function playBumpScore(n,d){ const par=playS.course.holes[n-1].par; let v=playS.scores[n]; v=(v==null)?par:Math.max(1,Math.min(15,v+d)); playS.scores[n]=v; playPersistDraft(); playSyncAce(n); playRender(); }
+function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playPersistDraft(); playSyncAce(n); playRender(); }
 function playBumpPutts(n,d){ let v=playS.putts[n]; v=(v==null)?(d>0?1:0):Math.max(0,Math.min(10,v+d)); playS.putts[n]=v; playPersistDraft(); playRender(); }
 function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,startedAt:playS.startedAt})); }catch(e){} }
-function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0;
-  playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; if(s!=null){ gross+=s; parPlayed+=h.par; holesPlayed++; if(h.n<=9)out+=s; else inn+=s; } const pu=playS.putts[h.n]; if(pu!=null)putts+=pu; });
-  return {gross,parPlayed,holesPlayed,vsPar:gross-parPlayed,putts,out,inn}; }
+function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
+  const ch=courseHandicap(getHcpIndex(),playS.course);
+  playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,h.si):0;
+    if(s!=null){ gross+=s; parPlayed+=h.par; holesPlayed++; if(h.n<=9)out+=s; else inn+=s;
+      net+=s-recv; recvTotal+=recv; points+=Math.max(0,(h.par-s)+recv+2); }
+    const pu=playS.putts[h.n]; if(pu!=null)putts+=pu; });
+  return {gross,parPlayed,holesPlayed,vsPar:gross-parPlayed,putts,out,inn,net,points,ch,recvTotal}; }
 
 // ── shot-distance tracker (between dropped marks) ──
 function playMarkShot(){ const pos=playPos(); if(!pos){ alert('No GPS fix yet — wait for a location lock.'); return; } (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice()); playRender(); }
@@ -5944,11 +5982,11 @@ function playSaveRound(){
   rounds.unshift({ id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
     date:new Date().toISOString(),
     scores:playS.course.holes.map(h=>playS.scores[h.n]??null),
-    putts:playS.course.holes.map(h=>playS.putts[h.n]??null),
-    gross:t.gross, parPlayed:t.parPlayed, vsPar:t.vsPar, putts:t.putts, holesPlayed:t.holesPlayed });
+    gross:t.gross, parPlayed:t.parPlayed, vsPar:t.vsPar, putts:t.putts, holesPlayed:t.holesPlayed,
+    hcpIndex:getHcpIndex(), courseHcp:t.ch, net:(t.ch!=null?t.net:null), stableford:(t.ch!=null?t.points:null) });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.shots={};
+  playS.scores={}; playS.putts={}; playS.shots={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
 }
 function playDeleteRound(id){ if(!confirm('Delete this round from your history?'))return; saveRounds(loadRounds().filter(r=>r.id!==id)); playRender(); }
@@ -5963,6 +6001,59 @@ function handicapEstimate(slug){
   const useN=diffs.length>=20?8:diffs.length>=10?4:diffs.length>=5?2:1;
   const best=diffs.slice(0,useN), avg=best.reduce((a,b)=>a+b,0)/best.length;
   return {hcp:Math.round(avg*0.96*10)/10, n:pool.length, low:diffs[0], usedN:useN}; }
+
+// ── Handicap (Golf Australia / WHS-style course handicap) + auto hole-in-one ────
+// You enter your Handicap Index once (gf_hcp_index). Per course it becomes a Course
+// Handicap from the white-tee Slope + Scratch (Course) Rating; strokes are allotted
+// hole-by-hole by each hole's stroke index (si) to give net + Stableford. Only courses
+// carrying cr/slope (+ per-hole si) in COURSE_PLAY can do this.
+function getHcpIndex(){ const v=parseFloat(localStorage.getItem('gf_hcp_index')); return isFinite(v)?v:null; }
+function setHcpIndex(v){
+  const n=parseFloat(v);
+  if(v===''||v==null||isNaN(n)) localStorage.removeItem('gf_hcp_index');
+  else localStorage.setItem('gf_hcp_index',String(Math.max(-9,Math.min(54,Math.round(n*10)/10))));
+  if(playS) playRender();
+}
+function courseHandicap(idx,course){
+  if(idx==null||!course||course.slope==null) return null;
+  const cr=course.cr!=null?course.cr:course.par;
+  return Math.round(idx*(course.slope/113)+(cr-course.par));
+}
+// Strokes received on a hole of stroke index si for a course handicap ch. Positive ch:
+// floor(ch/18) on every hole + 1 extra on the lowest-si holes. Plus (negative) ch gives
+// a stroke back on the easiest (highest-si) holes.
+function strokesForSI(ch,si){
+  if(ch==null||si==null) return 0;
+  if(ch>=0) return Math.floor(ch/18)+(si<=(ch%18)?1:0);
+  const give=-ch; return (si>18-give)?-1:0;
+}
+// Auto hole-in-one: scoring a 1 on any hole registers an ace (course + date + hole),
+// keyed to THIS round so it self-corrects if the score is changed away from 1. Manual
+// aces (via the 🏆 tracker) carry no `src` and are never touched.
+function playSyncAce(n){
+  if(!playS) return;
+  const h=playS.course.holes[n-1], src='round:'+playS.startedAt+'#'+n, isAce=playS.scores[n]===1;
+  const existing=hios.find(x=>x.src===src);
+  if(isAce&&!existing){
+    hios.unshift({ id:Date.now(), course:playS.course.name, slug:playS.slug, hole:n, par:h.par, club:null, auto:true, src,
+      date:new Date().toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'}) });
+    try{ localStorage.setItem('gf_hios',JSON.stringify(hios)); }catch(e){}
+    playAceToast(n);
+    if(document.getElementById('hio-list')) renderHioList();
+  } else if(!isAce&&existing){
+    hios=hios.filter(x=>x.src!==src);
+    try{ localStorage.setItem('gf_hios',JSON.stringify(hios)); }catch(e){}
+    if(document.getElementById('hio-list')) renderHioList();
+  }
+}
+function playAceToast(n){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet) return;
+  let el=document.getElementById('play-ace-toast');
+  if(!el){ el=document.createElement('div'); el.id='play-ace-toast'; el.className='play-ace-toast'; sheet.appendChild(el); }
+  el.innerHTML=`<div class="pat-emoji" aria-hidden="true">🏆</div><div class="pat-txt">HOLE-IN-ONE!</div><div class="pat-sub">Hole ${n} · ${playS.course.name}<br>auto-saved to your trophies</div>`;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(window._aceToastT); window._aceToastT=setTimeout(()=>{ el.classList.remove('show'); },4200);
+}
 
 // ── live (GPS-tick) refresh of just the rangefinder, map and shot readout ──
 function playLiveUpdate(){
@@ -6157,42 +6248,57 @@ function playTabHtml(){
 }
 
 function cardTabHtml(){
-  const t=playTotals(), holes=playS.course.holes;
-  const row=h=>{ const s=playS.scores[h.n], pu=playS.putts[h.n], rel=s!=null?s-h.par:null;
+  const holes=playS.course.holes, course=playS.course, t=playTotals();
+  const idx=getHcpIndex(), ch=t.ch;
+  const hcpBar=`
+    <div class="play-hcp-bar">
+      <label class="phb-lbl" for="cc-hcp">Handicap<br>index</label>
+      <input class="phb-input" id="cc-hcp" type="number" inputmode="decimal" step="0.1" placeholder="—" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
+      <div class="phb-ch">${ch!=null?`Course handicap<b>${ch}</b>`:`<span class="phb-hint">enter your index<br>for net scoring</span>`}</div>
+    </div>
+    <div class="phb-meta">${course.name} · white tee · CR ${course.cr} / Slope ${course.slope}</div>`;
+  const row=h=>{ const s=playS.scores[h.n], rel=s!=null?s-h.par:null;
     const rc=rel==null?'':rel<0?'sc-under':rel>0?'sc-over':'sc-par';
+    const recv=ch!=null?strokesForSI(ch,h.si):0;
+    const net=s!=null?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
+    const dot=recv>0?`<span class="cc-recv">${'•'.repeat(Math.min(3,recv))}</span>`:recv<0?`<span class="cc-recv minus">–</span>`:'';
     return `<tr>
-      <td class="cc-h">${h.n}</td><td class="cc-p">${h.par}</td>
+      <td class="cc-h">${h.n}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
+      <td class="cc-p">${h.par}<span class="cc-si">${h.si||''}</span></td>
       <td><div class="cc-step"><button onclick="playBumpScore(${h.n},-1)">–</button><span class="cc-val ${rc}">${s!=null?s:'·'}</span><button onclick="playBumpScore(${h.n},1)">+</button></div></td>
-      <td class="cc-pu">${pu!=null?pu:'·'}</td>
-      <td>${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
+      <td class="cc-net">${net!=null?net:''}${dot}</td>
+      <td class="cc-pts">${pts!=null?pts:''}</td>
     </tr>`; };
   const outPar=holes.slice(0,9).reduce((a,h)=>a+h.par,0), inPar=holes.slice(9).reduce((a,h)=>a+h.par,0);
-  const he=handicapEstimate(playS.slug);
+  const vpTxt=t.holesPlayed?(t.vsPar===0?'E':t.vsPar>0?'+'+t.vsPar:t.vsPar):'';
   return `
-    <table class="cc-table"><thead><tr><th>Hole</th><th>Par</th><th>Score</th><th>Putt</th><th></th></tr></thead>
+    ${hcpBar}
+    <table class="cc-table"><thead><tr><th>Hole</th><th>Par<span class="cc-si-h">SI</span></th><th>Score</th><th>Net</th><th>Pts</th></tr></thead>
       <tbody>${holes.slice(0,9).map(row).join('')}
         <tr class="cc-sub"><td>OUT</td><td>${outPar}</td><td>${t.out||'–'}</td><td colspan="2"></td></tr>
         ${holes.slice(9).map(row).join('')}
         <tr class="cc-sub"><td>IN</td><td>${inPar}</td><td>${t.inn||'–'}</td><td colspan="2"></td></tr>
-        <tr class="cc-tot"><td>TOT</td><td>${playS.course.par}</td><td>${t.holesPlayed?t.gross:'–'}</td><td colspan="2">${t.holesPlayed?(t.vsPar===0?'E':t.vsPar>0?'+'+t.vsPar:t.vsPar):''}</td></tr>
+        <tr class="cc-tot"><td>TOT</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${ch!=null&&t.holesPlayed?t.points:''}</td></tr>
       </tbody></table>
+    ${ch!=null?`<div class="play-net-sum">Net <b>${t.holesPlayed?t.net:'–'}</b> · Stableford <b>${t.holesPlayed?t.points:'–'}</b> pts${t.recvTotal?` · ${t.recvTotal>0?t.recvTotal+' strokes received':(-t.recvTotal)+' given'}`:''}</div>`:''}
     <button class="play-save" onclick="playSaveRound()">💾 Save round to history</button>
-    ${he?`<div class="play-hcp-mini">Est. handicap from your ${playS.course.name} rounds: <b>${he.hcp}</b></div>`:''}
   `;
 }
 
 function historyTabHtml(){
-  const rounds=loadRounds(), he=handicapEstimate(null);
+  const rounds=loadRounds(), he=handicapEstimate(null), idx=getHcpIndex(), course=playS.course;
   const hcpCard=`<div class="play-hcp">
-      <div class="play-hcp-num">${he?he.hcp:'–'}</div>
-      <div class="play-hcp-side"><div class="play-hcp-lbl">Estimated handicap</div>
-      <div class="play-hcp-sub">${he?`best ${he.usedN} of ${he.n} round${he.n>1?'s':''} · low ${he.low>=0?'+':''}${he.low}`:'play & save a round to begin'}</div></div></div>
-      <div class="play-hcp-disc">Personal estimate from your saved rounds — not an official Golf Australia handicap (no course rating/slope).</div>`;
+      <div class="play-hcp-num">${idx!=null?idx:'–'}</div>
+      <div class="play-hcp-side"><div class="play-hcp-lbl">Handicap index</div>
+        <input class="phb-input phb-input-wide" type="number" inputmode="decimal" step="0.1" placeholder="enter e.g. 18.4" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
+        <div class="play-hcp-sub">${he?`form ${he.hcp} · best ${he.usedN} of ${he.n} round${he.n>1?'s':''}`:'play &amp; save a round to estimate your form'}</div></div></div>
+      <div class="play-hcp-disc">Your Golf Australia handicap index. On the Card it becomes a course handicap from St Lucia's white-tee rating (CR ${course.cr} / Slope ${course.slope}) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
   if(!rounds.length) return hcpCard+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save.</div>`;
   const list=rounds.map(r=>{ const d=new Date(r.date), ds=d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
     const vp=r.vsPar===0?'E':r.vsPar>0?'+'+r.vsPar:''+r.vsPar;
     const partial=r.holesPlayed<18?` · ${r.holesPlayed} holes`:'';
-    return `<div class="ph-row"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}</div></div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><button class="ph-del" onclick="playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
+    const netTxt=(r.net!=null)?`<div class="ph-net">net <b>${r.net}</b>${r.stableford!=null?` · ${r.stableford} pts`:''}${r.courseHcp!=null?` · ch ${r.courseHcp}`:''}</div>`:'';
+    return `<div class="ph-row"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}</div>${netTxt}</div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><button class="ph-del" onclick="playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
   return hcpCard+`<div class="ph-list">${list}</div>`;
 }
 
