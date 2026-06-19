@@ -3058,6 +3058,9 @@ function buildCard(o){
     +`<div class="acard-note">${o.note}</div></div></div>`;
 }
 function fmtSkyDate(d){ try{ return d.toLocaleDateString(undefined,{day:'numeric',month:'short'}); }catch(e){ return ''; } }
+// Countdown pill text for a dated event: "today" once it's on/just past the current
+// day, otherwise "in Nd". Keeps every upcoming card labelled the same way.
+const _soonLbl=days=>{ const n=Math.round(days); return n<=0?'today':`in ${n}d`; };
 // Where a story's object sits in the sky right now (for the modal's "Up now" chip).
 function loreNowPos(slug,lat,lng){
   const date=nowDate(); let aa=null;
@@ -3330,9 +3333,11 @@ const COMETS=[
   for(const e of SKY_EVENTS) SKY_LORE[e.slug]={icon:e.icon,title:e.name,tag:'Event',blurb:e.blurb,rows:e.rows};
   for(const s of SEASON_MARKERS) SKY_LORE[s.slug]={icon:s.icon,title:s.name,tag:'Event',blurb:s.note,
     rows:[['For stargazers',s.star],['Why it happens','It marks a turning point in Earth’s year-long orbit — the tilt of our axis swinging the Sun’s path higher or lower in the sky.']]};
+  const _cdate=a=>{ try{ return new Date(a[0],a[1]-1,a[2]).toLocaleDateString(undefined,{day:'numeric',month:'short'}); }catch(e){ return ''; } };
   for(const c of COMETS) SKY_LORE[c.slug]={icon:c.icon,title:c.n,tag:'Event',blurb:c.note+'.',
     rows:[
       ['What you’re seeing',`A comet — a city-sized ball of ice and dust that sprouts a glowing coma and tail as the Sun warms it. ${c.n} peaks near magnitude ${c.mag}${c.eye==='binoc'?', so it needs binoculars or a small telescope rather than the naked eye.':', bright enough to glimpse with the naked eye under dark skies.'}`],
+      ['When to look',`Trackable from ${_cdate(c.start)}, brightest around ${_cdate(c.peak)} (about magnitude ${c.mag}), then slowly fading from view by ${_cdate(c.end)}. The card stays in your sky list right through that window — the countdown just marks when it first becomes trackable.`],
       ['From the Southern Hemisphere','Well placed for southern observers — it rides higher in our sky than it does up north. Look on a clear, moonless night well away from city lights.'],
       ['Worth knowing','Comet brightness is notoriously hard to predict — some fizzle, some flare up unexpectedly. It’s worth checking back across the apparition window.']]};
   const _oppLore={
@@ -4743,12 +4748,18 @@ function astroCards(lat,lng){
   // Comet apparitions — currently visible, or starting within the fortnight
   const cm=cometStatus(date);
   if(cm){
-    const dawnEvt=cm.active; const vis=cm.active?'now':'soon';
-    const peakTxt=Math.abs(cm.daysToPeak)<=2?'near its brightest now':cm.daysToPeak>0?`brightest in ${Math.round(cm.daysToPeak)}d`:'fading now';
+    const vis=cm.active?'now':'soon';
+    const startD=new Date(cm.c.start[0],cm.c.start[1]-1,cm.c.start[2]);
+    const peakD =new Date(cm.c.peak[0], cm.c.peak[1]-1, cm.c.peak[2]);
+    const endD  =new Date(cm.c.end[0],  cm.c.end[1]-1,  cm.c.end[2]);
+    const peakTxt=Math.abs(cm.daysToPeak)<=2?'near its brightest now':cm.daysToPeak>0?`brightest around ${fmtSkyDate(peakD)}`:`past its ${fmtSkyDate(peakD)} peak, fading`;
+    // Full lifecycle on the card face so the "in Nd" pill reads clearly (it counts to
+    // when the comet first becomes trackable, not to its peak).
+    const lifecycle=`Trackable from ${fmtSkyDate(startD)}, brightest around ${fmtSkyDate(peakD)} (mag ~${cm.c.mag}), then fading from view by ${fmtSkyDate(endD)}.`;
     cards.push({slug:cm.c.slug,cat:'events',rar:cm.c.rar||'epic',vis,eye:cm.c.eye||'naked',name:cm.c.n,icon:cm.c.icon||'☄️',glyph:cm.c.icon||'☄️',
-      pos:cm.active?`mag ~${cm.c.mag} · ${peakTxt}`:fmtSkyDate(new Date(cm.c.start[0],cm.c.start[1]-1,cm.c.start[2])),
+      pos:cm.active?`mag ~${cm.c.mag} · ${peakTxt}`:`best ${fmtSkyDate(peakD)}`,
       soonTxt:cm.active?'':`in ${Math.max(1,Math.round(cm.daysToStart))}d`,sortAlt:cm.active?20:0,
-      note:`${cm.c.note}. ${cm.active?peakTxt.charAt(0).toUpperCase()+peakTxt.slice(1)+'.':'Begins its apparition soon.'} Comets brighten unpredictably — worth a look on any clear, dark night in the window.`});
+      note:`${cm.c.note}. ${lifecycle} Comets brighten unpredictably — worth a look on any clear, dark night in the window.`});
   }
   // ISS (live position)
   const el=issElevation(lat,lng);
@@ -4818,19 +4829,19 @@ function astroCards(lat,lng){
   if(fm){ const dd=(fm-date)/day; if(dd<=14){
     const dist=moonDist(fm), bigPct=Math.round((384400/dist-1)*100);
     if(dist<=361500) cards.push({slug:'supermoon',cat:'events',rar:'epic',vis:'soon',name:'Supermoon',icon:'🌕',glyph:'🌕',
-      pos:fmtSkyDate(fm),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
+      pos:fmtSkyDate(fm),soonTxt:_soonLbl(dd),sortAlt:0,
       note:`The full Moon on ${fmtSkyDate(fm)} falls near perigee — its closest approach to Earth (~${Math.round(dist).toLocaleString()} km) — so it looks about ${bigPct}% larger and noticeably brighter than an average full Moon. Best appreciated as it rises, low against the horizon.`});
     else cards.push({slug:'fullmoon',cat:'events',rar:'common',vis:'soon',name:'Full Moon',icon:'🌕',glyph:'🌕',
-      pos:fmtSkyDate(fm),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
+      pos:fmtSkyDate(fm),soonTxt:_soonLbl(dd),sortAlt:0,
       note:`The Moon reaches full on ${fmtSkyDate(fm)} — brilliant all night, but it floods out fainter stars and the Milky Way.`});
   }}
   const nmoon=nextPhaseDate(date,'new');
   if(nmoon){ const dd=(nmoon-date)/day; if(dd<=14) cards.push({slug:'newmoon',cat:'events',rar:'rare',vis:'soon',name:'New Moon',icon:'🌑',glyph:'🌑',
-    pos:fmtSkyDate(nmoon),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,
+    pos:fmtSkyDate(nmoon),soonTxt:_soonLbl(dd),sortAlt:0,
     note:`Darkest skies of the month around ${fmtSkyDate(nmoon)} — the prime window for the Milky Way, faint clusters and meteors.`}); }
   const se=nextSeasonMarker(date);
   if(se && se.days<=14) cards.push({slug:se.slug,cat:'events',rar:'rare',vis:'soon',name:se.name,icon:se.icon,glyph:se.icon,
-    pos:fmtSkyDate(se.date),soonTxt:`in ${Math.max(1,Math.round(se.days))}d`,sortAlt:0,note:se.note});
+    pos:fmtSkyDate(se.date),soonTxt:_soonLbl(se.days),sortAlt:0,note:se.note});
   const cj=upcomingConjunction(lat,lng,date);
   if(cj) cards.push({slug:'conjunction',cat:'events',rar:'epic',vis:'soon',name:`${cj.a.label}–${cj.b.label} Conjunction`,icon:'🪐',glyph:'🪐',
     pos:fmtSkyDate(cj.date),soonTxt:cj.day===0?'tonight':`in ${cj.day}d`,sortAlt:0,
@@ -4849,8 +4860,10 @@ function astroCards(lat,lng){
   }
   for(const e of SKY_EVENTS){
     const ed=new Date(e.date[0],e.date[1]-1,e.date[2],20), dd=(ed-date)/day;
-    if(dd>0 && dd<=14) cards.push({slug:e.slug,cat:'events',rar:e.rar,vis:'soon',name:e.name,icon:e.icon,glyph:e.icon,
-      pos:fmtSkyDate(ed),soonTxt:`in ${Math.max(1,Math.round(dd))}d`,sortAlt:0,note:e.blurb});
+    // Keep the card from a fortnight out right through the event day/night (dd>-0.5),
+    // so it doesn't vanish the moment the eclipse/flyby actually arrives.
+    if(dd>-0.5 && dd<=14) cards.push({slug:e.slug,cat:'events',rar:e.rar,vis:'soon',name:e.name,icon:e.icon,glyph:e.icon,
+      pos:fmtSkyDate(ed),soonTxt:_soonLbl(dd),sortAlt:0,note:e.blurb});
   }
   // Loot order: visible-now first, then upcoming, then below-horizon; within each,
   // rarest first, then highest in the sky.
