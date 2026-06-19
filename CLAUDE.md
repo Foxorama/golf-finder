@@ -188,8 +188,9 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   crane the phone past a viewable angle, and at a natural eye-height hold the camera points
   slightly **below** the horizon, so you got mostly ground). Instead the band centre follows a
   **smooth saturating curve** of the true pitch: `centre = ceil − (ceil−lift)·e^(−gain·pitch/(ceil−lift))`
-  (`TILT_GAIN`/`TILT_LIFT`/`TILT_CEIL`, defaults `2.3 / 12 / 80`). At level (pitch 0) centre =
-  `lift` (sky just above the horizon, not ground); the **initial slope = `gain`** is the
+  (`TILT_GAIN`/`TILT_LIFT`/`TILT_CEIL`, defaults `2.3 / 21 / 80`). At level (pitch 0) centre =
+  `lift` (sky filling the frame, horizon pushed down near the bottom compass strip — `lift` was
+  raised from 12→21 on phone feedback to cut the below-horizon "ground" band by ~⅔); the **initial slope = `gain`** is the
   *tilt-friendliness* (a relaxed tilt lifts you into real sky — raise it to need even less tilt);
   and as you tilt overhead the centre **eases toward `ceil` (an asymptote, never a hard clamp)**.
   That asymptote is deliberate: the old linear map hit a hard `90−span·0.35` ceiling clamp and

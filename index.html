@@ -2016,12 +2016,12 @@ window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overc
   if(c!=null) window._tiltCeil=Math.max(40,Math.min(90,c));
 })();
 // Console equivalent for live desktop tweaking: setTilt(gain,lift,ceil) sets any of the three
-// (pass null to leave one alone) and repaints; setTilt() with no args restores defaults (2.3/12/80).
+// (pass null to leave one alone) and repaints; setTilt() with no args restores defaults (2.3/21/80).
 window.setTilt=(g,l,c)=>{
   if(g==null&&l==null&&c==null){ delete window._tiltGain; delete window._tiltLift; delete window._tiltCeil; }
   else { if(g!=null) window._tiltGain=Math.max(0.2,Math.min(6,+g)); if(l!=null) window._tiltLift=Math.max(-40,Math.min(60,+l)); if(c!=null) window._tiltCeil=Math.max(40,Math.min(90,+c)); }
   try{ if(typeof buildSkyObjects==='function'&&window._gpsLat!=null) buildSkyObjects(window._gpsLat,window._gpsLng); }catch(e){}
-  return {gain:(typeof window._tiltGain==='number')?window._tiltGain:'default(2.3)', lift:(typeof window._tiltLift==='number')?window._tiltLift:'default(12)', ceil:(typeof window._tiltCeil==='number')?window._tiltCeil:'default(80)'};
+  return {gain:(typeof window._tiltGain==='number')?window._tiltGain:'default(2.3)', lift:(typeof window._tiltLift==='number')?window._tiltLift:'default(21)', ceil:(typeof window._tiltCeil==='number')?window._tiltCeil:'default(80)'};
 };
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
@@ -4503,7 +4503,7 @@ let _tiltPan=true;           // tilt-to-pan vertical; set window._tiltPan=false 
 // _tiltLift = band centre when held level (° above the horizon), _tiltCeil = the altitude the
 // view eases toward as you tilt overhead (an asymptote — no hard clamp, so no frozen dead-spot
 // near the zenith). Override live on a phone via window._tiltGain / _tiltLift / _tiltCeil.
-const TILT_GAIN=2.3, TILT_LIFT=12, TILT_CEIL=80;
+const TILT_GAIN=2.3, TILT_LIFT=21, TILT_CEIL=80;
 let _lastOrientT=0,_paintedH=null,_paintedP=null,_iosAzOffset=0;
 // Ease one angle toward a target with a TIME-BASED low-pass (tau seconds, so the feel
 // is identical whatever rate the sensor fires at — the main cure for jumpy tilt), plus
