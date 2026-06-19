@@ -3867,13 +3867,23 @@ function buildStarField(lat,lng){
   if(full){ _skyVSpan=90; _skyAltC=46; }
   else {
     _skyVSpan=Math.min(90,Math.max(34,(H/W)*fov));
-    // Tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch) — 1:1,
-    // so it tracks the moment you start lifting. The floor sits a little BELOW the horizon
-    // (−span·0.4) so pointing at/just-below the horizon and tilting up responds straight
-    // away (a floor of 0 left a dead zone there — you'd point a touch low and the first
-    // few degrees of lift did nothing); only the TOP is clamped, so pointing near the
-    // zenith holds steady. No tilt signal → a comfortable mid-sky default.
-    const cen=(_tiltPan&&window._tiltPan!==false&&_skyPitch!=null)?_skyPitch:48;
+    // Comfort-tilt-to-pan: centre the band on the altitude the phone points at (_skyPitch),
+    // but AMPLIFIED — centre = pitch·gain + lift — so you don't have to crane the phone past
+    // a viewable angle to reach the upper sky. With the 1:1 map (old behaviour) a star at 60°
+    // sat centred only when the camera physically tilted to 60°, by which point the screen
+    // faces the ground; here a relaxed ~40° tilt already brings the zenith to the top of frame,
+    // and a near-level hold shows sky instead of ground. This does NOT distort shapes — the
+    // band stays conformal (equal deg/px both axes), only the pan-rate-vs-tilt changes. The
+    // "…° alt" readout still reports the TRUE pointing altitude, and the zenith-hold/azimuth
+    // damping (in _onOrient) stay keyed to true altitude, so only the vertical framing moves.
+    // Tune the feel live on a phone via window._tiltGain / window._tiltLift; set them to 1 & 0
+    // for the exact old 1:1 behaviour. The floor sits a little BELOW the horizon (−span·0.4)
+    // so the horizon line + a dip of ground stay reachable; only the TOP is clamped, so
+    // pointing near the zenith holds steady. No tilt signal → a comfortable mid-sky default.
+    const gain=(typeof window._tiltGain==='number')?window._tiltGain:TILT_GAIN;
+    const lift=(typeof window._tiltLift==='number')?window._tiltLift:TILT_LIFT;
+    const live=_tiltPan&&window._tiltPan!==false&&_skyPitch!=null;
+    const cen=live?(_skyPitch*gain+lift):48;
     _skyAltC=Math.max(-_skyVSpan*0.4,Math.min(90-_skyVSpan*0.35,cen));
   }
   // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
@@ -4448,6 +4458,10 @@ function _onSkyTap(e){
 let _compassOn=false,_headingSm=null,_pitchSm=null,_lastSkyPaint=0,_orientHandler=null,_orientEvent=null;
 let _skyPitch=null;          // applied pointing altitude (°) — drives the conformal band centre
 let _tiltPan=true;           // tilt-to-pan vertical; set window._tiltPan=false (console) to pin the band
+// Comfort-tilt defaults (see buildStarField): amplify physical tilt so the upper sky is
+// reachable at a viewable phone angle. _tiltGain=steepness, _tiltLift=° of upward bias.
+// Override live on a phone with window._tiltGain / window._tiltLift; set 1 & 0 for old 1:1.
+const TILT_GAIN=1.6, TILT_LIFT=10;
 let _lastOrientT=0,_paintedH=null,_paintedP=null,_iosAzOffset=0;
 // Ease one angle toward a target with a TIME-BASED low-pass (tau seconds, so the feel
 // is identical whatever rate the sensor fires at — the main cure for jumpy tilt), plus
