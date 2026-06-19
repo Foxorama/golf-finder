@@ -339,6 +339,9 @@ body.sky-full-on{overflow:hidden;}
 .sky-mag-btn:active{transform:scale(0.96);}
 .sky-mag-btn:disabled{opacity:0.38;cursor:default;}
 .sky-mag-btn:disabled:active{transform:none;}
+/* Inline binoculars glyph — sizes to the surrounding text, inherits its colour */
+.ic-binoc{width:1.18em;height:1.18em;display:inline-block;vertical-align:-0.22em;flex:none;}
+.acard-eye .ic-binoc{width:1.25em;height:1.25em;vertical-align:-0.24em;}
 .sky-facing{position:absolute;top:9px;left:50%;transform:translateX(-50%);z-index:8;font-family:var(--mono);font-size:10.5px;color:#cdd9f5;background:rgba(16,22,43,0.78);border:1px solid rgba(124,148,210,0.3);padding:4px 9px;border-radius:8px;white-space:nowrap;}
 .sky-center-tick{position:absolute;left:50%;bottom:13px;width:2px;height:15px;background:rgba(222,232,255,0.9);z-index:7;transform:translateX(-50%);border-radius:1px;box-shadow:0 0 6px rgba(160,190,255,0.7);pointer-events:none;}
 .sky-horizon{position:absolute;bottom:13px;left:0;right:0;height:1px;background:rgba(160,180,220,0.18);z-index:1;}
@@ -3036,13 +3039,17 @@ function cardArt(o){
   const g=o.glyph||o.icon||'✦';
   return glyphOutlineSVG(g,sz)+glyphHeroicSVG(g,sz,ac,o.slug);
 }
+// Inline binoculars glyph (currentColor so it inherits each context's text colour).
+// Unicode has no binoculars emoji — 🔭 is a telescope — so the "binoculars" depth
+// control and the per-card binocular badge draw this little two-barrel SVG instead.
+const BINOC_SVG='<svg class="ic-binoc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 7h4"/><path d="M8 11h8"/><path d="M5 21a3 3 0 0 1-3-3v-7a3 3 0 0 1 6 0v7a3 3 0 0 1-3 3z"/><path d="M19 21a3 3 0 0 0 3-3v-7a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3z"/><path d="M8 9a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2"/><path d="M16 9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>';
 // One card template for every night object — the single place card styling lives.
 function buildCard(o){
   const ac=rarCol(o.rar), phase=(-(_hashStr(o.slug)%1100)/100).toFixed(2)+'s';
   const lead=o.dot?`<span class="acard-dot" style="background:${o.dot};color:${o.dot}"></span>`
                   :`<span class="acard-icon">${o.icon||'✨'}</span>`;
   const rar=`<span class="acard-rar">${RARITY_LBL[o.rar]||'Common'}</span>`;
-  const binoc=o.eye==='binoc'?`<span class="acard-eye" title="Best with binoculars">🔭</span>`:'';
+  const binoc=o.eye==='binoc'?`<span class="acard-eye" title="Best with binoculars">${BINOC_SVG}</span>`:'';
   const soon=o.vis==='soon'?`<span class="acard-soon">${o.soonTxt||'Upcoming'}</span>`:'';
   const pos=o.pos?`<span class="acard-pos">${o.pos}</span>`:'';
   return `<div class="acard tappable${o.cls?(' '+o.cls):''}" data-cat="${o.cat}" data-vis="${o.vis}" data-eye="${o.eye||'naked'}" data-rarity="${o.rar}" onclick="openSkyStory('${o.slug}')" style="--ac:${ac};--phase:${phase};">`
@@ -3753,7 +3760,7 @@ async function loadStarCatalog(){
 // + toggleCompass), and the toggle is disabled there since depth is its own job.
 const STAR_MAG_PRESETS=[
   {k:'eye',  label:'👁 naked eye',  mag:4.9},
-  {k:'binoc',label:'🔭 binoculars', mag:5.8}
+  {k:'binoc',label:BINOC_SVG+' binoculars', mag:5.8}
 ];
 let _starMagIdx=0;
 try{ const i=STAR_MAG_PRESETS.findIndex(p=>p.k===localStorage.getItem('gf_starmag')); if(i>=0)_starMagIdx=i; }catch(e){}
@@ -3770,7 +3777,7 @@ async function loadDeepCatalog(){
     buildSkyObjects(window._gpsLat??-27.4698,window._gpsLng??153.0251);
 }
 function updateStarMagBtn(){
-  const b=document.getElementById('sky-mag-btn'); if(b) b.textContent=STAR_MAG_PRESETS[_starMagIdx].label;
+  const b=document.getElementById('sky-mag-btn'); if(b) b.innerHTML=STAR_MAG_PRESETS[_starMagIdx].label;
 }
 function cycleStarMag(){
   _starMagIdx=(_starMagIdx+1)%STAR_MAG_PRESETS.length;
@@ -4911,7 +4918,7 @@ function applySkyFilter(){
   if(!shown){
     if(!empty){ empty=document.createElement('div'); empty.id='sky-empty'; empty.className='no-results'; list.appendChild(empty); }
     empty.textContent = !_skyCats.size ? 'No categories selected — tap Stars, Planets, Deep sky or Events to fill the sky.'
-                      : _skyNowOnly ? 'Nothing in those categories is up right now — switch off “Visible now” to browse the whole sky, or try the 🔭 binoculars depth.'
+                      : _skyNowOnly ? 'Nothing in those categories is up right now — switch off “Visible now” to browse the whole sky, or try the binoculars depth.'
                       : 'Nothing in those categories right now.';
     empty.style.display='';
   }else if(empty){ empty.style.display='none'; }
