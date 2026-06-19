@@ -276,6 +276,19 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `photo:` field). **Ordering gotcha:** the `SKY_LORE` builder IIFE reads `COMETS`, so `COMETS`
   **must be declared above that IIFE** (a later `const` trips the temporal-dead-zone and silently
   halts the whole script — symptom: no app globals, loader never hides).
+- **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
+  same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
+  course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent
+  bar bleeding into a soft inner glow (`box-shadow:inset 0 0 24px -18px`, green when
+  playable / faint red when the day's out) — so keep new day list items in that idiom.
+  **The switch itself MELTS, it doesn't snap:** on a genuine day↔night flip, `render()`'s
+  `_uiNight` block adds a one-shot `body.mode-melt` class that eases the themed surfaces
+  between the green and indigo palettes (a `.55s` transition) and fades the swapped
+  hero/list in (`modeFade`), then self-removes after ~650ms (`window._meltT`). It is
+  **gated** to real flips only (`_modeFlip = _uiNight!==undefined`) so it never tweens on
+  first paint, a region reset, or the 60s re-render tick — don't make the theme-var change
+  unconditional or you'll reintroduce the hard one-frame swap. Honours
+  `prefers-reduced-motion`.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Change & versioning flow
