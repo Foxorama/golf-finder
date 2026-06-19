@@ -2873,7 +2873,7 @@ function figureAnchor(f){
 // painting was built from, so the overlay registers pixel-exact. Scorpius is the proof.
 const REG_HERO={scorpius:1,crux:1,centaurus:1,orion:1,'canis-major':1,sagittarius:1,leo:1,
   taurus:1,gemini:1,carina:1,'triangulum-australe':1,grus:1,vela:1,corvus:1,cygnus:1,lyra:1,
-  aquila:1,virgo:1};
+  aquila:1,virgo:1,lupus:1};
 // Every skeleton is built at 1536×1024 with pad 180, so the in-app overlay uses the
 // matching inset (180 ÷ 5.12 = 35.156 in the 300-px box) — its real stars then land
 // exactly on the painting's stars for ALL registered figures.
@@ -4950,7 +4950,8 @@ const HERO_ART={
   'triangulum-australe':'night-heroes/triangulum-australe.jpg', grus:'night-heroes/grus.jpg',
   vela:'night-heroes/vela.jpg', corvus:'night-heroes/corvus.jpg',
   cygnus:'night-heroes/cygnus.jpg', lyra:'night-heroes/lyra.jpg',
-  aquila:'night-heroes/aquila.jpg', virgo:'night-heroes/virgo.jpg'
+  aquila:'night-heroes/aquila.jpg', virgo:'night-heroes/virgo.jpg',
+  lupus:'night-heroes/lupus.jpg'
 };
 // Per-figure CSS transform on the painting AURA so its figure sits roughly behind
 // the registered star-figure (the paintings are fixed raster — they can't register
