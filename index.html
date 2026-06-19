@@ -5064,7 +5064,7 @@ function _skyResetCard(){ const c=document.getElementById('sky-modal-card'); if(
 function _skyTouchInit(){
   const card=document.getElementById('sky-modal-card'), body=document.getElementById('sky-modal-body');
   if(!card||card._swipeWired) return; card._swipeWired=true;
-  let x0=0,y0=0,dx=0,dy=0,drag=false,axis='',top0=0; const TH=90;
+  let x0=0,y0=0,dx=0,dy=0,drag=false,axis='',top0=0; const TH=135;
   card.addEventListener('touchstart',e=>{
     if(window._skySwipe===false||e.touches.length!==1){ drag=false; return; }
     const t=e.touches[0]; x0=t.clientX; y0=t.clientY; dx=dy=0; axis=''; drag=true;
@@ -5078,8 +5078,15 @@ function _skyTouchInit(){
       else { drag=false; card.style.transform=''; card.style.opacity=''; }
     } else if(dx>0){ const d=dx*0.7; card.style.transform='translateX('+d+'px)'; card.style.opacity=String(Math.max(0.4,1-d/600)); }
   },{passive:false});
-  const end=()=>{ if(!drag) return; drag=false; card.style.transition='transform .22s ease,opacity .22s ease';
-    if((axis==='y'&&dy>TH&&top0<=0)||(axis==='x'&&dx>TH)) closeSkyStory(); else { card.style.transform=''; card.style.opacity=''; } };
+  // Past threshold: glide the card the rest of the way off-screen + fade, THEN
+  // close — so it eases out instead of snapping to display:none ("crashing out").
+  const glideOff=(dir)=>{ card.style.transition='transform 340ms cubic-bezier(.3,0,.6,1),opacity 240ms ease';
+    card.style.transform=dir==='x'?'translateX('+(innerWidth+40)+'px)':'translateY('+(innerHeight+40)+'px)';
+    card.style.opacity='0'; setTimeout(closeSkyStory,300); };
+  const end=()=>{ if(!drag) return; drag=false;
+    if(axis==='y'&&dy>TH&&top0<=0) glideOff('y');
+    else if(axis==='x'&&dx>TH) glideOff('x');
+    else { card.style.transition='transform .28s cubic-bezier(.2,.7,.3,1),opacity .28s ease'; card.style.transform=''; card.style.opacity=''; } };
   card.addEventListener('touchend',end,{passive:true}); card.addEventListener('touchcancel',end,{passive:true});
 }
 window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const pp=document.getElementById('play-panel'); if(pp&&pp.style.display==='block') closePlay(); } });
