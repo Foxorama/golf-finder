@@ -4377,6 +4377,17 @@ function buildSkyObjects(lat,lng){
   // pos() reads below — keeps the markers aligned with the stars/lines.)
   buildStarField(lat,lng);
   const pos=(az,alt)=>({x:skyAzX(az), y:skyAltFrac(alt)*100});
+  // Frame cull (detail/compass view only): only emit a marker+label when its anchor is actually
+  // inside the visible frame — within the horizontal FOV AND the conformal altitude band. Without
+  // this, figures far in azimuth (|Δaz|>fov/2) or outside the pan-band (e.g. a constellation whose
+  // bright star sits below the band) were still added to the DOM at x=120%/y=130% and clipped, and
+  // the label-declutter then NUDGED their wide names back onto the screen edge — a pile of names
+  // (Triangulum Australe, Musca…) with no figure, plus orphans like "Aquila" pinned to the bottom
+  // while its stars are off-screen. The 360° overview is a wrap-around panorama, so it never culls.
+  const _detail=_skyFov<360, _cc=skyViewCenter();
+  const inFrame=(az,alt)=>{ if(!_detail) return true;
+    if(Math.abs(((az-_cc+540)%360)-180) > _skyFov/2+2) return false;     // outside horizontal FOV
+    const y=skyAltFrac(alt)*100; return y>=-4 && y<=104; };              // outside the vertical band
   // Depth + filter only bite in the fullscreen detail view (skyShows()); the overview
   // is unchanged. binocDepth also gates binocular-only deep-sky, matching the cards.
   const binocDepth=(STAR_MAG_PRESETS[_starMagIdx]||{}).k==='binoc';
@@ -4395,6 +4406,7 @@ function buildSkyObjects(lat,lng){
     const f=m.f; if(!f.info) continue;
     if(!_compassOn && f.slug!=='crux') continue;
     if(m.alt<visGate(f.info.vis||6)) continue;
+    if(!inFrame(m.az,m.alt)) continue;
     // Pin the name+marker just BELOW the figure's footprint (its lowest on-screen star,
     // from figMeta) rather than on the anchor, so the name stops landing across the
     // lines. Horizontal stays at the anchor (stable, seam-free); the real bright star
@@ -4409,30 +4421,33 @@ function buildSkyObjects(lat,lng){
     if(d.eye==='binoc' && !binocDepth) continue;
     const aa=altAz(d.ra,d.dec,lat,lng,date);
     if(aa.alt<visGate(d.vis||8)) continue;
+    if(!inFrame(aa.az,aa.alt)) continue;
     const p=pos(aa.az,aa.alt), mk=rarCol(d.rar);
     html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="${30+RR(d.rar)}" data-key="d-${d.slug}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${mk}">${skyMark(d.type||'deep',mk)}<span class="so-label" style="color:${mk};opacity:0.9;font-size:9px;">${d.n}</span></div>`);
   }
   if(skyShows('planets')) for(const pl of planetPositions(lat,lng,date)){
     if(pl.alt<3)continue;
+    if(!inFrame(pl.az,pl.alt)) continue;
     const p=pos(pl.az,pl.alt);
     html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${pl.az.toFixed(1)}" data-prio="10" data-key="p-${pl.key}" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;--mk:${pl.dot};color:${pl.dot}">${skyMark('planet',pl.dot)}<span class="so-label">${pl.label}</span></div>`);
   }
   if(skyShows('deep')){
     const gc=altAz(GAL_CORE.ra,GAL_CORE.dec,lat,lng,date);
-    if(gc.alt>8){
+    if(gc.alt>8 && inFrame(gc.az,gc.alt)){
       const p=pos(gc.az,gc.alt);
       html+=wrapX(p.x, x=>`<div class="sky-mw" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%"></div><div class="sky-obj" data-az="${gc.az.toFixed(1)}" data-prio="40" data-key="milkyway" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+9).toFixed(1)}%"><span class="so-label" style="opacity:0.75;">Milky Way core</span></div>`);
     }
     for(const mc of MAGELLANIC){
       const aa=altAz(mc.ra,mc.dec,lat,lng,date);
       if(aa.alt<4)continue;
+      if(!inFrame(aa.az,aa.alt)) continue;
       const p=pos(aa.az,aa.alt);
       html+=wrapX(p.x, x=>`<div class="sky-mc" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%;width:${mc.sz}px;height:${mc.sz}px;"></div><div class="sky-obj" data-az="${aa.az.toFixed(1)}" data-prio="41" data-key="mc-${mc.n}" style="left:${x.toFixed(1)}%;top:${Math.min(95,p.y+6).toFixed(1)}%"><span class="so-label" style="opacity:0.65;">${mc.n}</span></div>`);
     }
   }
   if(skyShows('planets')){
     const m=moonAltAz(lat,lng,date);
-    if(m.alt>0){
+    if(m.alt>0 && inFrame(m.az,m.alt)){
       const mp=moonPhase(date), p=pos(m.az,m.alt);
       html+=wrapX(p.x, x=>`<div class="sky-obj" data-az="${m.az.toFixed(1)}" data-prio="5" data-key="moon" style="left:${x.toFixed(1)}%;top:${p.y.toFixed(1)}%">${moonMark(mp.age)}<span class="so-label">Moon</span></div>`);
     }
