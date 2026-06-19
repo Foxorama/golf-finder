@@ -3943,16 +3943,19 @@ function buildStarField(lat,lng){
     // Safety clamp only (the soft curve already keeps the top ≤ zenith and the centre ≥ floor).
     _skyAltC=Math.max(-_skyVSpan*0.4,Math.min(90-half,cen));
   }
-  // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM
-  // objects), scaled to pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac.
-  const px=(az)=>{ const d=((az-c+540)%360)-180; return (d/fov+0.5)*W; };
+  // Same azimuth→x mapping as skyAzX (so the canvas lines up with the DOM objects), scaled to
+  // pixels; alt→y matches buildSkyObjects' pos() via skyAltFrac. Mirrors skyAzX's dome scaling
+  // (cos(alt) on the azimuth offset) so the canvas stars/lines un-squish at high altitude too.
+  const px=(az,alt)=>{ const d=((az-c+540)%360)-180;
+    const s=(!full && alt!=null && window._skyDome!==false)?Math.max(0.12,Math.cos(alt*RAD)):1;
+    return (d*s/fov+0.5)*W; };
   const py=(alt)=>skyAltFrac(alt)*H;
   // Constellation lines — always the curated seed figures (cached az/alt), so they stay
   // correct whether or not the dense catalog has loaded. Hidden when the (detail-view)
   // filter isn't showing stars; in the live compass the focus-band figures glow and the
   // rest dim (emphasis = each line's 5th value, read by paintSky).
   const sb=seedBase(lat,lng,date);
-  const seedP=sb.map(b=>b?{x:px(b.az),y:py(b.alt)}:null), lines=[];
+  const seedP=sb.map(b=>b?{x:px(b.az,b.alt),y:py(b.alt)}:null), lines=[];
   const detail=!full, live=skyHeading!=null, showStars=skyShows('stars');
   let figBand=null;
   if(detail && live && showStars){
@@ -3989,7 +3992,7 @@ function buildStarField(lat,lng){
   const dots=[];
   for(const b of base){
     if(b.mag>magCap) continue;
-    const x=px(b.az), y=py(b.alt);
+    const x=px(b.az,b.alt), y=py(b.alt);
     if(!full && (x<-2||x>W+2||y<-4||y>H+4)) continue;          // off the zoomed/conformal edge
     const d={x,y,r:b.r,a:b.a,cx:b.cx,glow:b.glow,ph:b.ph,tf:b.tf,ta:b.ta};
     dots.push(d);
@@ -4293,10 +4296,18 @@ let skyHeading=null;
 const SKY_FOV_DETAIL=120;
 let _skyFov=360,_skyCenter=180;
 function skyViewCenter(){ return skyHeading==null ? _skyCenter : skyHeading; }
-function skyAzX(az){
+function skyAzX(az,alt){
   const c=skyViewCenter();
   const d=((az-c+540)%360)-180;          // signed degrees from centre, −180..180
-  return (d/_skyFov+0.5)*100;            // centre → 50%; ±fov/2 → 0 / 100%
+  // Dome projection (detail view): scale the azimuth offset by cos(alt). A plain cylindrical
+  // map (no scaling) stretches high-altitude sky horizontally by 1/cos(alt) — at 80° that's
+  // ~5.8×, the "super-squished top". Scaling by cos(alt) un-stretches it so constellations keep
+  // their true shape all the way up, and azimuths converge toward the zenith as they really do.
+  // The horizon (alt 0, or callers that pass no alt like the compass strip) is unchanged.
+  // window._skyDome=false restores the plain cylindrical map.
+  let s=1;
+  if(_skyFov<360 && alt!=null && window._skyDome!==false) s=Math.max(0.12,Math.cos(alt*RAD));
+  return (d*s/_skyFov+0.5)*100;          // centre → 50%; ±fov/2 → 0 / 100% at the horizon
 }
 // Vertical (altitude) mapping. The OVERVIEW (360° strip) keeps the old full 0–90
 // squeeze — it's a deliberately squished panorama. The DETAIL view is CONFORMAL:
@@ -4376,7 +4387,7 @@ function buildSkyObjects(lat,lng){
   // (buildStarField runs first so it sets the conformal _skyVSpan/_skyAltC that
   // pos() reads below — keeps the markers aligned with the stars/lines.)
   buildStarField(lat,lng);
-  const pos=(az,alt)=>({x:skyAzX(az), y:skyAltFrac(alt)*100});
+  const pos=(az,alt)=>({x:skyAzX(az,alt), y:skyAltFrac(alt)*100});
   // Frame cull (detail/compass view only): only emit a marker+label when its anchor is actually
   // inside the visible frame — within the horizontal FOV AND the conformal altitude band. Without
   // this, figures far in azimuth (|Δaz|>fov/2) or outside the pan-band (e.g. a constellation whose
