@@ -2003,6 +2003,24 @@ window._wxForce=(()=>{const p=new URLSearchParams(location.search).get('wx');if(
 // Console helper: setWx('storm'|'rain'|'snow'|...) forces the scene instantly
 // (no reload, so it can't be defeated by caching). setWx() restores live weather.
 window.setWx=(v)=>{const m={clear:'Clear',partly:'Partly Cloudy',overcast:'Overcast',fog:'Foggy',drizzle:'Drizzle',shower:'Showers',rain:'Heavy Rain',snow:'Snow',storm:'Thunderstorm',hail:'Thunderstorm with hail'};window._wxForce=v?(m[(''+v).toLowerCase().trim()]||v):null;window._wxSceneKey=null;window._nightWxKey=null;render();return window._wxForce||'(live weather)';};
+// Night star-map comfort-tilt overrides, settable from the URL so the feel can be A/B'd
+// on a PHONE (no desktop JS console needed): e.g. ?tiltgain=1.8&tiltlift=12 . They feed
+// the gain/lift used by buildStarField; ?tiltgain=1&tiltlift=0 is the exact old 1:1 map.
+(function initTiltOverride(){
+  const q=new URLSearchParams(location.search);
+  const num=(k)=>{const v=q.get(k);if(v==null||v==='')return null;const n=parseFloat(v);return isFinite(n)?n:null;};
+  const g=num('tiltgain'),l=num('tiltlift');
+  if(g!=null) window._tiltGain=Math.max(0.2,Math.min(4,g));
+  if(l!=null) window._tiltLift=Math.max(-40,Math.min(60,l));
+})();
+// Console equivalent for live desktop tweaking: setTilt(1.8,12) sets gain/lift and repaints;
+// setTilt() with no args restores the defaults (1.6 / 10).
+window.setTilt=(g,l)=>{
+  if(g==null&&l==null){ delete window._tiltGain; delete window._tiltLift; }
+  else { if(g!=null) window._tiltGain=Math.max(0.2,Math.min(4,+g)); if(l!=null) window._tiltLift=Math.max(-40,Math.min(60,+l)); }
+  try{ if(typeof buildSkyObjects==='function'&&window._gpsLat!=null) buildSkyObjects(window._gpsLat,window._gpsLng); }catch(e){}
+  return {gain:(typeof window._tiltGain==='number')?window._tiltGain:'default(1.6)', lift:(typeof window._tiltLift==='number')?window._tiltLift:'default(10)'};
+};
 (function initTestTime(){
   const p = new URLSearchParams(location.search).get('time');
   if(p){
