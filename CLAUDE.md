@@ -186,19 +186,26 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   top-edge heading. **Comfort-tilt-to-pan:** `buildStarField` no longer centres the band on
   the pointing altitude 1:1 (that was *realistic but unusable* — to frame high sky you had to
   crane the phone past a viewable angle, and at a natural eye-height hold the camera points
-  slightly **below** the horizon, so you got mostly ground). Instead the band centre follows a
-  **smooth saturating curve** of the true pitch: `centre = ceil − (ceil−lift)·e^(−gain·pitch/(ceil−lift))`
-  (`TILT_GAIN`/`TILT_LIFT`/`TILT_CEIL`, defaults `2.3 / 21 / 80`). At level (pitch 0) centre =
+  slightly **below** the horizon, so you got mostly ground). Instead a **smooth saturating curve**
+  pans the band, and crucially it saturates the band's **TOP EDGE toward the zenith** (`ceil`≈90°),
+  not the centre toward a fixed value: `topAlt = ceil − (ceil−topLevel)·e^(−gain·pitch/(ceil−topLevel))`
+  with `topLevel = lift + span/2`, then `centre = topAlt − span/2`
+  (`TILT_GAIN`/`TILT_LIFT`/`TILT_CEIL`, defaults `2.3 / 21 / 90`). At level (pitch 0) centre =
   `lift` (sky filling the frame, horizon pushed down near the bottom compass strip — `lift` was
-  raised from 12→21 on phone feedback to cut the below-horizon "ground" band by ~⅔); the **initial slope = `gain`** is the
-  *tilt-friendliness* (a relaxed tilt lifts you into real sky — raise it to need even less tilt);
-  and as you tilt overhead the centre **eases toward `ceil` (an asymptote, never a hard clamp)**.
-  That asymptote is deliberate: the old linear map hit a hard `90−span·0.35` ceiling clamp and
-  **froze the band over a wide range of high tilts** (a "placeholder starfield that doesn't
-  change" dead-spot near the zenith) — the curve never goes dead, the zenith just sits near the
-  top of frame. (Past ~vertical the device's own pitch genuinely tips back down the far side of
-  the arc — inherent to the orientation sensor, not a clamp.) Floor stays `−span·0.4` (horizon +
-  a dip of ground reachable); no shape distortion (band stays conformal). No signal → mid-sky
+  raised from 12→21 on phone feedback to cut the below-horizon "ground" band by ~⅔); the **initial
+  slope of the centre = `gain`** is the *tilt-friendliness* (a relaxed tilt lifts you into real sky
+  — raise it to need even less tilt); and as you tilt overhead the **top edge eases up to `ceil`
+  (an asymptote, never a hard clamp) and holds at the zenith**. **Two dead-spots were fixed this
+  way:** (1) the *original* linear map hit a hard `90−span·0.35` ceiling clamp that froze the band
+  over a wide range of high tilts (a "placeholder starfield" near the zenith). (2) Saturating the
+  *centre* (toward a fixed 80°) instead pushed the band's top **past 90° into empty "above-the-
+  zenith" sky** once you tilted up — the top of the screen went blank and the real high sky bunched
+  /"squished" below it (the "map ends ~60°, top squished" report). Anchoring the **top** at the
+  zenith removes the empty gap entirely while staying a soft asymptote (no frozen dead-spot): the
+  highest sky you can see is the zenith at the top edge, and the view never scrolls past it. (Past
+  ~vertical the device's own pitch genuinely tips back down the far side of the arc — inherent to
+  the orientation sensor, not a clamp.) Floor stays `−span·0.4` (horizon + a dip of ground
+  reachable); no shape distortion (band stays conformal). No signal → mid-sky
   default (alt 48°), `window._tiltPan=false` pins it. **Tunable live on a phone** without a
   desktop console: `?tiltgain=`/`?tiltlift=`/`?tiltceil=` URL params (`initTiltOverride`) or the
   `setTilt(gain,lift,ceil)` console helper (`window._tiltGain`/`_tiltLift`/`_tiltCeil`) — so the
