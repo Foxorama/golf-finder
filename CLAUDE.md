@@ -330,7 +330,10 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `clubAvg` with 10%-trimmed mean, last 40 per club) when the round is saved, and the
   History tab shows a **"Your clubs"** card of carry averages. Marked shots + clubs now
   persist in the round draft and on the saved round (`legs:`), so shot distances survive a
-  close/reopen and a saved round. **Each baked feature is assigned to its nearest
+  close/reopen and a saved round. The rangefinder then **suggests a club** for the
+  plays-like distance (`suggestClub`, `.pr-club`): the club whose carry average (≥3 tagged
+  shots, within ~14 m) is nearest — so into a headwind the longer plays-like number bumps
+  the suggestion up. Hidden until you've tagged enough shots. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
