@@ -750,9 +750,24 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-mark:active{transform:scale(0.98);}
 .ps-empty{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;padding:4px 0 2px;}
 .ps-chips{display:flex;flex-wrap:wrap;gap:5px;}
-.ps-chip{font-family:var(--mono);font-size:11px;color:var(--tx2);background:var(--sur);border:1px solid var(--bdr2);border-radius:7px;padding:3px 7px;}
+.ps-chip{font-family:var(--mono);font-size:11px;color:var(--tx2);background:var(--sur);border:1px solid var(--bdr2);border-radius:7px;padding:3px 7px;cursor:pointer;}
+.ps-chip .ps-club{color:var(--tx3);border-left:1px solid var(--bdr2);margin-left:4px;padding-left:4px;}
+.ps-chip.tagged{border-color:var(--gl);} .ps-chip.tagged .ps-club{color:var(--gg);}
 .ps-live{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;margin-top:6px;}
 .ps-live b{color:var(--al);}
+/* club picker grid (in the play-confirm overlay) */
+.cp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px;}
+.cp-club{padding:10px 0;border-radius:9px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;}
+.cp-club.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
+/* "Your clubs" averages card (History) */
+.play-clubs{background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
+.pcl-h{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--tx);margin-bottom:10px;}
+.pcl-h span{font-family:var(--mono);font-weight:400;font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.04em;margin-left:6px;}
+.pcl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(72px,1fr));gap:8px;}
+.pcl-item{display:flex;flex-direction:column;align-items:center;gap:1px;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:7px 4px;}
+.pcl-club{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gg);}
+.pcl-avg{font-family:var(--mono);font-size:13px;color:var(--tx);}
+.pcl-n{font-family:var(--mono);font-size:9px;color:var(--tx3);}
 /* wind-vs-hole strip under the hole map */
 .play-windbar{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 13px;margin:8px 0 2px;border:1px solid var(--bdr);background:var(--bg3);}
 .wb-icon{font-size:17px;line-height:1;}
@@ -5960,12 +5975,24 @@ function playPos(){ return window.__playPos||(playS&&playS.pos)||null; }   // __
 function playUnit(){ return playS.units==='yd'?'yd':'m'; }
 function fmtDist(m){ if(m==null) return '--'; return Math.round(playS.units==='yd'?m*1.09361:m); }
 
+// ── Club tracking: per-club carry stats built from tagged shot legs (cross-round) ──
+// gf_club_stats = { 'Dr':[230,235,…], '7i':[150,…] } in metres, last 40 per club.
+const CLUBS=['Dr','3W','5W','Hyb','3i','4i','5i','6i','7i','8i','9i','PW','GW','SW','LW'];
+function loadClubStats(){ try{ return JSON.parse(localStorage.getItem('gf_club_stats')||'{}'); }catch(e){ return {}; } }
+function saveClubStats(s){ try{ localStorage.setItem('gf_club_stats',JSON.stringify(s)); }catch(e){} }
+function addClubShot(club,distM){ if(!club||!(distM>=20)) return; const s=loadClubStats();
+  (s[club]=s[club]||[]).push(Math.round(distM)); if(s[club].length>40) s[club]=s[club].slice(-40); saveClubStats(s); }
+function clubAvg(club,stats){ const a=(stats||loadClubStats())[club]; if(!a||!a.length) return null;
+  let v=a.slice().sort((x,y)=>x-y); if(v.length>=5){ const cut=Math.floor(v.length*0.1); v=v.slice(cut,v.length-cut); }  // trim 10% tails
+  return {avg:Math.round(v.reduce((p,c)=>p+c,0)/v.length), n:a.length}; }
+
 function openPlay(courseName){
   const slug=slugify(courseName), course=COURSE_PLAY[slug];
   if(!course) return;
   let draft={}; try{ draft=JSON.parse(localStorage.getItem(_draftKey(slug))||'{}'); }catch(e){}
   playS={ slug, course, hole:1, units:(localStorage.getItem('gf_units')||'m'),
-          watchId:null, pos:null, acc:null, gpsErr:null, shots:{},
+          watchId:null, pos:null, acc:null, gpsErr:null,
+          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}),
           scores:(draft.scores||{}), putts:(draft.putts||{}),
           startedAt:(draft.startedAt||Date.now()), tab:'play' };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
@@ -6027,7 +6054,7 @@ function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playP
 function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; const cap=Math.max(0,sc-1);
   let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
   playS.putts[n]=v; playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,h.si):0;
@@ -6037,8 +6064,12 @@ function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0
   return {gross,parPlayed,holesPlayed,vsPar:gross-parPlayed,putts,out,inn,net,points,ch,recvTotal}; }
 
 // ── shot-distance tracker (between dropped marks) ──
-function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix yet — wait for a location lock.'); return; } (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice()); playRender(); }
-function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop(); playRender(); } }
+// Each mark closes a leg; shotClubs[hole][i] is the (optional) club tagged to leg i.
+function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix yet — wait for a location lock.'); return; }
+  (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice());
+  (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(null);
+  playPersistDraft(); playRender(); }
+function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop(); const c=playS.shotClubs[playS.hole]; if(c)c.pop(); playPersistDraft(); playRender(); } }
 function playShotLegs(h){ // legs from tee through each mark, plus a live leg to current pos
   const marks=playS.shots[h.n]||[], chain=[h.tee,...marks], legs=[];
   for(let i=1;i<chain.length;i++) legs.push({from:chain[i-1],to:chain[i],d:_distM(chain[i-1],chain[i]),tee:i===1});
@@ -6052,15 +6083,22 @@ function playSaveRound(){
   else _commitRound(t);
 }
 function _commitRound(t){
+  // fold this round's tagged shot legs into the cross-round club stats, and store
+  // the legs (distance + club) on the round so shot distances persist with it
+  const legsByHole={};
+  playS.course.holes.forEach(h=>{ const {legs}=playShotLegs(h), cl=playS.shotClubs[h.n]||[];
+    const tagged=legs.map((l,i)=>({d:Math.round(l.d),club:cl[i]||null})).filter(x=>x.d>=20);
+    if(tagged.length){ legsByHole[h.n]=tagged; tagged.forEach(x=>{ if(x.club) addClubShot(x.club,x.d); }); } });
   const rounds=loadRounds();
   rounds.unshift({ id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
     date:new Date().toISOString(),
     scores:playS.course.holes.map(h=>playS.scores[h.n]??null),
     gross:t.gross, parPlayed:t.parPlayed, vsPar:t.vsPar, putts:t.putts, holesPlayed:t.holesPlayed,
-    hcpIndex:getHcpIndex(), courseHcp:t.ch, net:(t.ch!=null?t.net:null), stableford:(t.ch!=null?t.points:null) });
+    hcpIndex:getHcpIndex(), courseHcp:t.ch, net:(t.ch!=null?t.net:null), stableford:(t.ch!=null?t.points:null),
+    legs:legsByHole });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.shots={}; playS.startedAt=Date.now();
+  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
@@ -6442,12 +6480,27 @@ function playHoleSvg(){
 
 function playShotLiveHtml(){
   const h=playS.course.holes[playS.hole-1], {legs,last}=playShotLegs(h), pos=playPos(), u=playUnit();
+  const clubs=playS.shotClubs[playS.hole]||[];
   let live='';
   if(pos&&last){ const d=_distM(last,pos); if(d>=2) live=`<div class="ps-live">live from last mark <b>${fmtDist(d)}</b> ${u}</div>`; }
-  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is measured from the tee.</div>${live}`;
-  const rows=legs.map((l,i)=>`<span class="ps-chip">${l.tee?'tee':'shot '+i} → ${fmtDist(l.d)}${u}</span>`).join('');
+  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is measured from the tee. Tag the club to build your distances.</div>${live}`;
+  const rows=legs.map((l,i)=>{ const c=clubs[i];
+    return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="Tag club for ${l.tee?'tee shot':'shot '+i}, ${fmtDist(l.d)} ${u}">${l.tee?'tee':'shot '+i} → ${fmtDist(l.d)}${u} <span class="ps-club">${c||'+ club'}</span></button>`; }).join('');
   return `<div class="ps-chips">${rows}</div>${live}`;
 }
+// Tap a shot chip to tag (or clear) its club; tagged legs feed your club stats on save.
+function playClubPicker(legIdx){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet) return;
+  let el=document.getElementById('play-clubpick');
+  if(!el){ el=document.createElement('div'); el.id='play-clubpick'; el.className='play-confirm'; sheet.appendChild(el); }
+  const cur=(playS.shotClubs[playS.hole]||[])[legIdx];
+  const btns=CLUBS.map(c=>`<button class="cp-club${c===cur?' on':''}" onclick="playSetLegClub(${legIdx},'${c}')">${c}</button>`).join('');
+  el.innerHTML=`<div class="pc-card"><div class="pc-msg">Club for this shot</div><div class="cp-grid">${btns}</div><div class="pc-row"><button class="pc-cancel" onclick="playCloseClubPicker()">Close</button>${cur?`<button class="pc-ok pc-danger" onclick="playSetLegClub(${legIdx},null)">Clear</button>`:''}</div></div>`;
+  el.onclick=e=>{ if(e.target===el) playCloseClubPicker(); };
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+function playCloseClubPicker(){ const el=document.getElementById('play-clubpick'); if(el) el.classList.remove('show'); }
+function playSetLegClub(legIdx,club){ (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[])[legIdx]=club; playPersistDraft(); playCloseClubPicker(); playRender(); }
 
 function playTabHtml(){
   const h=playS.course.holes[playS.hole-1], tg=holeTargets(h), u=playUnit();
@@ -6538,13 +6591,15 @@ function historyTabHtml(){
         <input class="phb-input phb-input-wide" type="number" inputmode="decimal" step="0.1" placeholder="enter e.g. 18.4" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
         <div class="play-hcp-sub">${he?`form ${he.hcp} · best ${he.usedN} of ${he.n} round${he.n>1?'s':''}`:'play &amp; save a round to estimate your form'}</div></div></div>
       <div class="play-hcp-disc">Your Golf Australia handicap index. On the Card it becomes a course handicap from St Lucia's white-tee rating (CR ${course.cr} / Slope ${course.slope}) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
-  if(!rounds.length) return hcpCard+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save.</div>`;
+  const stats=loadClubStats(), clubRows=CLUBS.map(c=>{ const ca=clubAvg(c,stats); return ca?{c,avg:ca.avg,n:ca.n}:null; }).filter(Boolean);
+  const clubCard=clubRows.length?`<div class="play-clubs"><div class="pcl-h">Your clubs <span>carry avg · from tagged shots</span></div><div class="pcl-grid">${clubRows.map(r=>`<div class="pcl-item"><span class="pcl-club">${r.c}</span><span class="pcl-avg">${fmtDist(r.avg)} ${playUnit()}</span><span class="pcl-n">${r.n} shot${r.n>1?'s':''}</span></div>`).join('')}</div></div>`:'';
+  if(!rounds.length) return hcpCard+clubCard+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save.</div>`;
   const list=rounds.map(r=>{ const d=new Date(r.date), ds=d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
     const vp=r.vsPar===0?'E':r.vsPar>0?'+'+r.vsPar:''+r.vsPar;
     const partial=r.holesPlayed<18?` · ${r.holesPlayed} holes`:'';
     const netTxt=(r.net!=null)?`<div class="ph-net">net <b>${r.net}</b>${r.stableford!=null?` · ${r.stableford} pts`:''}${r.courseHcp!=null?` · ch ${r.courseHcp}`:''}</div>`:'';
     return `<div class="ph-row"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}</div>${netTxt}</div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><button class="ph-del" onclick="playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
-  return hcpCard+`<div class="ph-list">${list}</div>`;
+  return hcpCard+clubCard+`<div class="ph-list">${list}</div>`;
 }
 
 function playRender(){
