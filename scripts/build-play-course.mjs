@@ -26,18 +26,29 @@ for (const e of els) {
 }
 holesW.sort((a, b) => a.ref - b.ref);
 const holes = [], lines = {}, diag = [];
-for (const h of holesW) {
+// Pass 1: orient each hole tee->green and find the nearest green (by index, for uniqueness).
+const match = holesW.map(h => {
   const a = h.pts[0], b = h.pts[h.pts.length - 1];
-  let bA = 1e9, bB = 1e9, gA = null, gB = null;
-  for (const gr of greens) { const da = hav(a[0], a[1], gr.cen[0], gr.cen[1]), db = hav(b[0], b[1], gr.cen[0], gr.cen[1]); if (da < bA) { bA = da; gA = gr; } if (db < bB) { bB = db; gB = gr; } }
-  let tee, gr, gd, line;
-  if (bB <= bA) { tee = a; gr = gB; gd = bB; line = h.pts; } else { tee = b; gr = gA; gd = bA; line = h.pts.slice().reverse(); }
-  // Green centre: prefer the matched green polygon; if none is within 25 m (the hole's green
-  // isn't mapped in OSM), fall back to the centreline's green-end point + a synthetic ~11 m box.
+  let bA = 1e9, bB = 1e9, iA = -1, iB = -1;
+  greens.forEach((gr, i) => {
+    const da = hav(a[0], a[1], gr.cen[0], gr.cen[1]), db = hav(b[0], b[1], gr.cen[0], gr.cen[1]);
+    if (da < bA) { bA = da; iA = i; } if (db < bB) { bB = db; iB = i; }
+  });
+  return (bB <= bA) ? { h, tee: a, gi: iB, gd: bB, line: h.pts } : { h, tee: b, gi: iA, gd: bA, line: h.pts.slice().reverse() };
+});
+// Pass 2: each green belongs to its single closest hole. A hole whose green is claimed by a
+// closer hole (a resort's spare/practice greens cause this) — or whose nearest green is >25 m —
+// is "displaced" and falls back to its centreline-end, so no two holes ever share a green.
+const ownerGd = {};
+match.forEach(m => { if (m.gd <= 25 && (ownerGd[m.gi] === undefined || m.gd < ownerGd[m.gi])) ownerGd[m.gi] = m.gd; });
+match.forEach(m => { m.displaced = (m.gd > 25) || (ownerGd[m.gi] === undefined) || (m.gd > ownerGd[m.gi]); });
+// Pass 3: emit.
+for (const m of match) {
+  const { h, tee, gi, gd, line } = m;
   const gEnd = line[line.length - 1];
   let cen, gbb, synth = false;
-  if (gd > 25) { synth = true; cen = gEnd; const dLat = 0.00010, dLng = 0.00010 / Math.cos(cen[0] * rad); gbb = [cen[0] - dLat, cen[1] - dLng, cen[0] + dLat, cen[1] + dLng]; }
-  else { cen = gr.cen; gbb = gr.bb; }
+  if (m.displaced) { synth = true; cen = gEnd; const dLat = 0.00010, dLng = 0.00010 / Math.cos(cen[0] * rad); gbb = [cen[0] - dLat, cen[1] - dLng, cen[0] + dLat, cen[1] + dLng]; }
+  else { cen = greens[gi].cen; gbb = greens[gi].bb; }
   holes.push({ n: h.ref, par: h.par, tee: [r7(tee[0]), r7(tee[1])], cen: [r7(cen[0]), r7(cen[1])], pin: null, gbb: [r7(gbb[0]), r7(gbb[1]), r7(gbb[2]), r7(gbb[3])] });
   lines[h.ref] = simp(line);
   diag.push({ n: h.ref, par: h.par, hcp: h.hcp, gd: +gd.toFixed(1), len: Math.round(hav(tee[0], tee[1], cen[0], cen[1])), synth });
