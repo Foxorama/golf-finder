@@ -324,7 +324,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   edge: each owned hazard's vertices are projected onto the shot line for near/far edges
   and lateral offset, keeping only those ahead, within a ~22 m corridor, and short of the
   green — so it updates from fairway-bunker to greenside-bunker as you walk up.
-  `window._playCarries=false` disables it. **Each baked feature is assigned to its nearest
+  `window._playCarries=false` disables it. **Club tracking:** each marked shot leg can be
+  **tagged with a club** (tap the leg chip → `playClubPicker` grid, `CLUBS` set); tagged
+  legs feed a cross-round **per-club carry store** (`gf_club_stats`, `addClubShot`/
+  `clubAvg` with 10%-trimmed mean, last 40 per club) when the round is saved, and the
+  History tab shows a **"Your clubs"** card of carry averages. Marked shots + clubs now
+  persist in the round draft and on the saved round (`legs:`), so shot distances survive a
+  close/reopen and a saved round. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
