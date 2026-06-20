@@ -77,6 +77,83 @@ hole renders full-strength and neighbours fade — no per-feature hole tagging n
 
 ## Step-by-step
 
+### 0. Prerequisite — confirm the course is actually mapped in OSM (do this FIRST)
+Before anything else, run the containment query (Step 1) **and a wider bbox scan** for
+`golf=hole|fairway|green|tee|bunker` around the course. **Newer courses are often not
+mapped.** If the queries come back with **no `golf=hole`/`green`/`fairway` ways** (only a
+stray cart path or a couple of ponds — as with **Minnippi Golf & Range**, Cannon Hill,
+opened 2023, which is **not** in OSM as a golf course as of 2026-06: a bbox scan returns one
+`golf=cartpath` way + two unrelated ponds, and the `is_in` containment query is empty), then
+**STOP — you cannot source accurate geometry from OSM.** Do **not** fabricate or eyeball
+polygons: the entire point of this workflow (and the Step-3 verification) is that the
+geometry is real surveyed OSM data whose green polygons can be checked against `cen`. A
+hand-invented map can't be verified and will mislead a player on-course — it violates the
+project's "implement properly or stop, ensure accuracy" rule.
+
+When the course isn't in OSM, there are three honest options — **surface them to the user
+and let them choose; don't silently pick one:**
+1. **Contribute the geometry first (accurate path — recommended).** Map the course in
+   OpenStreetMap (or obtain an authoritative coordinate source: a GPX walk of the holes,
+   council/club GIS, a published GeoJSON), then re-run this workflow unchanged. This is the
+   only route that yields a *fully accurate, verifiable* map, and it benefits everyone.
+2. **Best-effort traced approximation (accuracy caveat).** Reconstruct routing/greens from
+   the course flyover + current aerial imagery and ship a **clearly-labelled approximate**
+   map. It cannot pass Step 3's green-polygon check and may be wrong on-course — only do
+   this if the user explicitly accepts the caveat.
+3. **Defer the course.** Record it as "not yet in OSM" and add an already-mapped course
+   instead.
+
+Don't treat "the course exists and has a scorecard online" as "I can map it" — the
+scorecard supplies par/SI/CR/slope (Step 2), **not** geometry. They are independent sources.
+
+### 0b. When the course isn't in OSM: extract it from 18Birdies (the proven fallback)
+**This is how Minnippi was mapped** (PR adding `minnippi-golf-and-range`) after OSM and Brisbane
+City Council GIS both came up empty. The 18Birdies course page is **server-rendered with the
+full vector layout inline** — real GPS tee/green geometry, the same data their on-course app uses.
+
+1. **Find the course** on 18birdies.com (`/golf-courses/club/<uuid>/<slug>`). Download the raw HTML
+   with PowerShell (`Invoke-WebRequest`, force TLS1.2, a real `User-Agent`; the WebFetch *tool*
+   strips the data, so save the HTML and parse it yourself). golfify/mScorecard 403 bots — 18Birdies
+   doesn't.
+2. **The geometry is in a `props="…"` attribute**, HTML-entity-encoded (`&quot;`→`"`). Decode it,
+   then `ConvertFrom-Json`. It's a **wrapped-JSON** format where *every* value is `[tag,payload]`
+   (`tag 0`=scalar/object, `tag 1`=array). Unwrap recursively: tag 1 → map over the array; tag 0 →
+   if the payload is a `PSCustomObject` unwrap each property, else it's the leaf scalar/null. There
+   are ~9 `props` blobs — pick the one containing `holeSets`.
+3. **What you get** (`profile.club`): `holeSets` (A=front 9, B=back 9), and `holes[18]`, each with:
+   `teeGeoPoints` (6 = Blue/White/Orange × male/female, **duplicated in pairs** → 3 distinct tees,
+   index 0=Blue back, 2=White, 4=Orange), `greens[].geoPoints`, `menPar`, `menHandicap` (= the
+   **stroke index**, cross-check it against the scorecard — they matched exactly for Minnippi),
+   and `teeYardages` (per-tee, **in yards**).
+4. **`greens[].geoPoints` is the hole *corridor* outline, not the putting surface** — it spans the
+   whole hole (its max-pairwise span ≈ the Blue yardage). It's null-separated into two edges
+   (tee→green, then green→tee). Derive:
+   - **tee** = `teeGeoPoints[0]` (Blue). Bake Blue: it's geometrically consistent on every hole
+     (straight-line tee→green ÷ yardage ≈ 0.91–1.04, doglegs <1). White markers were noisy on a
+     couple of Minnippi holes (ratio >1.10, i.e. *longer* than the playing yardage — impossible) so
+     **don't bake White**. Set `cr`/`slope` to the **Blue** rating (18Birdies' web scorecard gives
+     it; Minnippi Blue = 71.3/130). Forward-tee players use the Set-tee-from-GPS tool.
+   - **green centre (`cen`)** = the far end of edge1 (the tee→green edge), pulled ~9 m back toward
+     the previous point (the corridor tip ≈ green-back; ~9 m back ≈ centre). Verify: straight-line
+     `tee→cen` ÷ `teeYardages[0]·0.9144` should sit ≈ 0.9–1.05 per hole, and the summed centreline
+     length should match the official total (Minnippi: 6557 vs 6561 yd).
+   - **`gbb`** + a small **synthetic green** polygon (octagon, r ≈ 11 m) centred on `cen`, so
+     `holeTargets` matches a green polygon (centroid 0 m from `cen`) instead of falling back to gbb.
+   - **centreline** = resample edge1 and the reversed edge2 to N points each, average pairwise;
+     force the ends to the tee and `cen`. This follows doglegs (so `holeTargets.len` is dogleg-aware).
+   - **fairway** feature = the corridor outline (drop nulls, original order).
+5. **18Birdies has no bunkers/water.** Pull real **water hazards from OSM** (a plain bbox query for
+   `natural=water` near the course — Minnippi got two ponds + Bulimba Creek) and add them as `water`
+   features so the map isn't bare.
+6. **Generate the structures with a script, not by hand** — emit the `COURSE_PLAY` holes array and
+   the `COURSE_GEOM` JSON to files, then insert. Coords: play (`tee`/`cen`/`gbb`) 7 dp, geometry
+   polygons 6 dp.
+7. **Provenance + honesty:** 18Birdies data is **proprietary, not open-licensed like OSM** — flag
+   that to the user before it ships publicly. The green *shape* is synthesised (location is real),
+   so set a per-course **`src:'18Birdies'`** field on the `COURSE_PLAY` entry; the rangefinder
+   footnote reads `GPS estimate · ${playS.course.src||'OSM'} green data`, so St Lucia still says OSM
+   and the new course is labelled truthfully.
+
 ### 1. Source geometry from OpenStreetMap
 Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
 ```
