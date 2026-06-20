@@ -145,14 +145,26 @@ full vector layout inline** — real GPS tee/green geometry, the same data their
 5. **18Birdies has no bunkers/water.** Pull real **water hazards from OSM** (a plain bbox query for
    `natural=water` near the course — Minnippi got two ponds + Bulimba Creek) and add them as `water`
    features so the map isn't bare.
-6. **Generate the structures with a script, not by hand** — emit the `COURSE_PLAY` holes array and
-   the `COURSE_GEOM` JSON to files, then insert. Coords: play (`tee`/`cen`/`gbb`) 7 dp, geometry
-   polygons 6 dp.
-7. **Provenance + honesty:** 18Birdies data is **proprietary, not open-licensed like OSM** — flag
-   that to the user before it ships publicly. The green *shape* is synthesised (location is real),
-   so set a per-course **`src:'18Birdies'`** field on the `COURSE_PLAY` entry; the rangefinder
-   footnote reads `GPS estimate · ${playS.course.src||'OSM'} green data`, so St Lucia still says OSM
-   and the new course is labelled truthfully.
+6. **Generate the structures with a script, not by hand** — emit the `COURSE_PLAY` holes object and
+   the `COURSE_GEOM` JSON. Coords: play (`tee`/`cen`/`gbb`) 7 dp, geometry polygons 6 dp.
+7. **DO NOT commit or publish 18Birdies geometry — it is proprietary (not open-licensed like OSM),
+   and the exact coordinates are recognisable/traceable to them.** This was the hard lesson on
+   Minnippi: it was extracted *and shipped to the public site* before the licensing was raised, then
+   had to be pulled. The correct integration is **device-local only**:
+   - Write the course's data to a **git-ignored `*.local.json`** of the form
+     `{"play":{"<slug>":{…}},"geom":{"<slug>":{…}}}` (add `*.local.json` to `.gitignore`).
+   - The public `index.html` keeps a small generic loader (just after the `COURSE_GEOM` definition)
+     that merges `localStorage.gf_play_local` over the baked open-data courses, plus
+     `window.gfImportPlay`/`gfClearPlay` and an **`#importplay`** paste screen. It contains **no**
+     course data and is **not** course-specific.
+   - The owner imports the `*.local.json` once on their own device via `…/#importplay`. The public
+     app has **no** entry for the course, so the Play button only appears for the owner — genuine
+     personal use.
+   - Set a per-course **`src:'18Birdies'`** field so the rangefinder footnote
+     (`GPS estimate · ${playS.course.src||'OSM'} green data`) reads truthfully.
+   - **Flag the licensing the moment 18Birdies is even proposed as a source — *before* extracting,
+     not after.** (Par/SI/CR/slope are public scorecard facts and are fine to use, e.g. for
+     cross-checking; only the geometry is the sensitive part.)
 
 ### 1. Source geometry from OpenStreetMap
 Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
