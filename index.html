@@ -704,6 +704,20 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .bag-tracked.none{background:none;border:none;color:var(--tx3);cursor:default;}
 .bag-foot{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;margin-top:12px;}
 .bag-units{background:none;border:none;color:var(--gg);font-family:var(--mono);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;}
+.bag-tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--bg3);border:1px solid var(--bdr);border-radius:11px;padding:4px;}
+.bag-tab{flex:1;background:none;border:none;border-radius:8px;padding:8px 6px;color:var(--tx3);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.02em;}
+.bag-tab.active{background:var(--sur);color:var(--gg);box-shadow:0 1px 3px rgba(0,0,0,0.25);}
+.bag-empty{font-family:var(--mono);font-size:12px;color:var(--tx3);text-align:center;line-height:1.7;padding:26px 12px;}
+.bag-empty button{background:none;border:none;color:var(--gg);font-family:var(--mono);font-size:12px;text-decoration:underline;cursor:pointer;padding:0;}
+.witb-list{display:flex;flex-direction:column;gap:6px;}
+.witb-row{display:flex;align-items:center;gap:12px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:9px 12px;cursor:pointer;-webkit-user-select:none;user-select:none;}
+.witb-row.on{border-color:var(--gl);}
+.witb-check{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--bdr2);flex-shrink:0;display:flex;align-items:center;justify-content:center;color:transparent;font-size:13px;font-weight:700;}
+.witb-row.on .witb-check{background:var(--green);border-color:var(--gl);color:var(--gg);}
+.witb-abbr{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tx);width:34px;flex-shrink:0;}
+.witb-row.on .witb-abbr{color:var(--gg);}
+.witb-name{font-family:var(--mono);font-size:12px;color:var(--tx3);}
+.witb-dist{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--tx3);}
 .hio-submit{background:var(--green);border:1px solid var(--gl);border-radius:9px;padding:12px;color:var(--gg);font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;width:100%;}
 .hio-submit:active{transform:scale(0.98);background:var(--gl);}
 .hio-celebration{text-align:center;padding:16px;animation:celebfade 0.4s ease;}
@@ -6020,6 +6034,8 @@ function fmtDist(m){ if(m==null) return '--'; return Math.round(playS.units==='y
 // ── Club tracking: per-club carry stats built from tagged shot legs (cross-round) ──
 // gf_club_stats = { 'Dr':[230,235,…], '7i':[150,…] } in metres, last 40 per club.
 const CLUBS=['Dr','3W','5W','Hyb','3i','4i','5i','6i','7i','8i','9i','PW','GW','SW','LW'];
+const CLUB_NAMES={Dr:'Driver','3W':'3 Wood','5W':'5 Wood',Hyb:'Hybrid','3i':'3 Iron','4i':'4 Iron','5i':'5 Iron','6i':'6 Iron','7i':'7 Iron','8i':'8 Iron','9i':'9 Iron',PW:'Pitching Wedge',GW:'Gap Wedge',SW:'Sand Wedge',LW:'Lob Wedge'};
+let bagTab='bag';   // My Bag panel active tab: 'bag' | 'witb'
 function loadClubStats(){ try{ return JSON.parse(localStorage.getItem('gf_club_stats')||'{}'); }catch(e){ return {}; } }
 function saveClubStats(s){ try{ localStorage.setItem('gf_club_stats',JSON.stringify(s)); }catch(e){} }
 function addClubShot(club,distM){ if(!club||!(distM>=20)) return; const s=loadClubStats();
@@ -6037,8 +6053,16 @@ function setBagClub(club,distM){ const b=loadBag();
   saveBag(b); }
 // Effective carry for a club: manual bag value, else its tracked average (≥3 shots).
 function clubDist(club){ const b=loadBag(); if(b[club]!=null) return b[club]; const ca=clubAvg(club); return (ca&&ca.n>=3)?ca.avg:null; }
-// Every club with a usable distance (bag ∪ tracked), in CLUBS order, as {club,dist,manual}.
-function clubSet(){ const b=loadBag(), out=[]; for(const c of CLUBS){ const d=clubDist(c); if(d!=null) out.push({club:c,dist:d,manual:b[c]!=null}); } return out; }
+// ── What's-in-the-bag: which clubs you actually carry (a subset of CLUBS, gf_witb).
+// My Bag shows only these, and the on-course suggestion + tee-shot marker draw from
+// them. Default (unset) = the clubs you already have a distance for (migrates the old
+// implicit bag), else all clubs — so My Bag looks unchanged until you curate it. ──
+function loadWitb(){ try{ const j=localStorage.getItem('gf_witb'); if(j){ const a=JSON.parse(j); if(Array.isArray(a)) return CLUBS.filter(c=>a.includes(c)); } }catch(e){}
+  const eff=CLUBS.filter(c=>clubDist(c)!=null); return eff.length?eff:CLUBS.slice(); }
+function saveWitb(a){ try{ localStorage.setItem('gf_witb',JSON.stringify(CLUBS.filter(c=>a.includes(c)))); }catch(e){} }
+function toggleWitb(c){ const w=loadWitb(), i=w.indexOf(c); if(i>=0) w.splice(i,1); else w.push(c); saveWitb(w); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
+// Every carried club with a usable distance (witb ∩ (bag ∪ tracked)), in CLUBS order.
+function clubSet(){ const b=loadBag(), w=new Set(loadWitb()), out=[]; for(const c of CLUBS){ if(!w.has(c)) continue; const d=clubDist(c); if(d!=null) out.push({club:c,dist:d,manual:b[c]!=null}); } return out; }
 // Suggest the club whose carry is nearest a target distance (within ~14 m), else null.
 // Pass the plays-like distance. Uses your bag (manual distances + tracked fallbacks).
 function suggestClub(distM){ if(distM==null) return null; let best=null,bd=Infinity;
@@ -6049,22 +6073,47 @@ function suggestClub(distM){ if(distM==null) return null; let best=null,bd=Infin
 function _bagUnit(){ return localStorage.getItem('gf_units')==='yd'?'yd':'m'; }
 function _toDisplay(m){ return Math.round(_bagUnit()==='yd'?m*1.09361:m); }
 function _toMetres(v){ const n=parseFloat(v); return isFinite(n)?(_bagUnit()==='yd'?n/1.09361:n):null; }
-function showBag(){ document.getElementById('bag-panel').style.display='block'; document.body.style.overflow='hidden'; renderBag(); }
+function showBag(){ bagTab='bag'; document.getElementById('bag-panel').style.display='block'; document.body.style.overflow='hidden'; renderBag(); }
 function hideBag(){ document.getElementById('bag-panel').style.display='none'; document.body.style.overflow=''; }
 function setBagClubInput(club,v){ setBagClub(club, v===''?null:_toMetres(v)); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 function useTracked(club){ const ca=clubAvg(club); if(ca){ setBagClub(club,ca.avg); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); } }
+function setBagTab(t){ bagTab=t; renderBag(); }
 function renderBag(){
   const body=document.getElementById('bag-body'); if(!body) return;
-  const bag=loadBag(), u=_bagUnit(), inBag=Object.keys(bag).length;
-  const rows=CLUBS.map(c=>{ const has=bag[c]!=null, tr=clubAvg(c);
-    const hint=tr?`<button class="bag-tracked" onclick="useTracked('${c}')" title="Use your tracked average">tracked ${_toDisplay(tr.avg)}</button>`:`<span class="bag-tracked none">no shots yet</span>`;
-    return `<div class="bag-row${has?' in':''}">
-      <span class="bag-club">${c}</span>
-      <span class="bag-distwrap"><input class="bag-dist" type="number" inputmode="numeric" placeholder="—" value="${has?_toDisplay(bag[c]):''}" onchange="setBagClubInput('${c}',this.value)" aria-label="${c} carry distance in ${u}"><span class="bag-unit">${u}</span></span>
-      ${hint}</div>`; }).join('');
-  body.innerHTML=`<div class="bag-note">Enter your carry for each club you bag. These drive the club suggestion on course; blanks are ignored. Tracked = average from shots you've tagged.</div>
-    <div class="bag-list">${rows}</div>
-    <div class="bag-foot">${inBag} club${inBag===1?'':'s'} in the bag · distances in ${u} · <button class="bag-units" onclick="toggleBagUnits()">switch to ${u==='m'?'yd':'m'}</button></div>`;
+  const u=_bagUnit();
+  const tabs=`<div class="bag-tabs">
+    <button class="bag-tab${bagTab==='bag'?' active':''}" onclick="setBagTab('bag')">My Bag</button>
+    <button class="bag-tab${bagTab==='witb'?' active':''}" onclick="setBagTab('witb')">WITB</button></div>`;
+  let inner;
+  if(bagTab==='witb'){
+    const sel=new Set(loadWitb());
+    const rows=CLUBS.map(c=>{ const on=sel.has(c), d=clubDist(c);
+      const dist=d!=null?`<span class="witb-dist">${_toDisplay(d)} ${u}</span>`:'';
+      return `<div class="witb-row${on?' on':''}" onclick="toggleWitb('${c}')" role="checkbox" aria-checked="${on}" aria-label="${CLUB_NAMES[c]||c}" tabindex="0">
+        <span class="witb-check" aria-hidden="true">✓</span>
+        <span class="witb-abbr">${c}</span>
+        <span class="witb-name">${CLUB_NAMES[c]||c}</span>
+        ${dist}</div>`; }).join('');
+    inner=`<div class="bag-note">Tap the clubs you carry. Selected clubs show up in My Bag, where you set their carry distances — and they drive the on-course club suggestion.</div>
+      <div class="witb-list">${rows}</div>
+      <div class="bag-foot">${sel.size} of ${CLUBS.length} clubs in your bag</div>`;
+  } else {
+    const bag=loadBag(), witb=loadWitb();
+    if(!witb.length){
+      inner=`<div class="bag-empty">No clubs in your bag yet.<br><button onclick="setBagTab('witb')">Pick your clubs in the WITB tab &rarr;</button></div>`;
+    } else {
+      const rows=witb.map(c=>{ const has=bag[c]!=null, tr=clubAvg(c);
+        const hint=tr?`<button class="bag-tracked" onclick="useTracked('${c}')" title="Use your tracked average">tracked ${_toDisplay(tr.avg)}</button>`:`<span class="bag-tracked none">no shots yet</span>`;
+        return `<div class="bag-row${has?' in':''}">
+          <span class="bag-club">${c}</span>
+          <span class="bag-distwrap"><input class="bag-dist" type="number" inputmode="numeric" placeholder="—" value="${has?_toDisplay(bag[c]):''}" onchange="setBagClubInput('${c}',this.value)" aria-label="${c} carry distance in ${u}"><span class="bag-unit">${u}</span></span>
+          ${hint}</div>`; }).join('');
+      inner=`<div class="bag-note">Enter your carry for each club you bag. These drive the club suggestion on course; blanks are ignored. Tracked = average from shots you've tagged.</div>
+        <div class="bag-list">${rows}</div>
+        <div class="bag-foot">${witb.length} club${witb.length===1?'':'s'} in your bag · distances in ${u} · <button class="bag-units" onclick="toggleBagUnits()">switch to ${u==='m'?'yd':'m'}</button></div>`;
+    }
+  }
+  body.innerHTML=tabs+inner;
 }
 function toggleBagUnits(){ localStorage.setItem('gf_units', _bagUnit()==='yd'?'m':'yd'); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 
