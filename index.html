@@ -6189,7 +6189,7 @@ function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; cons
 function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,teePos:playS.teePos,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
-  playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,h.si):0;
+  playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
     if(s!=null){ gross+=s; parPlayed+=h.par; holesPlayed++; if(h.n<=9)out+=s; else inn+=s;
       net+=s-recv; recvTotal+=recv; points+=Math.max(0,(h.par-s)+recv+2); }
     const pu=playS.putts[h.n]; if(pu!=null)putts+=pu; });
@@ -6289,10 +6289,17 @@ function setHcpIndex(v){
   if(playS) playRender();
 }
 function courseHandicap(idx,course){
-  if(idx==null||!course||course.slope==null) return null;
+  if(idx==null||!course) return null;
+  // Unrated courses (no official CR/Slope) still give net scoring off the entered handicap:
+  // neutral slope (113) + neutral rating (= par) collapse the WHS formula to ~the index itself.
+  const slope=course.slope!=null?course.slope:113;
   const cr=course.cr!=null?course.cr:course.par;
-  return Math.round(idx*(course.slope/113)+(cr-course.par));
+  return Math.round(idx*(slope/113)+(cr-course.par));
 }
+// Effective stroke index for allocation: the official si when the course has one, else a
+// default 1..N by hole order — so an entered handicap still yields net + Stableford on courses
+// with no published stroke index (the per-hole spread is approximate; the round total is exact).
+function effSI(course,h){ return h.si!=null?h.si:h.n; }
 // Strokes received on a hole of stroke index si for a course handicap ch. Positive ch:
 // floor(ch/18) on every hole + 1 extra on the lowest-si holes. Plus (negative) ch gives
 // a stroke back on the easiest (highest-si) holes.
@@ -6691,9 +6698,11 @@ function _scoreTerm(rel){ if(rel==null)return''; if(rel<=-3)return'albatross'; i
 function cardTabHtml(){
   const holes=playS.course.holes, course=playS.course, t=playTotals();
   const idx=getHcpIndex(), ch=t.ch, hasRating=course.cr!=null&&course.slope!=null;
-  const chCell = !hasRating ? `<span class="phb-hint">gross scoring<br>no course rating</span>`
-               : ch!=null  ? `Course handicap<b>${ch}</b>`
-               :             `<span class="phb-hint">enter your index<br>for net scoring</span>`;
+  const hasSI=course.holes.some(h=>h.si!=null);
+  // Rated → WHS "Course handicap"; unrated but index entered → "Playing handicap" straight off the index.
+  const chCell = ch!=null
+    ? `${hasRating?'Course':'Playing'} handicap<b>${ch}</b>`
+    : `<span class="phb-hint">enter your index<br>for net scoring</span>`;
   const hcpBar=`
     <div class="play-hcp-bar">
       <label class="phb-lbl" for="cc-hcp">Handicap<br>index</label>
@@ -6703,10 +6712,10 @@ function cardTabHtml(){
     <div class="phb-meta">${course.name}${hasRating?` · white tee · CR ${course.cr} / Slope ${course.slope}`:` · ${course.holesN} holes · par ${course.par}`}</div>`;
   const row=h=>{ const s=playS.scores[h.n], rel=s!=null?s-h.par:null;
     const rc=rel==null?'':rel<0?'sc-under':rel>0?'sc-over':'sc-par';
-    const recv=ch!=null?strokesForSI(ch,h.si):0;
-    // Net needs a course handicap; on unrated (par-only) courses it's meaningless, so blank it.
-    // Stableford still tallies — scratch points (0 strokes) when there's no rating.
-    const net=(s!=null&&hasRating)?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
+    const recv=ch!=null?strokesForSI(ch,effSI(course,h)):0;
+    // Net shows once a handicap is in play (rated, or unrated with an entered index); blank otherwise.
+    // Stableford always tallies — scratch points (0 strokes) when no handicap is set.
+    const net=(s!=null&&ch!=null)?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
     const dot=recv>0?`<span class="cc-recv">${'•'.repeat(Math.min(3,recv))}</span>`:recv<0?`<span class="cc-recv minus">–</span>`:'';
     return `<tr>
       <td class="cc-h">${h.n}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
@@ -6724,9 +6733,9 @@ function cardTabHtml(){
         <tr class="cc-sub"><td>OUT</td><td>${outPar}</td><td>${t.out||'–'}</td><td colspan="2"></td></tr>
         ${holes.slice(9).map(row).join('')}
         <tr class="cc-sub"><td>IN</td><td>${inPar}</td><td>${t.inn||'–'}</td><td colspan="2"></td></tr>
-        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${(ch!=null||!hasRating)&&t.holesPlayed?t.points:''}</td></tr>
+        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${t.holesPlayed?t.points:''}</td></tr>
       </tbody></table>
-    ${ch!=null?`<div class="play-net-sum">Net <b>${t.holesPlayed?t.net:'–'}</b> · Stableford <b>${t.holesPlayed?t.points:'–'}</b> pts${t.recvTotal?` · ${t.recvTotal>0?t.recvTotal+' strokes received':(-t.recvTotal)+' given'}`:''}</div>`:''}
+    ${ch!=null?`<div class="play-net-sum">Net <b>${t.holesPlayed?t.net:'–'}</b> · Stableford <b>${t.holesPlayed?t.points:'–'}</b> pts${t.recvTotal?` · ${t.recvTotal>0?t.recvTotal+' strokes received':(-t.recvTotal)+' given'}`:''}${!hasSI?' · strokes by hole order':''}</div>`:''}
     <button class="play-save" onclick="playSaveRound()">💾 Save round to history</button>
   `;
 }
