@@ -339,7 +339,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   close/reopen and a saved round. The rangefinder then **suggests a club** for the
   plays-like distance (`suggestClub`, `.pr-club`): the club whose carry average (≥3 tagged
   shots, within ~14 m) is nearest — so into a headwind the longer plays-like number bumps
-  the suggestion up. Hidden until you've tagged enough shots. **Each baked feature is assigned to its nearest
+  the suggestion up. Hidden until you've tagged enough shots. **My Bag** (the 🎒 button in
+  the main-screen header → `showBag`/`renderBag` panel; `gf_bag = {club:metres}`) lets you
+  curate which clubs you carry and **set each club's carry distance by hand** (with a
+  "use tracked" shortcut to copy the tagged-shot average). `clubDist(club)` resolves a
+  manual bag value first, else the tracked average (≥3 shots); `clubSet()` is the union used
+  by `suggestClub` and the History "Your clubs" card — so the on-course club suggestion runs
+  off your real bag even before you've tagged any shots. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the

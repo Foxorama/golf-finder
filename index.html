@@ -688,6 +688,22 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .hio-input{background:var(--sur);border:1px solid var(--bdr2);border-radius:8px;padding:10px 12px;color:var(--tx);font-family:var(--mono);font-size:13px;width:100%;outline:none;}
 .hio-input:focus{border-color:var(--gb);}
 .hio-input::placeholder{color:var(--tx3);}
+/* My Bag panel */
+.bag-note{font-family:var(--mono);font-size:11px;color:var(--tx3);line-height:1.5;margin-bottom:12px;}
+.bag-list{display:flex;flex-direction:column;gap:6px;}
+.bag-row{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:8px 12px;}
+.bag-row.in{border-color:var(--gl);}
+.bag-club{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tx);width:34px;flex-shrink:0;}
+.bag-row.in .bag-club{color:var(--gg);}
+.bag-distwrap{display:flex;align-items:center;gap:4px;flex-shrink:0;}
+.bag-dist{background:var(--sur);border:1px solid var(--bdr2);border-radius:8px;padding:7px 8px;color:var(--tx);font-family:var(--mono);font-size:14px;font-weight:600;width:62px;text-align:center;outline:none;-moz-appearance:textfield;}
+.bag-dist::-webkit-outer-spin-button,.bag-dist::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+.bag-dist:focus{border-color:var(--gb);}
+.bag-unit{font-family:var(--mono);font-size:11px;color:var(--tx3);}
+.bag-tracked{margin-left:auto;background:var(--sur);border:1px solid var(--bdr2);border-radius:7px;color:var(--gg);font-family:var(--mono);font-size:10px;padding:4px 8px;cursor:pointer;}
+.bag-tracked.none{background:none;border:none;color:var(--tx3);cursor:default;}
+.bag-foot{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;margin-top:12px;}
+.bag-units{background:none;border:none;color:var(--gg);font-family:var(--mono);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;}
 .hio-submit{background:var(--green);border:1px solid var(--gl);border-radius:9px;padding:12px;color:var(--gg);font-family:var(--sans);font-size:14px;font-weight:700;cursor:pointer;width:100%;}
 .hio-submit:active{transform:scale(0.98);background:var(--gl);}
 .hio-celebration{text-align:center;padding:16px;animation:celebfade 0.4s ease;}
@@ -1120,6 +1136,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div class="hdr-actions">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
       <div class="hdr-icons">
+        <button class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
         <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
         <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
       </div>
@@ -1153,6 +1170,22 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <div class="hio-cel-sub" id="hio-cel-detail"></div>
       </div>
       <div id="hio-list"></div>
+    </div>
+  </div>
+
+  <!-- My Bag panel -->
+  <div id="bag-panel" style="display:none;">
+    <div class="hio-overlay" onclick="hideBag()"></div>
+    <div class="hio-sheet">
+      <div class="hio-header">
+        <span style="font-size:22px;" aria-hidden="true">🎒</span>
+        <div>
+          <div class="hio-title">My Bag</div>
+          <div class="hio-sub">Your clubs &amp; carry distances</div>
+        </div>
+        <button class="hio-close" onclick="hideBag()" aria-label="Close">✕</button>
+      </div>
+      <div id="bag-body"></div>
     </div>
   </div>
 
@@ -5974,11 +6007,46 @@ function addClubShot(club,distM){ if(!club||!(distM>=20)) return; const s=loadCl
 function clubAvg(club,stats){ const a=(stats||loadClubStats())[club]; if(!a||!a.length) return null;
   let v=a.slice().sort((x,y)=>x-y); if(v.length>=5){ const cut=Math.floor(v.length*0.1); v=v.slice(cut,v.length-cut); }  // trim 10% tails
   return {avg:Math.round(v.reduce((p,c)=>p+c,0)/v.length), n:a.length}; }
-// Suggest the club whose carry average is nearest a target distance (needs ≥3 tagged
-// shots for that club, and within ~14 m), else null. Pass the plays-like distance.
-function suggestClub(distM){ if(distM==null) return null; const s=loadClubStats(); let best=null,bd=Infinity;
-  for(const c of CLUBS){ const ca=clubAvg(c,s); if(!ca||ca.n<3) continue; const d=Math.abs(ca.avg-distM); if(d<bd){ bd=d; best={club:c,avg:ca.avg,n:ca.n}; } }
+// ── My Bag: the clubs you carry + their carry distances (gf_bag = {club:metres}). A
+// manual bag distance is authoritative; otherwise a club falls back to its tracked
+// average (≥3 tagged shots). Curate it from the 🎒 panel on the main screen. ──
+function loadBag(){ try{ return JSON.parse(localStorage.getItem('gf_bag')||'{}'); }catch(e){ return {}; } }
+function saveBag(b){ try{ localStorage.setItem('gf_bag',JSON.stringify(b)); }catch(e){} }
+function setBagClub(club,distM){ const b=loadBag();
+  if(distM==null||!isFinite(distM)) delete b[club]; else b[club]=Math.round(Math.max(20,Math.min(400,distM)));
+  saveBag(b); }
+// Effective carry for a club: manual bag value, else its tracked average (≥3 shots).
+function clubDist(club){ const b=loadBag(); if(b[club]!=null) return b[club]; const ca=clubAvg(club); return (ca&&ca.n>=3)?ca.avg:null; }
+// Every club with a usable distance (bag ∪ tracked), in CLUBS order, as {club,dist,manual}.
+function clubSet(){ const b=loadBag(), out=[]; for(const c of CLUBS){ const d=clubDist(c); if(d!=null) out.push({club:c,dist:d,manual:b[c]!=null}); } return out; }
+// Suggest the club whose carry is nearest a target distance (within ~14 m), else null.
+// Pass the plays-like distance. Uses your bag (manual distances + tracked fallbacks).
+function suggestClub(distM){ if(distM==null) return null; let best=null,bd=Infinity;
+  for(const x of clubSet()){ const d=Math.abs(x.dist-distM); if(d<bd){ bd=d; best={club:x.club,avg:x.dist,manual:x.manual}; } }
   return (best&&bd<=14)?best:null; }
+
+// units helpers that work outside a Play session (the Bag panel opens from the main screen)
+function _bagUnit(){ return localStorage.getItem('gf_units')==='yd'?'yd':'m'; }
+function _toDisplay(m){ return Math.round(_bagUnit()==='yd'?m*1.09361:m); }
+function _toMetres(v){ const n=parseFloat(v); return isFinite(n)?(_bagUnit()==='yd'?n/1.09361:n):null; }
+function showBag(){ document.getElementById('bag-panel').style.display='block'; document.body.style.overflow='hidden'; renderBag(); }
+function hideBag(){ document.getElementById('bag-panel').style.display='none'; document.body.style.overflow=''; }
+function setBagClubInput(club,v){ setBagClub(club, v===''?null:_toMetres(v)); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
+function useTracked(club){ const ca=clubAvg(club); if(ca){ setBagClub(club,ca.avg); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); } }
+function renderBag(){
+  const body=document.getElementById('bag-body'); if(!body) return;
+  const bag=loadBag(), u=_bagUnit(), inBag=Object.keys(bag).length;
+  const rows=CLUBS.map(c=>{ const has=bag[c]!=null, tr=clubAvg(c);
+    const hint=tr?`<button class="bag-tracked" onclick="useTracked('${c}')" title="Use your tracked average">tracked ${_toDisplay(tr.avg)}</button>`:`<span class="bag-tracked none">no shots yet</span>`;
+    return `<div class="bag-row${has?' in':''}">
+      <span class="bag-club">${c}</span>
+      <span class="bag-distwrap"><input class="bag-dist" type="number" inputmode="numeric" placeholder="—" value="${has?_toDisplay(bag[c]):''}" onchange="setBagClubInput('${c}',this.value)" aria-label="${c} carry distance in ${u}"><span class="bag-unit">${u}</span></span>
+      ${hint}</div>`; }).join('');
+  body.innerHTML=`<div class="bag-note">Enter your carry for each club you bag. These drive the club suggestion on course; blanks are ignored. Tracked = average from shots you've tagged.</div>
+    <div class="bag-list">${rows}</div>
+    <div class="bag-foot">${inBag} club${inBag===1?'':'s'} in the bag · distances in ${u} · <button class="bag-units" onclick="toggleBagUnits()">switch to ${u==='m'?'yd':'m'}</button></div>`;
+}
+function toggleBagUnits(){ localStorage.setItem('gf_units', _bagUnit()==='yd'?'m':'yd'); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 
 function openPlay(courseName){
   const slug=slugify(courseName), course=COURSE_PLAY[slug];
@@ -6230,7 +6298,7 @@ function playRangeHtml(){
     : '';
   // club suggestion off your tagged-shot averages, for the distance it actually plays
   const sug=suggestClub(pl?pl.adj:dC);
-  const sugRow=sug?`<div class="pr-club">play <b>${sug.club}</b><span class="pr-club-sub">your avg ${fmtDist(sug.avg)} ${u} · ${sug.n} shots</span></div>`:'';
+  const sugRow=sug?`<div class="pr-club">play <b>${sug.club}</b><span class="pr-club-sub">your carry ${fmtDist(sug.avg)} ${u}${sug.manual?'':' · tracked'}</span></div>`:'';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
       <div class="pr-centre"><div class="pr-lbl">CENTRE OF GREEN</div><div class="pr-big">${fmtDist(dC)}<span class="pr-u">${u}</span></div></div>
@@ -6557,8 +6625,10 @@ function historyTabHtml(){
         <input class="phb-input phb-input-wide" type="number" inputmode="decimal" step="0.1" placeholder="enter e.g. 18.4" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
         <div class="play-hcp-sub">${he?`form ${he.hcp} · best ${he.usedN} of ${he.n} round${he.n>1?'s':''}`:'play &amp; save a round to estimate your form'}</div></div></div>
       <div class="play-hcp-disc">Your Golf Australia handicap index. On the Card it becomes a course handicap from St Lucia's white-tee rating (CR ${course.cr} / Slope ${course.slope}) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
-  const stats=loadClubStats(), clubRows=CLUBS.map(c=>{ const ca=clubAvg(c,stats); return ca?{c,avg:ca.avg,n:ca.n}:null; }).filter(Boolean);
-  const clubCard=clubRows.length?`<div class="play-clubs"><div class="pcl-h">Your clubs <span>carry avg · from tagged shots</span></div><div class="pcl-grid">${clubRows.map(r=>`<div class="pcl-item"><span class="pcl-club">${r.c}</span><span class="pcl-avg">${fmtDist(r.avg)} ${playUnit()}</span><span class="pcl-n">${r.n} shot${r.n>1?'s':''}</span></div>`).join('')}</div></div>`:'';
+  const cs=clubSet();
+  const clubCard=cs.length
+    ? `<div class="play-clubs"><div class="pcl-h">Your clubs <span>carry · bag + tracked</span></div><div class="pcl-grid">${cs.map(r=>{ const tr=clubAvg(r.club), sub=r.manual?'bag':(tr?`${tr.n} shot${tr.n>1?'s':''}`:''); return `<div class="pcl-item"><span class="pcl-club">${r.club}</span><span class="pcl-avg">${fmtDist(r.dist)} ${playUnit()}</span><span class="pcl-n">${sub}</span></div>`; }).join('')}</div><div class="bag-foot" style="margin-top:10px;"><button class="bag-units" onclick="showBag()">🎒 Edit my bag</button></div></div>`
+    : `<div class="play-clubs"><div class="pcl-h">Your clubs</div><div class="bag-note" style="margin:0;">No clubs set. <button class="bag-units" onclick="showBag()">Open My Bag</button> to add your carry distances, or tag shots on Play to build them.</div></div>`;
   if(!rounds.length) return hcpCard+clubCard+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save.</div>`;
   const list=rounds.map(r=>{ const d=new Date(r.date), ds=d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
     const vp=r.vsPar===0?'E':r.vsPar>0?'+'+r.vsPar:''+r.vsPar;
