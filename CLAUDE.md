@@ -304,7 +304,14 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind), the rose draws an arrow pointing where the
   wind blows TO + a north tick at `-brgDeg`, and `playWindStripHtml()` adds a worded,
   colour-coded HTML strip (`.play-windbar wb-help/hurt/cross`) under the map. Both refresh
-  on every GPS tick in `playLiveUpdate`. **Each baked feature is assigned to its nearest
+  on every GPS tick in `playLiveUpdate`. The rangefinder also shows a **"plays-like"**
+  wind-adjusted yardage to the green centre (`_playsLike`, `.pr-plays`): headwind plays
+  longer, tailwind shorter, crosswind ~unchanged, computed against the **shot** bearing
+  (player→green, not the hole bearing) so it's right on doglegs. **Aggressive** default
+  (~1.3%/mph head, ~0.7%/mph tail, ±40% cap), tunable on-device via
+  `window._playWindHead`/`_playWindTail`, the `?playshead=`/`?playstail=` URL params, or
+  the `setPlaysLike(head,tail)` console helper; `window._playsLike=false` hides it.
+  Elevation isn't modelled yet (St Lucia is flat) — a tee→green Δh would complete it. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
