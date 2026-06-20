@@ -722,8 +722,11 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-holeno{font-size:20px;font-weight:800;color:var(--tx);}
 .play-holesub{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-top:1px;}
 .play-units{background:none;border:1px solid var(--bdr2);border-radius:6px;color:var(--tx3);font-family:var(--mono);font-size:10px;padding:1px 5px;margin-left:6px;cursor:pointer;}
-.play-pips{display:flex;gap:4px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;}
-.play-pip{flex:0 0 auto;width:26px;height:26px;border-radius:7px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx3);font-family:var(--mono);font-size:11px;cursor:pointer;}
+.play-ninebar{display:flex;gap:6px;margin-bottom:6px;}
+.play-nine{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:7px 4px;color:var(--tx2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;}
+.play-nine.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
+.play-pips{display:flex;gap:4px;padding:0 0 10px;}
+.play-pip{flex:1 1 0;min-width:0;height:30px;border-radius:7px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx3);font-family:var(--mono);font-size:11px;cursor:pointer;}
 .play-pip.done{color:var(--gg);border-color:var(--bdr);}
 .play-pip.on{background:var(--gb);border-color:var(--gb);color:#06140a;font-weight:700;}
 /* rangefinder readout */
@@ -771,15 +774,6 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pcl-club{font-family:var(--mono);font-size:12px;font-weight:700;color:var(--gg);}
 .pcl-avg{font-family:var(--mono);font-size:13px;color:var(--tx);}
 .pcl-n{font-family:var(--mono);font-size:9px;color:var(--tx3);}
-/* wind-vs-hole strip under the hole map */
-.play-windbar{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 13px;margin:8px 0 2px;border:1px solid var(--bdr);background:var(--bg3);}
-.wb-icon{font-size:17px;line-height:1;}
-.wb-tag{font-family:var(--sans);font-weight:800;font-size:13px;letter-spacing:0.02em;}
-.wb-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-left:auto;text-align:right;}
-.wb-help{border-color:rgba(95,208,106,0.55);} .wb-help .wb-tag,.wb-help .wb-icon{color:#5fd06a;}
-.wb-hurt{border-color:rgba(255,107,90,0.55);} .wb-hurt .wb-tag,.wb-hurt .wb-icon{color:#ff6b5a;}
-.wb-cross{border-color:rgba(255,210,74,0.55);} .wb-cross .wb-tag,.wb-cross .wb-icon{color:#ffd24a;}
-.wb-none{font-family:var(--mono);color:var(--tx3);font-size:12px;justify-content:center;}
 /* tap-to-measure strip under the hole map */
 .play-measure{display:flex;align-items:center;gap:8px;border-radius:12px;padding:9px 12px;margin:8px 0 2px;border:1px solid rgba(54,224,255,0.4);background:rgba(54,224,255,0.08);font-family:var(--mono);}
 .pm-ico{font-size:15px;line-height:1;flex-shrink:0;}
@@ -787,14 +781,6 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pm-txt b{color:#36e0ff;font-size:13px;} .pm-nogps{color:var(--tx3);}
 .pm-clr{background:none;border:1px solid rgba(54,224,255,0.4);border-radius:7px;color:#36e0ff;font-size:12px;cursor:pointer;padding:2px 8px;flex-shrink:0;line-height:1;}
 .play-measure.pm-hint{border-style:dashed;border-color:var(--bdr2);background:var(--bg3);color:var(--tx3);font-size:11px;}
-/* next-hazard carry strip */
-.play-carry{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 13px;margin:8px 0 2px;border:1px solid rgba(228,210,160,0.4);background:rgba(228,210,160,0.07);font-family:var(--mono);}
-.pcry-ico{font-size:15px;line-height:1;flex-shrink:0;}
-.pcry-txt{font-size:12px;color:var(--tx2);}
-.pcry-txt b{color:#e4d2a0;font-size:14px;}
-.pcry-sub{display:block;font-size:10px;color:var(--tx3);margin-top:1px;}
-.play-carry.pc-water{border-color:rgba(90,169,240,0.45);background:rgba(45,120,196,0.1);}
-.play-carry.pc-water .pcry-txt b{color:#7bb8f0;}
 .play-measure.pm-hint .pm-ico{opacity:0.7;}
 /* per-hole score row */
 .play-scorerow{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-top:12px;}
@@ -6048,7 +6034,8 @@ function playStartGps(){
   }catch(e){}
 }
 function playSetTab(t){ if(!playS)return; playS.tab=t; playRender(); }
-function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.measure=null; playS.manualAt=Date.now(); playRender(); }
+function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.nineView=playS.hole<=9?1:2; playS.measure=null; playS.manualAt=Date.now(); playRender(); }
+function playSetNine(v){ if(!playS)return; playS.nineView=v; playRender(); }   // just flips which nine's holes show
 function playToggleUnits(){ if(!playS)return; playS.units=playS.units==='yd'?'m':'yd'; localStorage.setItem('gf_units',playS.units); playRender(); }
 
 // ── score steppers ──
@@ -6215,7 +6202,7 @@ function _playAutoAdvance(){
   playS.course.holes.forEach(h=>{ const d=_distM(pos,h.tee); if(d<ntd){ntd=d;nt=h;} });
   if(!nt||nt.n===playS.hole||ntd>near) return false;
   if(ntd >= _distM(pos,playS.course.holes[playS.hole-1].cen)) return false;  // still nearer your current green
-  playS.hole=nt.n; playS.measure=null; playRender();
+  playS.hole=nt.n; playS.nineView=nt.n<=9?1:2; playS.measure=null; playRender();
   playToast(`Hole ${nt.n} — par ${nt.par}`);
   return true;
 }
@@ -6225,8 +6212,6 @@ function playLiveUpdate(){
   const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
   const m=document.getElementById('play-map'); if(m) m.innerHTML=playHoleSvg();
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
-  const wb=document.getElementById('play-windbar'); if(wb) wb.innerHTML=playWindStripHtml();
-  const cy=document.getElementById('play-carry'); if(cy) cy.innerHTML=playCarryStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
 }
 
@@ -6280,16 +6265,16 @@ function windVsHole(dir,spd,brgDeg){
   return {d,head,cross,tag,cls,crossTxt,spd};
 }
 // "Plays-like" wind-adjusted distance: a headwind plays longer, a tailwind shorter,
-// a crosswind barely changes carry. wv is shot-relative (player->green). Aggressive
-// default (~1.3%/mph headwind, ~0.7%/mph tailwind — tailwinds help less than headwinds
-// hurt), capped at ±40%. Tunable on-device via window._playWindHead/_playWindTail or
-// the ?playshead=/?playstail= URL params; window._playsLike=false disables it.
-// Elevation isn't modelled (St Lucia is flat) — a future tee->green Δh would complete it.
+// a crosswind barely changes carry. wv is shot-relative (player->green). CONSERVATIVE
+// default (~0.7%/mph headwind, ~0.4%/mph tailwind — the wind is a regional forecast,
+// not a hyperlocal measurement, so modest adjustments), capped at ±40%. Tunable
+// on-device via window._playWindHead/_playWindTail or the ?playshead=/?playstail= URL
+// params; window._playsLike=false disables it. Elevation isn't modelled (St Lucia is flat).
 function _playsLike(distM,wv){
   if(window._playsLike===false||!wv||wv.spd==null) return null;
   const mph=(wv.head*wv.spd)/1.60934;                                  // + = tailwind (helping)
-  const hF=(typeof window._playWindHead==='number')?window._playWindHead:0.013;
-  const tF=(typeof window._playWindTail==='number')?window._playWindTail:0.007;
+  const hF=(typeof window._playWindHead==='number')?window._playWindHead:0.007;
+  const tF=(typeof window._playWindTail==='number')?window._playWindTail:0.004;
   let frac = mph<0 ? (-mph)*hF : -(mph)*tF;                            // headwind longer / tailwind shorter
   frac=Math.max(-0.4,Math.min(0.4,frac));
   return {adj:distM*(1+frac), deltaM:distM*frac};
@@ -6301,49 +6286,11 @@ function _playsLike(distM,wv){
   if(t!=null) window._playWindTail=Math.max(0,Math.min(0.05,t));
 })();
 // Console helper to A/B the plays-like model live: setPlaysLike(head,tail) (per-mph
-// fractions); setPlaysLike() restores defaults (0.013 / 0.007).
+// fractions); setPlaysLike() restores defaults (0.007 / 0.004).
 window.setPlaysLike=(h,t)=>{ if(h==null&&t==null){delete window._playWindHead;delete window._playWindTail;}
   else { if(h!=null)window._playWindHead=Math.max(0,Math.min(0.05,+h)); if(t!=null)window._playWindTail=Math.max(0,Math.min(0.05,+t)); }
   if(typeof playS!=='undefined'&&playS)playRender();
-  return {head:(typeof window._playWindHead==='number')?window._playWindHead:'default(0.013)', tail:(typeof window._playWindTail==='number')?window._playWindTail:'default(0.007)'}; };
-// Worded wind strip under the hole map (crisp HTML; arrows are relative to the hole).
-function playWindStripHtml(){
-  const h=playS.course.holes[playS.hole-1], brgDeg=_bearingDeg(h.tee,h.cen);
-  const wind=playWind(), wv=windVsHole(wind.dir,wind.spd,brgDeg);
-  if(!wv) return `<div class="play-windbar wb-none">🚩 wind — no live data for this course yet</div>`;
-  const icon=wv.cls==='help'?'⬆':wv.cls==='hurt'?'⬇':(wv.cross>0?'➡':'⬅');
-  const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
-  const sub=`${wv.spd}${gustTxt} km/h from ${compass16(wind.dir)}${wv.crossTxt?' · '+wv.crossTxt:''}`;
-  return `<div class="play-windbar wb-${wv.cls}"><span class="wb-icon">${icon}</span><span class="wb-tag">${wv.tag}</span><span class="wb-sub">${sub}</span></div>`;
-}
-
-// Hazards (bunkers/water) on your line of play to the green, ahead of you. For each
-// owned hazard, project its vertices onto the shot line (player->green): `near`/`far`
-// are its front/back edges along that line and `lat` its closest offset from the line.
-// Keep only those ahead (far>12 m), within a ~22 m corridor, and not past the green.
-function playCarries(){
-  const h=playS.course.holes[playS.hole-1], pos=playPos(); if(!pos) return [];
-  const geom=COURSE_GEOM[playS.slug]; if(!geom||!geom.features) return [];
-  _featOwner(geom);
-  const th=_bearingDeg(pos,h.cen)*Math.PI/180, c=Math.cos(th), s=Math.sin(th), k=Math.cos(pos[0]*Math.PI/180);
-  const toGreen=_distM(pos,h.cen), out=[];
-  for(const f of geom.features){ if((f.t!=='bunker'&&f.t!=='water')||f._own!==h.n) continue;
-    let near=Infinity,far=-Infinity,minLat=Infinity;
-    for(const p of f.pts){ const e=(p[1]-pos[1])*111320*k, n=(p[0]-pos[0])*111320; const fwd=n*c+e*s, lat=Math.abs(-n*s+e*c);
-      if(fwd<near)near=fwd; if(fwd>far)far=fwd; if(lat<minLat)minLat=lat; }
-    if(far<=12||minLat>22||near>toGreen+5) continue;
-    out.push({t:f.t, near, far}); }
-  out.sort((a,b)=>a.near-b.near);   // the next hazard you face first
-  return out;
-}
-// Strip under the wind bar: the next hazard ahead on your line + its carry-to-clear.
-function playCarryStripHtml(){
-  if(window._playCarries===false) return '';
-  const cs=playCarries(); if(!cs.length) return '';
-  const u=playUnit(), c0=cs[0], water=c0.t==='water', label=water?'the water':'the bunker';
-  const more=cs.length>1?` · +${cs.length-1} ahead`:'';
-  return `<div class="play-carry${water?' pc-water':''}"><span class="pcry-ico">${water?'💧':'⚑'}</span><span class="pcry-txt">carry ${label} <b>${fmtDist(c0.far)}</b> ${u}<span class="pcry-sub">front edge ${fmtDist(c0.near)} ${u}${more}</span></span></div>`;
-}
+  return {head:(typeof window._playWindHead==='number')?window._playWindHead:'default(0.007)', tail:(typeof window._playWindTail==='number')?window._playWindTail:'default(0.004)'}; };
 
 // metres from point p to segment a-b (local equirectangular approx)
 function _distSegM(p,a,b){
@@ -6464,29 +6411,32 @@ function playHoleSvg(){
       s+=`<rect x="${(mx-19).toFixed(1)}" y="${(my-9).toFixed(1)}" width="38" height="16" rx="8" fill="rgba(6,20,26,0.92)" stroke="#36e0ff" stroke-width="0.6"/><text x="${mx.toFixed(1)}" y="${(my+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="bold" fill="#36e0ff">${fmtDist(dM)}${u}</text>`; }
     s+=`<circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="7" fill="none" stroke="#36e0ff" stroke-width="1.6"/><line x1="${(Mp.x-9).toFixed(1)}" y1="${Mp.y.toFixed(1)}" x2="${(Mp.x+9).toFixed(1)}" y2="${Mp.y.toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><line x1="${Mp.x.toFixed(1)}" y1="${(Mp.y-9).toFixed(1)}" x2="${Mp.x.toFixed(1)}" y2="${(Mp.y+9).toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="1.6" fill="#36e0ff"/>`;
   }
-  // ── wind compass rose (bottom-left, near the tee), oriented to THIS hole ──
-  const R=30, wcx=R+15, wcy=H-R-15;
+  // ── wind compass (bottom-right), oriented to THIS hole; the ring + arrow are colour-
+  //    coded help/hurt/cross and the speed/gust/from-direction are folded in below ──
+  const wind=playWind(), wv=windVsHole(wind.dir,wind.spd,brgDeg);
+  const R=31, wcx=W-R-12, wcy=H-R-34;
+  const wcol=wv?(wv.cls==='help'?'#5fd06a':wv.cls==='hurt'?'#ff6b5a':'#ffd24a'):'#9fc6e8';
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
-  window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+10}};
-  const wind=playWind(), wv=windVsHole(wind.dir,wind.spd,brgDeg);
-  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+3}" fill="rgba(4,10,7,0.5)"/><circle cx="${wcx}" cy="${wcy}" r="${R}" fill="rgba(10,22,32,0.92)" stroke="#9fc6e8" stroke-width="1.3"/>`;
+  window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+12}};
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+3}" fill="rgba(4,10,7,0.66)"/><circle cx="${wcx}" cy="${wcy}" r="${R}" fill="rgba(10,22,32,0.92)" stroke="${wcol}" stroke-width="1.7"/>`;
   // north tick + label (screen angle of north = -brgDeg, measured from "up")
   const thN=(-brgDeg)*Math.PI/180, nx=Math.sin(thN), ny=-Math.cos(thN);
-  s+=`<line x1="${(wcx+nx*(R-8)).toFixed(1)}" y1="${(wcy+ny*(R-8)).toFixed(1)}" x2="${(wcx+nx*R).toFixed(1)}" y2="${(wcy+ny*R).toFixed(1)}" stroke="#ff8a8a" stroke-width="1.8"/><text x="${(wcx+nx*(R-14)).toFixed(1)}" y="${(wcy+ny*(R-14)+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="bold" fill="#ff8a8a">N</text>`;
+  s+=`<line x1="${(wcx+nx*(R-7)).toFixed(1)}" y1="${(wcy+ny*(R-7)).toFixed(1)}" x2="${(wcx+nx*R).toFixed(1)}" y2="${(wcy+ny*R).toFixed(1)}" stroke="#ff8a8a" stroke-width="2"/><text x="${(wcx+nx*(R-13)).toFixed(1)}" y="${(wcy+ny*(R-13)+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="bold" fill="#ff8a8a">N</text>`;
   if(wv){
-    const col=wv.cls==='help'?'#5fd06a':wv.cls==='hurt'?'#ff6b5a':'#ffd24a';
-    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=5.4, al=8.4;
-    const tailX=wcx-dx*R*0.64, tailY=wcy-dy*R*0.64, headX=wcx+dx*R*0.8, headY=wcy+dy*R*0.8;
-    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${col}" stroke-width="3.6" stroke-linecap="round"/>`;
-    s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${col}"/>`;
-    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.1" fill="#0a1620" stroke="${col}" stroke-width="1"/>`;
-    s+=`<text x="${wcx}" y="${(wcy+R+12).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9.5" font-weight="bold" fill="${col}">${wv.spd} km/h</text>`;
+    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=6, al=9.5;
+    const tailX=wcx-dx*R*0.7, tailY=wcy-dy*R*0.7, headX=wcx+dx*R*0.86, headY=wcy+dy*R*0.86;
+    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="4.4" stroke-linecap="round"/>`;
+    s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/>`;
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.4" fill="#0a1620" stroke="${wcol}" stroke-width="1"/>`;
+    const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
+    s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11.5" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
+    s+=`<text x="${wcx}" y="${(wcy+R+24).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#cfe0ee">from ${compass16(wind.dir)}</text>`;
   } else {
-    s+=`<text x="${wcx}" y="${(wcy+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+12).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">no data</text>`;
+    s+=`<text x="${wcx}" y="${(wcy+4).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
   }
-  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Wind compass and tee at the bottom.`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:46vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
+  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass bottom-right.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:50vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
 }
 
 function playShotLiveHtml(){
@@ -6518,7 +6468,9 @@ function playTabHtml(){
   const sc=playS.scores[h.n], rel=sc!=null?sc-h.par:null;
   const relStr=rel==null?'':rel===0?'par':rel>0?'+'+rel:''+rel;
   const t=playTotals();
-  const pips=playS.course.holes.map(x=>{ const s=playS.scores[x.n]; const cls=x.n===playS.hole?'on':(s!=null?'done':''); return `<button class="play-pip ${cls}" onclick="playSetHole(${x.n})" aria-label="Hole ${x.n}">${x.n}</button>`; }).join('');
+  const view=playS.nineView||(playS.hole<=9?1:2), lo=view===1?1:10, hi=view===1?9:18;
+  const pips=playS.course.holes.filter(x=>x.n>=lo&&x.n<=hi).map(x=>{ const s=playS.scores[x.n]; const cls=x.n===playS.hole?'on':(s!=null?'done':''); return `<button class="play-pip ${cls}" onclick="playSetHole(${x.n})" aria-label="Hole ${x.n}">${x.n}</button>`; }).join('');
+  const nineBar=`<div class="play-ninebar" role="tablist" aria-label="Choose nine"><button class="play-nine${view===1?' on':''}" onclick="playSetNine(1)">Front 9</button><button class="play-nine${view===2?' on':''}" onclick="playSetNine(2)">Back 9</button></div>`;
   const puts=playS.putts[h.n];
   return `
     <div class="play-holehdr">
@@ -6526,12 +6478,11 @@ function playTabHtml(){
       <div class="play-holemeta"><div class="play-holeno">Hole ${h.n}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(tg.len)} ${u}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button></div></div>
       <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
     </div>
+    ${nineBar}
     <div class="play-pips">${pips}</div>
     <div id="play-range">${playRangeHtml()}</div>
     <div id="play-map" class="play-mapwrap" onclick="playMapTap(event)">${playHoleSvg()}</div>
     <div id="play-measure">${playMeasureStripHtml()}</div>
-    <div id="play-windbar">${playWindStripHtml()}</div>
-    <div id="play-carry">${playCarryStripHtml()}</div>
     <div class="play-shotbar">
       <button class="play-mark" onclick="playMarkShot()">⛳ Mark shot</button>
       <button class="play-mark ghost" onclick="playUndoShot()" aria-label="Undo last mark">↩ undo</button>

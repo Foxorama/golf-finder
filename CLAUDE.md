@@ -297,34 +297,34 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   green / bunker / water polygons + the hole centreline, baked inline from OpenStreetMap
   (`scripts`-free; fetched via Overpass, RDP-simplified to ~1–2.5 m, ~28 KB for St Lucia).
   Features are **cropped to the current hole's frame** (`inFrame`, frame computed from
-  the hole's own tee/green/centreline so neighbours only show at the edges). A **wind
-  compass rose** (bottom-left, near the tee) is oriented to THIS hole: `playWind()` reads
-  the same live weather as the day-hero compass (`window._playWindTest={dir,spd,gust}`
-  overrides it for preview), `windVsHole()` classifies it (d=0 ⇒ DOWNWIND/helping up the
-  screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind), the rose draws an arrow pointing where the
-  wind blows TO + a north tick at `-brgDeg`, and `playWindStripHtml()` adds a worded,
-  colour-coded HTML strip (`.play-windbar wb-help/hurt/cross`) under the map. Both refresh
-  on every GPS tick in `playLiveUpdate`. The rangefinder also shows a **"plays-like"**
-  wind-adjusted yardage to the green centre (`_playsLike`, `.pr-plays`): headwind plays
-  longer, tailwind shorter, crosswind ~unchanged, computed against the **shot** bearing
-  (player→green, not the hole bearing) so it's right on doglegs. **Aggressive** default
-  (~1.3%/mph head, ~0.7%/mph tail, ±40% cap), tunable on-device via
-  `window._playWindHead`/`_playWindTail`, the `?playshead=`/`?playstail=` URL params, or
-  the `setPlaysLike(head,tail)` console helper; `window._playsLike=false` hides it.
-  Elevation isn't modelled yet (St Lucia is flat) — a tee→green Δh would complete it.
-  The hole also **auto-advances** as you walk to the next tee (`_playAutoAdvance`, run
-  from `playLiveUpdate`): it switches to the nearest tee only when you're within ~25 m of
-  it AND now closer to it than to your current hole's green (greens here sit as little as
-  29 m from the next tee, so this guard is what stops it firing while you putt out), and it
-  respects a manual hole change for 20 s. It also auto-detects your starting hole on the
-  first fix. `window._playAutoHole=false` disables it, `window._playTeeNear` tunes the
-  radius — a GPS feature whose *feel* can only be judged on-course. A **next-hazard
-  carry** strip (`playCarries`/`playCarryStripHtml`, `.play-carry`) shows the nearest
-  bunker/water ahead **on your shot line** (player→green) with its carry-to-clear + front
-  edge: each owned hazard's vertices are projected onto the shot line for near/far edges
-  and lateral offset, keeping only those ahead, within a ~22 m corridor, and short of the
-  green — so it updates from fairway-bunker to greenside-bunker as you walk up.
-  `window._playCarries=false` disables it. **Club tracking:** each marked shot leg can be
+  the hole's own tee/green/centreline so neighbours only show at the edges). The hole
+  selector is a **Front 9 / Back 9 toggle** (`playSetNine`, `playS.nineView`) over a single
+  non-scrolling row of 9 pips; `nineView` follows the current hole (incl. auto-advance) but
+  the toggle lets you peek the other nine. A **wind compass** (bottom-right corner of the
+  map) is oriented to THIS hole: `playWind()` reads the same live weather as the day-hero
+  compass (`window._playWindTest={dir,spd,gust}` overrides it for preview), `windVsHole()`
+  classifies it (d=0 ⇒ DOWNWIND/helping up the screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind),
+  and the compass's **ring + arrow are colour-coded** help/hurt/cross with the
+  **speed/gust + "from <dir>"** folded in below it (the old separate worded strip was
+  removed as redundant). It refreshes on every GPS tick in `playLiveUpdate`. **The wind is
+  a regional Open-Meteo forecast, not a hyperlocal measurement** — fine for prevailing
+  conditions, not precise for a specific hole/moment. The rangefinder also shows a
+  **"plays-like"** wind-adjusted yardage to the green centre (`_playsLike`, `.pr-plays`):
+  headwind plays longer, tailwind shorter, crosswind ~unchanged, computed against the
+  **shot** bearing (player→green, not the hole bearing) so it's right on doglegs.
+  **Conservative** default (~0.7%/mph head, ~0.4%/mph tail, ±40% cap — *because* the wind is
+  only a forecast), tunable on-device via `window._playWindHead`/`_playWindTail`, the
+  `?playshead=`/`?playstail=` URL params, or the `setPlaysLike(head,tail)` console helper;
+  `window._playsLike=false` hides it. Elevation isn't modelled (St Lucia is flat). The hole
+  also **auto-advances** as you walk to the next tee (`_playAutoAdvance`, run from
+  `playLiveUpdate`): it switches to the nearest tee only when you're within ~25 m of it AND
+  now closer to it than to your current hole's green (greens here sit as little as 29 m from
+  the next tee, so this guard is what stops it firing while you putt out), and it respects a
+  manual hole change for 20 s. It also auto-detects your starting hole on the first fix.
+  `window._playAutoHole=false` disables it, `window._playTeeNear` tunes the radius — a GPS
+  feature whose *feel* can only be judged on-course. (An auto next-hazard "carry" strip was
+  trialled and removed — too noisy on the tee with multiple bunkers/water; tap-to-measure
+  covers it.) **Club tracking:** each marked shot leg can be
   **tagged with a club** (tap the leg chip → `playClubPicker` grid, `CLUBS` set); tagged
   legs feed a cross-round **per-club carry store** (`gf_club_stats`, `addClubShot`/
   `clubAvg` with 10%-trimmed mean, last 40 per club) when the round is saved, and the
