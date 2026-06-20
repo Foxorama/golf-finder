@@ -734,6 +734,11 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pr-num{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--tx2);}
 .pr-big{font-size:54px;font-weight:800;color:var(--gg);line-height:1;letter-spacing:-1px;}
 .pr-u{font-size:18px;color:var(--tx3);margin-left:3px;font-weight:600;}
+.pr-plays{text-align:center;font-family:var(--mono);font-size:13px;color:var(--tx2);margin-top:9px;}
+.pr-plays-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--tx3);}
+.pr-plays b{font-size:18px;font-weight:700;}
+.pr-plays.hurt b{color:#ff6b5a;} .pr-plays.help b{color:#5fd06a;}
+.pr-plays-tag{display:block;font-size:10px;color:var(--tx3);margin-top:1px;letter-spacing:0.02em;}
 .pr-foot{display:flex;justify-content:center;gap:10px;margin-top:8px;}
 .pr-acc,.pr-note{font-family:var(--mono);font-size:10px;color:var(--tx3);}
 .pr-nogps{text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:22px 16px;font-size:14px;color:var(--tx2);}
@@ -6158,11 +6163,16 @@ function playRangeHtml(){
   }
   const dF=_distM(pos,tg.front), dC=_distM(pos,tg.cen), dB=_distM(pos,tg.back);
   const acc=playS.acc?`<span class="pr-acc">GPS ±${Math.round(playS.acc)} m${(playS.rawAcc&&playS.rawAcc>Math.round(playS.acc)+2)?` · raw ±${playS.rawAcc}`:''}</span>`:'';
+  // plays-like to the centre, using the actual shot direction (player -> green)
+  const wind=playWind(), pl=_playsLike(dC,windVsHole(wind.dir,wind.spd,_bearingDeg(pos,tg.cen)));
+  const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
+    ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
+    : '';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
       <div class="pr-centre"><div class="pr-lbl">CENTRE OF GREEN</div><div class="pr-big">${fmtDist(dC)}<span class="pr-u">${u}</span></div></div>
       <div class="pr-side"><div class="pr-lbl">BACK</div><div class="pr-num">${fmtDist(dB)}</div></div>
-    </div><div class="pr-foot">${acc}<span class="pr-note">GPS estimate · OSM green data</span></div>`;
+    </div>${playsRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · OSM green data</span></div>`;
 }
 
 // Live wind for the Play hole map — same source as the day-hero compass.
@@ -6191,6 +6201,33 @@ function windVsHole(dir,spd,brgDeg){
   const crossTxt=cross>0.26?'left → right':cross<-0.26?'right → left':'';
   return {d,head,cross,tag,cls,crossTxt,spd};
 }
+// "Plays-like" wind-adjusted distance: a headwind plays longer, a tailwind shorter,
+// a crosswind barely changes carry. wv is shot-relative (player->green). Aggressive
+// default (~1.3%/mph headwind, ~0.7%/mph tailwind — tailwinds help less than headwinds
+// hurt), capped at ±40%. Tunable on-device via window._playWindHead/_playWindTail or
+// the ?playshead=/?playstail= URL params; window._playsLike=false disables it.
+// Elevation isn't modelled (St Lucia is flat) — a future tee->green Δh would complete it.
+function _playsLike(distM,wv){
+  if(window._playsLike===false||!wv||wv.spd==null) return null;
+  const mph=(wv.head*wv.spd)/1.60934;                                  // + = tailwind (helping)
+  const hF=(typeof window._playWindHead==='number')?window._playWindHead:0.013;
+  const tF=(typeof window._playWindTail==='number')?window._playWindTail:0.007;
+  let frac = mph<0 ? (-mph)*hF : -(mph)*tF;                            // headwind longer / tailwind shorter
+  frac=Math.max(-0.4,Math.min(0.4,frac));
+  return {adj:distM*(1+frac), deltaM:distM*frac};
+}
+(function initPlaysLikeOverride(){ const q=new URLSearchParams(location.search);
+  const num=k=>{const v=q.get(k);if(v==null||v==='')return null;const n=parseFloat(v);return isFinite(n)?n:null;};
+  const h=num('playshead'),t=num('playstail');
+  if(h!=null) window._playWindHead=Math.max(0,Math.min(0.05,h));
+  if(t!=null) window._playWindTail=Math.max(0,Math.min(0.05,t));
+})();
+// Console helper to A/B the plays-like model live: setPlaysLike(head,tail) (per-mph
+// fractions); setPlaysLike() restores defaults (0.013 / 0.007).
+window.setPlaysLike=(h,t)=>{ if(h==null&&t==null){delete window._playWindHead;delete window._playWindTail;}
+  else { if(h!=null)window._playWindHead=Math.max(0,Math.min(0.05,+h)); if(t!=null)window._playWindTail=Math.max(0,Math.min(0.05,+t)); }
+  if(typeof playS!=='undefined'&&playS)playRender();
+  return {head:(typeof window._playWindHead==='number')?window._playWindHead:'default(0.013)', tail:(typeof window._playWindTail==='number')?window._playWindTail:'default(0.007)'}; };
 // Worded wind strip under the hole map (crisp HTML; arrows are relative to the hole).
 function playWindStripHtml(){
   const h=playS.course.holes[playS.hole-1], brgDeg=_bearingDeg(h.tee,h.cen);
