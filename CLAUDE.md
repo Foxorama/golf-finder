@@ -318,7 +318,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   29 m from the next tee, so this guard is what stops it firing while you putt out), and it
   respects a manual hole change for 20 s. It also auto-detects your starting hole on the
   first fix. `window._playAutoHole=false` disables it, `window._playTeeNear` tunes the
-  radius — a GPS feature whose *feel* can only be judged on-course. **Each baked feature is assigned to its nearest
+  radius — a GPS feature whose *feel* can only be judged on-course. A **next-hazard
+  carry** strip (`playCarries`/`playCarryStripHtml`, `.play-carry`) shows the nearest
+  bunker/water ahead **on your shot line** (player→green) with its carry-to-clear + front
+  edge: each owned hazard's vertices are projected onto the shot line for near/far edges
+  and lateral offset, keeping only those ahead, within a ~22 m corridor, and short of the
+  green — so it updates from fairway-bunker to greenside-bunker as you walk up.
+  `window._playCarries=false` disables it. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the

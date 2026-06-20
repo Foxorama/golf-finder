@@ -769,6 +769,14 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pm-txt b{color:#36e0ff;font-size:13px;} .pm-nogps{color:var(--tx3);}
 .pm-clr{background:none;border:1px solid rgba(54,224,255,0.4);border-radius:7px;color:#36e0ff;font-size:12px;cursor:pointer;padding:2px 8px;flex-shrink:0;line-height:1;}
 .play-measure.pm-hint{border-style:dashed;border-color:var(--bdr2);background:var(--bg3);color:var(--tx3);font-size:11px;}
+/* next-hazard carry strip */
+.play-carry{display:flex;align-items:center;gap:9px;border-radius:12px;padding:9px 13px;margin:8px 0 2px;border:1px solid rgba(228,210,160,0.4);background:rgba(228,210,160,0.07);font-family:var(--mono);}
+.pcry-ico{font-size:15px;line-height:1;flex-shrink:0;}
+.pcry-txt{font-size:12px;color:var(--tx2);}
+.pcry-txt b{color:#e4d2a0;font-size:14px;}
+.pcry-sub{display:block;font-size:10px;color:var(--tx3);margin-top:1px;}
+.play-carry.pc-water{border-color:rgba(90,169,240,0.45);background:rgba(45,120,196,0.1);}
+.play-carry.pc-water .pcry-txt b{color:#7bb8f0;}
 .play-measure.pm-hint .pm-ico{opacity:0.7;}
 /* per-hole score row */
 .play-scorerow{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-top:12px;}
@@ -6172,6 +6180,7 @@ function playLiveUpdate(){
   const m=document.getElementById('play-map'); if(m) m.innerHTML=playHoleSvg();
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
   const wb=document.getElementById('play-windbar'); if(wb) wb.innerHTML=playWindStripHtml();
+  const cy=document.getElementById('play-carry'); if(cy) cy.innerHTML=playCarryStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
 }
 
@@ -6257,6 +6266,34 @@ function playWindStripHtml(){
   const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
   const sub=`${wv.spd}${gustTxt} km/h from ${compass16(wind.dir)}${wv.crossTxt?' · '+wv.crossTxt:''}`;
   return `<div class="play-windbar wb-${wv.cls}"><span class="wb-icon">${icon}</span><span class="wb-tag">${wv.tag}</span><span class="wb-sub">${sub}</span></div>`;
+}
+
+// Hazards (bunkers/water) on your line of play to the green, ahead of you. For each
+// owned hazard, project its vertices onto the shot line (player->green): `near`/`far`
+// are its front/back edges along that line and `lat` its closest offset from the line.
+// Keep only those ahead (far>12 m), within a ~22 m corridor, and not past the green.
+function playCarries(){
+  const h=playS.course.holes[playS.hole-1], pos=playPos(); if(!pos) return [];
+  const geom=COURSE_GEOM[playS.slug]; if(!geom||!geom.features) return [];
+  _featOwner(geom);
+  const th=_bearingDeg(pos,h.cen)*Math.PI/180, c=Math.cos(th), s=Math.sin(th), k=Math.cos(pos[0]*Math.PI/180);
+  const toGreen=_distM(pos,h.cen), out=[];
+  for(const f of geom.features){ if((f.t!=='bunker'&&f.t!=='water')||f._own!==h.n) continue;
+    let near=Infinity,far=-Infinity,minLat=Infinity;
+    for(const p of f.pts){ const e=(p[1]-pos[1])*111320*k, n=(p[0]-pos[0])*111320; const fwd=n*c+e*s, lat=Math.abs(-n*s+e*c);
+      if(fwd<near)near=fwd; if(fwd>far)far=fwd; if(lat<minLat)minLat=lat; }
+    if(far<=12||minLat>22||near>toGreen+5) continue;
+    out.push({t:f.t, near, far}); }
+  out.sort((a,b)=>a.near-b.near);   // the next hazard you face first
+  return out;
+}
+// Strip under the wind bar: the next hazard ahead on your line + its carry-to-clear.
+function playCarryStripHtml(){
+  if(window._playCarries===false) return '';
+  const cs=playCarries(); if(!cs.length) return '';
+  const u=playUnit(), c0=cs[0], water=c0.t==='water', label=water?'the water':'the bunker';
+  const more=cs.length>1?` · +${cs.length-1} ahead`:'';
+  return `<div class="play-carry${water?' pc-water':''}"><span class="pcry-ico">${water?'💧':'⚑'}</span><span class="pcry-txt">carry ${label} <b>${fmtDist(c0.far)}</b> ${u}<span class="pcry-sub">front edge ${fmtDist(c0.near)} ${u}${more}</span></span></div>`;
 }
 
 // metres from point p to segment a-b (local equirectangular approx)
@@ -6430,6 +6467,7 @@ function playTabHtml(){
     <div id="play-map" class="play-mapwrap" onclick="playMapTap(event)">${playHoleSvg()}</div>
     <div id="play-measure">${playMeasureStripHtml()}</div>
     <div id="play-windbar">${playWindStripHtml()}</div>
+    <div id="play-carry">${playCarryStripHtml()}</div>
     <div class="play-shotbar">
       <button class="play-mark" onclick="playMarkShot()">⛳ Mark shot</button>
       <button class="play-mark ghost" onclick="playUndoShot()" aria-label="Undo last mark">↩ undo</button>
