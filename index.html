@@ -786,8 +786,12 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .cc-h{color:var(--tx);font-weight:600;} .cc-p{color:var(--tx3);}
 .cc-step{display:inline-flex;align-items:center;gap:6px;}
 .cc-step button{width:26px;height:26px;border-radius:7px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-size:15px;cursor:pointer;line-height:1;}
-.cc-val{min-width:18px;display:inline-block;font-size:15px;font-weight:700;color:var(--tx);}
-.cc-val.sc-under{color:var(--gg);} .cc-val.sc-over{color:var(--al);} .cc-val.sc-par{color:var(--tx);}
+.cc-val{display:inline-block;width:22px;height:22px;line-height:19px;text-align:center;font-size:15px;font-weight:700;color:var(--tx);border:1.5px solid transparent;box-sizing:border-box;}
+/* golf-native notation: circle = under par, square = over par — a shape cue so the
+   score doesn't rely on colour alone (colour-blind / screen-reader friendly). */
+.cc-val.sc-under{color:var(--gg);border-color:var(--gg);border-radius:50%;}
+.cc-val.sc-over{color:var(--al);border-color:var(--al);border-radius:4px;}
+.cc-val.sc-par{color:var(--tx);}
 .cc-pu{color:var(--tx3);}
 .cc-clr{background:none;border:none;color:var(--tx3);font-size:12px;cursor:pointer;padding:2px;}
 .cc-sub td{background:var(--sur);color:var(--tx2);font-weight:600;font-size:12px;}
@@ -6300,7 +6304,8 @@ function playHoleSvg(){
   } else {
     s+=`<text x="${wcx}" y="${(wcy+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+12).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">no data</text>`;
   }
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" style="display:block;max-height:46vh;" xmlns="http://www.w3.org/2000/svg">${s}</svg>`;
+  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Wind compass and tee at the bottom.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:46vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
 }
 
 function playShotLiveHtml(){
@@ -6351,6 +6356,9 @@ function playTabHtml(){
   `;
 }
 
+// Score relative to par, in words — for the card cell's aria-label so a screen
+// reader announces "5, bogey" rather than just a coloured digit.
+function _scoreTerm(rel){ if(rel==null)return''; if(rel<=-3)return'albatross'; if(rel===-2)return'eagle'; if(rel===-1)return'birdie'; if(rel===0)return'par'; if(rel===1)return'bogey'; if(rel===2)return'double bogey'; return rel+' over par'; }
 function cardTabHtml(){
   const holes=playS.course.holes, course=playS.course, t=playTotals();
   const idx=getHcpIndex(), ch=t.ch;
@@ -6369,7 +6377,7 @@ function cardTabHtml(){
     return `<tr>
       <td class="cc-h">${h.n}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
       <td class="cc-p">${h.par}<span class="cc-si">${h.si||''}</span></td>
-      <td><div class="cc-step"><button onclick="playBumpScore(${h.n},-1)">–</button><span class="cc-val ${rc}">${s!=null?s:'·'}</span><button onclick="playBumpScore(${h.n},1)">+</button></div></td>
+      <td><div class="cc-step"><button onclick="playBumpScore(${h.n},-1)" aria-label="Lower score hole ${h.n}">–</button><span class="cc-val ${rc}"${s!=null?` aria-label="${s}, ${_scoreTerm(rel)}"`:''}>${s!=null?s:'·'}</span><button onclick="playBumpScore(${h.n},1)" aria-label="Raise score hole ${h.n}">+</button></div></td>
       <td class="cc-net">${net!=null?net:''}${dot}</td>
       <td class="cc-pts">${pts!=null?pts:''}</td>
     </tr>`; };
@@ -6411,6 +6419,7 @@ function playRender(){
   document.querySelectorAll('.play-tab').forEach(t=>{ const on=t.dataset.tab===playS.tab; t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); });
   const ttl=document.getElementById('play-title'); if(ttl) ttl.textContent=playS.course.name;
   const b=document.getElementById('play-body'); if(!b)return;
+  b.setAttribute('aria-labelledby','play-tab-'+playS.tab);   // tabpanel labelled by its active tab
   b.innerHTML = playS.tab==='play'?playTabHtml() : playS.tab==='card'?cardTabHtml() : historyTabHtml();
 }
 
@@ -6639,12 +6648,12 @@ showTestBanner();
       </div>
       <button class="play-close" onclick="closePlay()" aria-label="Close play">✕</button>
     </div>
-    <div class="play-tabs" role="tablist">
-      <button class="play-tab on" data-tab="play" role="tab" aria-selected="true" onclick="playSetTab('play')">⛳ Play</button>
-      <button class="play-tab" data-tab="card" role="tab" aria-selected="false" onclick="playSetTab('card')">📋 Card</button>
-      <button class="play-tab" data-tab="history" role="tab" aria-selected="false" onclick="playSetTab('history')">📊 History</button>
+    <div class="play-tabs" role="tablist" aria-label="Play, scorecard and history">
+      <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')">⛳ Play</button>
+      <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')">📋 Card</button>
+      <button class="play-tab" id="play-tab-history" data-tab="history" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('history')">📊 History</button>
     </div>
-    <div class="play-body" id="play-body"></div>
+    <div class="play-body" id="play-body" role="tabpanel" tabindex="0" aria-labelledby="play-tab-play"></div>
   </div>
 </div>
 
