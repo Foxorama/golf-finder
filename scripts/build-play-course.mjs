@@ -32,9 +32,15 @@ for (const h of holesW) {
   for (const gr of greens) { const da = hav(a[0], a[1], gr.cen[0], gr.cen[1]), db = hav(b[0], b[1], gr.cen[0], gr.cen[1]); if (da < bA) { bA = da; gA = gr; } if (db < bB) { bB = db; gB = gr; } }
   let tee, gr, gd, line;
   if (bB <= bA) { tee = a; gr = gB; gd = bB; line = h.pts; } else { tee = b; gr = gA; gd = bA; line = h.pts.slice().reverse(); }
-  holes.push({ n: h.ref, par: h.par, tee: [r7(tee[0]), r7(tee[1])], cen: [r7(gr.cen[0]), r7(gr.cen[1])], pin: null, gbb: [r7(gr.bb[0]), r7(gr.bb[1]), r7(gr.bb[2]), r7(gr.bb[3])] });
+  // Green centre: prefer the matched green polygon; if none is within 25 m (the hole's green
+  // isn't mapped in OSM), fall back to the centreline's green-end point + a synthetic ~11 m box.
+  const gEnd = line[line.length - 1];
+  let cen, gbb, synth = false;
+  if (gd > 25) { synth = true; cen = gEnd; const dLat = 0.00010, dLng = 0.00010 / Math.cos(cen[0] * rad); gbb = [cen[0] - dLat, cen[1] - dLng, cen[0] + dLat, cen[1] + dLng]; }
+  else { cen = gr.cen; gbb = gr.bb; }
+  holes.push({ n: h.ref, par: h.par, tee: [r7(tee[0]), r7(tee[1])], cen: [r7(cen[0]), r7(cen[1])], pin: null, gbb: [r7(gbb[0]), r7(gbb[1]), r7(gbb[2]), r7(gbb[3])] });
   lines[h.ref] = simp(line);
-  diag.push({ n: h.ref, par: h.par, hcp: h.hcp, gd: +gd.toFixed(1), len: Math.round(hav(tee[0], tee[1], gr.cen[0], gr.cen[1])) });
+  diag.push({ n: h.ref, par: h.par, hcp: h.hcp, gd: +gd.toFixed(1), len: Math.round(hav(tee[0], tee[1], cen[0], cen[1])), synth });
 }
 const par = holes.reduce((s, h) => s + (h.par || 0), 0);
 const out = { play: { name, par, holesN: holes.length, holes }, geom: { features: feats, lines } };
@@ -47,5 +53,8 @@ console.error('holes=' + holesW.length + ' greens=' + greens.length + ' feats=' 
 console.error('pars=[' + diag.map(d => d.par).join(',') + ']');
 console.error('osmHcp=[' + hcps.join(',') + ']  (valid 1..N permutation: ' + hcpOK + ')');
 console.error('greenMatch m=[' + diag.map(d => d.gd).join(',') + ']  max=' + Math.max(...diag.map(d => d.gd)));
+console.error('synthGreens (no polygon, centreline-end used): [' + diag.filter(d => d.synth).map(d => d.n).join(',') + ']');
+const missingPar = diag.filter(d => d.par == null || Number.isNaN(d.par)).map(d => d.n);
+console.error('holesMissingPar: [' + missingPar.join(',') + ']' + (missingPar.length ? '  *** NEEDS PAR ***' : ''));
 console.error('len m=[' + diag.map(d => d.len).join(',') + ']');
 console.error('-> ' + outPath + '  (' + (JSON.stringify(out).length / 1024).toFixed(1) + ' KB)');
