@@ -6358,7 +6358,7 @@ function playHoleSvg(){
   const padU=Math.max(16,(uMax-uMin)*0.12), padV=12;   // tighter frame → the hole fills more of the map
   uMin-=padU; uMax+=padU; vMin-=padV; vMax+=padV;
   const W=320,pad=10, gw=Math.max(1,uMax-uMin), gh=Math.max(1,vMax-vMin);
-  const H=Math.round(Math.max(440,Math.min(680,W*gh/gw)));   // height adapts to the hole's shape so it fills the map (short par-3 ⇒ shorter map, long hole ⇒ taller)
+  const H=Math.round(Math.max(440,Math.min(620,W*gh/gw)));   // height adapts to the hole's shape so it fills the map (short par-3 ⇒ shorter map, long hole ⇒ taller)
   const scl=Math.min((W-2*pad)/gw,(H-2*pad)/gh);
   const offX=pad+((W-2*pad)-gw*scl)/2, offY=pad+((H-2*pad)-gh*scl)/2;
   const P=(lat,lng)=>{ const [a,b]=uv(lat,lng); return {x:offX+(a-uMin)*scl, y:offY+(vMax-b)*scl}; };
@@ -6440,7 +6440,7 @@ function playHoleSvg(){
     s+=`<text x="${wcx}" y="${(wcy+4).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
   }
   const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass top-right.`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:92vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:86vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
 }
 
 function playShotLiveHtml(){
