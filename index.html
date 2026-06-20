@@ -6125,11 +6125,11 @@ function openPlay(courseName){
           watchId:null, pos:null, acc:null, gpsErr:null,
           shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), teePos:(draft.teePos||{}),
           scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
-          startedAt:(draft.startedAt||Date.now()), tab:'play' };
+          startedAt:(draft.startedAt||Date.now()), tab:(course.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
   document.getElementById('play-panel').style.display='block';
   document.body.style.overflow='hidden';
-  playStartGps();
+  if(!course.noGps) playStartGps();   // scorecard-only courses (no OSM geometry) skip the GPS rangefinder
   playRender();
 }
 function closePlay(){
@@ -6690,18 +6690,23 @@ function playTabHtml(){
 function _scoreTerm(rel){ if(rel==null)return''; if(rel<=-3)return'albatross'; if(rel===-2)return'eagle'; if(rel===-1)return'birdie'; if(rel===0)return'par'; if(rel===1)return'bogey'; if(rel===2)return'double bogey'; return rel+' over par'; }
 function cardTabHtml(){
   const holes=playS.course.holes, course=playS.course, t=playTotals();
-  const idx=getHcpIndex(), ch=t.ch;
+  const idx=getHcpIndex(), ch=t.ch, hasRating=course.cr!=null&&course.slope!=null;
+  const chCell = !hasRating ? `<span class="phb-hint">gross scoring<br>no course rating</span>`
+               : ch!=null  ? `Course handicap<b>${ch}</b>`
+               :             `<span class="phb-hint">enter your index<br>for net scoring</span>`;
   const hcpBar=`
     <div class="play-hcp-bar">
       <label class="phb-lbl" for="cc-hcp">Handicap<br>index</label>
       <input class="phb-input" id="cc-hcp" type="number" inputmode="decimal" step="0.1" placeholder="—" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
-      <div class="phb-ch">${ch!=null?`Course handicap<b>${ch}</b>`:`<span class="phb-hint">enter your index<br>for net scoring</span>`}</div>
+      <div class="phb-ch">${chCell}</div>
     </div>
-    <div class="phb-meta">${course.name} · white tee · CR ${course.cr} / Slope ${course.slope}</div>`;
+    <div class="phb-meta">${course.name}${hasRating?` · white tee · CR ${course.cr} / Slope ${course.slope}`:` · ${course.holesN} holes · par ${course.par}`}</div>`;
   const row=h=>{ const s=playS.scores[h.n], rel=s!=null?s-h.par:null;
     const rc=rel==null?'':rel<0?'sc-under':rel>0?'sc-over':'sc-par';
     const recv=ch!=null?strokesForSI(ch,h.si):0;
-    const net=s!=null?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
+    // Net needs a course handicap; on unrated (par-only) courses it's meaningless, so blank it.
+    // Stableford still tallies — scratch points (0 strokes) when there's no rating.
+    const net=(s!=null&&hasRating)?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
     const dot=recv>0?`<span class="cc-recv">${'•'.repeat(Math.min(3,recv))}</span>`:recv<0?`<span class="cc-recv minus">–</span>`:'';
     return `<tr>
       <td class="cc-h">${h.n}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
@@ -6719,7 +6724,7 @@ function cardTabHtml(){
         <tr class="cc-sub"><td>OUT</td><td>${outPar}</td><td>${t.out||'–'}</td><td colspan="2"></td></tr>
         ${holes.slice(9).map(row).join('')}
         <tr class="cc-sub"><td>IN</td><td>${inPar}</td><td>${t.inn||'–'}</td><td colspan="2"></td></tr>
-        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${ch!=null&&t.holesPlayed?t.points:''}</td></tr>
+        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${(ch!=null||!hasRating)&&t.holesPlayed?t.points:''}</td></tr>
       </tbody></table>
     ${ch!=null?`<div class="play-net-sum">Net <b>${t.holesPlayed?t.net:'–'}</b> · Stableford <b>${t.holesPlayed?t.points:'–'}</b> pts${t.recvTotal?` · ${t.recvTotal>0?t.recvTotal+' strokes received':(-t.recvTotal)+' given'}`:''}</div>`:''}
     <button class="play-save" onclick="playSaveRound()">💾 Save round to history</button>
@@ -6727,13 +6732,13 @@ function cardTabHtml(){
 }
 
 function historyTabHtml(){
-  const rounds=loadRounds(), he=handicapEstimate(null), idx=getHcpIndex(), course=playS.course;
+  const rounds=loadRounds(), he=handicapEstimate(null), idx=getHcpIndex();
   const hcpCard=`<div class="play-hcp">
       <div class="play-hcp-num">${idx!=null?idx:'–'}</div>
       <div class="play-hcp-side"><div class="play-hcp-lbl">Handicap index</div>
         <input class="phb-input phb-input-wide" type="number" inputmode="decimal" step="0.1" placeholder="enter e.g. 18.4" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
         <div class="play-hcp-sub">${he?`form ${he.hcp} · best ${he.usedN} of ${he.n} round${he.n>1?'s':''}`:'play &amp; save a round to estimate your form'}</div></div></div>
-      <div class="play-hcp-disc">Your Golf Australia handicap index. On the Card it becomes a course handicap from St Lucia's white-tee rating (CR ${course.cr} / Slope ${course.slope}) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
+      <div class="play-hcp-disc">Your Golf Australia handicap index. On a rated course's Card it becomes a course handicap (from that course's white-tee CR / Slope) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
   const cs=clubSet();
   const clubCard=cs.length
     ? `<div class="play-clubs"><div class="pcl-h">Your clubs <span>carry · bag + tracked</span></div><div class="pcl-grid">${cs.map(r=>{ const tr=clubAvg(r.club), sub=r.manual?'bag':(tr?`${tr.n} shot${tr.n>1?'s':''}`:''); return `<div class="pcl-item"><span class="pcl-club">${r.club}</span><span class="pcl-avg">${fmtDist(r.dist)} ${playUnit()}</span><span class="pcl-n">${sub}</span></div>`; }).join('')}</div><div class="bag-foot" style="margin-top:10px;"><button class="bag-units" onclick="showBag()">🎒 Edit my bag</button></div></div>`
@@ -6749,6 +6754,10 @@ function historyTabHtml(){
 
 function playRender(){
   if(!playS)return;
+  const noGps=!!playS.course.noGps;
+  if(noGps&&playS.tab==='play') playS.tab='card';   // no rangefinder tab for scorecard-only courses
+  const playTabBtn=document.getElementById('play-tab-play'); if(playTabBtn) playTabBtn.style.display=noGps?'none':'';
+  const sub=document.getElementById('play-subtitle'); if(sub) sub.textContent=noGps?'Scorecard · history':'GPS rangefinder · scorecard';
   document.querySelectorAll('.play-tab').forEach(t=>{ const on=t.dataset.tab===playS.tab; t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); });
   const ttl=document.getElementById('play-title'); if(ttl) ttl.textContent=playS.course.name;
   const b=document.getElementById('play-body'); if(!b)return;
@@ -6990,7 +6999,7 @@ showTestBanner();
     <div class="play-header">
       <div>
         <div class="play-title" id="play-title">Course</div>
-        <div class="play-subtitle">GPS rangefinder · scorecard</div>
+        <div class="play-subtitle" id="play-subtitle">GPS rangefinder · scorecard</div>
       </div>
       <button class="play-close" onclick="closePlay()" aria-label="Close play">✕</button>
     </div>
