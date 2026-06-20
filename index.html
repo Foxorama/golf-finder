@@ -850,6 +850,18 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pat-sub{font-family:var(--mono);font-size:11px;color:#e8d9b0;margin-top:5px;line-height:1.4;}
 .hio-auto{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:0.06em;color:#ffd24a;background:rgba(217,164,65,0.16);border:1px solid rgba(217,164,65,0.4);border-radius:5px;padding:0 4px;vertical-align:middle;margin-left:4px;}
 @media (prefers-reduced-motion: reduce){.pat-emoji{animation:none;}}
+/* in-sheet toast + confirm (replace native alert/confirm inside the Play sheet) */
+.play-toast{position:absolute;left:50%;bottom:calc(env(safe-area-inset-bottom,12px) + 92px);transform:translateX(-50%) translateY(8px);max-width:82%;text-align:center;background:var(--sur2);border:1px solid var(--bdr2);color:var(--tx);font-family:var(--mono);font-size:12.5px;line-height:1.35;padding:10px 16px;border-radius:11px;box-shadow:0 10px 28px -10px rgba(0,0,0,0.6);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease;z-index:35;}
+.play-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+.play-confirm{position:absolute;inset:0;background:rgba(4,8,6,0.62);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:45;}
+.play-confirm.show{opacity:1;pointer-events:auto;}
+.pc-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:16px;padding:20px 18px 16px;max-width:330px;width:100%;box-shadow:0 18px 50px -16px rgba(0,0,0,0.7);}
+.pc-msg{font-family:var(--sans);font-size:14.5px;color:var(--tx);line-height:1.4;text-align:center;margin-bottom:16px;}
+.pc-row{display:flex;gap:10px;}
+.pc-row button{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr2);font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;}
+.pc-cancel{background:var(--sur);color:var(--tx2);}
+.pc-ok{background:var(--green);border-color:var(--gl);color:var(--gg);}
+.pc-ok.pc-danger{background:rgba(220,80,70,0.16);border-color:var(--rl);color:#ff8a7a;}
 
 /* Respect reduced-motion; pause weather animations when the tab is hidden */
 @media (prefers-reduced-motion: reduce){
@@ -6012,7 +6024,7 @@ function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0
   return {gross,parPlayed,holesPlayed,vsPar:gross-parPlayed,putts,out,inn,net,points,ch,recvTotal}; }
 
 // ── shot-distance tracker (between dropped marks) ──
-function playMarkShot(){ const pos=playPos(); if(!pos){ alert('No GPS fix yet — wait for a location lock.'); return; } (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice()); playRender(); }
+function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix yet — wait for a location lock.'); return; } (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice()); playRender(); }
 function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop(); playRender(); } }
 function playShotLegs(h){ // legs from tee through each mark, plus a live leg to current pos
   const marks=playS.shots[h.n]||[], chain=[h.tee,...marks], legs=[];
@@ -6021,9 +6033,12 @@ function playShotLegs(h){ // legs from tee through each mark, plus a live leg to
 
 function playSaveRound(){
   const t=playTotals();
-  if(t.holesPlayed===0){ alert('Enter at least one hole score first.'); return; }
-  const partial=t.holesPlayed<playS.course.holesN;
-  if(partial && !confirm(`Save this round with ${t.holesPlayed} of ${playS.course.holesN} holes scored?`)) return;
+  if(t.holesPlayed===0){ playToast('Enter at least one hole score first.'); return; }
+  if(t.holesPlayed<playS.course.holesN)
+    playConfirm(`Save this round with ${t.holesPlayed} of ${playS.course.holesN} holes scored?`,'Save',()=>_commitRound(t));
+  else _commitRound(t);
+}
+function _commitRound(t){
   const rounds=loadRounds();
   rounds.unshift({ id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
     date:new Date().toISOString(),
@@ -6034,8 +6049,9 @@ function playSaveRound(){
   localStorage.removeItem(_draftKey(playS.slug));
   playS.scores={}; playS.putts={}; playS.shots={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
+  playToast('Round saved to history.');
 }
-function playDeleteRound(id){ if(!confirm('Delete this round from your history?'))return; saveRounds(loadRounds().filter(r=>r.id!==id)); playRender(); }
+function playDeleteRound(id){ playConfirm('Delete this round from your history?','Delete',()=>{ saveRounds(loadRounds().filter(r=>r.id!==id)); playRender(); },true); }
 
 // Honest, WHS-flavoured handicap estimate from saved rounds (best-of differentials,
 // 0.96 factor). Clearly NOT an official Golf Australia handicap — no slope/rating.
@@ -6100,6 +6116,28 @@ function playAceToast(n){
   el.innerHTML=`<div class="pat-emoji" aria-hidden="true">🏆</div><div class="pat-txt">HOLE-IN-ONE!</div><div class="pat-sub">Hole ${n} · ${playS.course.name}<br>auto-saved to your trophies</div>`;
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
   clearTimeout(window._aceToastT); window._aceToastT=setTimeout(()=>{ el.classList.remove('show'); },4200);
+}
+
+// Transient in-sheet toast (replaces native alert for non-blocking notices).
+function playToast(msg){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet){ return; }
+  let el=document.getElementById('play-toast');
+  if(!el){ el=document.createElement('div'); el.id='play-toast'; el.className='play-toast'; el.setAttribute('role','status'); sheet.appendChild(el); }
+  el.textContent=msg;
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+  clearTimeout(window._playToastT); window._playToastT=setTimeout(()=>el.classList.remove('show'),2800);
+}
+// In-sheet confirm (replaces native confirm). onOk runs only on the OK button.
+function playConfirm(msg,okLabel,onOk,danger){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet){ if(onOk)onOk(); return; }
+  let el=document.getElementById('play-confirm');
+  if(!el){ el=document.createElement('div'); el.id='play-confirm'; el.className='play-confirm'; sheet.appendChild(el); }
+  el.innerHTML=`<div class="pc-card" role="alertdialog" aria-modal="true"><div class="pc-msg">${msg}</div><div class="pc-row"><button class="pc-cancel">Cancel</button><button class="pc-ok${danger?' pc-danger':''}">${okLabel}</button></div></div>`;
+  const close=()=>el.classList.remove('show');
+  el.querySelector('.pc-cancel').onclick=close;
+  el.querySelector('.pc-ok').onclick=()=>{ close(); onOk&&onOk(); };
+  el.onclick=e=>{ if(e.target===el) close(); };   // tap the backdrop to cancel
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 
 // ── live (GPS-tick) refresh of just the rangefinder, map and shot readout ──
