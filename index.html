@@ -6555,6 +6555,8 @@ function _destPoint(a,brgDeg,distM){
 // green's near/far edges along the tee->green play line — found by projecting the
 // matched green polygon's vertices (the one whose centroid is this hole's green
 // centre) onto that line. Falls back to the green bbox extent if no polygon matches.
+// `len` is the hole length along the play corridor (follows doglegs), tee -> green
+// centre, from the baked centreline; falls back to straight-line.
 function holeTargets(h){
   const brg=_bearingDeg(h.tee,h.cen), th=brg*Math.PI/180;
   let front,back,depth;
@@ -6577,7 +6579,18 @@ function holeTargets(h){
     depth=Math.abs(dLat*Math.cos(th))+Math.abs(dLng*Math.sin(th)); const half=depth/2;
     front=_destPoint(h.cen,(brg+180)%360,half); back=_destPoint(h.cen,brg,half);
   }
-  return {tee:h.tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len:_distM(h.tee,h.cen)};
+  // hole length along the play corridor (dogleg-aware), tee -> green centre
+  let len=_distM(h.tee,h.cen);
+  const cl=geom&&geom.lines&&geom.lines[h.n];
+  if(cl&&cl.length>=2){
+    let line=cl.slice();
+    if(_distM(line[0],h.cen)<_distM(line[line.length-1],h.cen)) line.reverse();   // orient tee->green
+    if(_distM(h.tee,line[0])<20&&_distM(line[line.length-1],h.cen)<20){           // only if it spans tee..green
+      let d=_distM(h.tee,line[0]); for(let i=1;i<line.length;i++) d+=_distM(line[i-1],line[i]); d+=_distM(line[line.length-1],h.cen);
+      len=d;
+    }
+  }
+  return {tee:h.tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len};
 }
 
 // intermediate data -> SVG string (full detail)
