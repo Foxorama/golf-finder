@@ -311,7 +311,14 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   (~1.3%/mph head, ~0.7%/mph tail, ±40% cap), tunable on-device via
   `window._playWindHead`/`_playWindTail`, the `?playshead=`/`?playstail=` URL params, or
   the `setPlaysLike(head,tail)` console helper; `window._playsLike=false` hides it.
-  Elevation isn't modelled yet (St Lucia is flat) — a tee→green Δh would complete it. **Each baked feature is assigned to its nearest
+  Elevation isn't modelled yet (St Lucia is flat) — a tee→green Δh would complete it.
+  The hole also **auto-advances** as you walk to the next tee (`_playAutoAdvance`, run
+  from `playLiveUpdate`): it switches to the nearest tee only when you're within ~25 m of
+  it AND now closer to it than to your current hole's green (greens here sit as little as
+  29 m from the next tee, so this guard is what stops it firing while you putt out), and it
+  respects a manual hole change for 20 s. It also auto-detects your starting hole on the
+  first fix. `window._playAutoHole=false` disables it, `window._playTeeNear` tunes the
+  radius — a GPS feature whose *feel* can only be judged on-course. **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
