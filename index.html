@@ -730,13 +730,13 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-pip.done{color:var(--gg);border-color:var(--bdr);}
 .play-pip.on{background:var(--gb);border-color:var(--gb);color:#06140a;font-weight:700;}
 /* rangefinder readout */
-.pr-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;}
-.pr-side{text-align:center;flex:0 0 auto;padding-bottom:6px;}
+.pr-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:8px 14px;}
+.pr-side{text-align:center;flex:0 0 auto;padding-bottom:3px;}
 .pr-centre{text-align:center;flex:1;}
-.pr-lbl{font-family:var(--mono);font-size:9px;color:var(--tx3);letter-spacing:0.06em;}
-.pr-num{font-family:var(--mono);font-size:22px;font-weight:500;color:var(--tx2);}
-.pr-big{font-size:54px;font-weight:800;color:var(--gg);line-height:1;letter-spacing:-1px;}
-.pr-u{font-size:18px;color:var(--tx3);margin-left:3px;font-weight:600;}
+.pr-lbl{font-family:var(--mono);font-size:8px;color:var(--tx3);letter-spacing:0.06em;}
+.pr-num{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--tx2);}
+.pr-big{font-size:34px;font-weight:800;color:var(--gg);line-height:1;letter-spacing:-1px;}
+.pr-u{font-size:13px;color:var(--tx3);margin-left:2px;font-weight:600;}
 .pr-plays{text-align:center;font-family:var(--mono);font-size:13px;color:var(--tx2);margin-top:9px;}
 .pr-plays-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--tx3);}
 .pr-plays b{font-size:18px;font-weight:700;}
@@ -6355,9 +6355,10 @@ function playHoleSvg(){
   const anchors=[tee,tg.front,tg.cen,tg.back].concat(line); if(tg.pin)anchors.push(tg.pin);
   let uMin=Infinity,uMax=-Infinity,vMin=Infinity,vMax=-Infinity;
   for(const p of anchors){ const [a,b]=uv(p[0],p[1]); if(a<uMin)uMin=a;if(a>uMax)uMax=a;if(b<vMin)vMin=b;if(b>vMax)vMax=b; }
-  const padU=Math.max(30,(uMax-uMin)*0.22), padV=18;
+  const padU=Math.max(16,(uMax-uMin)*0.12), padV=12;   // tighter frame → the hole fills more of the map
   uMin-=padU; uMax+=padU; vMin-=padV; vMax+=padV;
-  const W=320,H=440,pad=12, gw=Math.max(1,uMax-uMin), gh=Math.max(1,vMax-vMin);
+  const W=320,pad=10, gw=Math.max(1,uMax-uMin), gh=Math.max(1,vMax-vMin);
+  const H=Math.round(Math.max(440,Math.min(680,W*gh/gw)));   // height adapts to the hole's shape so it fills the map (short par-3 ⇒ shorter map, long hole ⇒ taller)
   const scl=Math.min((W-2*pad)/gw,(H-2*pad)/gh);
   const offX=pad+((W-2*pad)-gw*scl)/2, offY=pad+((H-2*pad)-gh*scl)/2;
   const P=(lat,lng)=>{ const [a,b]=uv(lat,lng); return {x:offX+(a-uMin)*scl, y:offY+(vMax-b)*scl}; };
@@ -6411,32 +6412,35 @@ function playHoleSvg(){
       s+=`<rect x="${(mx-19).toFixed(1)}" y="${(my-9).toFixed(1)}" width="38" height="16" rx="8" fill="rgba(6,20,26,0.92)" stroke="#36e0ff" stroke-width="0.6"/><text x="${mx.toFixed(1)}" y="${(my+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="bold" fill="#36e0ff">${fmtDist(dM)}${u}</text>`; }
     s+=`<circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="7" fill="none" stroke="#36e0ff" stroke-width="1.6"/><line x1="${(Mp.x-9).toFixed(1)}" y1="${Mp.y.toFixed(1)}" x2="${(Mp.x+9).toFixed(1)}" y2="${Mp.y.toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><line x1="${Mp.x.toFixed(1)}" y1="${(Mp.y-9).toFixed(1)}" x2="${Mp.x.toFixed(1)}" y2="${(Mp.y+9).toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="1.6" fill="#36e0ff"/>`;
   }
-  // ── wind compass (bottom-right), oriented to THIS hole; the ring + arrow are colour-
-  //    coded help/hurt/cross and the speed/gust/from-direction are folded in below ──
+  // ── wind compass (TOP-right), oriented to THIS hole. Colours are chosen to pop off the
+  //    green map: GOOD tailwind = teal, MEDIUM crosswind = amber, BAD headwind = red. A
+  //    coloured glow halo + arrow/ring weight scale with wind strength to amplify it. ──
   const wind=playWind(), wv=windVsHole(wind.dir,wind.spd,brgDeg);
-  const R=31, wcx=W-R-12, wcy=H-R-34;
-  const wcol=wv?(wv.cls==='help'?'#5fd06a':wv.cls==='hurt'?'#ff6b5a':'#ffd24a'):'#9fc6e8';
+  const R=31, wcx=W-R-12, wcy=R+14;
+  const wcol=wv?(wv.cls==='help'?'#16e0a3':wv.cls==='hurt'?'#ff4d4d':'#ffc233'):'#9fc6e8';
+  const str=wv?Math.max(0.1,Math.min(1,(wv.spd-3)/37)):0;   // 0..1 strength (≈40 km/h = full)
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
-  window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+12}};
-  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+3}" fill="rgba(4,10,7,0.66)"/><circle cx="${wcx}" cy="${wcy}" r="${R}" fill="rgba(10,22,32,0.92)" stroke="${wcol}" stroke-width="1.7"/>`;
-  // north tick + label (screen angle of north = -brgDeg, measured from "up")
+  window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+16}};
+  if(wv) s+=`<circle cx="${wcx}" cy="${wcy}" r="${(R+5+str*10).toFixed(1)}" fill="${wcol}" opacity="${(0.12+str*0.32).toFixed(2)}"/>`;  // strength glow
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+3}" fill="rgba(4,10,7,0.78)"/><circle cx="${wcx}" cy="${wcy}" r="${R}" fill="rgba(7,16,24,0.95)" stroke="${wcol}" stroke-width="${(1.6+str*2.2).toFixed(1)}"/>`;
+  // north tick + label (neutral, so it doesn't clash with the red headwind colour)
   const thN=(-brgDeg)*Math.PI/180, nx=Math.sin(thN), ny=-Math.cos(thN);
-  s+=`<line x1="${(wcx+nx*(R-7)).toFixed(1)}" y1="${(wcy+ny*(R-7)).toFixed(1)}" x2="${(wcx+nx*R).toFixed(1)}" y2="${(wcy+ny*R).toFixed(1)}" stroke="#ff8a8a" stroke-width="2"/><text x="${(wcx+nx*(R-13)).toFixed(1)}" y="${(wcy+ny*(R-13)+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="bold" fill="#ff8a8a">N</text>`;
+  s+=`<line x1="${(wcx+nx*(R-7)).toFixed(1)}" y1="${(wcy+ny*(R-7)).toFixed(1)}" x2="${(wcx+nx*R).toFixed(1)}" y2="${(wcy+ny*R).toFixed(1)}" stroke="#e8eef5" stroke-width="1.8"/><text x="${(wcx+nx*(R-13)).toFixed(1)}" y="${(wcy+ny*(R-13)+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="bold" fill="#e8eef5">N</text>`;
   if(wv){
-    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=6, al=9.5;
+    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=5.2+str*3, al=8.5+str*4;
     const tailX=wcx-dx*R*0.7, tailY=wcy-dy*R*0.7, headX=wcx+dx*R*0.86, headY=wcy+dy*R*0.86;
-    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="4.4" stroke-linecap="round"/>`;
+    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3.4+str*3.6).toFixed(1)}" stroke-linecap="round"/>`;
     s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/>`;
-    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.4" fill="#0a1620" stroke="${wcol}" stroke-width="1"/>`;
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.4" fill="#07111a" stroke="${wcol}" stroke-width="1"/>`;
     const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
     s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11.5" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
     s+=`<text x="${wcx}" y="${(wcy+R+24).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#cfe0ee">from ${compass16(wind.dir)}</text>`;
   } else {
     s+=`<text x="${wcx}" y="${(wcy+4).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
   }
-  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass bottom-right.`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:50vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
+  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass top-right.`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:92vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
 }
 
 function playShotLiveHtml(){
@@ -6473,13 +6477,13 @@ function playTabHtml(){
   const nineBar=`<div class="play-ninebar" role="tablist" aria-label="Choose nine"><button class="play-nine${view===1?' on':''}" onclick="playSetNine(1)">Front 9</button><button class="play-nine${view===2?' on':''}" onclick="playSetNine(2)">Back 9</button></div>`;
   const puts=playS.putts[h.n];
   return `
+    ${nineBar}
+    <div class="play-pips">${pips}</div>
     <div class="play-holehdr">
       <button class="play-nav" onclick="playSetHole(${playS.hole-1})" ${playS.hole<=1?'disabled':''} aria-label="Previous hole">‹</button>
       <div class="play-holemeta"><div class="play-holeno">Hole ${h.n}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(tg.len)} ${u}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button></div></div>
       <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
     </div>
-    ${nineBar}
-    <div class="play-pips">${pips}</div>
     <div id="play-range">${playRangeHtml()}</div>
     <div id="play-map" class="play-mapwrap" onclick="playMapTap(event)">${playHoleSvg()}</div>
     <div id="play-measure">${playMeasureStripHtml()}</div>
