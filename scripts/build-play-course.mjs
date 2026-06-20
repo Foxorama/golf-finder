@@ -29,6 +29,17 @@ for (const e of els) {
   if (g === 'green') { let la = 0, lo = 0, mila = 999, milo = 999, mala = -999, malo = -999; for (const p of pts) { la += p[0]; lo += p[1]; if (p[0] < mila) mila = p[0]; if (p[0] > mala) mala = p[0]; if (p[1] < milo) milo = p[1]; if (p[1] > malo) malo = p[1]; } greens.push({ cen: [la / pts.length, lo / pts.length], bb: [mila, milo, mala, malo] }); }
   if (tmap[g]) feats.push({ t: tmap[g], pts: simp(pts) });
 }
+// Dedupe holes sharing a ref (a mapping error / practice hole tagged with a real hole's ref —
+// e.g. Sandy Gallop's two "11"s): keep the one with the longest centreline, drop the rest.
+{
+  const byRef = {};
+  for (const h of holesW) {
+    const len = h.pts.length > 1 ? hav(h.pts[0][0], h.pts[0][1], h.pts[h.pts.length - 1][0], h.pts[h.pts.length - 1][1]) : 0;
+    if (!byRef[h.ref] || len > byRef[h.ref].len) byRef[h.ref] = { h, len };
+  }
+  const kept = Object.values(byRef).map(x => x.h);
+  holesW.length = 0; for (const h of kept) holesW.push(h);
+}
 holesW.sort((a, b) => a.ref - b.ref);
 const holes = [], lines = {}, diag = [];
 // Pass 1: orient each hole tee->green and find the nearest green (by index, for uniqueness).
