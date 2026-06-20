@@ -4,7 +4,12 @@
 // Output: <osm>_built.json = { play:{name,par,holesN,holes:[{n,par,tee,cen,pin,gbb}]}, geom:{features,lines} }
 // SI/CR/slope are intentionally NOT emitted (unreliable third-party data; entered-handicap scoring covers it).
 import fs from 'fs';
-const [, , osmPath, name] = process.argv;
+const [, , osmPath, name, parCSV] = process.argv;
+// Optional authoritative per-hole par (CSV by hole ref: ref 1 -> first value), used when OSM
+// par tags are missing or wrong. ONLY supply after verifying the OSM hole numbering matches the
+// source card (e.g. OSM par-3/par-5 hole positions, by length, line up with the card's).
+const parOverride = parCSV ? parCSV.split(',').map(s => parseInt(s.trim(), 10)) : null;
+const parOf = h => (parOverride && parOverride[h.ref - 1] != null && !Number.isNaN(parOverride[h.ref - 1])) ? parOverride[h.ref - 1] : h.par;
 const r = JSON.parse(fs.readFileSync(osmPath, 'utf8').replace(/^﻿/, ''));
 const els = r.elements;
 const R = 6371000, rad = Math.PI / 180;
@@ -49,9 +54,9 @@ for (const m of match) {
   let cen, gbb, synth = false;
   if (m.displaced) { synth = true; cen = gEnd; const dLat = 0.00010, dLng = 0.00010 / Math.cos(cen[0] * rad); gbb = [cen[0] - dLat, cen[1] - dLng, cen[0] + dLat, cen[1] + dLng]; }
   else { cen = greens[gi].cen; gbb = greens[gi].bb; }
-  holes.push({ n: h.ref, par: h.par, tee: [r7(tee[0]), r7(tee[1])], cen: [r7(cen[0]), r7(cen[1])], pin: null, gbb: [r7(gbb[0]), r7(gbb[1]), r7(gbb[2]), r7(gbb[3])] });
+  holes.push({ n: h.ref, par: parOf(h), tee: [r7(tee[0]), r7(tee[1])], cen: [r7(cen[0]), r7(cen[1])], pin: null, gbb: [r7(gbb[0]), r7(gbb[1]), r7(gbb[2]), r7(gbb[3])] });
   lines[h.ref] = simp(line);
-  diag.push({ n: h.ref, par: h.par, hcp: h.hcp, gd: +gd.toFixed(1), len: Math.round(hav(tee[0], tee[1], cen[0], cen[1])), synth });
+  diag.push({ n: h.ref, par: parOf(h), hcp: h.hcp, gd: +gd.toFixed(1), len: Math.round(hav(tee[0], tee[1], cen[0], cen[1])), synth });
 }
 const par = holes.reduce((s, h) => s + (h.par || 0), 0);
 const out = { play: { name, par, holesN: holes.length, holes }, geom: { features: feats, lines } };
