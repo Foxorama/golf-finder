@@ -300,13 +300,19 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   the hole's own tee/green/centreline so neighbours only show at the edges). The hole
   selector is a **Front 9 / Back 9 toggle** (`playSetNine`, `playS.nineView`) over a single
   non-scrolling row of 9 pips; `nineView` follows the current hole (incl. auto-advance) but
-  the toggle lets you peek the other nine. A **wind compass** (bottom-right corner of the
-  map) is oriented to THIS hole: `playWind()` reads the same live weather as the day-hero
-  compass (`window._playWindTest={dir,spd,gust}` overrides it for preview), `windVsHole()`
-  classifies it (d=0 ⇒ DOWNWIND/helping up the screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind),
-  and the compass's **ring + arrow are colour-coded** help/hurt/cross with the
-  **speed/gust + "from <dir>"** folded in below it (the old separate worded strip was
-  removed as redundant). It refreshes on every GPS tick in `playLiveUpdate`. **The wind is
+  the toggle lets you peek the other nine. The hole header (Hole N + par/length + nav)
+  sits **below** the nine/pip selector so the selector doesn't split the card's flow. The
+  **map is play-line-up and sized to fill the screen**: its viewBox height adapts to the
+  hole's shape (`H = clamp(W·gh/gw, 440, 680)`, ~92vh on screen) and the frame padding is
+  tight, so the hole is large with little dead space — you scroll down to it. A **wind
+  compass** (TOP-right corner of the map) is oriented to THIS hole: `playWind()` reads the
+  same live weather as the day-hero compass (`window._playWindTest={dir,spd,gust}` overrides
+  it for preview), `windVsHole()` classifies it (d=0 ⇒ DOWNWIND/helping up the screen, ±180
+  ⇒ INTO WIND, ±90 ⇒ crosswind), and the compass is **colour-coded to pop off the green
+  map** — GOOD tailwind = teal `#16e0a3`, MEDIUM crosswind = amber `#ffc233`, BAD headwind =
+  red `#ff4d4d` — with a **coloured glow halo + arrow/ring weight that scale with wind
+  strength** (`str=(spd-3)/37`) to amplify stronger wind, and the **speed/gust + "from
+  <dir>"** folded in below. It refreshes on every GPS tick in `playLiveUpdate`. **The wind is
   a regional Open-Meteo forecast, not a hyperlocal measurement** — fine for prevailing
   conditions, not precise for a specific hole/moment. The rangefinder also shows a
   **"plays-like"** wind-adjusted yardage to the green centre (`_playsLike`, `.pr-plays`):
