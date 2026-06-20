@@ -739,6 +739,9 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pr-plays b{font-size:18px;font-weight:700;}
 .pr-plays.hurt b{color:#ff6b5a;} .pr-plays.help b{color:#5fd06a;}
 .pr-plays-tag{display:block;font-size:10px;color:var(--tx3);margin-top:1px;letter-spacing:0.02em;}
+.pr-club{text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx3);margin-top:7px;text-transform:uppercase;letter-spacing:0.06em;}
+.pr-club b{color:var(--gg);font-size:16px;margin-left:3px;letter-spacing:0;}
+.pr-club-sub{display:block;font-size:10px;color:var(--tx3);margin-top:1px;text-transform:none;letter-spacing:0;}
 .pr-foot{display:flex;justify-content:center;gap:10px;margin-top:8px;}
 .pr-acc,.pr-note{font-family:var(--mono);font-size:10px;color:var(--tx3);}
 .pr-nogps{text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:22px 16px;font-size:14px;color:var(--tx2);}
@@ -5985,6 +5988,11 @@ function addClubShot(club,distM){ if(!club||!(distM>=20)) return; const s=loadCl
 function clubAvg(club,stats){ const a=(stats||loadClubStats())[club]; if(!a||!a.length) return null;
   let v=a.slice().sort((x,y)=>x-y); if(v.length>=5){ const cut=Math.floor(v.length*0.1); v=v.slice(cut,v.length-cut); }  // trim 10% tails
   return {avg:Math.round(v.reduce((p,c)=>p+c,0)/v.length), n:a.length}; }
+// Suggest the club whose carry average is nearest a target distance (needs ≥3 tagged
+// shots for that club, and within ~14 m), else null. Pass the plays-like distance.
+function suggestClub(distM){ if(distM==null) return null; const s=loadClubStats(); let best=null,bd=Infinity;
+  for(const c of CLUBS){ const ca=clubAvg(c,s); if(!ca||ca.n<3) continue; const d=Math.abs(ca.avg-distM); if(d<bd){ bd=d; best={club:c,avg:ca.avg,n:ca.n}; } }
+  return (best&&bd<=14)?best:null; }
 
 function openPlay(courseName){
   const slug=slugify(courseName), course=COURSE_PLAY[slug];
@@ -6235,11 +6243,14 @@ function playRangeHtml(){
   const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
     ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
     : '';
+  // club suggestion off your tagged-shot averages, for the distance it actually plays
+  const sug=suggestClub(pl?pl.adj:dC);
+  const sugRow=sug?`<div class="pr-club">play <b>${sug.club}</b><span class="pr-club-sub">your avg ${fmtDist(sug.avg)} ${u} · ${sug.n} shots</span></div>`:'';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
       <div class="pr-centre"><div class="pr-lbl">CENTRE OF GREEN</div><div class="pr-big">${fmtDist(dC)}<span class="pr-u">${u}</span></div></div>
       <div class="pr-side"><div class="pr-lbl">BACK</div><div class="pr-num">${fmtDist(dB)}</div></div>
-    </div>${playsRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · OSM green data</span></div>`;
+    </div>${playsRow}${sugRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · OSM green data</span></div>`;
 }
 
 // Live wind for the Play hole map — same source as the day-hero compass.
