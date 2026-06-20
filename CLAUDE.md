@@ -345,7 +345,18 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   "use tracked" shortcut to copy the tagged-shot average). `clubDist(club)` resolves a
   manual bag value first, else the tracked average (≥3 shots); `clubSet()` is the union used
   by `suggestClub` and the History "Your clubs" card — so the on-course club suggestion runs
-  off your real bag even before you've tagged any shots. **Each baked feature is assigned to its nearest
+  off your real bag even before you've tagged any shots. The bag also drives a **tee-shot
+  club marker** on the hole map (`teeShotClub`): a dashed gold landing-zone reticle + label
+  on the centreline at the longest bag club that won't fly the green (`_pointAlong` walks the
+  baked centreline). Tees: there's no multi-tee data for St Lucia (one baked tee + the white
+  rating), so instead of a hollow tee picker, a **"Set tee" map tool** (`playSetTeeHere`,
+  `playS.teePos[hole]`, persisted in the draft) sets this hole's tee to your **current GPS**
+  — so the tee-shot Mark and the displayed hole length measure from the tee you're actually
+  on (`_effTee`); tap again to reset. The Set-tee + club-marker toggles live in a **right-side
+  overlay** (`.play-map-tools` / `playMapToolsHtml`) that sits in the map's side dead-space; it
+  is a **sibling of `#play-map`, not a child**, so the per-GPS-tick `innerHTML` re-render of the
+  map doesn't wipe it (and its buttons `stopPropagation` so they don't drop a measure reticle).
+  **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
   (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
