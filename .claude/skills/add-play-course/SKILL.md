@@ -77,6 +77,62 @@ hole renders full-strength and neighbours fade — no per-feature hole tagging n
 
 ## Step-by-step
 
+### 0. Prerequisite — confirm the course is actually mapped in OSM (do this FIRST)
+Before anything else, run the containment query (Step 1) **and a wider bbox scan** for
+`golf=hole|fairway|green|tee|bunker` around the course. **Newer courses are often not
+mapped.** If the queries come back with **no `golf=hole`/`green`/`fairway` ways** (only a
+stray cart path or a couple of ponds — as with **Minnippi Golf & Range**, Cannon Hill,
+opened 2023, which is **not** in OSM as a golf course as of 2026-06: a bbox scan returns one
+`golf=cartpath` way + two unrelated ponds, and the `is_in` containment query is empty), then
+**STOP — you cannot source accurate geometry from OSM.** Do **not** fabricate or eyeball
+polygons: the entire point of this workflow (and the Step-3 verification) is that the
+geometry is real surveyed OSM data whose green polygons can be checked against `cen`. A
+hand-invented map can't be verified and will mislead a player on-course — it violates the
+project's "implement properly or stop, ensure accuracy" rule.
+
+When the course isn't in OSM, there are three honest options — **surface them to the user
+and let them choose; don't silently pick one:**
+1. **Contribute the geometry first (accurate path — recommended).** Map the course in
+   OpenStreetMap (or obtain an authoritative coordinate source: a GPX walk of the holes,
+   council/club GIS, a published GeoJSON), then re-run this workflow unchanged. This is the
+   only route that yields a *fully accurate, verifiable* map, and it benefits everyone.
+2. **Best-effort traced approximation (accuracy caveat).** Reconstruct routing/greens from
+   the course flyover + current aerial imagery and ship a **clearly-labelled approximate**
+   map. It cannot pass Step 3's green-polygon check and may be wrong on-course — only do
+   this if the user explicitly accepts the caveat.
+3. **Defer the course.** Record it as "not yet in OSM" and add an already-mapped course
+   instead.
+
+Don't treat "the course exists and has a scorecard online" as "I can map it" — the
+scorecard supplies par/SI/CR/slope (Step 2), **not** geometry. They are independent sources.
+
+### 0b. If the course isn't in OSM but a third-party golf-GPS source has it
+A golf-GPS app or site may carry the course's vector geometry (greens, tees). **That data is
+proprietary** — not open-licensed like OSM, and the exact coordinates are traceable to the
+provider. So, before touching it:
+
+- **Flag the licensing to the user the *moment* such a source is even proposed — before you
+  extract anything, not after.** (Hard lesson learned here: data was extracted and shipped to
+  the public site before the licensing was raised, then had to be pulled and scrubbed from
+  history.) Get explicit sign-off, and treat it as **personal use only**.
+- **Never commit or publish third-party geometry.** Integrate it **device-local only**:
+  - Write the course's data to a **git-ignored `*.local.json`**:
+    `{"play":{"<slug>":{…}},"geom":{"<slug>":{…}}}` (`.gitignore` already covers `*.local.json`).
+  - The public `index.html` carries only a small **generic** loader (just after the
+    `COURSE_GEOM` definition): it merges `localStorage.gf_play_local` over the baked open-data
+    courses, plus `window.gfImportPlay`/`gfClearPlay` and an **`#importplay`** paste screen.
+    It holds **no** course data and is not course-specific.
+  - The owner imports the `*.local.json` once on their own device via `…/#importplay`, so the
+    Play button appears for them and no-one else.
+  - Set a per-course **`src:'<source>'`** field so the rangefinder footnote
+    (`GPS estimate · ${playS.course.src||'OSM'} green data`) reads truthfully.
+- Par/SI/CR/slope are **public scorecard facts** (the club site / golfpass) and are fine to use
+  and cross-check; only the **geometry** is the sensitive part.
+
+Detailed derivation notes (parsing a provider's embedded layout, deriving green centres from a
+hole corridor, synthesising greens, dogleg-aware centrelines, pulling OSM water) are kept in
+private session memory — deliberately **not** in this public repo.
+
 ### 1. Source geometry from OpenStreetMap
 Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
 ```
@@ -95,7 +151,7 @@ Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
   `golf=green` polygon; `gbb` = that green's lat/lng bounding box; `pin` = a
   `golf=pin` node if present (holes that have one), else `null`.
 - `si` (stroke index) and `cr`/`slope` are **NOT in OSM** — take them from the
-  course's real scorecard (golfpass / 18Birdies / the club site). Sanity: the 18 SIs
+  course's real scorecard (golfpass / the club site). Sanity: the 18 SIs
   must be a permutation of 1–18; the common convention is front-nine evens /
   back-nine odds (St Lucia) but follow the actual card.
 - `lines[n]` = the simplified `golf=hole` centreline, oriented later by the app.
