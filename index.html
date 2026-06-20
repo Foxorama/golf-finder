@@ -6005,7 +6005,7 @@ function playStartGps(){
   }catch(e){}
 }
 function playSetTab(t){ if(!playS)return; playS.tab=t; playRender(); }
-function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.measure=null; playRender(); }
+function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.measure=null; playS.manualAt=Date.now(); playRender(); }
 function playToggleUnits(){ if(!playS)return; playS.units=playS.units==='yd'?'m':'yd'; localStorage.setItem('gf_units',playS.units); playRender(); }
 
 // ── score steppers ──
@@ -6146,8 +6146,28 @@ function playConfirm(msg,okLabel,onOk,danger){
 }
 
 // ── live (GPS-tick) refresh of just the rangefinder, map and shot readout ──
+// Auto-advance to the hole whose tee you've walked to. Fires only when that tee is
+// the nearest, you're within ~25 m of it, AND you're now closer to it than to your
+// current hole's green (so it can't trigger while you're still putting out — greens
+// here sit as little as 29 m from the next tee). A recent manual hole change is
+// respected for 20 s. window._playAutoHole=false disables; window._playTeeNear tunes
+// the radius. Untestable for "feel" off-course — verify on-device.
+function _playAutoAdvance(){
+  if(window._playAutoHole===false||!playS) return false;
+  const pos=playPos(); if(!pos) return false;
+  if(playS.manualAt && Date.now()-playS.manualAt < 20000) return false;
+  const near=(typeof window._playTeeNear==='number')?window._playTeeNear:25;
+  let nt=null,ntd=Infinity;
+  playS.course.holes.forEach(h=>{ const d=_distM(pos,h.tee); if(d<ntd){ntd=d;nt=h;} });
+  if(!nt||nt.n===playS.hole||ntd>near) return false;
+  if(ntd >= _distM(pos,playS.course.holes[playS.hole-1].cen)) return false;  // still nearer your current green
+  playS.hole=nt.n; playS.measure=null; playRender();
+  playToast(`Hole ${nt.n} — par ${nt.par}`);
+  return true;
+}
 function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
+  if(_playAutoAdvance()) return;   // a hole switch already did a full re-render
   const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
   const m=document.getElementById('play-map'); if(m) m.innerHTML=playHoleSvg();
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
