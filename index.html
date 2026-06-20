@@ -759,6 +759,14 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .wb-hurt{border-color:rgba(255,107,90,0.55);} .wb-hurt .wb-tag,.wb-hurt .wb-icon{color:#ff6b5a;}
 .wb-cross{border-color:rgba(255,210,74,0.55);} .wb-cross .wb-tag,.wb-cross .wb-icon{color:#ffd24a;}
 .wb-none{font-family:var(--mono);color:var(--tx3);font-size:12px;justify-content:center;}
+/* tap-to-measure strip under the hole map */
+.play-measure{display:flex;align-items:center;gap:8px;border-radius:12px;padding:9px 12px;margin:8px 0 2px;border:1px solid rgba(54,224,255,0.4);background:rgba(54,224,255,0.08);font-family:var(--mono);}
+.pm-ico{font-size:15px;line-height:1;flex-shrink:0;}
+.pm-txt{font-size:11.5px;color:var(--tx2);flex:1;min-width:0;}
+.pm-txt b{color:#36e0ff;font-size:13px;} .pm-nogps{color:var(--tx3);}
+.pm-clr{background:none;border:1px solid rgba(54,224,255,0.4);border-radius:7px;color:#36e0ff;font-size:12px;cursor:pointer;padding:2px 8px;flex-shrink:0;line-height:1;}
+.play-measure.pm-hint{border-style:dashed;border-color:var(--bdr2);background:var(--bg3);color:var(--tx3);font-size:11px;}
+.play-measure.pm-hint .pm-ico{opacity:0.7;}
 /* per-hole score row */
 .play-scorerow{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-top:12px;}
 .play-scorelbl{font-family:var(--mono);font-size:11px;color:var(--tx3);}
@@ -5939,17 +5947,40 @@ function closePlay(){
   document.body.style.overflow='';
   playS=null;
 }
+// ── GPS smoothing (constant-position Kalman) ───────────────────────────────────
+// watchPosition reports a single-fix accuracy (often ±10–15 m on a phone). Fusing
+// successive fixes while you stand still genuinely tightens that: each agreeing
+// reading shrinks the filter variance, so a stationary lie settles well below the
+// raw ±. Process noise (~walking speed) keeps it honest when you actually move.
+function _gpsKalman(){ return {lat:null,lng:null,variance:-1,ts:0}; }
+function _kalmanStep(k,lat,lng,acc,ts){
+  const mVar=Math.max(acc,3)**2;                 // measurement variance (m²)
+  if(k.variance<0){ k.lat=lat;k.lng=lng;k.variance=mVar;k.ts=ts; return k; }
+  const dt=Math.max(0,(ts-k.ts)/1000);
+  k.variance+=dt*4.0;                            // ~2 m/s walking process noise (2²)
+  k.ts=ts;
+  const K=k.variance/(k.variance+mVar);
+  k.lat+=K*(lat-k.lat); k.lng+=K*(lng-k.lng);
+  k.variance=(1-K)*k.variance;
+  return k;
+}
 function playStartGps(){
   if(!navigator.geolocation) return;
   try{
     playS.watchId=navigator.geolocation.watchPosition(
-      p=>{ if(!playS)return; playS.pos=[p.coords.latitude,p.coords.longitude]; playS.acc=p.coords.accuracy; playS.gpsErr=null; playLiveUpdate(); },
+      p=>{ if(!playS)return;
+        const lat=p.coords.latitude,lng=p.coords.longitude,acc=p.coords.accuracy||15,ts=p.timestamp||Date.now();
+        if(!playS.kf) playS.kf=_gpsKalman();
+        _kalmanStep(playS.kf,lat,lng,acc,ts);
+        playS.pos=[playS.kf.lat,playS.kf.lng];
+        playS.acc=Math.max(3,Math.sqrt(playS.kf.variance));   // filtered (tightened) accuracy
+        playS.rawAcc=Math.round(acc); playS.gpsErr=null; playLiveUpdate(); },
       e=>{ if(!playS)return; playS.gpsErr=e.code; playLiveUpdate(); },
-      {enableHighAccuracy:true, maximumAge:2000, timeout:20000});
+      {enableHighAccuracy:true, maximumAge:1000, timeout:20000});
   }catch(e){}
 }
 function playSetTab(t){ if(!playS)return; playS.tab=t; playRender(); }
-function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playRender(); }
+function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.measure=null; playRender(); }
 function playToggleUnits(){ if(!playS)return; playS.units=playS.units==='yd'?'m':'yd'; localStorage.setItem('gf_units',playS.units); playRender(); }
 
 // ── score steppers ──
@@ -6060,6 +6091,7 @@ function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
   const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
   const m=document.getElementById('play-map'); if(m) m.innerHTML=playHoleSvg();
+  const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
   const wb=document.getElementById('play-windbar'); if(wb) wb.innerHTML=playWindStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
 }
@@ -6071,7 +6103,7 @@ function playRangeHtml(){
     return `<div class="pr-nogps">📍 ${msg}<div class="pr-nogps-sub">distances to the green appear once your phone has a fix</div></div>`;
   }
   const dF=_distM(pos,tg.front), dC=_distM(pos,tg.cen), dB=_distM(pos,tg.back), dP=tg.pin?_distM(pos,tg.pin):null;
-  const acc=playS.acc?`<span class="pr-acc">GPS ±${Math.round(playS.acc)} m</span>`:'';
+  const acc=playS.acc?`<span class="pr-acc">GPS ±${Math.round(playS.acc)} m${(playS.rawAcc&&playS.rawAcc>Math.round(playS.acc)+2)?` · raw ±${playS.rawAcc}`:''}</span>`:'';
   const pinRow=dP!=null?`<div class="pr-pin">🚩 to pin <b>${fmtDist(dP)}</b> ${u}</div>`:'';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
@@ -6117,6 +6149,50 @@ function playWindStripHtml(){
   return `<div class="play-windbar wb-${wv.cls}"><span class="wb-icon">${icon}</span><span class="wb-tag">${wv.tag}</span><span class="wb-sub">${sub}</span></div>`;
 }
 
+// metres from point p to segment a-b (local equirectangular approx)
+function _distSegM(p,a,b){
+  const kx=Math.cos(a[0]*Math.PI/180)*111320, ky=111320;
+  const bx=(b[1]-a[1])*kx, by=(b[0]-a[0])*ky, px=(p[1]-a[1])*kx, py=(p[0]-a[0])*ky;
+  const L2=bx*bx+by*by; let t=L2?((px*bx+py*by)/L2):0; t=Math.max(0,Math.min(1,t));
+  return Math.hypot(px-bx*t,py-by*t);
+}
+function _distPolyM(p,line){ if(line.length<2) return _distM(p,line[0]); let m=Infinity; for(let i=1;i<line.length;i++){ const d=_distSegM(p,line[i-1],line[i]); if(d<m)m=d; } return m; }
+// Assign every baked feature to its nearest hole centreline (once). The current hole's
+// own features render full-strength; everyone else's are faded to context.
+function _featOwner(geom){
+  if(geom._ownerDone) return;
+  for(const f of geom.features){ const c=_centroid(f.pts); let best=null,bd=Infinity;
+    for(const ref in geom.lines){ const d=_distPolyM(c,geom.lines[ref]); if(d<bd){bd=d;best=+ref;} }
+    f._own=best; }
+  geom._ownerDone=true;
+}
+// Tap-to-measure: tap the hole map to drop an ephemeral reticle and read the distance
+// from your GPS to that point (and from there to the green). Not a saved shot. Inverts
+// the live SVG projection (window._playMapProj) via getScreenCTM so it handles the
+// viewBox letterboxing for free.
+function playMapTap(evt){
+  if(!playS) return;
+  const svg=document.querySelector('#play-map svg'); if(!svg||!svg.getScreenCTM) return;
+  const ctm=svg.getScreenCTM(); if(!ctm) return;
+  let pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
+  pt=pt.matrixTransform(ctm.inverse());
+  const pr=window._playMapProj; if(!pr) return;
+  if(pt.x<0||pt.x>pr.W||pt.y<0||pt.y>pr.H) return;     // ignore taps outside the map
+  const u=(pt.x-pr.offX)/pr.scl+pr.uMin, v=pr.vMax-(pt.y-pr.offY)/pr.scl;
+  const e=u*pr.cosB+v*pr.sinB, n=-u*pr.sinB+v*pr.cosB;
+  playS.measure=[pr.tee[0]+n/pr.ky, pr.tee[1]+e/pr.kx];
+  playLiveUpdate();
+}
+function playClearMeasure(){ if(playS){ playS.measure=null; playLiveUpdate(); } }
+function playMeasureStripHtml(){
+  const m=playS&&playS.measure;
+  if(!m) return `<div class="play-measure pm-hint">📏 tap the map to measure — a bunker, a water carry, the exact yardage to anything</div>`;
+  const h=playS.course.holes[playS.hole-1], tg=holeTargets(h), pos=playPos(), u=playUnit();
+  const toPt=pos?_distM(pos,m):null, ptCen=_distM(m,tg.cen);
+  const main=toPt!=null?`<b>${fmtDist(toPt)}</b> ${u} to point`:`<span class="pm-nogps">no GPS fix</span>`;
+  return `<div class="play-measure"><span class="pm-ico">📏</span><span class="pm-txt">${main} · ${fmtDist(ptCen)} ${u} from there to centre</span><button class="pm-clr" onclick="playClearMeasure()" aria-label="Clear measurement">✕</button></div>`;
+}
+
 // Detailed, PLAY-LINE-UP map of the current hole: real OSM fairway / green / bunkers
 // / water cropped to the hole, the play line, your GPS dot, and a wind compass rose
 // oriented to THIS hole — the green is always up the screen, so a wind arrow pointing
@@ -6146,12 +6222,15 @@ function playHoleSvg(){
 
   let s=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="#1b3614"/>`;
   if(geom&&geom.features){
+    _featOwner(geom);
     const fill={fairway:'#3f7e2c',water:'#1d5fa0',bunker:'#e4d2a0',green:'#83d94f',tee:'#3b7a26'};
     for(const layer of ['fairway','water','bunker','green','tee']){
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
-        const edge=layer==='green'?'#2d5a1b':layer==='water'?'#2f7bc4':layer==='bunker'?'#cdb37a':'none';
-        s+=`<path d="${path(f.pts)}Z" fill="${fill[layer]}" stroke="${edge}" stroke-width="${layer==='green'?1.2:layer==='bunker'?0.8:0.6}" opacity="${layer==='fairway'?0.96:1}"/>`;
-        if(layer==='fairway') s+=`<path d="${path(f.pts)}Z" fill="none" stroke="#5aa83a" stroke-width="1" opacity="0.5"/>`;
+        const own=f._own===h.n;                         // current hole pops; neighbours fade
+        const edge=own?(layer==='green'?'#2d5a1b':layer==='water'?'#2f7bc4':layer==='bunker'?'#cdb37a':'none'):'none';
+        const op=own?(layer==='fairway'?0.96:1):0.3;
+        s+=`<path d="${path(f.pts)}Z" fill="${fill[layer]}" stroke="${edge}" stroke-width="${layer==='green'?1.2:layer==='bunker'?0.8:0.6}" opacity="${op}"/>`;
+        if(own&&layer==='fairway') s+=`<path d="${path(f.pts)}Z" fill="none" stroke="#5aa83a" stroke-width="1" opacity="0.5"/>`;
       }
     }
   } else {
@@ -6172,13 +6251,24 @@ function playHoleSvg(){
   s+=`<rect x="${(Tp.x-5).toFixed(1)}" y="${(Tp.y-5).toFixed(1)}" width="10" height="10" rx="2.5" fill="#cfe8b0" stroke="#2d5a1b" stroke-width="1"/>`;
   // dropped shot marks
   (playS.shots[playS.hole]||[]).forEach(mk=>{ const M=P(mk[0],mk[1]); s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="3" fill="#ffd24a" stroke="#16300f" stroke-width="0.8"/>`; });
-  // you + dashed line to centre, with the live distance on it
+  // you + dashed line to centre, with the live distance on it. The translucent ring is
+  // scaled to the (filtered) GPS accuracy, so it visibly tightens as the fix settles.
   if(pos){ const Y=P(pos[0],pos[1]);
+    const accM=(playS&&playS.acc)?playS.acc:null, accR=accM?Math.max(6,Math.min(64,accM*scl)):8;
     s+=`<line x1="${Y.x.toFixed(1)}" y1="${Y.y.toFixed(1)}" x2="${Cc.x.toFixed(1)}" y2="${Cc.y.toFixed(1)}" stroke="#ffd24a" stroke-width="1.5" stroke-dasharray="5 4" opacity="0.85"/>`;
-    s+=`<circle cx="${Y.x.toFixed(1)}" cy="${Y.y.toFixed(1)}" r="8" fill="rgba(90,169,240,0.25)"/><circle cx="${Y.x.toFixed(1)}" cy="${Y.y.toFixed(1)}" r="4.2" fill="#5aa9f0" stroke="#fff" stroke-width="1.4"/>`;
+    s+=`<circle cx="${Y.x.toFixed(1)}" cy="${Y.y.toFixed(1)}" r="${accR.toFixed(1)}" fill="rgba(90,169,240,0.18)" stroke="rgba(90,169,240,0.5)" stroke-width="0.7"/><circle cx="${Y.x.toFixed(1)}" cy="${Y.y.toFixed(1)}" r="4.2" fill="#5aa9f0" stroke="#fff" stroke-width="1.4"/>`;
     const mx=(Y.x+Cc.x)/2, my=(Y.y+Cc.y)/2, dC=_distM(pos,tg.cen);
     s+=`<rect x="${(mx-21).toFixed(1)}" y="${(my-9).toFixed(1)}" width="42" height="17" rx="8.5" fill="rgba(8,18,10,0.82)"/><text x="${mx.toFixed(1)}" y="${(my+3.5).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="#ffd24a">${fmtDist(dC)}${u}</text>`;
   }
+  // tap-to-measure reticle (ephemeral): line + distance from you, crosshair at the point
+  if(playS.measure){ const Mp=P(playS.measure[0],playS.measure[1]);
+    if(pos){ const Y=P(pos[0],pos[1]), mx=(Y.x+Mp.x)/2, my=(Y.y+Mp.y)/2, dM=_distM(pos,playS.measure);
+      s+=`<line x1="${Y.x.toFixed(1)}" y1="${Y.y.toFixed(1)}" x2="${Mp.x.toFixed(1)}" y2="${Mp.y.toFixed(1)}" stroke="#36e0ff" stroke-width="1.6" stroke-dasharray="2 3"/>`;
+      s+=`<rect x="${(mx-19).toFixed(1)}" y="${(my-9).toFixed(1)}" width="38" height="16" rx="8" fill="rgba(6,20,26,0.92)" stroke="#36e0ff" stroke-width="0.6"/><text x="${mx.toFixed(1)}" y="${(my+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10.5" font-weight="bold" fill="#36e0ff">${fmtDist(dM)}${u}</text>`; }
+    s+=`<circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="7" fill="none" stroke="#36e0ff" stroke-width="1.6"/><line x1="${(Mp.x-9).toFixed(1)}" y1="${Mp.y.toFixed(1)}" x2="${(Mp.x+9).toFixed(1)}" y2="${Mp.y.toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><line x1="${Mp.x.toFixed(1)}" y1="${(Mp.y-9).toFixed(1)}" x2="${Mp.x.toFixed(1)}" y2="${(Mp.y+9).toFixed(1)}" stroke="#36e0ff" stroke-width="1"/><circle cx="${Mp.x.toFixed(1)}" cy="${Mp.y.toFixed(1)}" r="1.6" fill="#36e0ff"/>`;
+  }
+  // expose the live projection so playMapTap can invert screen taps back to lat/lng
+  window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H};
   // ── wind compass rose (bottom-left, near the tee), oriented to THIS hole ──
   const wind=playWind(), wv=windVsHole(wind.dir,wind.spd,brgDeg);
   const R=30, wcx=R+15, wcy=H-R-15;
@@ -6224,7 +6314,8 @@ function playTabHtml(){
     </div>
     <div class="play-pips">${pips}</div>
     <div id="play-range">${playRangeHtml()}</div>
-    <div id="play-map" class="play-mapwrap">${playHoleSvg()}</div>
+    <div id="play-map" class="play-mapwrap" onclick="playMapTap(event)">${playHoleSvg()}</div>
+    <div id="play-measure">${playMeasureStripHtml()}</div>
     <div id="play-windbar">${playWindStripHtml()}</div>
     <div class="play-shotbar">
       <button class="play-mark" onclick="playMarkShot()">⛳ Mark shot</button>

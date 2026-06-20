@@ -304,7 +304,17 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   screen, ±180 ⇒ INTO WIND, ±90 ⇒ crosswind), the rose draws an arrow pointing where the
   wind blows TO + a north tick at `-brgDeg`, and `playWindStripHtml()` adds a worded,
   colour-coded HTML strip (`.play-windbar wb-help/hurt/cross`) under the map. Both refresh
-  on every GPS tick in `playLiveUpdate`.
+  on every GPS tick in `playLiveUpdate`. **Each baked feature is assigned to its nearest
+  hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
+  strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
+  (`playMapTap` on the `#play-map` wrapper) drops an ephemeral cyan reticle and reads the
+  distance from your GPS to the tapped point + that point→green centre (`playMeasureStripHtml`,
+  cleared on hole change / `✕`); it inverts the live projection (`window._playMapProj`) via
+  `svg.getScreenCTM().inverse()`, verified 0 m round-trip. **GPS is smoothed by a constant-
+  position Kalman filter** (`_gpsKalman`/`_kalmanStep`, measurement variance = `accuracy²`,
+  ~2 m/s process noise): a stationary lie settles well below the raw single-fix ± (≈±12 → ±5 m
+  in tests). `playS.acc` is the filtered accuracy (shown with `raw ±N` and as the scaled
+  you-ring radius); `playS.rawAcc` keeps the device figure.
 - **Scorecard, handicap + rounds (Card / History tabs).** Each `COURSE_PLAY` course can
   carry a white-tee **Scratch (Course) Rating `cr` + `slope`** and a **per-hole stroke
   index `si`** (St Lucia: real golfpass/18Birdies data — CR 67.5 / Slope 114, front-nine
