@@ -133,6 +133,40 @@ Detailed derivation notes (parsing a provider's embedded layout, deriving green 
 hole corridor, synthesising greens, dogleg-aware centrelines, pulling OSM water) are kept in
 private session memory — deliberately **not** in this public repo.
 
+### 0c. Multi-course sites — a club with 2+ courses → `layouts`
+A club that runs more than one course (Nudgee, Coolangatta & Tweed Heads, Sanctuary Cove) is ONE
+`COURSE_PLAY[slug]` entry carrying **`layouts:[{key,name,par,holesN,holes,noGps?,cr?,slope?}]`**.
+`openPlay(name)` then shows a picker; `openPlay(name,key)` plays a layout under its own slug
+`<courseSlug>-<key>` (independent geometry/draft/rounds). Each GPS layout's geometry is its own
+`play-geom/<courseSlug>-<key>.json`; a `noGps:true` layout needs only `holes:[{n,par}]`. Build each
+course exactly like a single course (Steps 1–3), then hand-assemble the one `layouts` entry. OSM
+maps the courses one of two ways — check which before splitting:
+
+- **Separate `golf_course` polygons (preferred; Sanctuary Cove).** Each course is its own area, so
+  `is_in` at each course's clubhouse — or a bbox over the whole site — already separates them. If one
+  course spans two polygons, `way(id:a,b); map_to_area ->.pa; (way["golf"](area.pa);…);`. Watch for a
+  **neighbouring club** in the bbox (Links Hope Island abuts Sanctuary Cove — set the bbox edge to
+  exclude it). Find a clean **discriminator** to bucket holes whose anchors straddle the boundary: at
+  Sanctuary Cove, **Pines holes carry OSM `par` tags and Palms holes carry none**, which split the 36
+  cleanly even though two Palms holes leaked into the Pines `is_in`.
+- **One polygon, holes share refs 1–18 (Coolangatta & Tweed Heads).** A 36-hole area with two of each
+  ref — `build-play-course.mjs`'s longest-per-ref dedup would **mix the two courses**. Use
+  **`scripts/split-play-site.mjs <osm.json> <outPrefix>`**: a routing-aware DP that assigns the
+  two-per-ref holes to the two real 18s by minimising consecutive green→tee gaps (each real course is a
+  tight routing; a mixed split forces long inter-course jumps). It writes `<outPrefix>_A.json` /
+  `_B.json` (per-course OSM-geom, features assigned by nearest centreline) → feed each to
+  `build-play-course.mjs`. **Confirm the split** by checking each course's straight-line hole lengths
+  match its published scorecard hole-for-hole (that also tells you OSM ref = scorecard hole, and which
+  half is which named course).
+
+**When a course's OSM hole NUMBERING can't be trusted, ship it `noGps` with card par, don't guess.**
+Sanctuary Cove's Palms has full geometry but its OSM refs are neither the playing order nor any
+rotation of the card (a min-gap routing reconstruction didn't reproduce the card par pattern), so its
+physical-hole↔playing-order mapping is unresolvable remotely → it ships scorecard-only (par 70,
+corroborated by the card AND an OSM length-class count) until an authoritative source arrives. A
+single unmapped **green** is fine (the synth centreline-end fallback handles it — Pines hole 14); a
+scrambled **numbering** is not.
+
 ### 1. Source geometry from OpenStreetMap
 Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
 ```
