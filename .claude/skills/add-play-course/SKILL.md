@@ -1,6 +1,6 @@
 ---
 name: add-play-course
-description: The end-to-end workflow for adding a new course to the on-course Play feature (GPS rangefinder + hole maps + scorecard + handicap) in index.html — the two baked data structures, how to source them from OpenStreetMap, how to verify, and how to ship. Use this whenever you add another course to COURSE_PLAY so every course is built and checked the same way St Lucia was.
+description: The end-to-end workflow for adding a new course to the on-course Play feature (GPS rangefinder + hole maps + scorecard + handicap) in index.html — the two baked data structures, how to source them (OpenStreetMap when complete; open-data triangulation when OSM is sparse), how to QA-review every hole, and how to ship. Use this whenever you add another course to COURSE_PLAY so every course is built and checked the same way.
 ---
 
 # Adding a course to on-course Play
@@ -105,6 +105,37 @@ and let them choose; don't silently pick one:**
 
 Don't treat "the course exists and has a scorecard online" as "I can map it" — the
 scorecard supplies par/SI/CR/slope (Step 2), **not** geometry. They are independent sources.
+
+### 0a. OSM present but INCOMPLETE → triangulate from open data (the Oxley path)
+A course can be **in** OSM as a golf course yet too thin for the clean Step-1→3 path: missing
+hole-number `ref`s, **no fairway polygons**, only a couple of greens (Oxley: refs on 2/17 hole
+lines, 0 fairways, 2/18 greens). This is **not** the section-0 STOP case (which is for *no golf
+data at all*, e.g. Minnippi). Instead **triangulate the gaps from open data** — proven accurate
+and verifiable on **Oxley Golf Club (PR #214 build + #215 fixes)**. This is the unified "best
+source available, per feature" workflow that combines OSM + non-OSM; full method + tooling in the
+`play-triangulation-pipeline` memory.
+
+| feature | primary (best) | open-data gap-fill |
+|---|---|---|
+| hole numbers | OSM `ref` | official **course map** badges read as *topology* + a tee→green **routing chain** |
+| centreline | OSM `golf=hole` | tee→green — **TRIM it if it overshoots the tee** (see QA §3a) |
+| green polygon | OSM `golf=green` | **oval** sized to `gbb` / the greenside-bunker footprint, at the real centre |
+| green centre + WHICH END is the green | OSM centroid | line-end + **greenside-bunker proximity** (the end with bunkers ≤~20 m is the green) |
+| bunkers / water | OSM | imagery-trace |
+| fairway | OSM `golf=fairway` | trace the **grass corridor between the tree lines** (mown-vs-rough isn't separable in the imagery; the tree-bounded corridor is) |
+| tees (per colour) | OSM `golf=tee` (rare) | **card distance back along the centreline** from the green (open, per-tee, accurate) |
+| par / SI / CR / Slope | — | official **scorecard** only — facts, never fabricate; Slope often absent → default 113 |
+
+**Sources:** official scorecard (image → crop+enlarge+vision-read), the club's `Course-map.png`
+(numbering — read **qualitatively**; do NOT metric-overlay a stylized illustration, an affine fit
+gave 45–106 m residuals), and **Esri World Imagery** export (`…/World_Imagery/MapServer/export?
+bbox=&bboxSR=4326&imageSR=4326&size=&format=png&f=image`, georeferenced so pixel↔latlng is linear,
+OSM-tracing-approved; production-preferred is QLD CC-BY imagery). **Tooling discipline:** PowerShell
+ONLY for the image fetch + a GDI+/LockBits pixel mask; **Node for ALL geometry** (PS array-of-arrays
+fights vector math — see `play-build-pipeline-node`). **Cross-check gates:** traced length vs card
+(>15% ⇒ flag), green-end vs bunkers, numbering vs map. A hole with **no OSM line at all** (Oxley hole
+7) is the hard case — place it from the course map + routing and **flag it for on-course Set-tee
+confirmation**; don't pretend it's surveyed.
 
 ### 0b. If the course isn't in OSM but a third-party golf-GPS source has it
 A golf-GPS app or site may carry the course's vector geometry (greens, tees). **That data is
@@ -213,6 +244,23 @@ Spin up the throwaway static server and drive it (full recipe in `CLAUDE.md` →
 Simulate GPS with `window.__playPos=[lat,lng]` (test hook) + `playLiveUpdate()`.
 Disable auto-advance during manual hole-stepping tests: `window._playAutoHole=false`.
 
+### 3a. Per-hole QA review — every hole shows EXACTLY its own features
+**Mandatory for triangulated/synthetic geometry** (it has failure modes OSM-clean courses don't;
+the user asked for this gate after the first Oxley build shipped with visible defects). Step
+through every hole (`openPlay` → next) and confirm it shows *only* what belongs to it — nothing
+missing, nothing spurious: ✓ **one** green, sitting on the green; ✓ tee marker at the start with
+the play-line tee→green up the screen; ✓ fairway spanning tee→green with **no overshoot at either
+end**; ✓ bunkers/water only where they belong; ✓ nothing from a *neighbouring* hole drawn bright (a
+**dimmed** neighbour at the frame edge is normal context, not a bug); ✓ tee-shot club marker (if
+shown) lands on the fairway; ✓ length ≈ card. Two real Oxley bugs this caught:
+- **Two green circles on a hole (or zero).** A synthetic green placed too near a neighbour's makes
+  `_featOwner` (nearest-centreline) assign both to one hole and none to the other (Oxley hole 7's
+  estimate sat ~17 m from hole 9's green). **Programmatic check:** `_featOwner(geom)` then count
+  green features per `_own` — **each hole must own exactly 1**, none missing.
+- **Fairway / play-line / length starting BEHIND the tee.** An OSM centreline overshooting the tee
+  (Oxley hole 8 ran 176 m past it to a car park → 449 m vs the real 273 m). **Fix:** trim `lines[n]`
+  to tee→green and rebuild that hole's fairway from the trimmed line.
+
 ### 4. Ship
 Branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-branch`
 (`CLAUDE.md` → "Change & versioning flow"). Windows/PowerShell gotchas that bite:
@@ -227,12 +275,15 @@ Branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-
 ## Not course data — don't bake these
 - **My Bag** (`gf_bag`) and **club stats** (`gf_club_stats`) are **per-user** localStorage,
   not per-course. Nothing to add.
-- **Multiple tees** (black/blue/red with their own CR/Slope/lengths) need real per-tee
-  ratings + coordinates that OSM does **not** provide. We deliberately did **not** build a
-  hollow tee picker; instead the **"Set tee" map tool** (`playSetTeeHere`) lets the player
-  set this hole's tee from GPS for the round. If you later have a course's real multi-tee
-  scorecard, that's the point to design a proper `tees:[…]` structure — until then, one
-  `cr`/`slope` (the tee you rate against) per course.
+- **Multiple tees** (black/blue/white/red). OSM rarely maps tee pads, but this is **no longer a
+  dead end**: the **scorecard gives exact per-tee distances**, so each tee can be placed accurately
+  at its **card distance back along the centreline** from the green (walked along the dogleg, not
+  straight) — open, verifiable, per-tee. That **resolves the old "hollow tee picker"** worry: the
+  tees aren't hollow, they're real card-placed coordinates. **What's still missing is the app
+  feature** to *use* >1: a `tees:{black:[…],blue:[…],white:[…],red:[…]}` data model (with each tee's
+  CR/Slope), a tee picker, and the rangefinder/scorecard/handicap reading the selected tee. Until
+  that's built, ship one `tee` + one `cr`/`slope` (the white tee) per hole plus the **"Set tee" GPS
+  tool** (`playSetTeeHere`) — but the extraction side is solved whenever you want to build the feature.
 
 ## Quick reference — who reads what
 - `COURSE_PLAY` → `openPlay`, `holeTargets`, `playTotals`, `courseHandicap`,
