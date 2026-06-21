@@ -1,0 +1,146 @@
+<!doctype html>
+<!--
+  Play course feature tracer — click features on georeferenced Esri aerial for ACCURATE display.
+  Open this file in a browser (needs internet for the basemap). Pick a hole + a feature type, then
+  click on the aerial to place it (polygon = click each corner then click the first point / press
+  Finish; marker/line similar). Export writes a geometry JSON that scripts/play/from-traced.mjs
+  turns into a built course (merging your scorecard config for par/SI/tees/CR). Use the official
+  course map / PDF (open alongside) to know which feature is which. This is the accurate path the
+  auto-imagery tracer can't match.
+-->
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Play feature tracer</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.css">
+<style>
+  html,body{margin:0;height:100%;font:13px/1.4 system-ui,sans-serif;background:#0b1f0b;color:#dfeccd}
+  #wrap{display:flex;height:100%}
+  #map{flex:1}
+  #side{width:280px;box-sizing:border-box;padding:10px;overflow:auto;background:#10260f;border-left:1px solid #2d5a1b}
+  h3{margin:.3em 0;color:#9fe07a;font-size:13px}
+  .row{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
+  button,select,input{font:inherit;background:#1c3a16;color:#dfeccd;border:1px solid #356a28;border-radius:6px;padding:4px 7px;cursor:pointer}
+  button.on{background:#3f7e2c;border-color:#9fe07a;color:#fff}
+  .ft{flex:1 0 44%}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  #holein{width:46px} #status{min-height:18px;color:#9fe07a;font-size:12px}
+  #data{font:11px/1.3 monospace;white-space:pre-wrap;color:#bcd6a0;background:#06140a;border:1px solid #2d5a1b;border-radius:6px;padding:6px;max-height:38%;overflow:auto}
+  .hint{color:#88a472;font-size:11px;margin:4px 0}
+  a{color:#9fe07a}
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="map"></div>
+  <div id="side">
+    <h3>Course</h3>
+    <div class="row"><input id="cname" placeholder="Gailes Golf Club" style="flex:1"></div>
+    <div class="row">Hole <input id="holein" type="number" min="1" max="18" value="1">
+      <button id="hprev">‹</button><button id="hnext">›</button></div>
+    <h3>Feature to place</h3>
+    <div class="row" id="ftypes"></div>
+    <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
+    <div class="hint">Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole.</div>
+    <div id="status">pick a hole + feature, then click the aerial.</div>
+    <h3>Captured</h3>
+    <div id="data">{}</div>
+    <div class="row"><button id="export">⬇ Export JSON</button><label style="flex:1"><button id="impbtn">⬆ Import</button><input id="impfile" type="file" accept=".json" style="display:none"></label></div>
+    <div class="hint">Then: <code>node from-traced.mjs &lt;traced.json&gt; &lt;scorecard.config.json&gt;</code> → build → bake.</div>
+  </div>
+</div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.min.js"></script>
+<script>
+const FT = [   // feature types: key, label, geoman shape, colour, multi(per hole)?
+  {k:'tee-white', l:'Tee White', s:'Marker', c:'#eaeaea', multi:false},
+  {k:'tee-blue',  l:'Tee Blue',  s:'Marker', c:'#3b6fd4', multi:false},
+  {k:'tee-black', l:'Tee Black', s:'Marker', c:'#1c1c1c', multi:false},
+  {k:'tee-red',   l:'Tee Red',   s:'Marker', c:'#d6453b', multi:false},
+  {k:'green',     l:'Green',      s:'Polygon',c:'#83d94f', multi:false},
+  {k:'centreline',l:'Centreline', s:'Line',   c:'#ffd24a', multi:false},
+  {k:'fairway',   l:'Fairway',    s:'Polygon',c:'#3f7e2c', multi:false},
+  {k:'bunker',    l:'Bunker',     s:'Polygon',c:'#e4d2a0', multi:true},
+  {k:'water',     l:'Water',      s:'Polygon',c:'#1d5fa0', multi:true},
+];
+const r6 = v => +v.toFixed(6);
+const data = { name:'', holes:{} };
+let active = FT[4], hole = 1;
+const layers = [];   // {layer, hole, key}
+
+const map = L.map('map').setView([-27.600, 152.916], 16);
+L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+  { maxZoom: 22, maxNativeZoom: 19, attribution:'Esri World Imagery' }).addTo(map);
+map.pm.setGlobalOptions({ snappable:true, snapDistance:12 });
+
+// build feature-type buttons
+const ftDiv = document.getElementById('ftypes');
+FT.forEach(f => { const b = document.createElement('button'); b.className='ft'; b.dataset.k=f.k;
+  b.innerHTML = `<span class="dot" style="background:${f.c}"></span>${f.l}`;
+  b.onclick = () => selectType(f); ftDiv.appendChild(b); });
+
+function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k));
+  map.pm.disableDraw(); map.pm.enableDraw(f.s, { continueDrawing:!!f.multi });
+  status(`placing <b>${f.l}</b> on hole ${hole} — ${f.s==='Marker'?'click the spot':'click corners, then Finish'}`); }
+function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active); }
+function status(t){ document.getElementById('status').innerHTML=t; }
+
+map.on('pm:create', e => {
+  const lyr = e.layer, f = active; lyr.options._k=f.k; lyr.options._h=hole;
+  lyr.setStyle && lyr.setStyle({color:f.c, fillColor:f.c, weight:2, fillOpacity:0.35});
+  // single-feature types: drop any previous one for this hole
+  if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
+  layers.push({layer:lyr, hole, key:f.k});
+  store(); redraw();
+});
+
+function coordsOf(lyr){
+  if(lyr instanceof L.Marker){ const ll=lyr.getLatLng(); return [r6(ll.lat), r6(ll.lng)]; }
+  let ll = lyr.getLatLngs(); while(Array.isArray(ll) && ll.length===1 && Array.isArray(ll[0])) ll=ll[0];
+  return ll.map(p=>[r6(p.lat), r6(p.lng)]);
+}
+function store(){
+  data.name = document.getElementById('cname').value || data.name;
+  data.holes = {};
+  for(const {layer,hole,key} of layers){
+    const h = data.holes[hole] = data.holes[hole] || {};
+    const c = coordsOf(layer);
+    if(key.startsWith('tee-')){ (h.tees=h.tees||{})[key.slice(4)] = c; }
+    else if(key==='bunker' || key==='water'){ (h[key]=h[key]||[]).push(c); }
+    else h[key] = c;   // green, centreline, fairway
+  }
+  document.getElementById('data').textContent = summary();
+}
+function summary(){
+  const out = []; for(let n=1;n<=18;n++){ const h=data.holes[n]; if(!h) continue;
+    const bits=[]; if(h.tees) bits.push('tee:'+Object.keys(h.tees).join('/')); if(h.green) bits.push('green'); if(h.centreline) bits.push('line'); if(h.fairway) bits.push('fairway'); if(h.bunkers) bits.push('bunk×'+h.bunkers.length); if(h.water) bits.push('water×'+h.water.length);
+    out.push('h'+n+': '+bits.join(', ')); }
+  return out.join('\n') || '(nothing yet)';
+}
+function redraw(){ layers.forEach(o=>{ const cur=o.hole===hole; o.layer.setStyle && o.layer.setStyle({opacity:cur?1:0.4, fillOpacity:cur?0.4:0.12}); if(o.layer.setOpacity) o.layer.setOpacity(cur?1:0.45); }); }
+
+document.getElementById('holein').onchange = e => setHole(+e.target.value);
+document.getElementById('hprev').onclick = () => setHole(hole-1);
+document.getElementById('hnext').onclick = () => setHole(hole+1);
+document.getElementById('cname').onchange = store;
+document.getElementById('finish').onclick = () => { map.pm.Draw[active.s] && map.pm.Draw[active.s]._finishShape && map.pm.Draw[active.s]._finishShape(); };
+document.getElementById('undo').onclick = () => { const d=map.pm.Draw[active.s]; d && d._removeLastVertex && d._removeLastVertex(); };
+document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
+  const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
+  layers.forEach(o=>o.layer.once('click', h)); };
+document.getElementById('export').onclick = () => { store();
+  const blob = new Blob([JSON.stringify(data,null,1)], {type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(data.name||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.traced.json'; a.click(); };
+document.getElementById('impbtn').onclick = () => document.getElementById('impfile').click();
+document.getElementById('impfile').onchange = e => { const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
+  rd.onload = () => { try{ const d=JSON.parse(rd.result); document.getElementById('cname').value=d.name||''; layers.splice(0).forEach(o=>map.removeLayer(o.layer));
+    for(const n in d.holes){ const h=d.holes[n]; const add=(key,coords)=>{ const f=FT.find(x=>x.k===key); let lyr; if(f.s==='Marker') lyr=L.marker(coords); else if(f.s==='Line') lyr=L.polyline(coords); else lyr=L.polygon(coords); lyr.setStyle&&lyr.setStyle({color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=key; lyr.options._h=+n; layers.push({layer:lyr,hole:+n,key}); };
+      if(h.tees) for(const t in h.tees) add('tee-'+t, h.tees[t]); if(h.green) add('green',h.green); if(h.centreline) add('centreline',h.centreline); if(h.fairway) add('fairway',h.fairway); (h.bunkers||[]).forEach(b=>add('bunker',b)); (h.water||[]).forEach(w=>add('water',w)); }
+    store(); const first=Object.keys(d.holes)[0]; if(first) map.fitBounds(L.featureGroup(layers.map(o=>o.layer)).getBounds().pad(0.2)); status('imported'); }catch(x){ alert('bad JSON: '+x.message); } };
+  rd.readAsText(f); };
+
+selectType(FT[4]); setHole(1);
+</script>
+</body>
+</html>

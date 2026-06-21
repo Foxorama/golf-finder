@@ -113,6 +113,15 @@ numbering/scorecard/tee distances you resolve) and emits the built `{play,geom}`
 `minnippi-golf-and-range.config.json` (absent — every hole placed by hand from the aerial) are the
 worked examples.
 
+**Auto vs accurate-display:** `gap-fill.mjs` is hands-off and good for **distance (±~15 m)**, but its
+auto-detected positions are fuzzy (oval greens, grass-corridor fairways, best-effort sand bunkers,
+config-coord tees) so the *display* drifts. When **placement accuracy matters more than being
+hands-off**, trace features by hand: open **`scripts/play/trace-tool.html`** in a browser, click each
+feature (tee/green/centreline/fairway/bunker/water) on the georeferenced Esri aerial (club PDF open
+alongside to identify them), then **`node from-traced.mjs <traced.json> <slug>.config.json`** merges
+the clicked geometry with the scorecard → a built course (real green polygons → true front/centre/back;
+tees/bunkers/water land exactly where placed). This is the path when the auto build looks off.
+
 | feature | primary (best) | open-data gap-fill |
 |---|---|---|
 | hole numbers | OSM `ref` | official **course map** badges read as *topology* + a tee→green **routing chain** |
