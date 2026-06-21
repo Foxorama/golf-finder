@@ -113,7 +113,11 @@ lines, 0 fairways, 2/18 greens). This is **not** the section-0 STOP case (which 
 data at all*, e.g. Minnippi). Instead **triangulate the gaps from open data** — proven accurate
 and verifiable on **Oxley Golf Club (PR #214 build + #215 fixes)**. This is the unified "best
 source available, per feature" workflow that combines OSM + non-OSM; full method + tooling in the
-`play-triangulation-pipeline` memory.
+`play-triangulation-pipeline` memory. **It is productionised in `scripts/play/`**: `gap-fill.mjs`
+takes the OSM JSON + a per-course config (the numbering/scorecard/tee distances you resolve) and
+emits the built `{play,geom}` with the gap-fills + cross-checks below — pure Node, no deps (built-in
+`fetch`/`zlib`, a vendored PNG decoder). See `scripts/play/README.md`; `oxley-golf-club.config.json`
+there is the worked example.
 
 | feature | primary (best) | open-data gap-fill |
 |---|---|---|
@@ -275,15 +279,16 @@ Branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-
 ## Not course data — don't bake these
 - **My Bag** (`gf_bag`) and **club stats** (`gf_club_stats`) are **per-user** localStorage,
   not per-course. Nothing to add.
-- **Multiple tees** (black/blue/white/red). OSM rarely maps tee pads, but this is **no longer a
-  dead end**: the **scorecard gives exact per-tee distances**, so each tee can be placed accurately
-  at its **card distance back along the centreline** from the green (walked along the dogleg, not
-  straight) — open, verifiable, per-tee. That **resolves the old "hollow tee picker"** worry: the
-  tees aren't hollow, they're real card-placed coordinates. **What's still missing is the app
-  feature** to *use* >1: a `tees:{black:[…],blue:[…],white:[…],red:[…]}` data model (with each tee's
-  CR/Slope), a tee picker, and the rangefinder/scorecard/handicap reading the selected tee. Until
-  that's built, ship one `tee` + one `cr`/`slope` (the white tee) per hole plus the **"Set tee" GPS
-  tool** (`playSetTeeHere`) — but the extraction side is solved whenever you want to build the feature.
+- **Multiple tees** (black/blue/white/red) ARE supported (PR #217 build + #218 refinements). Data:
+  per-hole `tees:{black:[lat,lng],…}` + course `teeSets:[{key,name,cr,slope}]` + `defaultTee` (one
+  `tee` + `cr`/`slope` stays the white/rated default for backward-compat). The **selector sits in the
+  map-tools row**; the choice is **per-hole with carry-forward** — picking a tee applies from that
+  hole onward and never rewrites earlier/played holes (`teeSelByHole`; a closed tee box on one hole
+  is a one-hole switch). `_effTee` / `holeTargets` (length) / `courseHandicap` all honour it
+  (handicap off the round's **primary** = hole-1 tee); the map tee marker is coloured to the tee.
+  **To populate a course**, put each tee's **card distance** in the build config (`tees:{black:343,…}`)
+  — the pipeline places them (white = the rated tee, others stepped back along the play line by the
+  card delta). Courses with no `teeSets` keep one tee + the **"Set tee" GPS tool**, unchanged.
 
 ## Quick reference — who reads what
 - `COURSE_PLAY` → `openPlay`, `holeTargets`, `playTotals`, `courseHandicap`,

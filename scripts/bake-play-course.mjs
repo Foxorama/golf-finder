@@ -13,12 +13,19 @@ if (html.includes(`'${slug}':`) || html.includes(`"${slug}":`)) { console.error(
 
 // --- COURSE_PLAY entry (formatted like St Lucia), inserted before the "};" that closes COURSE_PLAY ---
 const p = built.play;
-const holeLines = p.holes.map(h =>
-  `      {n:${h.n}, par:${h.par}, tee:[${h.tee.join(',')}], cen:[${h.cen.join(',')}], pin:${h.pin === null ? 'null' : '[' + h.pin.join(',') + ']'}, gbb:[${h.gbb.join(',')}]},`
-).join(EOL);
+const teeStr = t => `[${t.join(',')}]`;
+const holeLines = p.holes.map(h => {
+  const si = h.si != null ? `, si:${h.si}` : '';
+  const tees = h.tees ? `, tees:{${Object.keys(h.tees).map(k => `${k}:${teeStr(h.tees[k])}`).join(',')}}` : '';
+  return `      {n:${h.n}, par:${h.par}${si}, tee:[${h.tee.join(',')}]${tees}, cen:[${h.cen.join(',')}], pin:${h.pin === null ? 'null' : '[' + h.pin.join(',') + ']'}, gbb:[${h.gbb.join(',')}]},`;
+}).join(EOL);
+// course-level ratings / multi-tee fields, emitted only when the built file carries them
+const hdr = [p.cr != null ? `cr:${p.cr}` : null, p.slope != null ? `slope:${p.slope}` : null,
+  p.defaultTee ? `defaultTee:'${p.defaultTee}'` : null,
+  p.teeSets ? `teeSets:[${p.teeSets.map(t => `{key:'${t.key}',name:'${t.name}',cr:${t.cr},slope:${t.slope}}`).join(',')}]` : null].filter(Boolean).join(', ');
 const playEntry =
   `  '${slug}': {${EOL}` +
-  `    name:'${p.name.replace(/'/g, "\\'")}', par:${p.par}, holesN:${p.holesN},${EOL}` +
+  `    name:'${p.name.replace(/'/g, "\\'")}', par:${p.par}, holesN:${p.holesN}${hdr ? ', ' + hdr : ''},${EOL}` +
   `    holes:[${EOL}${holeLines}${EOL}    ],${EOL}  },`;
 
 const anchor = html.indexOf('const COURSE_GEOM');     // COURSE_PLAY closes just before this
