@@ -144,8 +144,14 @@ fairway apron (σ≈9 m, radius ≈22 m; tees σ≈7 m / R≈16 m, seeded at the
 green by re-cropping centred on the computed centroid — it must sit dead-centre**; tree-framed
 greens drift and become flagged estimates (Minnippi h8). Sanity-gate each straight tee→green length
 against par (par-3 ~100–190, par-4 ~260–410, par-5 ~430–540 m). Feed the 18 `{n,par,si,green,tee}`
-**placed** holes to `gap-fill.mjs` (`green`+`tee` per hole), water = OSM ponds re-tagged
-`golf=lateral_water_hazard`. Greens are aerial estimates (~±5 m) so set `course.src:'aerial imagery'`
+**placed** holes to `gap-fill.mjs` (`green`+`tee` per hole) with **`options.traceFairways:true`**, so each
+placed hole ALSO gets its **dogleg centreline + fairway** traced from the aerial (`traceHoleCorridor` —
+a centre-biased shortest path through the grass corridor, then a ribbon), not just a straight tee→green
+line; this also makes `holeTargets` lengths **dogleg-aware** (Minnippi PR #223 added this — without it the
+maps had no fairways and missed every dogleg/turn). Water = OSM ponds **plus any creek/river/basin**,
+re-tagged `golf=lateral_water_hazard` (note: the play map only draws water on a hole whose corridor is
+near it — a distant boundary creek won't show on far holes, and the doglegs help by bringing corridors
+closer to in-play hazards). Greens are aerial estimates (~±5 m) so set `course.src:'aerial imagery'`
 (honest footnote) — slightly-less-accurate is fine here; the visible green marker + the Set-tee tool
 correct them on-course.
 

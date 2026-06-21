@@ -60,6 +60,9 @@ others are stepped back along the play line by their card delta).
 - **greens** — real OSM polygon where present, else a `greenOvalM` (≈26 m) oval at the centre.
 - **tees** — per-tee positions from the card distances (`tees:{…}` for the multi-tee selector).
 - **fairways** — traced from imagery (tree-bounded grass corridor) when `traceFairways`.
+- **dogleg centrelines (placed/no-OSM holes)** — with `traceFairways`, a `green`+`tee` hole also gets its
+  real centreline routed through the grass corridor (`traceHoleCorridor`, a centre-biased shortest path),
+  overriding the straight tee→green line, so the map shows the dogleg and `holeTargets` length is dogleg-aware.
 - **QA report** (stderr): tee→green vs card length (>15% flagged), greens with no greenside
   bunker (possible orientation error), SI 1..N unique, par sum vs config. **Then do the
   visual per-hole QA review** (skill §3a) — exactly one green per hole, fairway tee→green,
