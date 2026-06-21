@@ -34,7 +34,7 @@ sparse-OSM course (Oxley: no `ref`s, no fairways, 2/18 greens) you supply:
   "name": "Oxley Golf Club", "slug": "oxley-golf-club",
   "course": { "par": 71, "cr": 70, "slope": 113, "defaultTee": "white",
     "teeSets": [ {"key":"black","name":"Black","cr":72,"slope":113}, … ] },
-  "options": { "traceFairways": true, "greenOvalM": 26 },
+  "options": { "traceFairways": true, "traceBunkers": true, "greenOvalM": 26 },
   "holes": [
     // a hole mapped to an OSM centreline way:
     { "n":1, "par":4, "si":7, "way": 1050483192, "greenEnd": "b",
@@ -54,19 +54,30 @@ OSM-missing hole); **`greenEnd`** `"a"`/`"b"` (which end of the way is the green
 to a greenside-bunker-proximity test); **`cardPlaceWhite`** (place the white tee at its card
 distance instead of the OSM tee-end, and trim the centreline tee→green); **`tee`** (explicit
 white-tee coord override); **`tees`** (per-tee card distances — white ≈ the rated tee, the
-others are stepped back along the play line by their card delta).
+others are stepped back along the play line by their card delta); **`via`** (optional
+`[[lat,lng],…]` dogleg waypoints — the corridor is routed through them, for the few holes the
+build flags as drifting >30 m off-axis).
 
 ## What it fills, and the cross-checks
 - **greens** — real OSM polygon where present, else a `greenOvalM` (≈26 m) oval at the centre.
 - **tees** — per-tee positions from the card distances (`tees:{…}` for the multi-tee selector).
-- **fairways** — traced from imagery (tree-bounded grass corridor) when `traceFairways`.
-- **dogleg centrelines (placed/no-OSM holes)** — with `traceFairways`, a `green`+`tee` hole also gets its
-  real centreline routed through the grass corridor (`traceHoleCorridor`, a centre-biased shortest path),
-  overriding the straight tee→green line, so the map shows the dogleg and `holeTargets` length is dogleg-aware.
-- **QA report** (stderr): tee→green vs card length (>15% flagged), greens with no greenside
-  bunker (possible orientation error), SI 1..N unique, par sum vs config. **Then do the
-  visual per-hole QA review** (skill §3a) — exactly one green per hole, fairway tee→green,
-  nothing spurious.
+- **fairways / dogleg centrelines** — traced from imagery (tree-bounded grass corridor) when
+  `traceFairways`. For placed (no-OSM) holes `traceHoleCorridor` routes the real centreline through the
+  corridor with a **straight-line "tube" prior** so it can't wander off the hole axis into a neighbour
+  fairway (the old failure); a quality gate falls back to straight if the trace bloats, and a hole that
+  still drifts >30 m is **flagged** to add a `via` waypoint — the only hand-step, for the odd dogleg.
+- **bunkers** — real OSM polygons, plus (with `traceBunkers`) **sand** bunkers from imagery: compact
+  bright-tan blobs near the corridor, fit to oriented ellipses, deduped against OSM. Best-effort —
+  eyeball for false positives, and **grass-faced bunkers won't show** (they read as rough, e.g. Minnippi).
+- **water** — from **OSM hydrology** (`natural=water`, `water=*`, `landuse=reservoir/basin`,
+  `waterway=riverbank`); the OSM query must fetch those too (below). Water is **not** traced from
+  imagery — dark tree shadows are indistinguishable from dark water in RGB.
+- **QA report** (stderr): tee→green vs card length (>15% flagged), greens with no greenside bunker,
+  corridor drift >30 m, SI 1..N unique, par sum. **Then do the visual per-hole QA review** (skill §3a).
+
+**OSM query:** the skill's `is_in` query fetches `golf=*`; to get water, also fetch hydrology in the
+course area — add e.g. `way["natural"="water"](area.g); way["waterway"](area.g);
+way["landuse"~"reservoir|basin"](area.g);` to the union.
 
 OSM-complete courses don't need most of this — `../build-play-course.mjs` (the OSM-only
 path) still applies; this pipeline is for filling the gaps when OSM is thin.

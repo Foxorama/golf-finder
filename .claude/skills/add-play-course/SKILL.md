@@ -119,8 +119,9 @@ worked examples.
 | centreline | OSM `golf=hole` | tee→green — **TRIM it if it overshoots the tee** (see QA §3a) |
 | green polygon | OSM `golf=green` | **oval** sized to `gbb` / the greenside-bunker footprint, at the real centre |
 | green centre + WHICH END is the green | OSM centroid | line-end + **greenside-bunker proximity** (the end with bunkers ≤~20 m is the green) |
-| bunkers / water | OSM | imagery-trace |
-| fairway | OSM `golf=fairway` | trace the **grass corridor between the tree lines** (mown-vs-rough isn't separable in the imagery; the tree-bounded corridor is) |
+| bunkers | OSM | **sand** traced from imagery (`traceBunkers`: compact bright-tan blobs → ellipses, deduped). Best-effort; **grass-faced bunkers don't show** (they read as rough, e.g. Minnippi) |
+| water | OSM **hydrology** (`natural=water`/`waterway`/`landuse=reservoir,basin` — expand the OSM query to fetch these) | — NOT imagery (dark tree-shadow is indistinguishable from dark water in RGB) |
+| fairway / centreline | OSM `golf=fairway`/`hole` | trace the **grass corridor between tree lines**; placed (no-OSM) holes route the centreline through it with a **straight-line tube prior** (anti-wander) + a `via` waypoint for the odd dogleg the build flags |
 | tees (per colour) | OSM `golf=tee` (rare) | **card distance back along the centreline** from the green (open, per-tee, accurate) |
 | par / SI / CR / Slope | — | official **scorecard** only — facts, never fabricate; Slope often absent → default 113 |
 
@@ -128,9 +129,10 @@ worked examples.
 (numbering — read **qualitatively**; do NOT metric-overlay a stylized illustration, an affine fit
 gave 45–106 m residuals), and **Esri World Imagery** export (`…/World_Imagery/MapServer/export?
 bbox=&bboxSR=4326&imageSR=4326&size=&format=png&f=image`, georeferenced so pixel↔latlng is linear,
-OSM-tracing-approved; production-preferred is QLD CC-BY imagery). **Tooling discipline:** PowerShell
-ONLY for the image fetch + a GDI+/LockBits pixel mask; **Node for ALL geometry** (PS array-of-arrays
-fights vector math — see `play-build-pipeline-node`). **Cross-check gates:** traced length vs card
+OSM-tracing-approved; production-preferred is QLD CC-BY imagery). **Tooling:** the productionised
+pipeline (`scripts/play/`) is **pure Node** — built-in `fetch` + a vendored PNG decoder (`lib-png.mjs`)
++ Node geometry; the old PowerShell-mask step is retired (PS array-of-arrays fights vector math — see
+`play-build-pipeline-node`). **Cross-check gates:** traced length vs card
 (>15% ⇒ flag), green-end vs bunkers, numbering vs map. A hole with **no OSM line at all** (Oxley hole
 7) is the hard case — place it from the course map + routing and **flag it for on-course Set-tee
 confirmation**; don't pretend it's surveyed.

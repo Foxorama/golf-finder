@@ -36,6 +36,7 @@
  },
  "options": {
   "traceFairways": true,
+  "traceBunkers": true,
   "greenOvalM": 28
  },
  "holes": [
