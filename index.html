@@ -1954,6 +1954,18 @@ const COURSE_PLAY = {
       {n:18, par:4, si:6, tee:[-27.481329,153.105866], tees:{blue:[-27.4814824,153.1059241],white:[-27.481329,153.105866],orange:[-27.480971,153.1057303]}, cen:[-27.478698,153.104869], pin:null, gbb:[-27.4788148,153.1047374,-27.4785812,153.1050006]},
     ],
   },
+  // Gailes Golf Club (Wacol) — SCORECARD-ONLY (noGps). OSM has no hole geometry (boundary
+  // polygon only) and there is no public georeferenceable course-map PDF to fix hole numbering,
+  // so per the add-play-course skill we ship card par/SI rather than guess GPS holes. Par/SI/CR/
+  // slope are official (gailesgolf.com.au per-hole pages + club rating CR 72.5 / Slope 127).
+  // To upgrade to a GPS course later, supply the official course map and build via scripts/play.
+  'gailes-golf-club': {
+    name:'Gailes Golf Club', par:73, holesN:18, noGps:true, cr:72.5, slope:127, src:'official scorecard',
+    holes:[
+      {n:1, par:5, si:15}, {n:2, par:5, si:14}, {n:3, par:3, si:10}, {n:4, par:4, si:18}, {n:5, par:4, si:6}, {n:6, par:3, si:8}, {n:7, par:4, si:3}, {n:8, par:4, si:4}, {n:9, par:5, si:12},
+      {n:10, par:4, si:2}, {n:11, par:4, si:13}, {n:12, par:3, si:11}, {n:13, par:4, si:5}, {n:14, par:4, si:9}, {n:15, par:4, si:1}, {n:16, par:4, si:7}, {n:17, par:4, si:17}, {n:18, par:5, si:16},
+    ],
+  },
 };
 
 // ── Constants ────────────────────────────────────────────────
