@@ -740,6 +740,13 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-title{font-size:18px;font-weight:800;color:var(--tx);line-height:1.1;}
 .play-subtitle{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.07em;margin-top:2px;}
 .play-close{background:var(--sur2);border:none;border-radius:50%;width:32px;height:32px;color:var(--tx2);cursor:pointer;font-size:15px;margin-left:auto;flex-shrink:0;}
+.play-back{background:var(--sur2);border:none;border-radius:50%;width:32px;height:32px;color:var(--tx2);cursor:pointer;font-size:16px;flex-shrink:0;}
+.play-layouts{display:flex;flex-direction:column;gap:12px;padding:18px 16px;}
+.pl-intro{color:var(--tx2);font-size:13px;line-height:1.5;margin-bottom:2px;}
+.pl-card{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:16px 18px;cursor:pointer;box-shadow:inset 0 0 24px -18px var(--acc);}
+.pl-card:hover{border-color:var(--acc);}
+.pl-name{font-family:var(--sans);font-size:17px;font-weight:700;color:var(--tx);}
+.pl-meta{font-size:12.5px;color:var(--tx2);}
 .play-tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--bdr);}
 .play-tab{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:9px 4px;color:var(--tx2);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;}
 .play-tab.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
@@ -1801,6 +1808,32 @@ const COURSE_PLAY = {
       {n:16, par:4, tee:[-27.5138145,153.1095944], cen:[-27.5164288,153.1088941], pin:null, gbb:[-27.5165534,153.1088005,-27.5163342,153.1089786]},
       {n:17, par:3, tee:[-27.5173074,153.1083624], cen:[-27.5157421,153.108413], pin:null, gbb:[-27.5159021,153.1083156,-27.5156189,153.1084921]},
       {n:18, par:5, tee:[-27.5161841,153.1078767], cen:[-27.5171316,153.1030221], pin:null, gbb:[-27.5172585,153.1028981,-27.517012,153.1031205]},
+    ],
+  },
+  'nudgee-golf-club': {
+    name:'Nudgee Golf Club',
+    layouts:[
+      { key:'kurrai', name:'Kurrai', par:72, holesN:18, holes:[
+        {n:1, par:4, tee:[-27.3734936,153.0990487], cen:[-27.3764775,153.101024], pin:null, gbb:[-27.376625,153.1008948,-27.3763377,153.1011651]},
+        {n:2, par:4, tee:[-27.3769462,153.1003153], cen:[-27.3788592,153.0975001], pin:null, gbb:[-27.3789951,153.0973731,-27.3787458,153.0976416]},
+        {n:3, par:3, tee:[-27.3791879,153.097339], cen:[-27.3805087,153.0975123], pin:null, gbb:[-27.3806167,153.0973745,-27.3803705,153.0976695]},
+        {n:4, par:5, tee:[-27.380136,153.097811], cen:[-27.3776485,153.1022563], pin:null, gbb:[-27.3777662,153.1021012,-27.3775082,153.1024246]},
+        {n:5, par:5, tee:[-27.3770629,153.1019696], cen:[-27.3794361,153.0977711], pin:null, gbb:[-27.3795453,153.0976344,-27.379312,153.097893]},
+        {n:6, par:4, tee:[-27.3789793,153.09805], cen:[-27.3769683,153.1014006], pin:null, gbb:[-27.3770498,153.101223,-27.3768541,153.1015881]},
+        {n:7, par:4, tee:[-27.3772003,153.1021223], cen:[-27.3752105,153.1003533], pin:null, gbb:[-27.3753229,153.1002111,-27.375089,153.1004838]},
+        {n:8, par:3, tee:[-27.3748125,153.1001029], cen:[-27.3748721,153.1018002], pin:null, gbb:[-27.3749894,153.1016298,-27.3747525,153.1019912]},
+        {n:9, par:4, tee:[-27.3744749,153.1029791], cen:[-27.3737218,153.0995494], pin:null, gbb:[-27.3738188,153.0993934,-27.3735827,153.0997126]},
+        {n:10, par:4, tee:[-27.3734897,153.0989304], cen:[-27.376574,153.0981483], pin:null, gbb:[-27.3767236,153.0979854,-27.3764181,153.0982776]},
+        {n:11, par:3, tee:[-27.3770802,153.0979304], cen:[-27.3761435,153.09972], pin:null, gbb:[-27.3762874,153.0995965,-27.3760124,153.0998661]},
+        {n:12, par:4, tee:[-27.3765071,153.1002631], cen:[-27.3784447,153.0972598], pin:null, gbb:[-27.3786094,153.0971591,-27.378305,153.0973688]},
+        {n:13, par:4, tee:[-27.3786484,153.0969361], cen:[-27.3817124,153.0965284], pin:null, gbb:[-27.3818372,153.0963761,-27.3815868,153.0966909]},
+        {n:14, par:4, tee:[-27.3823897,153.0964652], cen:[-27.3800249,153.0992261], pin:null, gbb:[-27.3801719,153.0991155,-27.3799005,153.0993561]},
+        {n:15, par:5, tee:[-27.3802627,153.0998911], cen:[-27.3833264,153.096233], pin:null, gbb:[-27.383417,153.096074,-27.383228,153.0963555]},
+        {n:16, par:4, tee:[-27.3827617,153.0959558], cen:[-27.3797162,153.0962954], pin:null, gbb:[-27.3798319,153.0961937,-27.3795591,153.096428]},
+        {n:17, par:5, tee:[-27.3798655,153.0957249], cen:[-27.3759831,153.0977977], pin:null, gbb:[-27.3761137,153.0976671,-27.3758375,153.0979445]},
+        {n:18, par:3, tee:[-27.3754872,153.0975062], cen:[-27.3741967,153.0981079], pin:null, gbb:[-27.3743242,153.0979599,-27.374059,153.0982687]}
+      ] },
+      { key:'bulka', name:'Bulka', par:70, holesN:18, noGps:true, holes:[{n:1, par:3}, {n:2, par:4}, {n:3, par:3}, {n:4, par:4}, {n:5, par:4}, {n:6, par:5}, {n:7, par:3}, {n:8, par:5}, {n:9, par:4}, {n:10, par:4}, {n:11, par:4}, {n:12, par:4}, {n:13, par:4}, {n:14, par:4}, {n:15, par:4}, {n:16, par:3}, {n:17, par:5}, {n:18, par:3}] },
     ],
   },
 };
@@ -6524,21 +6557,40 @@ function renderBag(){
 }
 function toggleBagUnits(){ localStorage.setItem('gf_units', _bagUnit()==='yd'?'m':'yd'); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 
-function openPlay(courseName){
+// openPlay(name) opens the course. A course can carry `layouts:[{key,name,par,holesN,holes,noGps?}]`
+// for sites with more than one course (e.g. Nudgee's Kurrai + Bulka, or Virginia's 18 + Heritage):
+// opening it with no layoutKey shows a selection screen; a layout then plays under its own
+// per-layout slug (<courseSlug>-<key>) so its geometry, draft and saved rounds are independent.
+function openPlay(courseName, layoutKey){
   const slug=slugify(courseName), course=COURSE_PLAY[slug];
   if(!course) return;
-  let draft={}; try{ draft=JSON.parse(localStorage.getItem(_draftKey(slug))||'{}'); }catch(e){}
-  playS={ slug, course, hole:1, units:(localStorage.getItem('gf_units')||'m'),
+  if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }   // drop any prior GPS watch (e.g. switching layouts)
+  document.getElementById('play-panel').style.display='block';
+  document.body.style.overflow='hidden';
+  if(course.layouts && !layoutKey){ playS={ slug, course, picker:true }; playRender(); return; }   // show the course picker
+  const L = course.layouts ? (course.layouts.find(x=>x.key===layoutKey)||course.layouts[0]) : null;
+  const active = L ? { name:course.name+' — '+L.name, par:L.par, holesN:L.holesN, holes:L.holes, noGps:!!L.noGps, cr:L.cr, slope:L.slope } : course;
+  const activeSlug = L ? (slug+'-'+L.key) : slug;
+  let draft={}; try{ draft=JSON.parse(localStorage.getItem(_draftKey(activeSlug))||'{}'); }catch(e){}
+  playS={ slug:activeSlug, course:active, parentSlug:(L?slug:null), parentName:(L?course.name:null), layoutKey:(L?L.key:null),
+          hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
           shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), teePos:(draft.teePos||{}),
           scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
-          startedAt:(draft.startedAt||Date.now()), tab:(course.noGps?'card':'play') };
+          startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
-  document.getElementById('play-panel').style.display='block';
-  document.body.style.overflow='hidden';
-  if(!course.noGps){ playStartGps(); loadCourseGeom(slug); }   // GPS courses: start the rangefinder + lazy-load the hole-map geometry
+  if(!active.noGps){ playStartGps(); loadCourseGeom(activeSlug); }   // GPS courses: start the rangefinder + lazy-load the hole-map geometry
   playRender();
 }
+// Picker screen for a multi-course site, and the back affordance to return to it.
+function layoutPickerHtml(course){
+  return `<div class="play-layouts"><div class="pl-intro">${course.name} has ${course.layouts.length} courses — choose one:</div>`+
+    course.layouts.map(L=>`<button class="pl-card" onclick="openPlay('${course.name.replace(/'/g,"\\'")}','${L.key}')">
+      <span class="pl-name">${L.name}</span>
+      <span class="pl-meta">${L.holesN} holes · par ${L.par} · ${L.noGps?'📋 scorecard only':'⛳ GPS rangefinder'}</span>
+    </button>`).join('')+`</div>`;
+}
+function playBackToCourses(){ if(playS&&playS.parentName) openPlay(playS.parentName); }
 function closePlay(){
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }
   document.getElementById('play-panel').style.display='none';
@@ -7170,6 +7222,18 @@ function historyTabHtml(){
 
 function playRender(){
   if(!playS)return;
+  const tabs=document.querySelector('.play-tabs'), backBtn=document.getElementById('play-back');
+  const ttl0=document.getElementById('play-title'), sub0=document.getElementById('play-subtitle'), body0=document.getElementById('play-body');
+  if(playS.picker){   // course-selection screen for a multi-course site
+    if(ttl0) ttl0.textContent=playS.course.name;
+    if(sub0) sub0.textContent='Choose a course';
+    if(tabs) tabs.style.display='none';
+    if(backBtn) backBtn.style.display='none';
+    if(body0) body0.innerHTML=layoutPickerHtml(playS.course);
+    return;
+  }
+  if(tabs) tabs.style.display='';
+  if(backBtn) backBtn.style.display=playS.parentName?'':'none';   // back-to-courses only for a layout of a multi-course site
   const noGps=!!playS.course.noGps;
   if(noGps&&playS.tab==='play') playS.tab='card';   // no rangefinder tab for scorecard-only courses
   const playTabBtn=document.getElementById('play-tab-play'); if(playTabBtn) playTabBtn.style.display=noGps?'none':'';
@@ -7413,6 +7477,7 @@ showTestBanner();
 <div id="play-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Play round">
   <div class="play-sheet">
     <div class="play-header">
+      <button class="play-back" id="play-back" onclick="playBackToCourses()" style="display:none" aria-label="Back to course selection" title="Choose a different course">⟵</button>
       <div>
         <div class="play-title" id="play-title">Course</div>
         <div class="play-subtitle" id="play-subtitle">GPS rangefinder · scorecard</div>
