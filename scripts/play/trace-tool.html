@@ -42,7 +42,8 @@
     <h3>Feature to place</h3>
     <div class="row" id="ftypes"></div>
     <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
-    <div class="hint">Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole.</div>
+    <div class="row"><button id="editmode">✥ Edit / drag mode</button></div>
+    <div class="hint">Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features).</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
     <div id="data">{}</div>
@@ -129,6 +130,11 @@ document.getElementById('undo').onclick = () => { const d=map.pm.Draw[active.s];
 document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
   const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
   layers.forEach(o=>o.layer.once('click', h)); };
+let editing=false;
+document.getElementById('editmode').onclick = () => { editing=!editing; const b=document.getElementById('editmode'); b.classList.toggle('on',editing);
+  if(editing){ map.pm.disableDraw(); map.pm.enableGlobalEditMode(); status('<b>Edit/drag mode ON</b> — drag any marker or vertex to reposition. Toggle off to add features.'); }
+  else{ map.pm.disableGlobalEditMode(); store(); selectType(active); status('edit mode off — back to placing'); } };
+map.on('pm:edit', store); map.on('pm:dragend', store); map.on('pm:markerdragend', store);
 document.getElementById('export').onclick = () => { store();
   const blob = new Blob([JSON.stringify(data,null,1)], {type:'application/json'});
   const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=(data.name||'course').toLowerCase().replace(/[^a-z0-9]+/g,'-')+'.traced.json'; a.click(); };
