@@ -25,7 +25,7 @@ for (const e of els) {
   if (e.type !== 'way') continue;
   const g = e.tags && e.tags.golf; if (!g) continue;
   const pts = (e.geometry || []).filter(x => x).map(x => [+x.lat, +x.lon]); if (pts.length < 2) continue;
-  if (g === 'hole') { holesW.push({ pts, ref: +e.tags.ref, par: e.tags.par != null ? +e.tags.par : null, hcp: e.tags.handicap != null ? +e.tags.handicap : null }); continue; }
+  if (g === 'hole') { const ref = +e.tags.ref; if (Number.isFinite(ref) && ref >= 1) holesW.push({ pts, ref, par: e.tags.par != null ? +e.tags.par : null, hcp: e.tags.handicap != null ? +e.tags.handicap : null }); continue; }   // skip degenerate hole ways with no/invalid ref
   if (g === 'green') { let la = 0, lo = 0, mila = 999, milo = 999, mala = -999, malo = -999; for (const p of pts) { la += p[0]; lo += p[1]; if (p[0] < mila) mila = p[0]; if (p[0] > mala) mala = p[0]; if (p[1] < milo) milo = p[1]; if (p[1] > malo) malo = p[1]; } greens.push({ cen: [la / pts.length, lo / pts.length], bb: [mila, milo, mala, malo] }); }
   if (tmap[g]) feats.push({ t: tmap[g], pts: simp(pts) });
 }
