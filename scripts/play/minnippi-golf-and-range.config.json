@@ -1,20 +1,37 @@
 {
   "_provenance": [
-    "Minnippi is NOT in OSM as a golf course (only a cartpath + ponds). Built from OPEN data only:",
-    "- greens: centroids traced from Esri World Imagery (smoothness-weighted mean-shift on the green-turf mask), verified per-hole. Hole 8 green is a flagged tree-framed estimate.",
-    "- tees: back-tee boxes traced the same way.",
-    "- DOGLEG centrelines + FAIRWAY corridors: traceHoleCorridor (centre-biased shortest path through the grass corridor, then a ribbon) via options.traceFairways. Lengths cross-checked vs par; total ~6121 m ~= 6032 m card.",
-    "- par/SI: public scorecard facts (front nine odd SIs / back nine even). par 72. cr/slope 73.1/123 (public back tee).",
-    "- water: OSM ponds 611986696 + 668007566, Bulimba Creek 799506477 + 799523110, stormwater basin 845575904 (re-tagged golf=lateral_water_hazard for the build).",
-    "Build: node scripts/play/gap-fill.mjs <osm-water.json> scripts/play/minnippi-golf-and-range.config.json"
+    "Holes re-derived from the OFFICIAL course-map PDF + the official scorecard (Aug 2025 user-supplied), replacing the earlier 18Birdies-derived data which had wrong tees + a numbering permutation.",
+    "Method: georeference the map via its green-flags (RANSAC, ±5m); detect all 18 yellow tee-circles + greens; OCR the printed hole-number circles; match each hole's scorecard distance to the detected tee->green pair whose number-circle it straddles. The map marks the WHITE tee (best card fit). Blue (back) + Orange (forward) placed by card delta along the play line.",
+    "par/SI/ratings/per-tee distances are official scorecard facts. Greens are map-flag positions (georeferenced). Water/creeks from the same map (PR #225)."
   ],
   "name": "Minnippi Golf & Range",
   "slug": "minnippi-golf-and-range",
   "course": {
     "par": 72,
-    "cr": 73.1,
-    "slope": 123,
-    "src": "aerial imagery"
+    "cr": 67.8,
+    "slope": 120,
+    "defaultTee": "white",
+    "src": "course map",
+    "teeSets": [
+      {
+        "key": "blue",
+        "name": "Blue",
+        "cr": 71.3,
+        "slope": 130
+      },
+      {
+        "key": "white",
+        "name": "White",
+        "cr": 67.8,
+        "slope": 120
+      },
+      {
+        "key": "orange",
+        "name": "Orange",
+        "cr": 66.2,
+        "slope": 108
+      }
+    ]
   },
   "options": {
     "greenOvalM": 26,
@@ -26,234 +43,324 @@
       "par": 4,
       "si": 15,
       "green": [
-        -27.481157,
-        153.105186
+        -27.481163,
+        153.105193
       ],
       "tee": [
-        -27.478872,
-        153.104216
-      ]
+        -27.479556,
+        153.104541
+      ],
+      "tees": {
+        "blue": 295,
+        "white": 276,
+        "orange": 232
+      }
     },
     {
       "n": 2,
       "par": 4,
       "si": 7,
       "green": [
-        -27.485298,
-        153.107035
+        -27.485235,
+        153.107059
       ],
       "tee": [
-        -27.482182,
-        153.106303
-      ]
+        -27.482843,
+        153.106287
+      ],
+      "tees": {
+        "blue": 355,
+        "white": 330,
+        "orange": 310
+      }
     },
     {
       "n": 3,
       "par": 5,
       "si": 9,
       "green": [
-        -27.48149,
-        153.105566
+        -27.481487,
+        153.105561
       ],
       "tee": [
-        -27.485943,
-        153.106674
-      ]
+        -27.485893,
+        153.106465
+      ],
+      "tees": {
+        "blue": 520,
+        "white": 494,
+        "orange": 464
+      }
     },
     {
       "n": 4,
       "par": 3,
       "si": 5,
       "green": [
-        -27.480924,
-        153.103473
+        -27.480907,
+        153.103474
       ],
       "tee": [
-        -27.481886,
-        153.105044
-      ]
+        -27.481863,
+        153.104659
+      ],
+      "tees": {
+        "blue": 188,
+        "white": 164,
+        "orange": 143
+      }
     },
     {
       "n": 5,
       "par": 4,
       "si": 1,
       "green": [
-        -27.483244,
-        153.100915
+        -27.483222,
+        153.100893
       ],
       "tee": [
-        -27.480409,
-        153.103263
-      ]
+        -27.481022,
+        153.102921
+      ],
+      "tees": {
+        "blue": 393,
+        "white": 377,
+        "orange": 354
+      }
     },
     {
       "n": 6,
       "par": 5,
       "si": 17,
       "green": [
-        -27.480038,
-        153.103001
+        -27.480032,
+        153.102948
       ],
       "tee": [
-        -27.483244,
-        153.100399
-      ]
+        -27.482828,
+        153.100562
+      ],
+      "tees": {
+        "blue": 449,
+        "white": 425,
+        "orange": 359
+      }
     },
     {
       "n": 7,
       "par": 4,
       "si": 11,
       "green": [
-        -27.475114,
-        153.100132
+        -27.475119,
+        153.099966
       ],
       "tee": [
-        -27.477512,
-        153.100387
-      ]
+        -27.477312,
+        153.10024
+      ],
+      "tees": {
+        "blue": 286,
+        "white": 257,
+        "orange": 223
+      }
     },
     {
       "n": 8,
       "par": 4,
       "si": 3,
       "green": [
-        -27.476159,
-        153.103345
+        -27.47616,
+        153.103458
       ],
       "tee": [
-        -27.475055,
-        153.100118
-      ]
+        -27.475612,
+        153.10076
+      ],
+      "tees": {
+        "blue": 374,
+        "white": 320,
+        "orange": 277
+      }
     },
     {
       "n": 9,
       "par": 3,
       "si": 13,
       "green": [
-        -27.477852,
-        153.104586
+        -27.477866,
+        153.104599
       ],
       "tee": [
-        -27.476478,
-        153.104592
-      ]
+        -27.477073,
+        153.104548
+      ],
+      "tees": {
+        "blue": 156,
+        "white": 137,
+        "orange": 130
+      }
     },
     {
       "n": 10,
       "par": 4,
       "si": 10,
       "green": [
-        -27.476637,
-        153.108247
+        -27.476652,
+        153.108241
       ],
       "tee": [
-        -27.478159,
-        153.105251
-      ]
+        -27.478041,
+        153.105684
+      ],
+      "tees": {
+        "blue": 346,
+        "white": 287,
+        "orange": 267
+      }
     },
     {
       "n": 11,
       "par": 3,
       "si": 8,
       "green": [
-        -27.478062,
-        153.108809
+        -27.478116,
+        153.108867
       ],
       "tee": [
-        -27.47741,
-        153.107612
-      ]
+        -27.477796,
+        153.107684
+      ],
+      "tees": {
+        "blue": 144,
+        "white": 137,
+        "orange": 129
+      }
     },
     {
       "n": 12,
       "par": 4,
       "si": 12,
       "green": [
-        -27.47832,
-        153.105864
+        -27.478361,
+        153.10584
       ],
       "tee": [
-        -27.478761,
-        153.109066
-      ]
+        -27.478852,
+        153.108506
+      ],
+      "tees": {
+        "blue": 334,
+        "white": 316,
+        "orange": 277
+      }
     },
     {
       "n": 13,
       "par": 5,
       "si": 2,
       "green": [
-        -27.483073,
-        153.107492
+        -27.483045,
+        153.107534
       ],
       "tee": [
-        -27.479145,
-        153.106366
-      ]
+        -27.480729,
+        153.107328
+      ],
+      "tees": {
+        "blue": 487,
+        "white": 371,
+        "orange": 312
+      }
     },
     {
       "n": 14,
       "par": 3,
       "si": 16,
       "green": [
-        -27.484444,
-        153.10882
+        -27.484409,
+        153.1088
       ],
       "tee": [
-        -27.483361,
-        153.10768
-      ]
+        -27.483955,
+        153.108207
+      ],
+      "tees": {
+        "blue": 164,
+        "white": 104,
+        "orange": 100
+      }
     },
     {
       "n": 15,
       "par": 4,
       "si": 4,
       "green": [
-        -27.48572,
-        153.111662
+        -27.485733,
+        153.111611
       ],
       "tee": [
-        -27.483814,
-        153.1093
-      ]
+        -27.484289,
+        153.109375
+      ],
+      "tees": {
+        "blue": 361,
+        "white": 321,
+        "orange": 291
+      }
     },
     {
       "n": 16,
       "par": 5,
       "si": 14,
       "green": [
-        -27.48415,
-        153.107366
+        -27.484191,
+        153.107402
       ],
       "tee": [
-        -27.486204,
-        153.111719
-      ]
+        -27.486335,
+        153.110809
+      ],
+      "tees": {
+        "blue": 489,
+        "white": 436,
+        "orange": 436
+      }
     },
     {
       "n": 17,
       "par": 4,
       "si": 18,
       "green": [
-        -27.480889,
-        153.106908
+        -27.480876,
+        153.106923
       ],
       "tee": [
-        -27.483609,
-        153.107233
-      ]
+        -27.483616,
+        153.107104
+      ],
+      "tees": {
+        "blue": 308,
+        "white": 292,
+        "orange": 271
+      }
     },
     {
       "n": 18,
       "par": 4,
       "si": 6,
       "green": [
-        -27.478701,
-        153.104829
+        -27.478698,
+        153.104869
       ],
       "tee": [
-        -27.481447,
-        153.106169
-      ]
+        -27.481329,
+        153.105866
+      ],
+      "tees": {
+        "blue": 349,
+        "white": 331,
+        "orange": 289
+      }
     }
   ]
 }
