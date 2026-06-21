@@ -759,6 +759,8 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-holeno{font-size:20px;font-weight:800;color:var(--tx);}
 .play-holesub{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-top:1px;}
 .play-units{background:none;border:1px solid var(--bdr2);border-radius:6px;color:var(--tx3);font-family:var(--mono);font-size:10px;padding:1px 5px;margin-left:6px;cursor:pointer;}
+.play-teesel{display:inline-flex;align-items:center;gap:4px;background:none;border:1px solid var(--bdr2);border-radius:6px;color:var(--tx2);font-family:var(--mono);font-size:10px;padding:1px 6px;margin-left:6px;cursor:pointer;}
+.tee-dot{width:8px;height:8px;border-radius:50%;border:1px solid rgba(255,255,255,0.35);display:inline-block;flex:none;}
 .play-ninebar{display:flex;gap:6px;margin-bottom:6px;}
 .play-nine{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:7px 4px;color:var(--tx2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;}
 .play-nine.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
@@ -1908,26 +1910,26 @@ const COURSE_PLAY = {
     ],
   },
   'oxley-golf-club': {
-    name:'Oxley Golf Club', par:71, holesN:18, cr:70, slope:113,
+    name:'Oxley Golf Club', par:71, holesN:18, cr:70, slope:113, defaultTee:'white', teeSets:[{key:'black',name:'Black',cr:72,slope:113},{key:'blue',name:'Blue',cr:71,slope:113},{key:'white',name:'White',cr:70,slope:113}],
     holes:[
-      {n:1, par:4, si:7, tee:[-27.5718604,152.977619], cen:[-27.5747589,152.9769608], pin:null, gbb:[-27.5748728,152.9768631,-27.5746431,152.9770551]},
-      {n:2, par:5, si:17, tee:[-27.5748694,152.9775029], cen:[-27.5764264,152.9812738], pin:null, gbb:[-27.5765434,152.9811418,-27.5763094,152.9814058]},
-      {n:3, par:3, si:14, tee:[-27.5762165,152.9817804], cen:[-27.5752753,152.9807297], pin:null, gbb:[-27.5753923,152.9805977,-27.5751583,152.9808617]},
-      {n:4, par:4, si:1, tee:[-27.576077,152.9819819], cen:[-27.5728913,152.9807458], pin:null, gbb:[-27.5730083,152.9806138,-27.5727743,152.9808778]},
-      {n:5, par:3, si:11, tee:[-27.5731569,152.9801253], cen:[-27.5719233,152.9807073], pin:null, gbb:[-27.5720403,152.9805753,-27.5718063,152.9808393]},
-      {n:6, par:4, si:13, tee:[-27.5712964,152.9806299], cen:[-27.5720187,152.9779496], pin:null, gbb:[-27.5721357,152.9778176,-27.5719017,152.9780816]},
-      {n:7, par:3, si:18, tee:[-27.5708,152.9786], cen:[-27.5698,152.9786], pin:null, gbb:[-27.569917,152.978468,-27.569683,152.978732]},
-      {n:8, par:4, si:16, tee:[-27.5696189,152.9785671], cen:[-27.5673907,152.9774134], pin:null, gbb:[-27.5675077,152.9772814,-27.5672737,152.9775454]},
-      {n:9, par:4, si:4, tee:[-27.5673917,152.9766914], cen:[-27.5702702,152.9781038], pin:null, gbb:[-27.5703872,152.9779718,-27.5701532,152.9782358]},
-      {n:10, par:4, si:10, tee:[-27.5718925,152.9774236], cen:[-27.5745547,152.9760202], pin:null, gbb:[-27.5746717,152.9758882,-27.5744377,152.9761522]},
-      {n:11, par:5, si:15, tee:[-27.574934,152.9763851], cen:[-27.5764419,152.9802583], pin:null, gbb:[-27.5765589,152.9801263,-27.5763249,152.9803903]},
-      {n:12, par:5, si:8, tee:[-27.576773,152.9787513], cen:[-27.5770262,152.9745306], pin:null, gbb:[-27.5771432,152.9743986,-27.5769092,152.9746626]},
-      {n:13, par:3, si:5, tee:[-27.5770965,152.9741709], cen:[-27.575315,152.9740969], pin:null, gbb:[-27.575432,152.9739649,-27.575198,152.9742289]},
-      {n:14, par:4, si:12, tee:[-27.5749053,152.9738889], cen:[-27.5732277,152.9762475], pin:null, gbb:[-27.5733447,152.9761155,-27.5731107,152.9763795]},
-      {n:15, par:4, si:2, tee:[-27.572535,152.9768248], cen:[-27.5733846,152.9732391], pin:null, gbb:[-27.5735016,152.9731071,-27.5732676,152.9733711]},
-      {n:16, par:4, si:3, tee:[-27.5728917,152.9730821], cen:[-27.5720742,152.9769675], pin:null, gbb:[-27.5721912,152.9768355,-27.5719572,152.9770995]},
-      {n:17, par:4, si:9, tee:[-27.5707545,152.9769563], cen:[-27.5677569,152.9761738], pin:null, gbb:[-27.5678742,152.9761025,-27.5676453,152.9762466]},
-      {n:18, par:4, si:6, tee:[-27.5677106,152.9765428], cen:[-27.5704947,152.9776769], pin:null, gbb:[-27.5706117,152.9775449,-27.5703777,152.9778089]},
+      {n:1, par:4, si:7, tee:[-27.5718604,152.977619], tees:{black:[-27.5717987,152.9776047],blue:[-27.5718252,152.9776108],white:[-27.5718604,152.977619]}, cen:[-27.5747589,152.9769608], pin:null, gbb:[-27.5748728,152.9768631,-27.5746431,152.9770551]},
+      {n:2, par:5, si:17, tee:[-27.5748694,152.9775029], tees:{black:[-27.5748678,152.9773507],blue:[-27.5748689,152.9774522],white:[-27.5748694,152.9775029]}, cen:[-27.5764264,152.9812738], pin:null, gbb:[-27.5765434,152.9811418,-27.5763094,152.9814058]},
+      {n:3, par:3, si:14, tee:[-27.5762165,152.9817804], tees:{black:[-27.5763572,152.9819373],blue:[-27.5762805,152.9818517],white:[-27.5762165,152.9817804]}, cen:[-27.5752753,152.9807297], pin:null, gbb:[-27.5753923,152.9805977,-27.5751583,152.9808617]},
+      {n:4, par:4, si:1, tee:[-27.576077,152.9819819], tees:{black:[-27.5762755,152.9821009],blue:[-27.5761961,152.9820533],white:[-27.576077,152.9819819]}, cen:[-27.5728913,152.9807458], pin:null, gbb:[-27.5730083,152.9806138,-27.5727743,152.9808778]},
+      {n:5, par:3, si:11, tee:[-27.5731569,152.9801253], tees:{black:[-27.573298,152.9800588],blue:[-27.5732399,152.9800862],white:[-27.5731569,152.9801253]}, cen:[-27.5719233,152.9807073], pin:null, gbb:[-27.5720403,152.9805753,-27.5718063,152.9808393]},
+      {n:6, par:4, si:13, tee:[-27.5712964,152.9806299], tees:{black:[-27.5712556,152.9807316],blue:[-27.5712742,152.9806854],white:[-27.5712964,152.9806299]}, cen:[-27.5720187,152.9779496], pin:null, gbb:[-27.5721357,152.9778176,-27.5719017,152.9780816]},
+      {n:7, par:3, si:18, tee:[-27.5708,152.9786], tees:{black:[-27.5709259,152.9786],blue:[-27.570863,152.9786],white:[-27.5708,152.9786]}, cen:[-27.5698,152.9786], pin:null, gbb:[-27.569917,152.978468,-27.569683,152.978732]},
+      {n:8, par:4, si:16, tee:[-27.5696189,152.9785671], tees:{black:[-27.5697006,152.9786094],blue:[-27.5696434,152.9785798],white:[-27.5696189,152.9785671]}, cen:[-27.5673907,152.9774134], pin:null, gbb:[-27.5675077,152.9772814,-27.5672737,152.9775454]},
+      {n:9, par:4, si:4, tee:[-27.5673917,152.9766914], tees:{black:[-27.5672336,152.9765573],blue:[-27.5672695,152.9765877],white:[-27.5673917,152.9766914]}, cen:[-27.5702702,152.9781038], pin:null, gbb:[-27.5703872,152.9779718,-27.5701532,152.9782358]},
+      {n:10, par:4, si:10, tee:[-27.5718925,152.9774236], tees:{black:[-27.5718076,152.9774572],blue:[-27.5718501,152.9774404],white:[-27.5718925,152.9774236]}, cen:[-27.5745547,152.9760202], pin:null, gbb:[-27.5746717,152.9758882,-27.5744377,152.9761522]},
+      {n:11, par:5, si:15, tee:[-27.574934,152.9763851], tees:{black:[-27.5747905,152.9761394],blue:[-27.5748598,152.976258],white:[-27.574934,152.9763851]}, cen:[-27.5764419,152.9802583], pin:null, gbb:[-27.5765589,152.9801263,-27.5763249,152.9803903]},
+      {n:12, par:5, si:8, tee:[-27.576773,152.9787513], tees:{black:[-27.5768582,152.9790508],blue:[-27.5768307,152.9789542],white:[-27.576773,152.9787513]}, cen:[-27.5770262,152.9745306], pin:null, gbb:[-27.5771432,152.9743986,-27.5769092,152.9746626]},
+      {n:13, par:3, si:5, tee:[-27.5770965,152.9741709], tees:{black:[-27.5772133,152.9741758],blue:[-27.5771594,152.9741735],white:[-27.5770965,152.9741709]}, cen:[-27.575315,152.9740969], pin:null, gbb:[-27.575432,152.9739649,-27.575198,152.9742289]},
+      {n:14, par:4, si:12, tee:[-27.5749053,152.9738889], tees:{black:[-27.5750559,152.9735203],blue:[-27.5750333,152.9735756],white:[-27.5749053,152.9738889]}, cen:[-27.5732277,152.9762475], pin:null, gbb:[-27.5733447,152.9761155,-27.5731107,152.9763795]},
+      {n:15, par:4, si:2, tee:[-27.572535,152.9768248], tees:{black:[-27.5724644,152.9769778],blue:[-27.5724935,152.9769148],white:[-27.572535,152.9768248]}, cen:[-27.5733846,152.9732391], pin:null, gbb:[-27.5735016,152.9731071,-27.5732676,152.9733711]},
+      {n:16, par:4, si:3, tee:[-27.5728917,152.9730821], tees:{black:[-27.5729068,152.9728799],blue:[-27.5728993,152.972981],white:[-27.5728917,152.9730821]}, cen:[-27.5720742,152.9769675], pin:null, gbb:[-27.5721912,152.9768355,-27.5719572,152.9770995]},
+      {n:17, par:4, si:9, tee:[-27.5707545,152.9769563], tees:{black:[-27.570877,152.9769889],blue:[-27.5708245,152.9769749],white:[-27.5707545,152.9769563]}, cen:[-27.5677569,152.9761738], pin:null, gbb:[-27.5678742,152.9761025,-27.5676453,152.9762466]},
+      {n:18, par:4, si:6, tee:[-27.5677106,152.9765428], tees:{black:[-27.5675033,152.9764447],blue:[-27.5676857,152.976531],white:[-27.5677106,152.9765428]}, cen:[-27.5704947,152.9776769], pin:null, gbb:[-27.5706117,152.9775449,-27.5703777,152.9778089]},
     ],
   },
 };
@@ -6669,7 +6671,7 @@ function openPlay(courseName, layoutKey){
   playS={ slug:activeSlug, course:active, parentSlug:(L?slug:null), parentName:(L?course.name:null), layoutKey:(L?L.key:null),
           hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
-          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), teePos:(draft.teePos||{}),
+          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), teePos:(draft.teePos||{}), teeSel:(draft.teeSel||active.defaultTee||null),
           scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
           startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
@@ -6727,6 +6729,15 @@ function playSetTab(t){ if(!playS)return; playS.tab=t; playRender(); }
 function playSetHole(n){ if(!playS)return; const N=playS.course.holesN; playS.hole=Math.max(1,Math.min(N,n)); playS.nineView=playS.hole<=9?1:2; playS.measure=null; playS.manualAt=Date.now(); playRender(); }
 function playSetNine(v){ if(!playS)return; playS.nineView=v; playRender(); }   // just flips which nine's holes show
 function playToggleUnits(){ if(!playS)return; playS.units=playS.units==='yd'?'m':'yd'; localStorage.setItem('gf_units',playS.units); playRender(); }
+// Multi-tee: a persistent per-round tee choice (stays across all 18 holes). Only courses with a
+// teeSets:[{key,name,cr,slope}] list + per-hole tees:{} render the selector; others are unaffected.
+const TEE_DOT={black:'#1c1c1c',blue:'#3b6fd4',white:'#eaeaea',gold:'#d6b13a',yellow:'#e3c200',red:'#d6453b',green:'#2f9e54',silver:'#b9c0c7',orange:'#e08a2b'};
+function playTeeSelHtml(){ const c=playS&&playS.course; if(!c||!c.teeSets||c.teeSets.length<2) return '';
+  const sel=playS.teeSel||c.defaultTee||c.teeSets[0].key, t=c.teeSets.find(x=>x.key===sel)||c.teeSets[0];
+  return `<button class="play-teesel" onclick="playCycleTee()" aria-label="Tee: ${t.name}. Tap to change tee for the whole round." title="Playing the ${t.name} tees — tap to cycle (whole round, all 18 holes)"><span class="tee-dot" style="background:${TEE_DOT[t.key]||'#888'}"></span>${t.name}</button>`; }
+function playCycleTee(){ const c=playS&&playS.course; if(!c||!c.teeSets||c.teeSets.length<2) return;
+  const keys=c.teeSets.map(x=>x.key), cur=playS.teeSel||c.defaultTee||keys[0];
+  playS.teeSel=keys[(keys.indexOf(cur)+1)%keys.length]; playPersistDraft(); playRender(); }
 
 // ── score steppers ──
 // Putts can never exceed (gross − 1): you always need ≥1 stroke to reach the green
@@ -6739,7 +6750,7 @@ function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playP
 function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; const cap=Math.max(0,sc-1);
   let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
   playS.putts[n]=v; playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,teePos:playS.teePos,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,teePos:playS.teePos,teeSel:playS.teeSel,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -6756,7 +6767,7 @@ function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix ye
   playPersistDraft(); playRender(); }
 function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop(); const c=playS.shotClubs[playS.hole]; if(c)c.pop(); playPersistDraft(); playRender(); } }
 // Effective tee for a hole: a GPS "Set tee" override for this round, else the baked tee.
-function _effTee(h){ return (playS.teePos&&playS.teePos[h.n])||h.tee; }
+function _effTee(h){ if(playS.teePos&&playS.teePos[h.n]) return playS.teePos[h.n]; const s=playS.teeSel; if(s&&h.tees&&h.tees[s]) return h.tees[s]; return h.tee; }
 function playShotLegs(h){ // legs from the (effective) tee through each mark, plus a live leg to current pos
   const marks=playS.shots[h.n]||[], chain=[_effTee(h),...marks], legs=[];
   for(let i=1;i<chain.length;i++) legs.push({from:chain[i-1],to:chain[i],d:_distM(chain[i-1],chain[i]),tee:i===1});
@@ -6843,10 +6854,14 @@ function setHcpIndex(v){
 }
 function courseHandicap(idx,course){
   if(idx==null||!course) return null;
+  // Per-tee rating when a tee is selected (multi-tee courses); else the course default.
+  let cCr=course.cr, cSlope=course.slope;
+  const sel=(typeof playS!=='undefined'&&playS&&playS.teeSel);
+  if(sel&&course.teeSets){ const t=course.teeSets.find(x=>x.key===sel); if(t){ if(t.cr!=null)cCr=t.cr; if(t.slope!=null)cSlope=t.slope; } }
   // Unrated courses (no official CR/Slope) still give net scoring off the entered handicap:
   // neutral slope (113) + neutral rating (= par) collapse the WHS formula to ~the index itself.
-  const slope=course.slope!=null?course.slope:113;
-  const cr=course.cr!=null?course.cr:course.par;
+  const slope=cSlope!=null?cSlope:113;
+  const cr=cCr!=null?cCr:course.par;
   return Math.round(idx*(slope/113)+(cr-course.par));
 }
 // Effective stroke index for allocation: the official si when the course has one, else a
@@ -7209,13 +7224,13 @@ function playTabHtml(){
   const pips=playS.course.holes.filter(x=>x.n>=lo&&x.n<=hi).map(x=>{ const s=playS.scores[x.n]; const cls=x.n===playS.hole?'on':(s!=null?'done':''); return `<button class="play-pip ${cls}" onclick="playSetHole(${x.n})" aria-label="Hole ${x.n}">${x.n}</button>`; }).join('');
   const nineBar=`<div class="play-ninebar" role="tablist" aria-label="Choose nine"><button class="play-nine${view===1?' on':''}" onclick="playSetNine(1)">Front 9</button><button class="play-nine${view===2?' on':''}" onclick="playSetNine(2)">Back 9</button></div>`;
   const puts=playS.putts[h.n];
-  const teeSet=playS.teePos&&playS.teePos[h.n], lenDisp=teeSet?_distM(teeSet,tg.cen):tg.len;
+  const teeSet=playS.teePos&&playS.teePos[h.n], lenDisp=tg.len;
   return `
     ${nineBar}
     <div class="play-pips">${pips}</div>
     <div class="play-holehdr">
       <button class="play-nav" onclick="playSetHole(${playS.hole-1})" ${playS.hole<=1?'disabled':''} aria-label="Previous hole">‹</button>
-      <div class="play-holemeta"><div class="play-holeno">Hole ${h.n}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(lenDisp)} ${u}${teeSet?' · <span class="play-yourtee">your tee</span>':''}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button></div></div>
+      <div class="play-holemeta"><div class="play-holeno">Hole ${h.n}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(lenDisp)} ${u}${teeSet?' · <span class="play-yourtee">your tee</span>':''}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button>${playTeeSelHtml()}</div></div>
       <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
     </div>
     <div id="play-range">${playRangeHtml()}</div>
@@ -7436,7 +7451,8 @@ function _destPoint(a,brgDeg,distM){
 // `len` is the hole length along the play corridor (follows doglegs), tee -> green
 // centre, from the baked centreline; falls back to straight-line.
 function holeTargets(h){
-  const brg=_bearingDeg(h.tee,h.cen), th=brg*Math.PI/180;
+  const tee=(typeof playS!=='undefined'&&playS)?_effTee(h):h.tee;   // selected/GPS tee drives length+bearing
+  const brg=_bearingDeg(tee,h.cen), th=brg*Math.PI/180;
   let front,back,depth;
   const geom=(typeof playS!=='undefined'&&playS&&COURSE_GEOM[playS.slug])||null;
   let g=null,bd=Infinity;
@@ -7458,17 +7474,17 @@ function holeTargets(h){
     front=_destPoint(h.cen,(brg+180)%360,half); back=_destPoint(h.cen,brg,half);
   }
   // hole length along the play corridor (dogleg-aware), tee -> green centre
-  let len=_distM(h.tee,h.cen);
+  let len=_distM(tee,h.cen);
   const cl=geom&&geom.lines&&geom.lines[h.n];
   if(cl&&cl.length>=2){
     let line=cl.slice();
     if(_distM(line[0],h.cen)<_distM(line[line.length-1],h.cen)) line.reverse();   // orient tee->green
-    if(_distM(h.tee,line[0])<20&&_distM(line[line.length-1],h.cen)<20){           // only if it spans tee..green
-      let d=_distM(h.tee,line[0]); for(let i=1;i<line.length;i++) d+=_distM(line[i-1],line[i]); d+=_distM(line[line.length-1],h.cen);
+    if(_distM(tee,line[0])<20&&_distM(line[line.length-1],h.cen)<20){           // only if it spans tee..green
+      let d=_distM(tee,line[0]); for(let i=1;i<line.length;i++) d+=_distM(line[i-1],line[i]); d+=_distM(line[line.length-1],h.cen);
       len=d;
     }
   }
-  return {tee:h.tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len};
+  return {tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len};
 }
 
 // intermediate data -> SVG string (full detail)
