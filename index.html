@@ -7152,11 +7152,17 @@ function playHoleSvg(){
     // punchy-comic cell shading: each owned surface gets flat tones + a texture pass + an ink edge.
     // Neighbours stay faded-flat for context. Drawn once here ⇒ every hole/course inherits the look.
     const fill={fairway:'#3a8a2c',water:'#1d6fb8',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26'};
+    // this hole's own footprint (fairway/green/tee) → cull any NEIGHBOUR feature that overlaps it
+    // (the "directly underneath the current hole" bleed); distant neighbours stay as faint edge context.
+    let core=null;
+    for(const f of geom.features){ if(f._own===h.n && (f.t==='fairway'||f.t==='green'||f.t==='tee') && inFrame(f.pts)){
+      const b=featBox(f.pts); core=core?{x0:Math.min(core.x0,b.x0),y0:Math.min(core.y0,b.y0),x1:Math.max(core.x1,b.x1),y1:Math.max(core.y1,b.y1)}:b; } }
+    const overlapsCore=b=> !!core && b.x1>core.x0 && b.x0<core.x1 && b.y1>core.y0 && b.y0<core.y1;
     let ci=0;
     for(const layer of ['fairway','water','bunker','green','tee']){
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const d=path(f.pts);
-        if(f._own!==h.n){ s+=`<path d="${d}Z" fill="${fill[layer]}" opacity="0.3"/>`; continue; }  // neighbours fade flat
+        if(f._own!==h.n){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; s+=`<path d="${d}Z" fill="${fill[layer]}" opacity="0.18"/>`; continue; }  // neighbours: faint, and hidden where they'd sit under this hole
         const bb=featBox(f.pts), cid='pmc'+(ci++);
         if(layer==='fairway'){                              // base + subtle lengthwise (up-the-hole) mow stripes + shaded rough edge + ink
           defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
