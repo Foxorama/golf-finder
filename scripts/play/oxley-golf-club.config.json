@@ -1,0 +1,33 @@
+{
+  "name": "Oxley Golf Club",
+  "slug": "oxley-golf-club",
+  "course": {
+    "par": 71, "cr": 70, "slope": 113, "defaultTee": "white",
+    "teeSets": [
+      { "key": "black", "name": "Black", "cr": 72, "slope": 113 },
+      { "key": "blue", "name": "Blue", "cr": 71, "slope": 113 },
+      { "key": "white", "name": "White", "cr": 70, "slope": 113 }
+    ]
+  },
+  "options": { "traceFairways": true, "greenOvalM": 26 },
+  "holes": [
+    { "n": 1, "par": 4, "si": 7, "way": 1050483192, "greenEnd": "b", "tees": { "black": 350, "blue": 347, "white": 343 } },
+    { "n": 2, "par": 5, "si": 17, "way": 1050483195, "greenEnd": "b", "tees": { "black": 453, "blue": 443, "white": 438 } },
+    { "n": 3, "par": 3, "si": 14, "way": 1050483196, "greenEnd": "b", "tees": { "black": 175, "blue": 163, "white": 153 } },
+    { "n": 4, "par": 4, "si": 1, "way": 1050483199, "greenEnd": "b", "tees": { "black": 390, "blue": 380, "white": 365 } },
+    { "n": 5, "par": 3, "si": 11, "way": 1050483197, "greenEnd": "b", "tees": { "black": 161, "blue": 154, "white": 144 } },
+    { "n": 6, "par": 4, "si": 13, "way": 1050483198, "greenEnd": "b", "tees": { "black": 295, "blue": 290, "white": 284 } },
+    { "n": 7, "par": 3, "si": 18, "green": [-27.5698, 152.9786], "tee": [-27.5708, 152.9786], "tees": { "black": 130, "blue": 123, "white": 116 } },
+    { "n": 8, "par": 4, "si": 16, "way": 1050483204, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "black": 291, "blue": 284, "white": 281 } },
+    { "n": 9, "par": 4, "si": 4, "way": 1050483203, "greenEnd": "b", "tees": { "black": 378, "blue": 373, "white": 356 } },
+    { "n": 10, "par": 4, "si": 10, "way": 1050483191, "greenEnd": "b", "tees": { "black": 336, "blue": 331, "white": 326 } },
+    { "n": 11, "par": 5, "si": 15, "way": 1050483189, "greenEnd": "b", "tees": { "black": 463, "blue": 449, "white": 434 } },
+    { "n": 12, "par": 5, "si": 8, "way": 1050483194, "greenEnd": "b", "tees": { "black": 551, "blue": 541, "white": 520 } },
+    { "n": 13, "par": 3, "si": 5, "way": 1050483193, "greenEnd": "b", "tees": { "black": 208, "blue": 202, "white": 195 } },
+    { "n": 14, "par": 4, "si": 12, "way": 1050483200, "greenEnd": "b", "tees": { "black": 355, "blue": 349, "white": 315 } },
+    { "n": 15, "par": 4, "si": 2, "way": 1050483201, "greenEnd": "b", "tees": { "black": 397, "blue": 390, "white": 380 } },
+    { "n": 16, "par": 4, "si": 3, "way": 1050483202, "greenEnd": "b", "tees": { "black": 410, "blue": 400, "white": 390 } },
+    { "n": 17, "par": 4, "si": 9, "way": 1050483190, "greenEnd": "b", "tees": { "black": 354, "blue": 348, "white": 340 } },
+    { "n": 18, "par": 4, "si": 6, "way": 1050483205, "greenEnd": "b", "tees": { "black": 365, "blue": 343, "white": 340 } }
+  ]
+}
