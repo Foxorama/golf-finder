@@ -7119,23 +7119,64 @@ function playHoleSvg(){
   const path=ps=>{ let d=''; for(let i=0;i<ps.length;i++){ const q=P(ps[i][0],ps[i][1]); d+=(i?'L':'M')+q.x.toFixed(1)+' '+q.y.toFixed(1); } return d; };
   const inFrame=ps=>{ for(const p of ps){ const [a,b]=uv(p[0],p[1]); if(a>=uMin-10&&a<=uMax+10&&b>=vMin-10&&b<=vMax+10) return true; } return false; };
 
-  let s=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="#1b3614"/>`;
+  // comic cell-shade helpers: screen-space bbox of a feature, and an offset path (for soft shadows)
+  const featBox=ps=>{ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9; for(const p of ps){ const q=P(p[0],p[1]); if(q.x<x0)x0=q.x; if(q.x>x1)x1=q.x; if(q.y<y0)y0=q.y; if(q.y>y1)y1=q.y; } return {x0,y0,x1,y1}; };
+  const pathOff=(ps,dx,dy)=>{ let d=''; for(let i=0;i<ps.length;i++){ const q=P(ps[i][0],ps[i][1]); d+=(i?'L':'M')+(q.x+dx).toFixed(1)+' '+(q.y+dy).toFixed(1); } return d; };
+  let defs='';
+  let s=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="#163009"/>`;
   if(geom&&geom.features){
     _featOwner(geom);
-    const fill={fairway:'#3f7e2c',water:'#1d5fa0',bunker:'#e4d2a0',green:'#83d94f',tee:'#3b7a26'};
+    // punchy-comic cell shading: each owned surface gets flat tones + a texture pass + an ink edge.
+    // Neighbours stay faded-flat for context. Drawn once here ⇒ every hole/course inherits the look.
+    const fill={fairway:'#3a8a2c',water:'#1d6fb8',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26'};
+    let ci=0;
     for(const layer of ['fairway','water','bunker','green','tee']){
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
-        const own=f._own===h.n;                         // current hole pops; neighbours fade
-        const edge=own?(layer==='green'?'#2d5a1b':layer==='water'?'#2f7bc4':layer==='bunker'?'#cdb37a':'none'):'none';
-        const op=own?(layer==='fairway'?0.96:1):0.3;
-        s+=`<path d="${path(f.pts)}Z" fill="${fill[layer]}" stroke="${edge}" stroke-width="${layer==='green'?1.2:layer==='bunker'?0.8:0.6}" opacity="${op}"/>`;
-        if(own&&layer==='fairway') s+=`<path d="${path(f.pts)}Z" fill="none" stroke="#5aa83a" stroke-width="1" opacity="0.5"/>`;
+        const d=path(f.pts);
+        if(f._own!==h.n){ s+=`<path d="${d}Z" fill="${fill[layer]}" opacity="0.3"/>`; continue; }  // neighbours fade flat
+        const bb=featBox(f.pts), cid='pmc'+(ci++);
+        if(layer==='fairway'){                              // base + subtle lengthwise (up-the-hole) mow stripes + shaded rough edge + ink
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="${fill.fairway}"/>`;
+          let st=`<g clip-path="url(#${cid})">`;
+          for(let x=bb.x0;x<bb.x1;x+=18) st+=`<rect x="${x.toFixed(1)}" y="${bb.y0.toFixed(1)}" width="9" height="${(bb.y1-bb.y0).toFixed(1)}" fill="#46a032" opacity="0.22"/>`;
+          s+=st+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#2c6b1d" stroke-width="5" opacity="0.28"/>`;
+          s+=`<path d="${d}Z" fill="none" stroke="#5fb53a" stroke-width="0.8" opacity="0.4"/>`;
+          s+=`<path d="${d}Z" fill="none" stroke="#1c4d12" stroke-width="1.4"/>`;
+        } else if(layer==='water'){                         // base + curved crest/trough ripples + ink
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="${fill.water}"/>`;
+          const w=Math.max(8,bb.x1-bb.x0); let rp=`<g clip-path="url(#${cid})">`;
+          for(let i=0,y=bb.y0+6;y<bb.y1;y+=11,i++){ const c=(i%2)?'#9ccef2':'#b3d9f6';
+            rp+=`<path d="M${bb.x0.toFixed(1)} ${y.toFixed(1)} q${(w*0.25).toFixed(1)} -4 ${(w*0.5).toFixed(1)} 0 t${(w*0.5).toFixed(1)} 0" fill="none" stroke="${c}" stroke-width="1.3" opacity="0.5" stroke-linecap="round"/>`; }
+          s+=rp+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#0a3a66" stroke-width="1.7"/>`;
+        } else if(layer==='bunker'){                        // sand + soft bottom shadow + halftone stipple + ink
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="${fill.bunker}"/>`;
+          let bk=`<g clip-path="url(#${cid})"><path d="${pathOff(f.pts,0,3)}Z" fill="#dcc28e" opacity="0.55"/>`;
+          for(let y=bb.y0+4;y<bb.y1;y+=7) for(let x=bb.x0+4;x<bb.x1;x+=8) bk+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.1" fill="#cdb37a" opacity="0.7"/>`;
+          s+=bk+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#6e5a2e" stroke-width="1.6"/>`;
+        } else if(layer==='green'){                         // lighter collar/fringe ring (thick stroke) defines the edge, then green + mow + ink
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="#6aa844" stroke="#6aa844" stroke-width="8" stroke-linejoin="round"/>`;
+          s+=`<path d="${d}Z" fill="${fill.green}"/>`;
+          let gm=`<g clip-path="url(#${cid})">`;
+          for(let y=bb.y0+3;y<bb.y1;y+=8) gm+=`<rect x="${bb.x0.toFixed(1)}" y="${y.toFixed(1)}" width="${(bb.x1-bb.x0).toFixed(1)}" height="4" fill="#5ebb33" opacity="0.4"/>`;
+          s+=gm+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#214a10" stroke-width="1.6" stroke-linejoin="round"/>`;
+        } else {                                            // tee
+          s+=`<path d="${d}Z" fill="${fill.tee}" stroke="#1c4d12" stroke-width="1.1"/>`;
+        }
       }
     }
   } else {
     const T0=P(tee[0],tee[1]),C0=P(cen[0],cen[1]);
-    s+=`<line x1="${T0.x.toFixed(1)}" y1="${T0.y.toFixed(1)}" x2="${C0.x.toFixed(1)}" y2="${C0.y.toFixed(1)}" stroke="#3f7e2c" stroke-width="22" stroke-linecap="round" opacity="0.85"/>`;
-    s+=`<circle cx="${C0.x.toFixed(1)}" cy="${C0.y.toFixed(1)}" r="13" fill="#83d94f" stroke="#2d5a1b" stroke-width="1.3"/>`;
+    s+=`<line x1="${T0.x.toFixed(1)}" y1="${T0.y.toFixed(1)}" x2="${C0.x.toFixed(1)}" y2="${C0.y.toFixed(1)}" stroke="#1c4d12" stroke-width="24" stroke-linecap="round"/>`;
+    s+=`<line x1="${T0.x.toFixed(1)}" y1="${T0.y.toFixed(1)}" x2="${C0.x.toFixed(1)}" y2="${C0.y.toFixed(1)}" stroke="#3a8a2c" stroke-width="20" stroke-linecap="round"/>`;
+    s+=`<circle cx="${C0.x.toFixed(1)}" cy="${C0.y.toFixed(1)}" r="15" fill="#6aa844"/><circle cx="${C0.x.toFixed(1)}" cy="${C0.y.toFixed(1)}" r="11" fill="#54ab2c" stroke="#214a10" stroke-width="1.4"/>`;
   }
   // faint centre guide line
   s+=`<path d="${path(line)}" fill="none" stroke="#dfeccd" stroke-width="1.1" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.4"/>`;
@@ -7185,25 +7226,31 @@ function playHoleSvg(){
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
   window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+16}};
-  if(wv) s+=`<circle cx="${wcx}" cy="${wcy}" r="${(R+5+str*10).toFixed(1)}" fill="${wcol}" opacity="${(0.12+str*0.32).toFixed(2)}"/>`;  // strength glow
-  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+3}" fill="rgba(4,10,7,0.78)"/><circle cx="${wcx}" cy="${wcy}" r="${R}" fill="rgba(7,16,24,0.95)" stroke="${wcol}" stroke-width="${(1.6+str*2.2).toFixed(1)}"/>`;
-  // north tick + label (neutral, so it doesn't clash with the red headwind colour)
-  const thN=(-brgDeg)*Math.PI/180, nx=Math.sin(thN), ny=-Math.cos(thN);
-  s+=`<line x1="${(wcx+nx*(R-7)).toFixed(1)}" y1="${(wcy+ny*(R-7)).toFixed(1)}" x2="${(wcx+nx*R).toFixed(1)}" y2="${(wcy+ny*R).toFixed(1)}" stroke="#e8eef5" stroke-width="1.8"/><text x="${(wcx+nx*(R-13)).toFixed(1)}" y="${(wcy+ny*(R-13)+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" font-weight="bold" fill="#e8eef5">N</text>`;
+  // slim graduated bezel (replaces the old chunky glow dial)
+  if(wv) s+=`<circle cx="${wcx}" cy="${wcy}" r="${(R+3+str*7).toFixed(1)}" fill="${wcol}" opacity="${(0.06+str*0.16).toFixed(2)}"/>`;  // soft strength halo
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+2}" fill="rgba(4,10,7,0.55)"/>`;
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R}" fill="#0b1712" stroke="#33454f" stroke-width="1.4"/>`;
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R-5}" fill="#0e2230"/>`;
+  // cardinal graduation ticks oriented to TRUE north relative to the play line; N highlighted
+  for(const bC of [0,90,180,270]){ const a=(-brgDeg+bC)*Math.PI/180, ux=Math.sin(a), uy=-Math.cos(a), isN=bC===0;
+    s+=`<line x1="${(wcx+ux*(R-5)).toFixed(1)}" y1="${(wcy+uy*(R-5)).toFixed(1)}" x2="${(wcx+ux*(R-1)).toFixed(1)}" y2="${(wcy+uy*(R-1)).toFixed(1)}" stroke="${isN?'#e8eef5':'#5a6b78'}" stroke-width="${isN?1.8:1.1}"/>`; }
+  { const a=(-brgDeg)*Math.PI/180, ux=Math.sin(a), uy=-Math.cos(a);
+    s+=`<text x="${(wcx+ux*(R-11)).toFixed(1)}" y="${(wcy+uy*(R-11)+3).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#9fb0bd">N</text>`; }
   if(wv){
-    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=5.2+str*3, al=8.5+str*4;
-    const tailX=wcx-dx*R*0.7, tailY=wcy-dy*R*0.7, headX=wcx+dx*R*0.86, headY=wcy+dy*R*0.86;
-    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3.4+str*3.6).toFixed(1)}" stroke-linecap="round"/>`;
+    // teal/amber/red arrow points where the wind BLOWS TO (wv.d): up = downwind/helping toward the green
+    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=4.4+str*3, al=8+str*4;
+    const tailX=wcx-dx*(R-13), tailY=wcy-dy*(R-13), headX=wcx+dx*(R-6), headY=wcy+dy*(R-6);
+    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3+str*3).toFixed(1)}" stroke-linecap="round"/>`;
     s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/>`;
-    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.4" fill="#07111a" stroke="${wcol}" stroke-width="1"/>`;
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.6" fill="#0e2230" stroke="${wcol}" stroke-width="1.1"/>`;
     const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
-    s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11.5" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
+    s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
     s+=`<text x="${wcx}" y="${(wcy+R+24).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#cfe0ee">from ${compass16(wind.dir)}</text>`;
   } else {
-    s+=`<text x="${wcx}" y="${(wcy+4).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
+    s+=`<text x="${wcx}" y="${(wcy+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
   }
   const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass top-right.`;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:86vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${s}</svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:86vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${defs?'<defs>'+defs+'</defs>':''}${s}</svg>`;
 }
 
 function playShotLiveHtml(){
@@ -7510,16 +7557,20 @@ function renderCourseMapSVG(data){
   const gw=Math.max(1e-9,(lngMax-lngMin)*k), gh=Math.max(1e-9,(latMax-latMin));
   const H=Math.max(360,Math.min(1200,Math.round((W-2*pad)*(gh/gw))+2*pad));
   const proj=projectGeo(data.bbox,W,H,pad);
-  const fill={rough:'#2f5a24',fairway:'#4f9434',green:'#86d84f',bunker:'#ddc89a',water_hazard:'#1a4a8a',driving_range:'#3d7a25'};
+  // comic palette + ink edges, collar greens — same look as the on-course hole map, course-wide
+  const fill={rough:'#2a5520',fairway:'#3a8a2c',green:'#54ab2c',bunker:'#ecd9a6',water_hazard:'#1d6fb8',driving_range:'#357f25'};
   const order=['rough','driving_range','water_hazard','fairway','bunker'];
-  let b=`<rect width="${W}" height="${H}" fill="#16300f"/>`;
+  let b=`<rect width="${W}" height="${H}" fill="#163009"/>`;
   for(const layer of order) for(const f of data.features){ if(f.t!==layer||f.pts.length<2) continue;
-    b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="${fill[layer]}" stroke="#16300f" stroke-width="0.5" opacity="${layer==='rough'?0.92:1}"/>`; }
-  for(const f of data.features){ if(f.t!=='fairway'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="none" stroke="#a8e063" stroke-width="1.5" opacity="0.55"/>`; }
-  for(const f of data.features){ if(f.t==='bunker'&&f.pts.length===1){ const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#ddc89a"/>`; } }
+    const ink=layer==='water_hazard'?'#0a3a66':layer==='bunker'?'#6e5a2e':layer==='fairway'?'#1c4d12':'#163009';
+    b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="${fill[layer]}" stroke="${ink}" stroke-width="${layer==='rough'?0.5:1.4}" stroke-linejoin="round" opacity="${layer==='rough'?0.92:1}"/>`; }
+  for(const f of data.features){ if(f.t!=='fairway'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="none" stroke="#5fb53a" stroke-width="1.2" opacity="0.45"/>`; }
+  for(const f of data.features){ if(f.t==='bunker'&&f.pts.length===1){ const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="4" fill="#ecd9a6" stroke="#6e5a2e" stroke-width="1"/>`; } }
   for(const f of data.features){ if(f.t!=='cartpath'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}" fill="none" stroke="#e8e2d2" stroke-width="1.4" opacity="0.4"/>`; }
-  for(const f of data.features){ if(f.t!=='green'||f.pts.length<2) continue; b+=`<path d="${ptsToPath(f.pts,proj)}Z" fill="#86d84f" stroke="#2d5a1b" stroke-width="0.6"/>`; }
-  for(const f of data.features){ if(f.t!=='tee') continue; const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.5" fill="#7ed44f"/>`; }
+  for(const f of data.features){ if(f.t!=='green'||f.pts.length<2) continue; const gp=ptsToPath(f.pts,proj);
+    b+=`<path d="${gp}Z" fill="#6aa844" stroke="#6aa844" stroke-width="9" stroke-linejoin="round"/>`;
+    b+=`<path d="${gp}Z" fill="#54ab2c" stroke="#214a10" stroke-width="1.2" stroke-linejoin="round"/>`; }
+  for(const f of data.features){ if(f.t!=='tee') continue; const p=proj(f.pts[0][0],f.pts[0][1]); b+=`<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="3.8" fill="#cfe8b0" stroke="#214a10" stroke-width="1"/>`; }
   const greenC=data.features.filter(f=>f.t==='green'&&f.pts.length).map(f=>_centroid(f.pts));
   for(const h of data.holes){
     let line=h.pts;
@@ -7543,7 +7594,7 @@ function renderCourseMapSVG(data){
     if(h.par) b+=`<text x="${p.x.toFixed(1)}" y="${(p.y+26).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" fill="#cfe8b0">par ${h.par}</text>`;
   }
   b+=`<rect x="0" y="${H-22}" width="${W}" height="22" fill="rgba(0,0,0,0.45)"/><text x="${W-8}" y="${H-7}" text-anchor="end" font-family="sans-serif" font-size="11" fill="#9fc98a">© OpenStreetMap contributors</text>`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;border-radius:8px;background:#16300f;">${b}</svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}" style="width:100%;display:block;border-radius:8px;background:#163009;">${b}</svg>`;
 }
 
 function mapFallback(c,err){
