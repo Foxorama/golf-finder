@@ -1,4 +1,2 @@
-# Device-private on-course Play data for courses not in OpenStreetMap.
-# Third-party-sourced geometry that must NOT be published — it lives only in the
-# owner's browser localStorage (imported via the app's #importplay screen).
+# Local-only override files (e.g. .claude/settings.local.json) — never committed.
 *.local.json
