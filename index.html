@@ -1965,7 +1965,7 @@ const COURSE_GEOM = {};
 // Lazy-load a course's hole-map geometry the first time its Play opens, from
 // play-geom/<slug>.json. SW-runtime-cached (same-origin network-first) and NOT in the
 // precache shell, so default users never download it. The hole map degrades to a
-// tee->green line until it arrives; device-local courses are already in COURSE_GEOM.
+// tee->green line until it arrives.
 const _geomPending = {};
 function loadCourseGeom(slug){
   if(!slug || COURSE_GEOM[slug] || _geomPending[slug]) return;
@@ -1977,19 +1977,6 @@ function loadCourseGeom(slug){
     .finally(()=>{ delete _geomPending[slug]; });
 }
 
-// ── Local-only Play data (device-private) ───────────────────────────────────
-// Some courses (e.g. brand-new ones) aren't in OpenStreetMap, so their on-course
-// Play geometry can't be sourced the open way the baked courses above are. Rather
-// than ship third-party-sourced data to everyone, such a course's Play data lives
-// ONLY in this device's localStorage — imported by the owner via #importplay, never
-// committed to the public app. Merged here over the open-data courses.
-(function(){ try{ var j=localStorage.getItem('gf_play_local'); if(!j) return; var d=JSON.parse(j);
-  if(d&&d.play) for(var k in d.play) COURSE_PLAY[k]=d.play[k];
-  if(d&&d.geom) for(var k2 in d.geom) COURSE_GEOM[k2]=d.geom[k2];
-}catch(e){ console.warn('local Play import failed',e); } })();
-window.gfImportPlay=function(t){ try{ JSON.parse(t); localStorage.setItem('gf_play_local',t); location.reload(); }catch(e){ alert('Invalid Play JSON: '+e.message); } };
-window.gfClearPlay=function(){ localStorage.removeItem('gf_play_local'); location.reload(); };
-if(location.hash==='#importplay'){ addEventListener('DOMContentLoaded',function(){ var ov=document.createElement('div'); ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#0b1f0b;color:#cfe8b0;padding:14px;font:13px monospace;display:flex;flex-direction:column;gap:8px'; ov.innerHTML='<div>Paste course Play JSON, then Load:</div><textarea id="_pj" style="flex:1;width:100%;box-sizing:border-box;background:#06140a;color:#cfe8b0;border:1px solid #2d5a1b"></textarea><div><button id="_pl">Load</button> <button id="_px">Cancel</button> <button id="_pc">Clear stored</button></div>'; document.body.appendChild(ov); document.getElementById("_pl").onclick=function(){ gfImportPlay(document.getElementById("_pj").value); }; document.getElementById("_px").onclick=function(){ location.hash=""; ov.remove(); }; document.getElementById("_pc").onclick=function(){ gfClearPlay(); }; }); }
 const PREP   = 20;   // mins to get ready and leave house
 const BUFFER = 15;   // mins buffer before tee time
 const SUNRISE_DEFAULT = 5*60+30;
