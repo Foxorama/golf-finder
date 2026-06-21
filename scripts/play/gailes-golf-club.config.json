@@ -1,0 +1,367 @@
+{
+ "_provenance": [
+  "Greens = surveyed pins (user-dropped in Google Maps, 2026-06-22), survey-grade.",
+  "Numbering/routing from the OFFICIAL course map in the Gailes New Member Package PDF (gitignored), georeferenced to the 3 control greens.",
+  "Tees placed at the official per-tee card distances (Black/Blue/White, gailesgolf.com.au per-hole pages) along each hole line; fairways traced from Esri World Imagery; centrelines straight tee->green so displayed length == card.",
+  "par/SI/CR-Slope are official scorecard facts. No bunkers/water yet (greens+fairways+lengths only)."
+ ],
+ "name": "Gailes Golf Club",
+ "slug": "gailes-golf-club",
+ "course": {
+  "par": 73,
+  "cr": 71,
+  "slope": 127,
+  "defaultTee": "white",
+  "src": "survey pins + course map",
+  "teeSets": [
+   {
+    "key": "black",
+    "name": "Black",
+    "cr": 73,
+    "slope": 127
+   },
+   {
+    "key": "blue",
+    "name": "Blue",
+    "cr": 72,
+    "slope": 127
+   },
+   {
+    "key": "white",
+    "name": "White",
+    "cr": 71,
+    "slope": 127
+   }
+  ]
+ },
+ "options": {
+  "traceFairways": true,
+  "greenOvalM": 28
+ },
+ "holes": [
+  {
+   "n": 1,
+   "par": 5,
+   "si": 15,
+   "green": [
+    -27.605324,
+    152.914081
+   ],
+   "tee": [
+    -27.6029842,
+    152.9179922
+   ],
+   "tees": {
+    "black": 482,
+    "blue": 474,
+    "white": 465
+   }
+  },
+  {
+   "n": 2,
+   "par": 5,
+   "si": 14,
+   "green": [
+    -27.60214,
+    152.91624
+   ],
+   "tee": [
+    -27.6055934,
+    152.9138983
+   ],
+   "tees": {
+    "black": 466,
+    "blue": 454,
+    "white": 448
+   }
+  },
+  {
+   "n": 3,
+   "par": 3,
+   "si": 10,
+   "green": [
+    -27.602993,
+    152.914668
+   ],
+   "tee": [
+    -27.6023027,
+    152.9159402
+   ],
+   "tees": {
+    "black": 176,
+    "blue": 169,
+    "white": 147
+   }
+  },
+  {
+   "n": 4,
+   "par": 4,
+   "si": 18,
+   "green": [
+    -27.601603,
+    152.915361
+   ],
+   "tee": [
+    -27.603495,
+    152.9144177
+   ],
+   "tees": {
+    "black": 238,
+    "blue": 234,
+    "white": 230
+   }
+  },
+  {
+   "n": 5,
+   "par": 4,
+   "si": 6,
+   "green": [
+    -27.598638,
+    152.916463
+   ],
+   "tee": [
+    -27.601696,
+    152.9153264
+   ],
+   "tees": {
+    "black": 370,
+    "blue": 364,
+    "white": 358
+   }
+  },
+  {
+   "n": 6,
+   "par": 3,
+   "si": 8,
+   "green": [
+    -27.60057,
+    152.915284
+   ],
+   "tee": [
+    -27.5992489,
+    152.9160902
+   ],
+   "tees": {
+    "black": 201,
+    "blue": 193,
+    "white": 167
+   }
+  },
+  {
+   "n": 7,
+   "par": 4,
+   "si": 3,
+   "green": [
+    -27.597095,
+    152.915162
+   ],
+   "tee": [
+    -27.6005018,
+    152.9152816
+   ],
+   "tees": {
+    "black": 392,
+    "blue": 385,
+    "white": 379
+   }
+  },
+  {
+   "n": 8,
+   "par": 4,
+   "si": 4,
+   "green": [
+    -27.598625,
+    152.918477
+   ],
+   "tee": [
+    -27.5972126,
+    152.9154169
+   ],
+   "tees": {
+    "black": 358,
+    "blue": 348,
+    "white": 340
+   }
+  },
+  {
+   "n": 9,
+   "par": 5,
+   "si": 12,
+   "green": [
+    -27.603139,
+    152.916574
+   ],
+   "tee": [
+    -27.5989857,
+    152.9183249
+   ],
+   "tees": {
+    "black": 503,
+    "blue": 497,
+    "white": 493
+   }
+  },
+  {
+   "n": 10,
+   "par": 4,
+   "si": 2,
+   "green": [
+    -27.599093,
+    152.919575
+   ],
+   "tee": [
+    -27.6023361,
+    152.9184595
+   ],
+   "tees": {
+    "black": 384,
+    "blue": 380,
+    "white": 377
+   }
+  },
+  {
+   "n": 11,
+   "par": 4,
+   "si": 13,
+   "green": [
+    -27.596202,
+    152.918163
+   ],
+   "tee": [
+    -27.5988183,
+    152.9194408
+   ],
+   "tees": {
+    "black": 329,
+    "blue": 324,
+    "white": 317
+   }
+  },
+  {
+   "n": 12,
+   "par": 3,
+   "si": 11,
+   "green": [
+    -27.597418,
+    152.91807
+   ],
+   "tee": [
+    -27.5963682,
+    152.9181503
+   ],
+   "tees": {
+    "black": 134,
+    "blue": 126,
+    "white": 117
+   }
+  },
+  {
+   "n": 13,
+   "par": 4,
+   "si": 5,
+   "green": [
+    -27.594921,
+    152.917902
+   ],
+   "tee": [
+    -27.5979104,
+    152.9181031
+   ],
+   "tees": {
+    "black": 351,
+    "blue": 345,
+    "white": 333
+   }
+  },
+  {
+   "n": 14,
+   "par": 4,
+   "si": 9,
+   "green": [
+    -27.597151,
+    152.916687
+   ],
+   "tee": [
+    -27.5944299,
+    152.9181696
+   ],
+   "tees": {
+    "black": 343,
+    "blue": 343,
+    "white": 336
+   }
+  },
+  {
+   "n": 15,
+   "par": 4,
+   "si": 1,
+   "green": [
+    -27.593713,
+    152.916648
+   ],
+   "tee": [
+    -27.5972202,
+    152.9166878
+   ],
+   "tees": {
+    "black": 403,
+    "blue": 403,
+    "white": 390
+   }
+  },
+  {
+   "n": 16,
+   "par": 4,
+   "si": 7,
+   "green": [
+    -27.59518,
+    152.919701
+   ],
+   "tee": [
+    -27.5936669,
+    152.916552
+   ],
+   "tees": {
+    "black": 367,
+    "blue": 367,
+    "white": 353
+   }
+  },
+  {
+   "n": 17,
+   "par": 4,
+   "si": 17,
+   "green": [
+    -27.598803,
+    152.919745
+   ],
+   "tee": [
+    -27.5964649,
+    152.9197166
+   ],
+   "tees": {
+    "black": 276,
+    "blue": 268,
+    "white": 260
+   }
+  },
+  {
+   "n": 18,
+   "par": 5,
+   "si": 16,
+   "green": [
+    -27.602841,
+    152.917173
+   ],
+   "tee": [
+    -27.5991288,
+    152.9195375
+   ],
+   "tees": {
+    "black": 481,
+    "blue": 477,
+    "white": 474
+   }
+  }
+ ]
+}

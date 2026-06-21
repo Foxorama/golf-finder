@@ -1,2 +1,10 @@
 # Local-only override files (e.g. .claude/settings.local.json) — never committed.
 *.local.json
+
+# Local course-build source material (member packs, scorecards, maps dropped in to build
+# a Play course) and scratch working files — never committed.
+*.pdf
+scripts/play/g_*.png
+scripts/play/gailes_*.png
+scripts/play/gailes_*.json
+scripts/play/gailes_place.mjs
