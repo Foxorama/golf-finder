@@ -7,24 +7,27 @@
 // Config: see scripts/play/README.md (and oxley-golf-club.config.json for a worked example).
 import fs from 'node:fs';
 import { distM, bearing, dest, centroid, bbox as bboxOf, pointAlong, lineLen, simp, rdp, round6, rad } from './lib-geo.mjs';
-import { traceFairway, traceHoleCorridor } from './imagery.mjs';
+import { traceFairway, traceHoleCorridor, traceBunkers } from './imagery.mjs';
 
 const [, , osmPath, cfgPath] = process.argv;
 if (!osmPath || !cfgPath) { console.error('usage: node gap-fill.mjs <osm.json> <config.json>'); process.exit(1); }
 const osm = JSON.parse(fs.readFileSync(osmPath, 'utf8').replace(/^﻿/, ''));
 const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8').replace(/^﻿/, ''));
 const r7 = v => +v.toFixed(7);
+const perpM = (p, a, b) => { const kx = 111320 * Math.cos(a[0] * rad), Px = (p[1] - a[1]) * kx, Py = (p[0] - a[0]) * 110540, Bx = (b[1] - a[1]) * kx, By = (b[0] - a[0]) * 110540, L = Bx * Bx + By * By; if (!L) return 0; const t = Math.max(0, Math.min(1, (Px * Bx + Py * By) / L)); return Math.hypot(Px - t * Bx, Py - t * By); };
 
-// ---- parse OSM ----
+// ---- parse OSM (golf features + hydrology → water) ----
 const waysById = {}, greens = [], bunkers = [], feats = [];
 const tmap = { green: 'green', bunker: 'bunker', tee: 'tee', water_hazard: 'water', lateral_water_hazard: 'water', fairway: 'fairway' };
+const isHydro = t => t.natural === 'water' || t.water || t.landuse === 'reservoir' || t.landuse === 'basin' || t.waterway === 'riverbank';
 for (const e of osm.elements) {
-  if (e.type !== 'way' || !e.tags || !e.tags.golf) continue;
+  if (e.type !== 'way' || !e.tags) continue;
   const g = e.tags.golf, pts = (e.geometry || []).filter(x => x).map(x => [+x.lat, +x.lon]); if (pts.length < 2) continue;
   if (g === 'hole') { waysById[e.id] = pts; continue; }
   if (g === 'green') { const cen = centroid(pts); greens.push({ cen, bb: bboxOf(pts), pts }); }
   if (g === 'bunker') bunkers.push(centroid(pts));
-  if (tmap[g] && g !== 'hole' && g !== 'green') feats.push({ t: tmap[g], pts: simp(pts) });
+  if (g && tmap[g] && g !== 'hole' && g !== 'green') feats.push({ t: tmap[g], pts: simp(pts) });
+  else if (!g && isHydro(e.tags) && pts.length >= 4) feats.push({ t: 'water', pts: simp(pts) });   // OSM pond/lake/basin → water (when the query fetched it)
 }
 const realGreenNear = pt => { let best = null, bd = 1e9; for (const gr of greens) { const d = distM(pt, gr.cen); if (d < bd) { bd = d; best = gr; } } return bd <= 25 ? best : null; };
 const bunkersNear = (pt, R = 40) => bunkers.reduce((n, b) => n + (distM(pt, b) <= R ? 1 : 0), 0);
@@ -54,7 +57,7 @@ for (const hc of cfg.holes) {
     lines[hc.n] = round6(line);
   } else if (hc.green && hc.tee) {                            // OSM-missing hole, placed by hand
     cen = hc.green.map(r7); tee = hc.tee.map(r7); gbb = ovalGbb(cen); greenSrc = 'placed'; line = [tee, cen]; lines[hc.n] = round6(line); note = ' (no OSM line — placed)';
-    if (cfg.options?.traceFairways) traceJobs.push({ n: hc.n, placed: true, tee, green: cen });   // dogleg centreline + fairway from aerial
+    if (cfg.options?.traceFairways) traceJobs.push({ n: hc.n, placed: true, tee, green: cen, via: hc.via || [] });   // dogleg centreline + fairway from aerial (hc.via = optional dogleg waypoints)
   } else { qa.push(`h${hc.n}: needs "way" or "green"+"tee"`); continue; }
   // per-tee positions: white = tee; others stepped back by the card delta along the play line
   const tees = {};
@@ -79,11 +82,27 @@ for (const h of holes) { const onOsm = greens.some(gr => distM(gr.cen, h.cen) <=
 for (const job of traceJobs) {
   try {
     if (job.placed) {   // OSM-missing hole: trace the dogleg centreline (overrides the straight line) + fairway
-      const r = await traceHoleCorridor(job.tee, job.green);
+      const r = await traceHoleCorridor(job.tee, job.green, { via: job.via || [] });
       if (r.line && r.line.length > 2) lines[job.n] = r.line;
       if (r.fairway) feats.push({ t: 'fairway', pts: r.fairway.pts });
+      let mx = 0; for (const p of lines[job.n]) mx = Math.max(mx, perpM(p, job.tee, job.green));
+      if (mx > 30 && !(job.via && job.via.length)) qa.push(`h${job.n}: corridor drifts ${Math.round(mx)} m off the tee→green axis — if not a real dogleg, add a "via":[[lat,lng]] waypoint`);
     } else { const f = await traceFairway(job.line); if (f) feats.push({ t: 'fairway', pts: f.pts }); else qa.push(`h${job.n}: fairway trace too short`); }
   } catch (e) { qa.push(`h${job.n}: fairway/corridor trace failed (${e.message})`); }
+}
+
+// ---- bunkers from imagery (opt-in via options.traceBunkers; supplements OSM, deduped) ----
+if (cfg.options?.traceBunkers) {
+  let added = 0;
+  for (const h of holes) { const line = lines[h.n]; if (!line || line.length < 2) continue;
+    try { for (const b of await traceBunkers(line)) {
+      if (bunkers.some(o => distM(o, b._c) < 14)) continue;                                    // already an OSM bunker
+      if (feats.some(f => f.t === 'bunker' && f._c && distM(f._c, b._c) < 12)) continue;       // already traced (shared between holes)
+      feats.push({ t: 'bunker', pts: b.pts, _c: b._c }); added++;
+    } } catch (e) { qa.push(`h${h.n}: bunker trace failed (${e.message})`); }
+  }
+  feats.forEach(f => delete f._c);
+  qa.push(`+${added} imagery bunkers (best-effort — eyeball for false positives / grass bunkers won't show)`);
 }
 
 // ---- emit ----
