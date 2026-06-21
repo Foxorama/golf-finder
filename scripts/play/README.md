@@ -13,7 +13,21 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
 | `lib-png.mjs` | minimal pure-Node PNG decoder (8-bit RGB/RGBA/indexed) via `zlib` |
 | `imagery.mjs` | fetch georeferenced **Esri World Imagery** tiles → trace the fairway corridor |
 | `gap-fill.mjs` | **the orchestrator** — OSM + config → `<osm>_built.json` (`{play,geom}`) |
+| `trace-tool.html` | **click-to-place tracer** for *accurate display* — trace features on the aerial by hand |
+| `from-traced.mjs` | merge a hand-traced geometry JSON + a scorecard config → `<traced>_built.json` |
 | `<slug>.config.json` | per-course config (the human-resolved bits). `oxley-golf-club.config.json` is the worked example |
+
+## Two paths — pick by how much accuracy you need
+- **Auto (`gap-fill.mjs`)** — fast, hands-off, **good for distance (±~15 m)**. But auto-detected
+  positions are fuzzy (greens are ovals, fairways follow the grass-corridor, bunkers are best-effort
+  sand blobs, tees are config coords), so the *display* drifts — fine for a rough course, not for
+  pixel placement.
+- **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. Open the tool
+  in a browser, pick a hole + a feature (tee / green / centreline / fairway / bunker / water), and
+  **click it on the georeferenced Esri aerial** (use the club PDF/map open alongside to identify
+  features). Export the geometry JSON, then `node from-traced.mjs <traced.json> <slug>.config.json`
+  merges it with the scorecard (par/SI/per-tee distances/CR) → a built course. Real green polygons
+  give true front/centre/back; clicked tees + bunkers + water land exactly where you put them.
 
 ## Run
 ```
