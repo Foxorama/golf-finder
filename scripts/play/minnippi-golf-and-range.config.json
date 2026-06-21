@@ -1,0 +1,259 @@
+{
+  "_provenance": [
+    "Minnippi is NOT in OSM as a golf course (only a cartpath + ponds), so geometry was triangulated from OPEN data only:",
+    "- greens: centroids traced from Esri World Imagery (mean-shift over the green-turf mask, smoothness-weighted to lock the putting surface). Verified hole-by-hole against the aerial.",
+    "- tees: back-tee boxes traced the same way; per-hole straight tee->green lengths cross-checked against par (all sensible).",
+    "- par/SI: public scorecard facts (front nine odd SIs / back nine even). par 72.",
+    "- cr/slope 73.1/123: public rated (back) tee (golfpass/planetgolf).",
+    "- water: OSM ponds way 611986696 + 668007566 (natural=water), re-tagged golf=lateral_water_hazard for the build input.",
+    "- HOLE 8 green is a flagged estimate: it is tree-framed and could not be pinned as tightly as the others; confirm on-course via the Set-tee tool.",
+    "Build: node scripts/play/gap-fill.mjs <osm-ponds.json> minnippi-golf-and-range.config.json -> bake-play-course.mjs"
+  ],
+  "name": "Minnippi Golf & Range",
+  "slug": "minnippi-golf-and-range",
+  "course": {
+    "par": 72,
+    "cr": 73.1,
+    "slope": 123,
+    "src": "aerial imagery"
+  },
+  "options": {
+    "greenOvalM": 26
+  },
+  "holes": [
+    {
+      "n": 1,
+      "par": 4,
+      "si": 15,
+      "green": [
+        -27.481157,
+        153.105186
+      ],
+      "tee": [
+        -27.478872,
+        153.104216
+      ]
+    },
+    {
+      "n": 2,
+      "par": 4,
+      "si": 7,
+      "green": [
+        -27.485298,
+        153.107035
+      ],
+      "tee": [
+        -27.482182,
+        153.106303
+      ]
+    },
+    {
+      "n": 3,
+      "par": 5,
+      "si": 9,
+      "green": [
+        -27.48149,
+        153.105566
+      ],
+      "tee": [
+        -27.485943,
+        153.106674
+      ]
+    },
+    {
+      "n": 4,
+      "par": 3,
+      "si": 5,
+      "green": [
+        -27.480924,
+        153.103473
+      ],
+      "tee": [
+        -27.481886,
+        153.105044
+      ]
+    },
+    {
+      "n": 5,
+      "par": 4,
+      "si": 1,
+      "green": [
+        -27.483244,
+        153.100915
+      ],
+      "tee": [
+        -27.480409,
+        153.103263
+      ]
+    },
+    {
+      "n": 6,
+      "par": 5,
+      "si": 17,
+      "green": [
+        -27.480038,
+        153.103001
+      ],
+      "tee": [
+        -27.483244,
+        153.100399
+      ]
+    },
+    {
+      "n": 7,
+      "par": 4,
+      "si": 11,
+      "green": [
+        -27.475114,
+        153.100132
+      ],
+      "tee": [
+        -27.477512,
+        153.100387
+      ]
+    },
+    {
+      "n": 8,
+      "par": 4,
+      "si": 3,
+      "green": [
+        -27.476159,
+        153.103345
+      ],
+      "tee": [
+        -27.475055,
+        153.100118
+      ]
+    },
+    {
+      "n": 9,
+      "par": 3,
+      "si": 13,
+      "green": [
+        -27.477852,
+        153.104586
+      ],
+      "tee": [
+        -27.476478,
+        153.104592
+      ]
+    },
+    {
+      "n": 10,
+      "par": 4,
+      "si": 10,
+      "green": [
+        -27.476637,
+        153.108247
+      ],
+      "tee": [
+        -27.478159,
+        153.105251
+      ]
+    },
+    {
+      "n": 11,
+      "par": 3,
+      "si": 8,
+      "green": [
+        -27.478062,
+        153.108809
+      ],
+      "tee": [
+        -27.47741,
+        153.107612
+      ]
+    },
+    {
+      "n": 12,
+      "par": 4,
+      "si": 12,
+      "green": [
+        -27.47832,
+        153.105864
+      ],
+      "tee": [
+        -27.478761,
+        153.109066
+      ]
+    },
+    {
+      "n": 13,
+      "par": 5,
+      "si": 2,
+      "green": [
+        -27.483073,
+        153.107492
+      ],
+      "tee": [
+        -27.479145,
+        153.106366
+      ]
+    },
+    {
+      "n": 14,
+      "par": 3,
+      "si": 16,
+      "green": [
+        -27.484444,
+        153.10882
+      ],
+      "tee": [
+        -27.483361,
+        153.10768
+      ]
+    },
+    {
+      "n": 15,
+      "par": 4,
+      "si": 4,
+      "green": [
+        -27.48572,
+        153.111662
+      ],
+      "tee": [
+        -27.483814,
+        153.1093
+      ]
+    },
+    {
+      "n": 16,
+      "par": 5,
+      "si": 14,
+      "green": [
+        -27.48415,
+        153.107366
+      ],
+      "tee": [
+        -27.486204,
+        153.111719
+      ]
+    },
+    {
+      "n": 17,
+      "par": 4,
+      "si": 18,
+      "green": [
+        -27.480889,
+        153.106908
+      ],
+      "tee": [
+        -27.483609,
+        153.107233
+      ]
+    },
+    {
+      "n": 18,
+      "par": 4,
+      "si": 6,
+      "green": [
+        -27.478701,
+        153.104829
+      ],
+      "tee": [
+        -27.481447,
+        153.106169
+      ]
+    }
+  ]
+}

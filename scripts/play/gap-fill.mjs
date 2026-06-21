@@ -82,7 +82,7 @@ for (const job of traceJobs) {
 
 // ---- emit ----
 const c = cfg.course, parSum = holes.reduce((s, h) => s + h.par, 0);
-const play = { name: cfg.name, par: c.par ?? parSum, holesN: holes.length, ...(c.cr != null ? { cr: c.cr } : {}), ...(c.slope != null ? { slope: c.slope } : {}), ...(c.defaultTee ? { defaultTee: c.defaultTee } : {}), ...(c.teeSets ? { teeSets: c.teeSets } : {}), holes };
+const play = { name: cfg.name, par: c.par ?? parSum, holesN: holes.length, ...(c.cr != null ? { cr: c.cr } : {}), ...(c.slope != null ? { slope: c.slope } : {}), ...(c.defaultTee ? { defaultTee: c.defaultTee } : {}), ...(c.teeSets ? { teeSets: c.teeSets } : {}), ...(c.src != null ? { src: c.src } : {}), holes };
 const out = { play, geom: { features: feats, lines } };
 const outPath = osmPath.replace(/\.json$/, '_built.json');
 fs.writeFileSync(outPath, JSON.stringify(out));

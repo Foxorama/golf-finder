@@ -21,6 +21,7 @@ const holeLines = p.holes.map(h => {
 }).join(EOL);
 // course-level ratings / multi-tee fields, emitted only when the built file carries them
 const hdr = [p.cr != null ? `cr:${p.cr}` : null, p.slope != null ? `slope:${p.slope}` : null,
+  p.src != null ? `src:'${String(p.src).replace(/'/g, "\\'")}'` : null,
   p.defaultTee ? `defaultTee:'${p.defaultTee}'` : null,
   p.teeSets ? `teeSets:[${p.teeSets.map(t => `{key:'${t.key}',name:'${t.name}',cr:${t.cr},slope:${t.slope}}`).join(',')}]` : null].filter(Boolean).join(', ');
 const playEntry =
