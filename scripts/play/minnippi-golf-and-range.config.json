@@ -1,13 +1,12 @@
 {
   "_provenance": [
-    "Minnippi is NOT in OSM as a golf course (only a cartpath + ponds), so geometry was triangulated from OPEN data only:",
-    "- greens: centroids traced from Esri World Imagery (mean-shift over the green-turf mask, smoothness-weighted to lock the putting surface). Verified hole-by-hole against the aerial.",
-    "- tees: back-tee boxes traced the same way; per-hole straight tee->green lengths cross-checked against par (all sensible).",
-    "- par/SI: public scorecard facts (front nine odd SIs / back nine even). par 72.",
-    "- cr/slope 73.1/123: public rated (back) tee (golfpass/planetgolf).",
-    "- water: OSM ponds way 611986696 + 668007566 (natural=water), re-tagged golf=lateral_water_hazard for the build input.",
-    "- HOLE 8 green is a flagged estimate: it is tree-framed and could not be pinned as tightly as the others; confirm on-course via the Set-tee tool.",
-    "Build: node scripts/play/gap-fill.mjs <osm-ponds.json> minnippi-golf-and-range.config.json -> bake-play-course.mjs"
+    "Minnippi is NOT in OSM as a golf course (only a cartpath + ponds). Built from OPEN data only:",
+    "- greens: centroids traced from Esri World Imagery (smoothness-weighted mean-shift on the green-turf mask), verified per-hole. Hole 8 green is a flagged tree-framed estimate.",
+    "- tees: back-tee boxes traced the same way.",
+    "- DOGLEG centrelines + FAIRWAY corridors: traceHoleCorridor (centre-biased shortest path through the grass corridor, then a ribbon) via options.traceFairways. Lengths cross-checked vs par; total ~6121 m ~= 6032 m card.",
+    "- par/SI: public scorecard facts (front nine odd SIs / back nine even). par 72. cr/slope 73.1/123 (public back tee).",
+    "- water: OSM ponds 611986696 + 668007566, Bulimba Creek 799506477 + 799523110, stormwater basin 845575904 (re-tagged golf=lateral_water_hazard for the build).",
+    "Build: node scripts/play/gap-fill.mjs <osm-water.json> scripts/play/minnippi-golf-and-range.config.json"
   ],
   "name": "Minnippi Golf & Range",
   "slug": "minnippi-golf-and-range",
@@ -18,7 +17,8 @@
     "src": "aerial imagery"
   },
   "options": {
-    "greenOvalM": 26
+    "greenOvalM": 26,
+    "traceFairways": true
   },
   "holes": [
     {

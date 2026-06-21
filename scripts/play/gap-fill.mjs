@@ -7,7 +7,7 @@
 // Config: see scripts/play/README.md (and oxley-golf-club.config.json for a worked example).
 import fs from 'node:fs';
 import { distM, bearing, dest, centroid, bbox as bboxOf, pointAlong, lineLen, simp, rdp, round6, rad } from './lib-geo.mjs';
-import { traceFairway } from './imagery.mjs';
+import { traceFairway, traceHoleCorridor } from './imagery.mjs';
 
 const [, , osmPath, cfgPath] = process.argv;
 if (!osmPath || !cfgPath) { console.error('usage: node gap-fill.mjs <osm.json> <config.json>'); process.exit(1); }
@@ -54,6 +54,7 @@ for (const hc of cfg.holes) {
     lines[hc.n] = round6(line);
   } else if (hc.green && hc.tee) {                            // OSM-missing hole, placed by hand
     cen = hc.green.map(r7); tee = hc.tee.map(r7); gbb = ovalGbb(cen); greenSrc = 'placed'; line = [tee, cen]; lines[hc.n] = round6(line); note = ' (no OSM line — placed)';
+    if (cfg.options?.traceFairways) traceJobs.push({ n: hc.n, placed: true, tee, green: cen });   // dogleg centreline + fairway from aerial
   } else { qa.push(`h${hc.n}: needs "way" or "green"+"tee"`); continue; }
   // per-tee positions: white = tee; others stepped back by the card delta along the play line
   const tees = {};
@@ -76,8 +77,13 @@ for (const h of holes) { const onOsm = greens.some(gr => distM(gr.cen, h.cen) <=
 
 // ---- fairways from imagery (sequential, polite) ----
 for (const job of traceJobs) {
-  try { const f = await traceFairway(job.line); if (f) feats.push({ t: 'fairway', pts: f.pts }); else qa.push(`h${job.n}: fairway trace too short`); }
-  catch (e) { qa.push(`h${job.n}: fairway trace failed (${e.message})`); }
+  try {
+    if (job.placed) {   // OSM-missing hole: trace the dogleg centreline (overrides the straight line) + fairway
+      const r = await traceHoleCorridor(job.tee, job.green);
+      if (r.line && r.line.length > 2) lines[job.n] = r.line;
+      if (r.fairway) feats.push({ t: 'fairway', pts: r.fairway.pts });
+    } else { const f = await traceFairway(job.line); if (f) feats.push({ t: 'fairway', pts: f.pts }); else qa.push(`h${job.n}: fairway trace too short`); }
+  } catch (e) { qa.push(`h${job.n}: fairway/corridor trace failed (${e.message})`); }
 }
 
 // ---- emit ----
