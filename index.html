@@ -7569,22 +7569,23 @@ function playDragonInit(){
 }
 function playDragonFly(){
   const wrap=document.getElementById('play-dragon'); if(!wrap||!playS||playS.tab!=='play') return;
-  const ltr=Math.random()<0.5, top=(10+Math.random()*55).toFixed(0), sc=(0.8+Math.random()*0.5).toFixed(2), dur=(4.8+Math.random()*1.8).toFixed(1);
+  const ltr=Math.random()<0.5, top=(10+Math.random()*55).toFixed(0), sc=(0.8+Math.random()*0.5).toFixed(2), dur=(7.5+Math.random()*3.5).toFixed(1);
   wrap.innerHTML=`<div class="pdragon" style="top:${top}%;--sc:${sc};animation:dragonFly${ltr?'R':'L'} ${dur}s ease-in-out forwards">${playDragonSVG()}</div>`;
   const el=wrap.firstElementChild; if(el) el.addEventListener('animationend',()=>{ if(wrap.firstElementChild===el) wrap.innerHTML=''; });
 }
-function playDragonSVG(){   // side-view dragon facing right: tail + body + flapping wing + head + pulsing fire plume
-  return `<svg viewBox="0 0 122 60" width="100%" height="100%" style="overflow:visible">
+function playDragonSVG(){   // side-view dragon facing right: barbed tail, body, neck+head+snout, swept flapping wing, fire
+  return `<svg viewBox="0 0 124 64" width="100%" height="100%" style="overflow:visible">
     <defs><linearGradient id="pdFire" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe26b"/><stop offset="0.55" stop-color="#ff8c1a"/><stop offset="1" stop-color="#e0331b"/></linearGradient></defs>
-    <g class="pd-fire" style="transform-origin:96px 26px">
-      <path d="M95 26 Q112 19 124 25 Q113 26 108 28 Q117 29 122 33 Q109 33 102 30 Q108 34 111 39 Q98 34 95 30 Z" fill="url(#pdFire)"/>
-      <path d="M96 26 Q106 23 114 26 Q106 28 102 28 Z" fill="#fff0b3"/>
+    <g class="pd-fire" style="transform-origin:116px 21px">
+      <path d="M113 21 Q130 14 143 20 Q131 22 126 23 Q136 25 141 29 Q127 28 120 25 Q127 29 130 34 Q116 29 113 25 Z" fill="url(#pdFire)"/>
+      <path d="M115 21 Q126 19 134 22 Q126 23 121 23 Z" fill="#fff0b3"/>
     </g>
-    <path d="M4 50 Q12 42 22 36 L27 40 Q16 48 7 55 Q3 54 4 50 Z" fill="#5f2718" stroke="#34120b" stroke-width="1.3"/>
-    <path d="M16 36 Q6 30 16 28 Q30 16 50 24 Q70 14 88 24 Q96 20 99 26 Q95 32 86 30 Q66 36 50 30 Q32 36 20 35 Q14 38 16 36 Z" fill="#6e2b1c" stroke="#34120b" stroke-width="1.4"/>
-    <path d="M88 24 Q99 18 106 21 Q100 25 99 27 Q94 25 88 24 Z" fill="#6e2b1c" stroke="#34120b" stroke-width="1.1"/>
-    <circle cx="93" cy="24" r="1.7" fill="#ffe26b"/>
-    <g class="pd-wing" style="transform-origin:50px 26px"><path d="M50 26 Q42 2 66 2 Q60 16 78 16 Q60 28 50 26 Z" fill="#883826" stroke="#34120b" stroke-width="1.3"/></g>
+    <path d="M32 35 C 21 40 11 43 3 47 C 0 48 0 45 2 44 C 10 41 20 38 28 32 Z" fill="#5f2718" stroke="#34120b" stroke-width="1.2" stroke-linejoin="round"/>
+    <path d="M3 47 L -4 45 L 2 41 L 5 45 Z" fill="#8a3a26" stroke="#34120b" stroke-width="0.8" stroke-linejoin="round"/>
+    <ellipse cx="56" cy="31" rx="30" ry="12.5" transform="rotate(-9 56 31)" fill="#6e2b1c" stroke="#34120b" stroke-width="1.4"/>
+    <path d="M80 25 C 91 23 95 13 104 13 C 112 13 118 16 120 20 C 117 22 113 22 110 22 C 114 24 115 26 112 27 L 104 26 C 97 29 89 31 82 31 C 77 30 76 27 80 25 Z" fill="#6e2b1c" stroke="#34120b" stroke-width="1.3" stroke-linejoin="round"/>
+    <circle cx="108" cy="18" r="1.7" fill="#ffe26b"/>
+    <g class="pd-wing" style="transform-origin:60px 27px"><path d="M60 27 C 50 -2 30 -8 30 3 C 37 5 41 12 49 20 C 40 14 33 17 38 25 C 45 20 54 25 60 27 Z" fill="#9a4530" stroke="#34120b" stroke-width="1.3" stroke-linejoin="round"/><path d="M30 3 C 37 5 41 12 49 20" fill="none" stroke="#34120b" stroke-width="0.8" opacity="0.6"/></g>
   </svg>`;
 }
 
