@@ -7255,6 +7255,18 @@ function playHoleSvg(){
         }
       }
     }
+    // bridges — drawn over the water/creek so the deck reads as spanning it; plank slats + rail edge
+    for(const f of geom.features){ if(f.t!=='bridge'||!inFrame(f.pts)) continue;
+      const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
+      const d=path(f.pts), bb=featBox(f.pts), o=own?1:0.4, cid='pmb'+(ci++);
+      s+=`<path d="${d}Z" fill="#8a6d4a" opacity="${o}"/>`;
+      defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+      let pk=`<g clip-path="url(#${cid})">`; const wide=(bb.x1-bb.x0)>=(bb.y1-bb.y0);
+      if(wide) for(let x=bb.x0+3;x<bb.x1;x+=5) pk+=`<line x1="${x.toFixed(1)}" y1="${bb.y0.toFixed(1)}" x2="${x.toFixed(1)}" y2="${bb.y1.toFixed(1)}" stroke="#6b5436" stroke-width="1" opacity="0.7"/>`;
+      else for(let y=bb.y0+3;y<bb.y1;y+=5) pk+=`<line x1="${bb.x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${bb.x1.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#6b5436" stroke-width="1" opacity="0.7"/>`;
+      s+=pk+'</g>';
+      s+=`<path d="${d}Z" fill="none" stroke="#3a2c1a" stroke-width="2" opacity="${(o*0.85).toFixed(2)}"/>`;
+    }
     // point features: 100/150/200 distance markers + drop zone (numbered discs, same neighbour cull)
     const MKC={mk100:'#d6453b',mk150:'#f2f2f2',mk200:'#3b6fd4'}, MKT={mk100:'#fff',mk150:'#102a08',mk200:'#fff'};
     for(const f of geom.features){ const mk=MKC[f.t], dz=(f.t==='dz'); if(!mk&&!dz) continue; if(!inFrame(f.pts)) continue;
