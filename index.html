@@ -7255,15 +7255,21 @@ function playHoleSvg(){
         }
       }
     }
-    // bridges — drawn over the water/creek so the deck reads as spanning it; plank slats + rail edge
+    // bridges — drawn over the water/creek so the deck reads as spanning it. Planks run perpendicular
+    // to the deck's own long axis (from its longest edge), so it reads right at ANY orientation.
     for(const f of geom.features){ if(f.t!=='bridge'||!inFrame(f.pts)) continue;
       const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
-      const d=path(f.pts), bb=featBox(f.pts), o=own?1:0.4, cid='pmb'+(ci++);
+      const d=path(f.pts), o=own?1:0.4, cid='pmb'+(ci++);
+      const pj=f.pts.map(p=>P(p[0],p[1]));   // projected deck corners (already play-line rotated)
+      let ax=1,ay=0,best=0; for(let i=0;i<pj.length;i++){ const a=pj[i],b=pj[(i+1)%pj.length],dx=b.x-a.x,dy=b.y-a.y,L=Math.hypot(dx,dy); if(L>best){best=L;ax=dx/L;ay=dy/L;} }
+      const qx=-ay,qy=ax;   // plank direction = perpendicular to the long (span) axis
+      let cx=0,cy=0; for(const p of pj){cx+=p.x;cy+=p.y;} cx/=pj.length; cy/=pj.length;
+      let aMin=1e9,aMax=-1e9,qMin=1e9,qMax=-1e9; for(const p of pj){ const da=(p.x-cx)*ax+(p.y-cy)*ay, dq=(p.x-cx)*qx+(p.y-cy)*qy; if(da<aMin)aMin=da;if(da>aMax)aMax=da;if(dq<qMin)qMin=dq;if(dq>qMax)qMax=dq; }
       s+=`<path d="${d}Z" fill="#8a6d4a" opacity="${o}"/>`;
       defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
-      let pk=`<g clip-path="url(#${cid})">`; const wide=(bb.x1-bb.x0)>=(bb.y1-bb.y0);
-      if(wide) for(let x=bb.x0+3;x<bb.x1;x+=5) pk+=`<line x1="${x.toFixed(1)}" y1="${bb.y0.toFixed(1)}" x2="${x.toFixed(1)}" y2="${bb.y1.toFixed(1)}" stroke="#6b5436" stroke-width="1" opacity="0.7"/>`;
-      else for(let y=bb.y0+3;y<bb.y1;y+=5) pk+=`<line x1="${bb.x0.toFixed(1)}" y1="${y.toFixed(1)}" x2="${bb.x1.toFixed(1)}" y2="${y.toFixed(1)}" stroke="#6b5436" stroke-width="1" opacity="0.7"/>`;
+      let pk=`<g clip-path="url(#${cid})">`;
+      for(let t=aMin+3;t<aMax;t+=5){ const mx=cx+ax*t, my=cy+ay*t;
+        pk+=`<line x1="${(mx+qx*qMin).toFixed(1)}" y1="${(my+qy*qMin).toFixed(1)}" x2="${(mx+qx*qMax).toFixed(1)}" y2="${(my+qy*qMax).toFixed(1)}" stroke="#6b5436" stroke-width="1" opacity="0.7"/>`; }
       s+=pk+'</g>';
       s+=`<path d="${d}Z" fill="none" stroke="#3a2c1a" stroke-width="2" opacity="${(o*0.85).toFixed(2)}"/>`;
     }
