@@ -79,6 +79,16 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   hazards/markers, domed green, vignette — see `CLAUDE.md`), so trace the shapes accurately and the art
   follows automatically.
 
+## Opening the tracer (no Python / VS Code needed)
+- **Quickest:** just **open `trace-tool.html` directly in a browser** (double-click). The basemap,
+  CDN libraries and Import all work over `file://` — the *only* thing that needs a local server is the
+  🪄 **detect** pixel-read (an Esri tile `fetch`, blocked from `file://` by CORS). For hand-tracing /
+  refining seeded features you don't need it.
+- **With detect:** double-click **`trace.cmd`** — it finds the portable Node (`%LOCALAPPDATA%\gf-node\*`
+  or any `node` on PATH), starts `serve.mjs` on :8090 **in its own window**, waits, then opens the tool.
+  Keep that server window open while tracing. (Manual equivalent: `node serve.mjs` then browse
+  `http://localhost:8090/scripts/play/trace-tool.html`.)
+
 ## Run
 ```
 node gap-fill.mjs <osm-geom.json> <slug>.config.json   ->  <osm>_built.json
