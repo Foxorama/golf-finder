@@ -22,7 +22,13 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   positions are fuzzy (greens are ovals, fairways follow the grass-corridor, bunkers are best-effort
   sand blobs, tees are config coords), so the *display* drifts — fine for a rough course, not for
   pixel placement.
-- **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. Open the tool
+- **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. **First, if the
+  course is already built** (auto or from pins), seed the tracer instead of starting blank:
+  `node build-to-traced.mjs <slug>` reads `play-geom/<slug>.json` + the baked COURSE_PLAY tees and
+  writes `<slug>.traced.json` with the existing greens (ovals), fairways (ribbons), centrelines, tees,
+  and aerial-detected bunkers/water/rough/trees/buildings already placed per hole — **Import** it in the
+  tool and you DRAG features into shape rather than placing 18 holes from scratch. (The `.traced.json`
+  is a local working file, gitignored; re-export it from the tool as you edit.) Then open the tool
   in a browser, pick a hole + a feature and **click it on the georeferenced Esri aerial** (club PDF
   open alongside to identify features). Feature types: **tee markers (any of
   white/blue/black/red/gold/orange/yellow/green/silver — match the card; others can also be derived from

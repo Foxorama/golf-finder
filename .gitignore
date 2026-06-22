@@ -8,4 +8,7 @@ scripts/play/g_*.png
 scripts/play/gailes_*.png
 scripts/play/gailes_*.json
 scripts/play/gailes_place.mjs
+# trace-tool working files (re-exported as you hand-trace; rebuilt via from-traced.mjs)
+scripts/play/*.traced.json
+scripts/play/*.traced_built.json
 _tooltest/
