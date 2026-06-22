@@ -7167,6 +7167,10 @@ function playHoleSvg(){
       const b=featBox(f.pts); core=core?{x0:Math.min(core.x0,b.x0),y0:Math.min(core.y0,b.y0),x1:Math.max(core.x1,b.x1),y1:Math.max(core.y1,b.y1)}:b; } }
     const overlapsCore=b=> !!core && b.x1>core.x0 && b.x0<core.x1 && b.y1>core.y0 && b.y0<core.y1;
     let ci=0;
+    // overall soft edges: a subtle blur over the whole terrain group rounds the hard cell-shaded
+    // outlines so features sit together more naturally (window._playMapSoft=false to disable).
+    const _soft=(window._playMapSoft!==false);
+    if(_soft){ defs+=`<filter id="pmSoft" x="-4%" y="-4%" width="108%" height="108%"><feGaussianBlur stdDeviation="0.45"/></filter>`; s+='<g filter="url(#pmSoft)">'; }
     for(const layer of ['rough','native','trees','building','fairway','waste','green','tee','water','bunker']){   // hazards (water/bunker) LAST so they're never hidden by the green collar or trees — important on a playability map
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const d=path(f.pts);
@@ -7196,14 +7200,13 @@ function playHoleSvg(){
           for(let y=bb.y0+4;y<bb.y1;y+=7) for(let x=bb.x0+4;x<bb.x1;x+=8) bk+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1.1" fill="#cdb37a" opacity="0.7"/>`;
           s+=bk+'</g>';
           s+=`<path d="${d}Z" fill="none" stroke="#6e5a2e" stroke-width="0.9"/>`;
-        } else if(layer==='green'){                         // lighter collar/fringe ring (thick stroke) defines the edge, then green + mow + ink
+        } else if(layer==='green'){                         // green + mow + thin ink (no collar/fringe — not enough room at small scale)
           defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
-          s+=`<path d="${d}Z" fill="#6aa844" stroke="#6aa844" stroke-width="4.5" stroke-linejoin="round"/>`;
           s+=`<path d="${d}Z" fill="${fill.green}"/>`;
           let gm=`<g clip-path="url(#${cid})">`;
           for(let y=bb.y0+3;y<bb.y1;y+=8) gm+=`<rect x="${bb.x0.toFixed(1)}" y="${y.toFixed(1)}" width="${(bb.x1-bb.x0).toFixed(1)}" height="4" fill="#5ebb33" opacity="0.4"/>`;
           s+=gm+'</g>';
-          s+=`<path d="${d}Z" fill="none" stroke="#214a10" stroke-width="0.9" stroke-linejoin="round"/>`;
+          s+=`<path d="${d}Z" fill="none" stroke="#214a10" stroke-width="0.7" stroke-linejoin="round"/>`;
         } else if(layer==='rough'){                         // duller mid-green base + faint speckle + ink (drawn under fairway)
           defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
           s+=`<path d="${d}Z" fill="${fill.rough}"/>`;
@@ -7250,8 +7253,8 @@ function playHoleSvg(){
           s+=`<path d="${d}" fill="none" stroke="#2a86c8" stroke-width="${own?3:1.8}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
           if(own) s+=`<path d="${d}" fill="none" stroke="#9ccef2" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>`;
         } else if(layer==='path'){
-          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?4:2.5}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
-          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?3:2}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
         } else if(layer==='ob'){  // out-of-bounds: white dashed boundary + stake dots at vertices
           s+=`<path d="${d}" fill="none" stroke="#f2f2f2" stroke-width="${own?1.6:1}" stroke-dasharray="2 5" stroke-linecap="round" opacity="${op}"/>`;
           if(own) for(const p of f.pts){ const q=P(p[0],p[1]); s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="1.4" fill="#fff" stroke="#c0392b" stroke-width="0.5"/>`; }
@@ -7294,13 +7297,21 @@ function playHoleSvg(){
       s+=`<circle cx="${(sx+24).toFixed(1)}" cy="${(sy+4).toFixed(1)}" r="2.2" fill="#f0c869" opacity="${(o*0.9).toFixed(2)}"/>`;
       s+=`<text x="${cx.toFixed(1)}" y="${(cy+6).toFixed(1)}" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="bold" font-size="11" fill="#f3d27a" stroke="#5a1206" stroke-width="0.4" opacity="${o}">Here be dragons</text>`;
     }
-    // point features: 100/150/200 distance markers + drop zone (numbered discs, same neighbour cull)
-    const MKC={mk100:'#d6453b',mk150:'#f2f2f2',mk200:'#3b6fd4'}, MKT={mk100:'#fff',mk150:'#102a08',mk200:'#fff'};
+    if(_soft) s+='</g>';   // end soft-edge terrain group — markers + overlays stay crisp
+    // point features: 100/150/200 distance markers + drop zone — comic cell-shaded yardage plates
+    const MKC={mk100:'#d6453b',mk150:'#f4f4f4',mk200:'#3b6fd4'}, MKT={mk100:'#fff',mk150:'#173a0c',mk200:'#fff'};
+    // soft contact shadow + flat base + top sheen + thin ink → a fun plate that sits in the turf
+    const mkDisc=(q,r,base,tc,label,o)=>{
+      let g=`<ellipse cx="${q.x.toFixed(1)}" cy="${(q.y+r*0.5).toFixed(1)}" rx="${(r*0.95).toFixed(1)}" ry="${(r*0.42).toFixed(1)}" fill="#0c1f06" opacity="${(0.3*o).toFixed(2)}"/>`;
+      g+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="${base}" stroke="#16320d" stroke-width="0.7" opacity="${o}"/>`;
+      g+=`<ellipse cx="${(q.x-r*0.26).toFixed(1)}" cy="${(q.y-r*0.32).toFixed(1)}" rx="${(r*0.5).toFixed(1)}" ry="${(r*0.33).toFixed(1)}" fill="#ffffff" opacity="${(0.34*o).toFixed(2)}"/>`;
+      g+=`<text x="${q.x.toFixed(1)}" y="${(q.y+2.6).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="7" font-weight="bold" fill="${tc}" opacity="${o}">${label}</text>`;
+      return g; };
     for(const f of geom.features){ const mk=MKC[f.t], dz=(f.t==='dz'); if(!mk&&!dz) continue; if(!inFrame(f.pts)) continue;
       const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
       const q=P(f.pts[0][0],f.pts[0][1]), o=own?1:0.4;
-      if(mk) s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="6.5" fill="${mk}" stroke="#0f2a0a" stroke-width="1" opacity="${o}"/><text x="${q.x.toFixed(1)}" y="${(q.y+2.7).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="7" font-weight="bold" fill="${MKT[f.t]}" opacity="${o}">${f.t.slice(2)}</text>`;
-      else s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="7" fill="#e08a2a" stroke="#0f2a0a" stroke-width="1" opacity="${o}"/><text x="${q.x.toFixed(1)}" y="${(q.y+2.7).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="7" font-weight="bold" fill="#1a1206" opacity="${o}">DZ</text>`;
+      if(mk) s+=mkDisc(q,6,mk,MKT[f.t],f.t.slice(2),o);
+      else s+=mkDisc(q,6.5,'#e08a2a','#1a1206','DZ',o);
     }
   } else {
     const T0=P(tee[0],tee[1]),C0=P(cen[0],cen[1]);
@@ -7310,9 +7321,14 @@ function playHoleSvg(){
   }
   // faint centre guide line
   s+=`<path d="${path(line)}" fill="none" stroke="#dfeccd" stroke-width="1.1" stroke-dasharray="2 6" stroke-linecap="round" opacity="0.4"/>`;
-  // front/back ticks on the green
-  const Cc=P(tg.cen[0],tg.cen[1]), Fp=P(tg.front[0],tg.front[1]), Bp=P(tg.back[0],tg.back[1]);
-  s+=`<circle cx="${Fp.x.toFixed(1)}" cy="${Fp.y.toFixed(1)}" r="2.3" fill="#0f2a0a"/><circle cx="${Bp.x.toFixed(1)}" cy="${Bp.y.toFixed(1)}" r="2.3" fill="#0f2a0a"/>`;
+  // front-of-green marker: a small white chevron pointing up the hole toward the pin
+  // (replaces the old front/back black dots — too heavy / out of place on a small map)
+  const Cc=P(tg.cen[0],tg.cen[1]), Fp=P(tg.front[0],tg.front[1]);
+  { let ux=Cc.x-Fp.x, uy=Cc.y-Fp.y; const L=Math.hypot(ux,uy)||1; ux/=L; uy/=L; const px=-uy, py=ux, w=4.2, b=2.6;
+    const ax=(Fp.x+ux*b).toFixed(1), ay=(Fp.y+uy*b).toFixed(1);
+    const lx=(Fp.x-ux*1.2+px*w).toFixed(1), ly=(Fp.y-uy*1.2+py*w).toFixed(1);
+    const rx=(Fp.x-ux*1.2-px*w).toFixed(1), ry=(Fp.y-uy*1.2-py*w).toFixed(1);
+    s+=`<polyline points="${lx},${ly} ${ax},${ay} ${rx},${ry}" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.92"/>`; }
   // flag at the green centre — the reliable aim point (daily pin positions aren't in static data)
   const pin=tg.cen, Pp=P(pin[0],pin[1]);
   s+=`<line x1="${Pp.x.toFixed(1)}" y1="${Pp.y.toFixed(1)}" x2="${Pp.x.toFixed(1)}" y2="${(Pp.y-15).toFixed(1)}" stroke="#fff" stroke-width="1.4"/><polygon points="${Pp.x.toFixed(1)},${(Pp.y-15).toFixed(1)} ${(Pp.x+9).toFixed(1)},${(Pp.y-12).toFixed(1)} ${Pp.x.toFixed(1)},${(Pp.y-9).toFixed(1)}" fill="#e74c3c"/><circle cx="${Pp.x.toFixed(1)}" cy="${Pp.y.toFixed(1)}" r="1.8" fill="#fff"/>`;
