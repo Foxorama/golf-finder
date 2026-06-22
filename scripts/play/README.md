@@ -24,8 +24,9 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   pixel placement.
 - **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. Open the tool
   in a browser, pick a hole + a feature and **click it on the georeferenced Esri aerial** (club PDF
-  open alongside to identify features). Feature types: **tee marker (White; others derived from the
-  card), tee box, green, centreline, fairway, bunker, water, creek, rough, trees, building, bridge,
+  open alongside to identify features). Feature types: **tee markers (any of
+  white/blue/black/red/gold/orange/yellow/green/silver — match the card; others can also be derived from
+  card distances), tee box, green, centreline, fairway, bunker, water, creek, rough, trees, building, bridge,
   out-of-bounds, cart-path, ditch, waste area, native/scrub, 100/150/200 markers, drop zone,
   here-be-dragons (danger zone)** — tee-box/green/fairway/bunker/water/rough/trees/building/bridge/
   waste/native/dragon are polygons; centreline/creek/OB/cart-path/ditch are lines; tee markers +
@@ -59,10 +60,14 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
   map now and then (`window._playDragons=false` disables it; honours `prefers-reduced-motion`). Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
-  (par/SI/per-tee distances/CR) → a built course. Real green polygons give true front/centre/back;
-  every clicked feature lands exactly where you put it, and the hole map's frame expands to include
-  the hole's own edge features (trees/rough/OB) so they're never culled. Procedural flat-shading
-  renders each type now; nicer art assets can be layered on later.
+  (par/SI/per-tee distances/CR) → a built course. It **keeps any traced tee colour even with no card
+  distance** (unions the card + traced keys), so a hand-placed red/orange/ladies tee isn't dropped — but
+  the app selector only shows a colour that has a `teeSets:[{key,name,cr,slope}]` entry in the config.
+  Real green polygons give true front/centre/back; every clicked feature lands exactly where you put it,
+  and the hole map's frame expands to include the hole's own edge features (trees/rough/OB) so they're
+  never culled. The renderer now does a full depth/bevel pass (deepest-green trees, recessed `pmInset`
+  hazards/markers, domed green, vignette — see `CLAUDE.md`), so trace the shapes accurately and the art
+  follows automatically.
 
 ## Run
 ```
