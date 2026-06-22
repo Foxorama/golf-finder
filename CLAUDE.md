@@ -347,8 +347,18 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   by `suggestClub` and the History "Your clubs" card — so the on-course club suggestion runs
   off your real bag even before you've tagged any shots. The bag also drives a **tee-shot
   club marker** on the hole map (`teeShotClub`): a dashed gold landing-zone reticle + label
-  on the centreline at the longest bag club that won't fly the green (`_pointAlong` walks the
-  baked centreline). Tees: there's no multi-tee data for St Lucia (one baked tee + the white
+  at the longest bag club that won't fly the green. **Tee colours/ratings are per-course
+  configurable** — `teeSets:[{key,name,cr,slope}]` (any colours: black/blue/white/red/gold/
+  orange/yellow/green/silver — `TEE_DOT` has them all) + per-hole `tees:{key:[lat,lng]}` — and
+  the tracer can place every one (its `tee-*` `FT` rows match `TEE_DOT`); `from-traced` keeps any
+  **traced** colour even with no card distance (union of card+traced keys). **The hole LENGTH and
+  the tee-shot club marker both follow the SELECTED tee** (PR #259): `holeTargets` builds a
+  play-line from the effective tee via `_teePlayLine` (project the tee onto the corridor, follow
+  it to the green — forward tees like red start partway down, back tees prepend their offset) and
+  returns it as `tg.pl`; the marker is `_pointAlong(tg.pl,…)`, NOT the baked centreline — so the
+  landing zone shifts toward the green on a forward tee. (Before #259 it was stuck to the white/
+  baked tee and forward tees even mis-computed length as *longer*.) Tees: there's no multi-tee
+  data for St Lucia (one baked tee + the white
   rating), so instead of a hollow tee picker, a **"Set tee" map tool** (`playSetTeeHere`,
   `playS.teePos[hole]`, persisted in the draft) sets this hole's tee to your **current GPS**
   — so the tee-shot Mark and the displayed hole length measure from the tee you're actually
