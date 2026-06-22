@@ -26,14 +26,18 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   in a browser, pick a hole + a feature and **click it on the georeferenced Esri aerial** (club PDF
   open alongside to identify features). Feature types: **tee marker (White; others derived from the
   card), tee box, green, centreline, fairway, bunker, water, creek, rough, trees, building, bridge,
-  out-of-bounds, cart-path, ditch, waste area, native/scrub, 100/150/200 markers, drop zone** —
-  tee-box/green/fairway/bunker/water/rough/trees/building/bridge/waste/native are polygons;
-  centreline/creek/OB/cart-path/ditch are lines; tee markers + distance markers + drop zone are
-  points. The tee BOX is the mowed teeing ground (multiple tee markers can sit on it). Adding another
-  type = one `FT` row in the tool + one render case in `playHoleSvg`. Pan the map with **right-click
-  drag** (left is for drawing). Polygons draw as **drag-a-box (Box mode, default)**; toggle to
-  **Outline mode** to click a precise outline (use it for greens, where the shape sets front/back
-  distances). **Edit/drag mode** repositions any placed point/vertex and pulls polygon edges out. Export the geometry JSON, then
+  out-of-bounds, cart-path, ditch, waste area, native/scrub, 100/150/200 markers, drop zone,
+  here-be-dragons (danger zone)** — tee-box/green/fairway/bunker/water/rough/trees/building/bridge/
+  waste/native/dragon are polygons; centreline/creek/OB/cart-path/ditch are lines; tee markers +
+  distance markers + drop zone are points. The tee BOX is the mowed teeing ground (multiple tee
+  markers can sit on it). Adding another type = one `FT` row in the tool + one render case in
+  `playHoleSvg`. Pan the map with **right-click drag** (left is for drawing). Polygons draw as
+  **drag-a-box (Box mode, default)**; toggle to **Outline mode** to click a precise outline (use it
+  for greens, where the shape sets front/back distances). **Edit/drag mode** repositions any placed
+  point/vertex and pulls polygon edges out. **Drawing a green auto-drops 100/150/200 markers** along
+  the centreline (toward the tee) — just nudge them onto the fairway. A hole with a **here-be-dragons**
+  zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
+  map now and then (`window._playDragons=false` disables it; honours `prefers-reduced-motion`). Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
   (par/SI/per-tee distances/CR) → a built course. Real green polygons give true front/centre/back;
   every clicked feature lands exactly where you put it, and the hole map's frame expands to include
