@@ -561,6 +561,18 @@ it with the preview tool:
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
   `setWx()` restores live weather.
+- `?yorb=berserk|ufo|normal` — force a **night-loader** variant (must be in night
+  mode, e.g. `&time=21:00`). The night loader rolls once: **1-in-10** the Night
+  Y'orb goes **Super-Saiyan berserker** when it bites the moon (`.ld-berserk` →
+  flowing green/gold mane + wind-blown locks down the spine, green/purple energy
+  aura, four-colour green/purple/white/near-black lightning); **1-in-50** an
+  **alien saucer** flies in and blasts the moon with a green laser instead of the
+  Y'orb (`.ld-ufo` → benches the Y'orb, cancels the bite, moon explodes to debris).
+  Both are pure inline SVG/CSS gated on a 6s clock (the loader is first-paint +
+  offline, so **no Flux/raster** in it); the dice roll is the short night
+  controller script just after the day loader controller, FX revealed at the bite
+  (~40%). Verify them via the loader-rebuild overlay recipe below (the live page's
+  `<style>` is stale after edits — reload `?fresh=` first, then re-inject).
 - Weather/sun data come from open-meteo + sunrisesunset.io with month-based SEQ
   fallbacks (QLD has no DST) when the APIs fail.
 
