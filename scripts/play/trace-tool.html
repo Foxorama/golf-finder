@@ -234,11 +234,16 @@ function _floodFill(d,W,Hh,sx,sy,tol,maxR){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i
   while(st.length && out.length<7000){ const k=st.pop(),x=k%W,y=(k/W)|0; if((x-sx)*(x-sx)+(y-sy)*(y-sy)>r2) continue;   // radius cap stops the splatter
     const i=k*4,dr=d[i]-sr,dg=d[i+1]-sg,db=d[i+2]-sb; if(dr*dr+dg*dg+db*db>t2) continue; out.push([x,y]);
     if(x>0&&!seen[k-1]){seen[k-1]=1;st.push(k-1);} if(x<W-1&&!seen[k+1]){seen[k+1]=1;st.push(k+1);} if(y>0&&!seen[k-W]){seen[k-W]=1;st.push(k-W);} if(y<Hh-1&&!seen[k+W]){seen[k+W]=1;st.push(k+W);} } return out; }
-function _hull(pts){   // convex hull (monotone chain) → a clean, simple polygon (no spikes)
-  if(pts.length<3) return pts; pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]); const n=pts.length, cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
-  const lo=[]; for(const p of pts){ while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0) lo.pop(); lo.push(p); }
-  const up=[]; for(let i=n-1;i>=0;i--){ const p=pts[i]; while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0) up.pop(); up.push(p); }
-  lo.pop(); up.pop(); return lo.concat(up); }
+function _contour(mask,W,H){   // Moore boundary trace (clockwise) → ordered outline that follows CONCAVITIES (bean greens)
+  const get=(x,y)=> (x>=0&&x<W&&y>=0&&y<H)?mask[y*W+x]:0;
+  const dx=[0,1,1,1,0,-1,-1,-1], dy=[-1,-1,0,1,1,1,0,-1];   // N,NE,E,SE,S,SW,W,NW clockwise
+  let sx=-1,sy=-1; for(let y=0;y<H&&sy<0;y++) for(let x=0;x<W;x++) if(mask[y*W+x]){sx=x;sy=y;break;}
+  if(sx<0) return []; const out=[]; let cx=sx,cy=sy,dir=7,iter=0;
+  do{ out.push([cx,cy]); let found=false;
+    for(let i=0;i<8;i++){ const nd=(dir+i)%8, nx=cx+dx[nd], ny=cy+dy[nd]; if(get(nx,ny)){ cx=nx; cy=ny; dir=(nd+6)%8; found=true; break; } }
+    if(!found) break; iter++;
+  } while((cx!==sx||cy!==sy) && iter<W*H*4);
+  return out; }
 function _rdp(pts, eps){   // Douglas–Peucker simplify a closed ring → a handful of draggable points
   if(pts.length<4) return pts; const e2=eps*eps;
   const seg=(p,a,b)=>{ const dx=b[0]-a[0],dy=b[1]-a[1],L=dx*dx+dy*dy; if(!L) return (p[0]-a[0])**2+(p[1]-a[1])**2; let t=((p[0]-a[0])*dx+(p[1]-a[1])*dy)/L; t=Math.max(0,Math.min(1,t)); return (p[0]-a[0]-t*dx)**2+(p[1]-a[1]-t*dy)**2; };
@@ -253,7 +258,9 @@ async function wandClick(e){
   try{ const r=await fetch(url,{mode:'cors'}); const bm=await createImageBitmap(await r.blob()); const cv=document.createElement('canvas'); cv.width=256;cv.height=256; const cx=cv.getContext('2d'); cx.drawImage(bm,0,0); img=cx.getImageData(0,0,256,256).data; }
   catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); setMode('draw'); return; }
   const region=_floodFill(img,256,256,px,py,30,60); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
-  const poly=_rdp(_hull(region),3.5).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
+  const mask=new Uint8Array(256*256); for(const [qx,qy] of region) mask[qy*256+qx]=1;   // boundary-trace the actual (possibly concave) outline
+  const cont=_contour(mask,256,256); if(cont.length<3){ status('region too small'); return; }
+  const poly=_rdp(cont,2.5).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
   if(poly.length<3){ status('region too small'); return; }
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=f.k; lyr.options._h=hole; layers.push({layer:lyr,hole,key:f.k});
