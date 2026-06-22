@@ -70,6 +70,13 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'building',  l:'Building',    s:'Polygon',c:'#9a9da3', field:'buildings',  multi:true},
   {k:'ob',        l:'Out of bounds',s:'Line',  c:'#f2f2f2', field:'ob',         multi:true},
   {k:'path',      l:'Cart path',   s:'Line',   c:'#c9bfa6', field:'paths',      multi:true},
+  {k:'ditch',     l:'Ditch (dry)', s:'Line',   c:'#7a6238', field:'ditch',      multi:true},
+  {k:'waste',     l:'Waste area',  s:'Polygon',c:'#d8c89e', field:'waste',      multi:true},
+  {k:'native',    l:'Native / scrub',s:'Polygon',c:'#8a7d4a', field:'native',   multi:true},
+  {k:'mk100',     l:'100 marker',  s:'Marker', c:'#d6453b', field:'mk100',      multi:true},
+  {k:'mk150',     l:'150 marker',  s:'Marker', c:'#f2f2f2', field:'mk150',      multi:true},
+  {k:'mk200',     l:'200 marker',  s:'Marker', c:'#3b6fd4', field:'mk200',      multi:true},
+  {k:'dz',        l:'Drop zone',   s:'Marker', c:'#e08a2a', field:'dz',         multi:true},
 ];
 const r6 = v => +v.toFixed(6);
 const data = { name:'', holes:{} };

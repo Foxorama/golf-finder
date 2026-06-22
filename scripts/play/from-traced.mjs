@@ -51,6 +51,14 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   for (const ck of t.creeks || []) if (ck.length >= 2) feats.push({ t: 'creek', pts: simp(ck) });
   for (const o of t.ob || []) if (o.length >= 2) feats.push({ t: 'ob', pts: simp(o) });
   for (const p of t.paths || []) if (p.length >= 2) feats.push({ t: 'path', pts: simp(p) });
+  for (const dt of t.ditch || []) if (dt.length >= 2) feats.push({ t: 'ditch', pts: simp(dt) });
+  for (const wa of t.waste || []) if (wa.length >= 3) feats.push({ t: 'waste', pts: simp(wa) });
+  for (const nv of t.native || []) if (nv.length >= 3) feats.push({ t: 'native', pts: simp(nv) });
+  // point markers — pts is a single [lat,lng] wrapped as one-vertex array
+  for (const m of t.mk100 || []) feats.push({ t: 'mk100', pts: [m] });
+  for (const m of t.mk150 || []) feats.push({ t: 'mk150', pts: [m] });
+  for (const m of t.mk200 || []) feats.push({ t: 'mk200', pts: [m] });
+  for (const m of t.dz    || []) feats.push({ t: 'dz',    pts: [m] });
   // cross-check vs card length
   if (white != null) { const d = Math.round(distM(tee, cen)); if (Math.abs(d - white) > white * 0.2) qa.push(`h${n}: tee→green ${d} m vs card ${white} m (>20%)`); }
 }
