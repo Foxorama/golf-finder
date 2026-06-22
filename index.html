@@ -7180,7 +7180,7 @@ function playHoleSvg(){
   if(geom&&geom.features){
     // punchy-comic cell shading: each owned surface gets flat tones + a texture pass + an ink edge.
     // Neighbours stay faded-flat for context. Drawn once here ⇒ every hole/course inherits the look.
-    const fill={rough:'#356016',native:'#6e6a38',fairway:'#3a8a2c',water:'#1d6fb8',waste:'#d8c89e',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26',trees:'#0e2c0b',building:'#9a9da3'};
+    const fill={rough:'#2d5414',native:'#6e6a38',fairway:'#3a8a2c',water:'#1d6fb8',waste:'#d8c89e',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26',trees:'#0e2c0b',building:'#9a9da3'};
     // this hole's own footprint (fairway/green/tee) → cull any NEIGHBOUR feature that overlaps it
     // (the "directly underneath the current hole" bleed); distant neighbours stay as faint edge context.
     let core=null;
@@ -7197,6 +7197,7 @@ function playHoleSvg(){
     // as a single lit surface instead of flat shapes. objectBoundingBox ⇒ one gradient fits any shape.
     defs+=`<linearGradient id="pmInset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.42"/><stop offset="0.34" stop-color="#000" stop-opacity="0.05"/><stop offset="0.72" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0.2"/></linearGradient>`;
     defs+=`<radialGradient id="pmDome" cx="0.42" cy="0.32" r="0.8"><stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#06200a" stop-opacity="0.28"/></radialGradient>`;
+    defs+=`<radialGradient id="pmVig" cx="0.5" cy="0.5" r="0.72"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#02100a" stop-opacity="0.4"/></radialGradient>`;
     for(const layer of ['rough','native','trees','building','fairway','waste','green','tee','water','bunker']){   // hazards (water/bunker) LAST so they're never hidden by the green collar or trees — important on a playability map
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const d=path(f.pts);
@@ -7283,8 +7284,8 @@ function playHoleSvg(){
           s+=`<path d="${d}" fill="none" stroke="#2a86c8" stroke-width="${own?3:1.8}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
           if(own) s+=`<path d="${d}" fill="none" stroke="#9ccef2" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>`;
         } else if(layer==='path'){
-          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?3:2}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
-          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>`;
+          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?1.8:1.2}" stroke-linecap="round" stroke-linejoin="round" opacity="${own?0.8:op}"/>`;
+          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
         } else if(layer==='ob'){  // out-of-bounds: white dashed boundary + stake dots at vertices
           s+=`<path d="${d}" fill="none" stroke="#f2f2f2" stroke-width="${own?1.6:1}" stroke-dasharray="2 5" stroke-linecap="round" opacity="${op}"/>`;
           if(own) for(const p of f.pts){ const q=P(p[0],p[1]); s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="1.4" fill="#fff" stroke="#c0392b" stroke-width="0.5"/>`; }
@@ -7328,13 +7329,16 @@ function playHoleSvg(){
       s+=`<text x="${cx.toFixed(1)}" y="${(cy+6).toFixed(1)}" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="bold" font-size="11" fill="#f3d27a" stroke="#5a1206" stroke-width="0.4" opacity="${o}">Here be dragons</text>`;
     }
     if(_soft) s+='</g>';   // end soft-edge terrain group — markers + overlays stay crisp
+    // vignette: darken the frame edges so the lit hole pops off the green surround (window._playMapVig=false off)
+    if(window._playMapVig!==false) s+=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="url(#pmVig)"/>`;
     // point features: 100/150/200 distance markers + drop zone — comic cell-shaded yardage plates
     const MKC={mk100:'#d6453b',mk150:'#f4f4f4',mk200:'#3b6fd4'}, MKT={mk100:'#fff',mk150:'#173a0c',mk200:'#fff'};
-    // soft contact shadow + flat base + top sheen + thin ink → a fun plate that sits in the turf
+    // recessed inset bevel (same pmInset as the hazards): base + dark-top/light-bottom bevel + rim
+    // ink → a yardage plate set INTO the turf, not sitting proud.
     const mkDisc=(q,r,base,tc,label,o)=>{
-      let g=`<ellipse cx="${q.x.toFixed(1)}" cy="${(q.y+r*0.5).toFixed(1)}" rx="${(r*0.95).toFixed(1)}" ry="${(r*0.42).toFixed(1)}" fill="#0c1f06" opacity="${(0.3*o).toFixed(2)}"/>`;
-      g+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="${base}" stroke="#16320d" stroke-width="0.7" opacity="${o}"/>`;
-      g+=`<ellipse cx="${(q.x-r*0.26).toFixed(1)}" cy="${(q.y-r*0.32).toFixed(1)}" rx="${(r*0.5).toFixed(1)}" ry="${(r*0.33).toFixed(1)}" fill="#ffffff" opacity="${(0.34*o).toFixed(2)}"/>`;
+      let g=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="${base}" opacity="${o}"/>`;
+      g+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="url(#pmInset)" opacity="${o}"/>`;
+      g+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="${r}" fill="none" stroke="#0c2208" stroke-width="0.8" opacity="${o}"/>`;
       g+=`<text x="${q.x.toFixed(1)}" y="${(q.y+2.6).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="7" font-weight="bold" fill="${tc}" opacity="${o}">${label}</text>`;
       return g; };
     for(const f of geom.features){ const mk=MKC[f.t], dz=(f.t==='dz'); if(!mk&&!dz) continue; if(!inFrame(f.pts)) continue;
