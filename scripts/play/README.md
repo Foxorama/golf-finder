@@ -47,10 +47,13 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   **↳ fairway** generates a tapered ribbon polygon along the centreline (≈34 m, narrower at the ends) you then
   edit — instead of tracing 18 fairways by hand. A **live readout** under the controls shows the centreline's
   metres vs the White card distance (ambers if >8% off). Navigating to a not-yet-traced hole **auto-recentres**
-  the map near an adjacent traced green (where the next tee usually is). **🪄 detect (experimental):** with a
-  polygon feature selected, click inside a green/bunker/water on the aerial and it **flood-fills the outline by
-  colour** (one click vs many) → **Moore boundary trace** (follows concave/bean outlines) → **Douglas–Peucker
-  simplified to ~12 draggable points** (not 50) → auto-enters Edit mode to fit it. It fetches the Esri tile
+  the map near an adjacent traced green (where the next tee usually is). **🪄 detect (best for bunkers/water):**
+  click inside a feature and it **flood-fills the outline by colour** → fill holes + morphological close →
+  **Moore boundary trace** (follows concavities) → **Douglas–Peucker to ~12 draggable points** → auto-enters
+  Edit mode. **Works on high-contrast features (sand bunkers, water); it does NOT work on greens** — greens vary
+  in colour across the surface and blend into the surrounding grass, so a colour flood-fill under/over-fills
+  (verified on real Gailes imagery). When it can't get a clean outline (>18 points) it **bails with a message
+  ("Box-draw it by hand")** instead of dumping a spaghetti polygon. It fetches the Esri tile
   separately via CORS — if pixel reads are blocked it disables itself with a message and the basemap is
   unaffected. A hole with a **here-be-dragons**
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
