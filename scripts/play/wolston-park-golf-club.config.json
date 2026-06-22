@@ -1,0 +1,149 @@
+{
+ "_provenance": [
+  "Scorecard = the club scorecard PNG in the repo root (user-supplied 2026-06-22). Header says 'Yards' but the distances are METRES (user-confirmed).",
+  "3 tees: Champ=Blue (4876 m), Mens=White (4617 m, the rated/default), Womens=Red (4134 m). Par 67. SI = Mens HCP column (front-odd/back-even).",
+  "Rating + Slope: card shows 0; sourced from GolfPass/freegolftracker — White(Mens) CR 64 / Slope 113, Red(Womens) CR 66 / Slope 113. Blue(Champ) CR estimated 65 (longer than white, no published figure). Web also confirms Red/Womens par 69 (vs my per-hole read of 67) — 2 holes likely play a stroke higher for women; men's par 67 is solid and is what's used.",
+  "Geometry (green/tee coords) = FULL-AUTO best-effort from the club layout-map PNG + Esri aerial (no user green-pins) — distance-right, display-rough; refine in the trace tool.",
+  "Womens tee-summary box says Par 69 but the per-hole Womens Par column sums to 67 (OUT 35 / IN 32) — used 67 (matches Mens + the card's own subtotals)."
+ ],
+ "name": "Wolston Park Golf Club",
+ "slug": "wolston-park-golf-club",
+ "course": {
+  "par": 67,
+  "cr": 64,
+  "slope": 113,
+  "defaultTee": "white",
+  "src": "scorecard + layout map + aerial (estimate)",
+  "teeSets": [
+   {
+    "key": "blue",
+    "name": "Blue (Champ)",
+    "cr": 65,
+    "slope": 113,
+    "_note": "Champ tee; CR/Slope placeholder (card shows 0)"
+   },
+   {
+    "key": "white",
+    "name": "White (Mens)",
+    "cr": 64,
+    "slope": 113,
+    "_note": "rated/default tee; CR/Slope placeholder (card shows 0)"
+   },
+   {
+    "key": "red",
+    "name": "Red (Womens)",
+    "cr": 66,
+    "slope": 113,
+    "_note": "Womens tee; CR/Slope placeholder (card shows 0)"
+   }
+  ]
+ },
+ "options": {
+  "traceFairways": true,
+  "traceBunkers": true,
+  "greenOvalM": 26
+ },
+ "_scorecard": {
+  "par": [
+   4,
+   4,
+   3,
+   5,
+   3,
+   4,
+   5,
+   3,
+   4,
+   3,
+   4,
+   4,
+   3,
+   3,
+   4,
+   3,
+   4,
+   4
+  ],
+  "si": [
+   1,
+   3,
+   5,
+   7,
+   9,
+   11,
+   13,
+   15,
+   17,
+   2,
+   4,
+   6,
+   8,
+   10,
+   12,
+   14,
+   16,
+   18
+  ],
+  "blue": [
+   317,
+   283,
+   176,
+   486,
+   179,
+   338,
+   454,
+   131,
+   262,
+   108,
+   283,
+   336,
+   136,
+   137,
+   314,
+   163,
+   409,
+   365
+  ],
+  "white": [
+   282,
+   270,
+   169,
+   477,
+   161,
+   305,
+   436,
+   131,
+   254,
+   103,
+   273,
+   324,
+   118,
+   130,
+   286,
+   161,
+   389,
+   347
+  ],
+  "red": [
+   174,
+   251,
+   156,
+   440,
+   156,
+   285,
+   359,
+   120,
+   236,
+   99,
+   240,
+   256,
+   107,
+   121,
+   287,
+   149,
+   358,
+   339
+  ]
+ },
+ "holes": []
+}
