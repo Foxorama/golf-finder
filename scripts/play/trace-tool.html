@@ -69,7 +69,7 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'tee-red',   l:'Tee Red',   s:'Marker', c:'#d6453b', field:'tees', multi:false},
   {k:'teebox',    l:'Tee box',     s:'Polygon',c:'#3b7a26', field:'teeboxes',   multi:true},
   {k:'green',     l:'Green',       s:'Polygon',c:'#83d94f', field:'green',      multi:false},
-  {k:'centreline',l:'Centreline',  s:'Line',   c:'#ffd24a', field:'centreline', multi:false},
+  {k:'centreline',l:'Centreline',  s:'Line',   c:'#ffd24a', field:'centreline', multi:false, auto:true},  // auto-built from green+tee; not hand-drawn
   {k:'fairway',   l:'Fairway',     s:'Polygon',c:'#3f7e2c', field:'fairway',    multi:false},
   {k:'bunker',    l:'Bunker',      s:'Polygon',c:'#e4d2a0', field:'bunkers',    multi:true},
   {k:'water',     l:'Water',       s:'Polygon',c:'#1d5fa0', field:'water',      multi:true},
@@ -111,7 +111,8 @@ map.dragging.disable();
 
 // build feature-type buttons
 const ftDiv = document.getElementById('ftypes');
-FT.forEach(f => { const b = document.createElement('button'); b.className='ft'; b.dataset.k=f.k;
+FT.forEach(f => { if(f.auto) return;   // auto-built features (centreline) have no draw button
+  const b = document.createElement('button'); b.className='ft'; b.dataset.k=f.k;
   b.innerHTML = `<span class="dot" style="background:${f.c}"></span>${f.l}`;
   b.onclick = () => (active && active.k===f.k && mode==='draw') ? deselect() : selectType(f); ftDiv.appendChild(b); });
 
@@ -190,7 +191,9 @@ function _markerPos(H, dist){   // point at arc-distance `dist` from the GREEN a
 }
 function ensureCentreline(hole){   // straight tee-mid→green when none; else KEEP the user's dogleg bends, only snap the endpoints to tee + green
   const H=data.holes[hole]; if(!H||!H.green) return; const tm=_teeMid(hole), gc=_ctr(H.green); if(!tm) return;
-  let entry=layers.find(o=>o.hole===hole && o.key==='centreline');
+  const cls=layers.filter(o=>o.hole===hole && o.key==='centreline');   // dedup: at most one centreline per hole (a stray 2nd one would win in store() and run long)
+  for(let i=1;i<cls.length;i++){ map.removeLayer(cls[i].layer); const idx=layers.indexOf(cls[i]); if(idx>=0) layers.splice(idx,1); }
+  let entry=cls[0];
   if(entry){ let arr=entry.layer.getLatLngs().map(p=>[p.lat,p.lng]); if(arr.length<2) arr=[tm,gc];
     if(_dM(arr[0],gc) < _dM(arr[arr.length-1],gc)) arr.reverse();   // arr[0]=tee end
     arr[0]=tm; arr[arr.length-1]=gc; entry.layer.setLatLngs(arr.map(p=>L.latLng(p[0],p[1]))); }
