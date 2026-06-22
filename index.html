@@ -791,6 +791,16 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-yourtee{color:var(--gg);}
 /* right-side overlay tools on the hole map (use the map's side dead-space) */
 .play-map-tools{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:5;}
+/* "Here be dragons" Easter egg: a fire-breathing dragon flies across on a hole with a dragon zone */
+#play-dragon{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:6;border-radius:14px;}
+.pdragon{position:absolute;left:-30%;width:84px;height:54px;will-change:left,transform;filter:drop-shadow(0 3px 4px rgba(0,0,0,0.4));}
+@keyframes dragonFlyR{0%{left:-30%;transform:scale(var(--sc)) translateY(0) scaleX(1);}25%{transform:scale(var(--sc)) translateY(-14px) scaleX(1);}50%{transform:scale(var(--sc)) translateY(7px) scaleX(1);}75%{transform:scale(var(--sc)) translateY(-11px) scaleX(1);}100%{left:118%;transform:scale(var(--sc)) translateY(0) scaleX(1);}}
+@keyframes dragonFlyL{0%{left:118%;transform:scale(var(--sc)) translateY(0) scaleX(-1);}25%{transform:scale(var(--sc)) translateY(-14px) scaleX(-1);}50%{transform:scale(var(--sc)) translateY(7px) scaleX(-1);}75%{transform:scale(var(--sc)) translateY(-11px) scaleX(-1);}100%{left:-30%;transform:scale(var(--sc)) translateY(0) scaleX(-1);}}
+@keyframes dragFlap{0%,100%{transform:rotate(-20deg);}50%{transform:rotate(26deg);}}
+@keyframes dragFire{0%,100%{opacity:0.5;transform:scaleX(0.8);}50%{opacity:1;transform:scaleX(1.3);}}
+.pd-wing{animation:dragFlap 0.5s ease-in-out infinite;}
+.pd-fire{animation:dragFire 0.28s ease-in-out infinite;}
+@media (prefers-reduced-motion: reduce){#play-dragon{display:none;}}
 .pmt-btn{display:flex;flex-direction:column;align-items:center;gap:1px;background:rgba(8,16,12,0.82);border:1px solid rgba(159,198,232,0.4);border-radius:10px;width:46px;padding:7px 2px;color:var(--tx2);font-size:15px;cursor:pointer;line-height:1;}
 .pmt-btn .pmt-lbl{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.03em;color:var(--tx3);}
 .pmt-btn.on{border-color:var(--gl);background:rgba(31,74,38,0.72);}
@@ -7273,6 +7283,21 @@ function playHoleSvg(){
       s+=pk+'</g>';
       s+=`<path d="${d}Z" fill="none" stroke="#3a2c1a" stroke-width="2" opacity="${(o*0.85).toFixed(2)}"/>`;
     }
+    // "here be dragons" — olde-map danger warning: red tint + warning hatch + dashed ink edge + serpent + label
+    for(const f of geom.features){ if(f.t!=='dragon'||!inFrame(f.pts)) continue;
+      const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
+      const d=path(f.pts), bb=featBox(f.pts), o=own?1:0.4, cid='pmw'+(ci++);
+      defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+      s+=`<path d="${d}Z" fill="#7a1e10" opacity="${(o*0.34).toFixed(2)}"/>`;
+      let ht=`<g clip-path="url(#${cid})">`; const span=Math.max(8,bb.y1-bb.y0);
+      for(let x=bb.x0-span;x<bb.x1;x+=9) ht+=`<line x1="${x.toFixed(1)}" y1="${bb.y0.toFixed(1)}" x2="${(x+span).toFixed(1)}" y2="${bb.y1.toFixed(1)}" stroke="#e0492b" stroke-width="1.3" opacity="${(o*0.28).toFixed(2)}"/>`;
+      s+=ht+'</g>';
+      s+=`<path d="${d}Z" fill="none" stroke="#c0392b" stroke-width="1.7" stroke-dasharray="6 4" opacity="${o}"/>`;
+      const cx=(bb.x0+bb.x1)/2, cy=(bb.y0+bb.y1)/2, sx=cx-15, sy=cy-13;   // olde-map serpent above the warning
+      s+=`<path transform="translate(${sx.toFixed(1)},${sy.toFixed(1)})" d="M0 4 q3 -6 6 0 q3 6 6 0 q3 -6 6 0 q3 6 6 0" fill="none" stroke="#f0c869" stroke-width="2" stroke-linecap="round" opacity="${(o*0.9).toFixed(2)}"/>`;
+      s+=`<circle cx="${(sx+24).toFixed(1)}" cy="${(sy+4).toFixed(1)}" r="2.2" fill="#f0c869" opacity="${(o*0.9).toFixed(2)}"/>`;
+      s+=`<text x="${cx.toFixed(1)}" y="${(cy+6).toFixed(1)}" text-anchor="middle" font-family="Georgia,'Times New Roman',serif" font-style="italic" font-weight="bold" font-size="11" fill="#f3d27a" stroke="#5a1206" stroke-width="0.4" opacity="${o}">Here be dragons</text>`;
+    }
     // point features: 100/150/200 distance markers + drop zone (numbered discs, same neighbour cull)
     const MKC={mk100:'#d6453b',mk150:'#f2f2f2',mk200:'#3b6fd4'}, MKT={mk100:'#fff',mk150:'#102a08',mk200:'#fff'};
     for(const f of geom.features){ const mk=MKC[f.t], dz=(f.t==='dz'); if(!mk&&!dz) continue; if(!inFrame(f.pts)) continue;
@@ -7408,6 +7433,7 @@ function playTabHtml(){
     <div class="play-mapwrap">
       <div id="play-map" onclick="playMapTap(event)">${playHoleSvg()}</div>
       <div class="play-map-tools">${playMapToolsHtml()}</div>
+      <div id="play-dragon" aria-hidden="true"></div>
     </div>
     <div id="play-measure">${playMeasureStripHtml()}</div>
     <div class="play-shotbar">
@@ -7523,6 +7549,43 @@ function playRender(){
   const b=document.getElementById('play-body'); if(!b)return;
   b.setAttribute('aria-labelledby','play-tab-'+playS.tab);   // tabpanel labelled by its active tab
   b.innerHTML = playS.tab==='play'?playTabHtml() : playS.tab==='card'?cardTabHtml() : historyTabHtml();
+  playDragonInit();
+}
+// ── "Here be dragons" Easter egg: on a hole with a dragon zone, a fire-breathing dragon flies
+//    across the map at random intervals. #play-dragon is a sibling of #play-map so it survives the
+//    per-GPS-tick map redraw. window._playDragons=false disables it; honours reduced-motion. ──
+let _dragonT=null, _dragonHole=null;
+function playDragonInit(){
+  const wrap=document.getElementById('play-dragon');
+  const geom=playS&&COURSE_GEOM[playS.slug];
+  const has = window._playDragons!==false && playS && playS.tab==='play' && geom && geom.features
+    && geom.features.some(f=>f.t==='dragon' && f._own===playS.hole)
+    && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
+  if(!has){ clearTimeout(_dragonT); _dragonT=null; _dragonHole=null; if(wrap) wrap.innerHTML=''; return; }
+  if(_dragonHole===playS.hole && _dragonT) return;   // already scheduled for this hole
+  clearTimeout(_dragonT); _dragonHole=playS.hole;
+  const loop=()=>{ playDragonFly(); _dragonT=setTimeout(loop, 16000+Math.random()*22000); };
+  _dragonT=setTimeout(loop, 4000+Math.random()*8000);   // first fly-by 4–12 s after arriving on the hole
+}
+function playDragonFly(){
+  const wrap=document.getElementById('play-dragon'); if(!wrap||!playS||playS.tab!=='play') return;
+  const ltr=Math.random()<0.5, top=(10+Math.random()*55).toFixed(0), sc=(0.8+Math.random()*0.5).toFixed(2), dur=(4.8+Math.random()*1.8).toFixed(1);
+  wrap.innerHTML=`<div class="pdragon" style="top:${top}%;--sc:${sc};animation:dragonFly${ltr?'R':'L'} ${dur}s ease-in-out forwards">${playDragonSVG()}</div>`;
+  const el=wrap.firstElementChild; if(el) el.addEventListener('animationend',()=>{ if(wrap.firstElementChild===el) wrap.innerHTML=''; });
+}
+function playDragonSVG(){   // side-view dragon facing right: tail + body + flapping wing + head + pulsing fire plume
+  return `<svg viewBox="0 0 122 60" width="100%" height="100%" style="overflow:visible">
+    <defs><linearGradient id="pdFire" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffe26b"/><stop offset="0.55" stop-color="#ff8c1a"/><stop offset="1" stop-color="#e0331b"/></linearGradient></defs>
+    <g class="pd-fire" style="transform-origin:96px 26px">
+      <path d="M95 26 Q112 19 124 25 Q113 26 108 28 Q117 29 122 33 Q109 33 102 30 Q108 34 111 39 Q98 34 95 30 Z" fill="url(#pdFire)"/>
+      <path d="M96 26 Q106 23 114 26 Q106 28 102 28 Z" fill="#fff0b3"/>
+    </g>
+    <path d="M4 50 Q12 42 22 36 L27 40 Q16 48 7 55 Q3 54 4 50 Z" fill="#5f2718" stroke="#34120b" stroke-width="1.3"/>
+    <path d="M16 36 Q6 30 16 28 Q30 16 50 24 Q70 14 88 24 Q96 20 99 26 Q95 32 86 30 Q66 36 50 30 Q32 36 20 35 Q14 38 16 36 Z" fill="#6e2b1c" stroke="#34120b" stroke-width="1.4"/>
+    <path d="M88 24 Q99 18 106 21 Q100 25 99 27 Q94 25 88 24 Z" fill="#6e2b1c" stroke="#34120b" stroke-width="1.1"/>
+    <circle cx="93" cy="24" r="1.7" fill="#ffe26b"/>
+    <g class="pd-wing" style="transform-origin:50px 26px"><path d="M50 26 Q42 2 66 2 Q60 16 78 16 Q60 28 50 26 Z" fill="#883826" stroke="#34120b" stroke-width="1.3"/></g>
+  </svg>`;
 }
 
 // ── Course layout modal ──────────────────────────────────────────────────────

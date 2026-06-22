@@ -79,6 +79,7 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'mk150',     l:'150 marker',  s:'Marker', c:'#f2f2f2', field:'mk150',      multi:true},
   {k:'mk200',     l:'200 marker',  s:'Marker', c:'#3b6fd4', field:'mk200',      multi:true},
   {k:'dz',        l:'Drop zone',   s:'Marker', c:'#e08a2a', field:'dz',         multi:true},
+  {k:'dragon',    l:'⚠ Here be dragons',s:'Polygon',c:'#c0392b', field:'dragons', multi:true},
 ];
 const r6 = v => +v.toFixed(6);
 const data = { name:'', holes:{} };
@@ -123,12 +124,40 @@ map.on('pm:create', e => {
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   layers.push({layer:lyr, hole, key:f.k});
   store(); redraw();
+  if(f.k==='green') autoMarkers(hole);   // drop 100/150/200 markers along the line — then drag them onto the fairway
 });
 
 function coordsOf(lyr){
   if(lyr instanceof L.Marker){ const ll=lyr.getLatLng(); return [r6(ll.lat), r6(ll.lng)]; }
   let ll = lyr.getLatLngs(); while(Array.isArray(ll) && ll.length===1 && Array.isArray(ll[0])) ll=ll[0];
   return ll.map(p=>[r6(p.lat), r6(p.lng)]);
+}
+
+// Auto-place 100/150/200 markers when a green is drawn — positioned along the centreline (or toward
+// the tee) at those metre distances back from the green centre, so you just nudge them onto the fairway.
+const _ctr  = ps => { let la=0,lo=0; for(const p of ps){la+=p[0];lo+=p[1];} return [la/ps.length, lo/ps.length]; };
+const _dM   = (a,b) => map.distance(L.latLng(a[0],a[1]), L.latLng(b[0],b[1]));
+const _brg  = (a,b) => { const la1=a[0]*Math.PI/180,la2=b[0]*Math.PI/180,dlo=(b[1]-a[1])*Math.PI/180; const y=Math.sin(dlo)*Math.cos(la2), x=Math.cos(la1)*Math.sin(la2)-Math.sin(la1)*Math.cos(la2)*Math.cos(dlo); return Math.atan2(y,x)*180/Math.PI; };
+const _dest = (p,brg,d) => { const R=6378137, br=brg*Math.PI/180, la1=p[0]*Math.PI/180, lo1=p[1]*Math.PI/180, dr=d/R; const la2=Math.asin(Math.sin(la1)*Math.cos(dr)+Math.cos(la1)*Math.sin(dr)*Math.cos(br)); const lo2=lo1+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(la1),Math.cos(dr)-Math.sin(la1)*Math.sin(la2)); return [r6(la2*180/Math.PI), r6(lo2*180/Math.PI)]; };
+function _markerPos(H, dist){
+  const gc=_ctr(H.green), line=H.centreline;
+  if(line && line.length>=2){ let L2=line.slice(); if(_dM(L2[0],gc)>_dM(L2[L2.length-1],gc)) L2.reverse();   // L2[0] = green end
+    let acc=0; for(let i=0;i<L2.length-1;i++){ const seg=_dM(L2[i],L2[i+1]); if(acc+seg>=dist){ const t=(dist-acc)/seg; return [r6(L2[i][0]+(L2[i+1][0]-L2[i][0])*t), r6(L2[i][1]+(L2[i+1][1]-L2[i][1])*t)]; } acc+=seg; }
+    const a=L2[L2.length-2], b=L2[L2.length-1]; return _dest(b, _brg(a,b), dist-acc); }   // beyond line end → extend straight
+  const tee=H.tees && H.tees.white; return _dest(gc, tee?_brg(gc,tee):180, dist);
+}
+function autoMarkers(hole){
+  const H=data.holes[hole]; if(!H||!H.green) return;
+  const gc=_ctr(H.green); let holeLen=Infinity;
+  if(H.tees && H.tees.white) holeLen=_dM(gc,H.tees.white);
+  else if(H.centreline && H.centreline.length>=2){ const L2=H.centreline; let s=0; for(let i=0;i<L2.length-1;i++) s+=_dM(L2[i],L2[i+1]); holeLen=s; }
+  for(const [key,dist] of [['mk100',100],['mk150',150],['mk200',200]]){
+    if(H[key]) continue;                 // already has this marker — don't clobber a moved one
+    if(dist > holeLen-15) continue;      // no room on a short hole
+    const p=_markerPos(H,dist); if(!p) continue;
+    const lyr=L.marker(p); lyr.addTo(map); lyr.options._k=key; lyr.options._h=hole; layers.push({layer:lyr,hole,key});
+  }
+  store(); redraw();
 }
 function store(){
   data.name = document.getElementById('cname').value || data.name;
