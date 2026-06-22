@@ -41,7 +41,11 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   fairway (this is the fix for the par-5-dogleg-cutting-through-the-trees problem — the markers can't be
   the control points, since you need a bend *between* the tee and the 200 marker). Moving a tee/green
   snaps the line's endpoint + re-derives; the markers are non-interactive (steer them via the line).
-  Type each tee's card metres into **Tee m** + **place tees** to drop the colours by distance along the line. A hole with a **here-be-dragons**
+  Type each tee's card metres into **Tee m** + **place tees** to drop the colours by distance along the line.
+  **↳ fairway** generates a tapered ribbon polygon along the centreline (≈34 m, narrower at the ends) you then
+  edit — instead of tracing 18 fairways by hand. A **live readout** under the controls shows the centreline's
+  metres vs the White card distance (ambers if >8% off). Navigating to a not-yet-traced hole **auto-recentres**
+  the map near an adjacent traced green (where the next tee usually is). A hole with a **here-be-dragons**
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
   map now and then (`window._playDragons=false` disables it; honours `prefers-reduced-motion`). Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard

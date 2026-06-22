@@ -48,7 +48,8 @@
       <input id="td-blue"  type="number" placeholder="Bl" title="Blue tee metres"  style="width:34px;padding:3px">
       <input id="td-white" type="number" placeholder="Wh" title="White tee metres" style="width:34px;padding:3px">
       <input id="td-red"   type="number" placeholder="Rd" title="Red tee metres"   style="width:34px;padding:3px">
-      <button id="td-place">↳ place tees</button></div>
+      <button id="td-place">↳ place tees</button><button id="fw-auto">↳ fairway</button></div>
+    <div id="cl-readout" style="font:11px var(--mono,monospace);color:#88a472;min-height:14px"></div>
     <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line.</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
@@ -120,7 +121,12 @@ function selectType(f){ active=f; document.querySelectorAll('#ftypes button').fo
   map.pm.disableDraw(); curDraw=drawShapeOf(f); map.pm.enableDraw(curDraw, { continueDrawing:!!f.multi });
   const how = curDraw==='Marker'?'click the spot' : curDraw==='Line'?'click points along it' : curDraw==='Rectangle'?'drag a box (then Edit/drag mode to reshape)' : 'click each corner, then Finish';
   status(`placing <b>${f.l}</b> on hole ${hole} — ${how}`); }
-function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active); }
+function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active);
+  // auto-recentre: arriving at a not-yet-traced hole pans near an adjacent traced green (the next tee is usually there)
+  const H=data.holes[hole], traced=H&&(H.green||H.tees||H.centreline);
+  if(!traced){ const near=(data.holes[hole-1]&&data.holes[hole-1].green)||(data.holes[hole+1]&&data.holes[hole+1].green); if(near) map.panTo(L.latLng(_ctr(near)[0],_ctr(near)[1]),{animate:true}); }
+  for(const c of ['black','blue','white','red']){ const e=document.getElementById('td-'+c); if(e) e.value=''; }
+  updateReadout(); }
 function status(t){ document.getElementById('status').innerHTML=t; }
 
 map.on('pm:create', e => {
@@ -179,7 +185,36 @@ function placeTees(hole){   // place each entered tee colour at its card distanc
     placeMarker(hole,'tee-'+col,p); n++; }
   if(n){ store(); syncHole(hole); status('placed '+n+' tee(s) by card distance along the line — drag to fine-tune'); } else status('enter at least one tee distance (m)');
 }
-function syncHole(hole){ ensureCentreline(hole); store(); deriveMarkers(hole); store(); redraw(); }
+function syncHole(hole){ ensureCentreline(hole); store(); deriveMarkers(hole); store(); redraw(); updateReadout(); }
+// Auto-fairway: a tapered ribbon polygon along the centreline (default 34 m, narrower at tee+green) you then edit.
+function fairwayRibbon(line, widthM){
+  if(!line||line.length<2) return null;
+  const rad=Math.PI/180, kx=Math.cos(line[0][0]*rad)*111320, ky=111320;
+  const toXY=p=>[(p[1]-line[0][1])*kx,(p[0]-line[0][0])*ky], toLL=xy=>[r6(line[0][0]+xy[1]/ky),r6(line[0][1]+xy[0]/kx)];
+  const P=line.map(toXY), n=P.length; let total=0; for(let i=1;i<n;i++) total+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]);
+  const hw=[]; let acc=0; for(let i=0;i<n;i++){ if(i) acc+=Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]); const f=total?acc/total:0;
+    hw.push(widthM/2*Math.min(1, 0.55+0.45*Math.min(Math.min(1,f/0.12),Math.min(1,(1-f)/0.12)))); }
+  const norm=[]; for(let i=0;i<n;i++){ let dx,dy; if(i===0){dx=P[1][0]-P[0][0];dy=P[1][1]-P[0][1];} else if(i===n-1){dx=P[n-1][0]-P[n-2][0];dy=P[n-1][1]-P[n-2][1];} else {dx=P[i+1][0]-P[i-1][0];dy=P[i+1][1]-P[i-1][1];} const L=Math.hypot(dx,dy)||1; norm.push([-dy/L,dx/L]); }
+  const left=[],right=[]; for(let i=0;i<n;i++){ left.push([P[i][0]+norm[i][0]*hw[i],P[i][1]+norm[i][1]*hw[i]]); right.push([P[i][0]-norm[i][0]*hw[i],P[i][1]-norm[i][1]*hw[i]]); }
+  return left.concat(right.reverse()).map(toLL);
+}
+function autoFairway(hole){
+  const H=data.holes[hole]; if(!H||!H.centreline){ status('draw the green + a tee first (need a centreline)'); return; }
+  const poly=fairwayRibbon(H.centreline, 34); if(!poly) return;
+  for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key==='fairway'){ map.removeLayer(layers[i].layer); layers.splice(i,1); } }
+  const f=FT.find(x=>x.k==='fairway'); const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k='fairway'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'fairway'});
+  store(); redraw(); status('fairway ribbon from the centreline — Edit-mode-drag to fit, or widen/narrow the edges');
+}
+// Live readout: centreline length (+ tee→green) vs the White card distance entered in Tee m.
+function updateReadout(){
+  const el=document.getElementById('cl-readout'); if(!el) return; const H=data.holes[hole]; if(!H){ el.textContent=''; return; }
+  const bits=[]; if(H.centreline&&H.centreline.length>=2){ let L=0; for(let i=1;i<H.centreline.length;i++) L+=_dM(H.centreline[i-1],H.centreline[i]);
+    const wEl=document.getElementById('td-white'), w=wEl&&parseFloat(wEl.value); let s='line '+Math.round(L)+' m';
+    if(w){ const d=Math.round(L-w); s+=' · card '+w+' ('+(d>=0?'+':'')+d+')'; } bits.push(s); }
+  else if(H.green && H.tees){ const tm=_teeMid(hole); if(tm) bits.push('tee→green '+Math.round(_dM(tm,_ctr(H.green)))+' m'); }
+  el.innerHTML = bits.join(' · ');
+  if(H.centreline&&H.centreline.length>=2){ const wEl=document.getElementById('td-white'), w=wEl&&parseFloat(wEl.value); let L=0; for(let i=1;i<H.centreline.length;i++) L+=_dM(H.centreline[i-1],H.centreline[i]); el.style.color = (w && Math.abs(L-w)>w*0.08) ? '#e0a23a' : '#88a472'; }
+}
 function store(){
   data.name = document.getElementById('cname').value || data.name;
   data.holes = {};
@@ -191,6 +226,7 @@ function store(){
     else h[f.field] = c;                                       // green/centreline/fairway
   }
   document.getElementById('data').textContent = summary();
+  updateReadout();
 }
 function summary(){
   const out = []; for(let n=1;n<=18;n++){ const h=data.holes[n]; if(!h) continue;
@@ -211,6 +247,7 @@ document.getElementById('undo').onclick = () => { const d=map.pm.Draw[curDraw]; 
 document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box'?'outline':'box'; const b=document.getElementById('drawmode');
   b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; b.classList.toggle('on',drawMode==='outline'); if(active) selectType(active); };
 document.getElementById('td-place').onclick = () => placeTees(hole);
+document.getElementById('fw-auto').onclick = () => autoFairway(hole);
 document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
   const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
   layers.forEach(o=>o.layer.once('click', h)); };
