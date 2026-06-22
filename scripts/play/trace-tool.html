@@ -90,7 +90,7 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
 ];
 const r6 = v => +v.toFixed(6);
 const data = { name:'', holes:{} };
-let active = FT[4], hole = 1;
+let active = null, hole = 1;   // nothing selected until you pick a feature — so a stray click never draws
 const layers = [];   // {layer, hole, key}
 
 const map = L.map('map').setView([-27.600, 152.916], 16);
@@ -124,13 +124,13 @@ function applyMode(){   // tear everything down, then enable just the active mod
   wandOn = (mode==='detect');
   const eb=document.getElementById('editmode'), wb=document.getElementById('wand'), db=document.getElementById('drawmode');
   if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect'); if(db) db.style.opacity = mode==='draw'?'1':'0.45';
-  if(mode==='draw'){ curDraw=drawShapeOf(active); map.pm.enableDraw(curDraw, { continueDrawing:!!active.multi }); }
+  if(mode==='draw' && active){ curDraw=drawShapeOf(active); map.pm.enableDraw(curDraw, { continueDrawing:!!active.multi }); }   // no active feature ⇒ draw stays OFF (clicks do nothing)
   else if(mode==='edit'){ map.pm.enableGlobalEditMode(); }
 }
 function setMode(m){ mode=m; applyMode();
   status(m==='edit' ? '<b>Edit/drag ON</b> — drag a marker/vertex; drag a polygon edge-dot to reshape. Tap Edit again to draw.'
-       : m==='detect' ? '🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> to auto-trace it. Tap detect again to draw.'
-       : 'drawing <b>'+active.l+'</b> — '+(curDraw==='Marker'?'click the spot':curDraw==='Line'?'click points':curDraw==='Rectangle'?'drag a box':'click corners, then Finish')); }
+       : m==='detect' ? (active ? '🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> to auto-trace it. Tap detect again to draw.' : '🪄 <b>Detect ON</b> — pick a polygon feature on the left first.')
+       : (active ? 'drawing <b>'+active.l+'</b> — '+(curDraw==='Marker'?'click the spot':curDraw==='Line'?'click points':curDraw==='Rectangle'?'drag a box':'click corners, then Finish') : '<b>pick a feature</b> on the left to start drawing')); }
 function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k)); setMode('draw'); }
 function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active);
   // auto-recentre: arriving at a not-yet-traced hole pans near an adjacent traced green (the next tee is usually there)
@@ -246,7 +246,7 @@ function _rdp(pts, eps){   // Douglas–Peucker simplify a closed ring → a han
   const out=rec(0,pts.length-1); return out.length>=3?out:pts;
 }
 async function wandClick(e){
-  if(!wandOn) return; const f=active; if(f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
+  if(!wandOn) return; const f=active; if(!f||f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
   const z=Math.min(19,Math.max(1,Math.round(map.getZoom()))), wp=map.project(e.latlng,z), tx=Math.floor(wp.x/256), ty=Math.floor(wp.y/256), px=Math.floor(wp.x-tx*256), py=Math.floor(wp.y-ty*256);
   const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
   status('🪄 detecting…'); let img;
@@ -317,7 +317,7 @@ document.getElementById('impfile').onchange = e => { const f=e.target.files[0]; 
     store(); const first=Object.keys(d.holes)[0]; if(first) map.fitBounds(L.featureGroup(layers.map(o=>o.layer)).getBounds().pad(0.2)); status('imported'); }catch(x){ alert('bad JSON: '+x.message); } };
   rd.readAsText(f); };
 
-selectType(FT[4]); setHole(1);
+setHole(1); setMode('draw');   // no feature pre-selected — prompts "pick a feature to start"
 </script>
 </body>
 </html>
