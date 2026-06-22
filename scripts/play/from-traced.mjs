@@ -24,8 +24,8 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   const card = hc.tees || {}, white = card.white;
   // green polygon → centre + bbox + feature; else fall back to config/placed green + oval
   let cen, gbb;
-  if (t.green && t.green.length >= 3) { cen = centroid(t.green).map(r7); gbb = bboxOf(t.green).map(r7); feats.push({ t: 'green', pts: simp(t.green) }); }
-  else if (hc.green) { cen = hc.green.map(r7); gbb = ovalGbb(cen); feats.push({ t: 'green', pts: ovalPts(gbb) }); qa.push(`h${n}: no traced green — oval from config`); }
+  if (t.green && t.green.length >= 3) { cen = centroid(t.green).map(r7); gbb = bboxOf(t.green).map(r7); feats.push({ t: 'green', pts: simp(t.green), own: n }); }
+  else if (hc.green) { cen = hc.green.map(r7); gbb = ovalGbb(cen); feats.push({ t: 'green', pts: ovalPts(gbb), own: n }); qa.push(`h${n}: no traced green — oval from config`); }
   else { qa.push(`h${n}: no green at all`); continue; }
   // tee: clicked white tee, else config tee, else card-place not possible without a line start
   const whiteTee = t.tees?.white || hc.tee; if (!whiteTee) { qa.push(`h${n}: no tee`); continue; }
@@ -44,7 +44,7 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   if (Object.keys(tees).length) tees.white = tees.white || tee;
   holes.push({ n, par: hc.par, si: hc.si, tee, ...(Object.keys(tees).length ? { tees } : {}), cen, pin: null, gbb });
   // traced area features (polygons ≥3 pts) and line features (creek/OB/path ≥2 pts) → geom features
-  if (t.fairway && t.fairway.length >= 3) feats.push({ t: 'fairway', pts: simp(t.fairway) });
+  if (t.fairway && t.fairway.length >= 3) feats.push({ t: 'fairway', pts: simp(t.fairway), own: n });
   for (const b of t.bunkers || []) if (b.length >= 3) feats.push({ t: 'bunker', pts: simp(b) });
   for (const w of t.water || []) if (w.length >= 3) feats.push({ t: 'water', pts: simp(w) });
   for (const r of t.rough || []) if (r.length >= 3) feats.push({ t: 'rough', pts: simp(r) });
