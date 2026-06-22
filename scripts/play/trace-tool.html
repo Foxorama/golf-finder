@@ -250,6 +250,14 @@ function _rdp(pts, eps){   // Douglas–Peucker simplify a closed ring → a han
   const rec=(s,e2i)=>{ let dm=0,idx=-1; for(let i=s+1;i<e2i;i++){ const d=seg(pts[i],pts[s],pts[e2i]); if(d>dm){dm=d;idx=i;} } if(dm>e2 && idx>0){ const l=rec(s,idx), r=rec(idx,e2i); return l.slice(0,-1).concat(r); } return [pts[s],pts[e2i]]; };
   const out=rec(0,pts.length-1); return out.length>=3?out:pts;
 }
+function _clean(m,W,H){   // fill interior holes + a small morphological close, so the contour is smooth not spaghetti
+  const bg=new Uint8Array(W*H),st=[],pu=k=>{if(!m[k]&&!bg[k]){bg[k]=1;st.push(k);}};
+  for(let x=0;x<W;x++){pu(x);pu((H-1)*W+x);} for(let y=0;y<H;y++){pu(y*W);pu(y*W+W-1);}
+  while(st.length){const k=st.pop(),x=k%W,y=(k/W)|0; if(x>0)pu(k-1); if(x<W-1)pu(k+1); if(y>0)pu(k-W); if(y<H-1)pu(k+W);}
+  for(let i=0;i<W*H;i++) if(!m[i]&&!bg[i]) m[i]=1;   // holes → solid
+  const morph=grow=>{ const o=m.slice(); for(let y=0;y<H;y++)for(let x=0;x<W;x++){ const k=y*W+x; if(grow===!!o[k]) continue; let hit=0; for(let j=-2;j<=2&&!hit;j++)for(let i=-2;i<=2;i++){ const xx=x+i,yy=y+j; if(xx>=0&&xx<W&&yy>=0&&yy<H && (!!o[yy*W+xx])===grow){hit=1;break;} } if(hit) m[k]=grow?1:0; } };
+  morph(true); morph(false);   // close (dilate→erode, radius 2) seals thin cracks
+}
 async function wandClick(e){
   if(!wandOn) return; const f=active; if(!f||f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
   const z=Math.min(19,Math.max(1,Math.round(map.getZoom()))), wp=map.project(e.latlng,z), tx=Math.floor(wp.x/256), ty=Math.floor(wp.y/256), px=Math.floor(wp.x-tx*256), py=Math.floor(wp.y-ty*256);
@@ -258,10 +266,13 @@ async function wandClick(e){
   try{ const r=await fetch(url,{mode:'cors'}); const bm=await createImageBitmap(await r.blob()); const cv=document.createElement('canvas'); cv.width=256;cv.height=256; const cx=cv.getContext('2d'); cx.drawImage(bm,0,0); img=cx.getImageData(0,0,256,256).data; }
   catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); setMode('draw'); return; }
   const region=_floodFill(img,256,256,px,py,30,60); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
-  const mask=new Uint8Array(256*256); for(const [qx,qy] of region) mask[qy*256+qx]=1;   // boundary-trace the actual (possibly concave) outline
-  const cont=_contour(mask,256,256); if(cont.length<3){ status('region too small'); return; }
-  const poly=_rdp(cont,2.5).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
-  if(poly.length<3){ status('region too small'); return; }
+  const mask=new Uint8Array(256*256); for(const [qx,qy] of region) mask[qy*256+qx]=1;
+  _clean(mask,256,256);   // fill holes + seal cracks first
+  const simp=_rdp(_contour(mask,256,256),2.5);
+  // bail cleanly rather than dump a spaghetti polygon — greens blend into the grass so they rarely trace clean
+  if(simp.length<3){ status('region too small — trace by hand'); return; }
+  if(simp.length>18){ status("🪄 couldn't get a clean outline here — auto-detect works best on <b>bunkers/water</b> (high contrast); greens blend into the grass, so Box-draw this one by hand."); return; }
+  const poly=simp.map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=f.k; lyr.options._h=hole; layers.push({layer:lyr,hole,key:f.k});
   store(); redraw(); if(f.k==='green') syncHole(hole); setMode('edit'); status('detected a '+f.l+' — now in Edit mode: drag its dots to fit (tap a feature to draw again)');
