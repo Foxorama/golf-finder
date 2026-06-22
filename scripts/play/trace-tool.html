@@ -49,7 +49,7 @@
       <input id="td-white" type="number" placeholder="Wh" title="White tee metres" style="width:34px;padding:3px">
       <input id="td-red"   type="number" placeholder="Rd" title="Red tee metres"   style="width:34px;padding:3px">
       <button id="td-place">↳ place tees</button></div>
-    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → 100/150/200 markers drop and a <b>centreline auto-threads tee→markers→green</b>; drag the markers onto the fairway to shape doglegs (the line follows). <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance.</div>
+    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line.</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
     <div id="data">{}</div>
@@ -130,7 +130,7 @@ map.on('pm:create', e => {
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   layers.push({layer:lyr, hole, key:f.k});
   store(); redraw();
-  if(['green','tee-white','tee-blue','tee-black','tee-red','mk100','mk150','mk200'].includes(f.k)) syncHole(hole);  // auto markers + sticky centreline through the control points
+  if(f.k==='green' || f.k.indexOf('tee-')===0) syncHole(hole);  // green/tee → auto straight centreline + markers derived along it
 });
 
 function coordsOf(lyr){
@@ -150,33 +150,36 @@ const _brg  = (a,b) => { const la1=a[0]*Math.PI/180,la2=b[0]*Math.PI/180,dlo=(b[
 const _dest = (p,brg,d) => { const R=6378137, br=brg*Math.PI/180, la1=p[0]*Math.PI/180, lo1=p[1]*Math.PI/180, dr=d/R; const la2=Math.asin(Math.sin(la1)*Math.cos(dr)+Math.cos(la1)*Math.sin(dr)*Math.cos(br)); const lo2=lo1+Math.atan2(Math.sin(br)*Math.sin(dr)*Math.cos(la1),Math.cos(dr)-Math.sin(la1)*Math.sin(la2)); return [r6(la2*180/Math.PI), r6(lo2*180/Math.PI)]; };
 const _teeMid = hole => { const H=data.holes[hole]; if(!H||!H.tees) return null; const ps=Object.values(H.tees); if(!ps.length) return null; let la=0,lo=0; for(const p of ps){la+=p[0];lo+=p[1];} return [r6(la/ps.length), r6(lo/ps.length)]; };
 function placeMarker(hole,key,p){ const lyr=L.marker(p); lyr.addTo(map); lyr.options._k=key; lyr.options._h=hole; layers.push({layer:lyr,hole,key}); return lyr; }
-function autoMarkers(hole){   // 100/150/200 straight along green→tee-mid; never clobbers an already-placed one
-  const H=data.holes[hole]; if(!H||!H.green) return; const tm=_teeMid(hole); if(!tm) return;
-  const gc=_ctr(H.green), brg=_brg(gc,tm), holeLen=_dM(gc,tm);
-  for(const [key,dist] of [['mk100',100],['mk150',150],['mk200',200]]){ if(H[key]) continue; if(dist>holeLen-15) continue; placeMarker(hole,key,_dest(gc,brg,dist)); }
+function _markerPos(H, dist){   // point at arc-distance `dist` from the GREEN along the centreline (extends past the tee end)
+  const line=H.centreline; if(!line||line.length<2) return null;
+  const gc=_ctr(H.green); let L2=line.slice(); if(_dM(L2[0],gc)>_dM(L2[L2.length-1],gc)) L2.reverse();   // L2[0]=green end
+  let acc=0; for(let i=0;i<L2.length-1;i++){ const seg=_dM(L2[i],L2[i+1]); if(acc+seg>=dist){ const t=(dist-acc)/seg; return [r6(L2[i][0]+(L2[i+1][0]-L2[i][0])*t), r6(L2[i][1]+(L2[i+1][1]-L2[i][1])*t)]; } acc+=seg; }
+  const a=L2[L2.length-2], b=L2[L2.length-1]; return _dest(b, _brg(a,b), dist-acc);   // beyond the tee end → extend straight
 }
-function placeTees(hole){   // place each entered tee colour at its card distance along green→tee-mid (then drag to fine-tune)
-  const H=data.holes[hole]; if(!H||!H.green){ status('draw the green + a tee first'); return; }
-  const gc=_ctr(H.green), tm=_teeMid(hole); const brg = tm ? _brg(gc,tm) : (H.centreline ? _brg(gc,H.centreline[0]) : 0);
-  if(!tm && !H.centreline){ status('place one tee (or draw a line) first to set the direction'); return; }
-  let n=0; for(const [col,id] of [['black','td-black'],['blue','td-blue'],['white','td-white'],['red','td-red']]){ const el=document.getElementById(id); const v=el&&parseFloat(el.value); if(!v) continue;
-    for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key==='tee-'+col){ map.removeLayer(layers[i].layer); layers.splice(i,1); } }
-    placeMarker(hole,'tee-'+col,_dest(gc,brg,v)); n++; }
-  if(n){ store(); syncHole(hole); status('placed '+n+' tee(s) by distance — drag to fine-tune'); } else status('enter at least one tee distance (m)');
-}
-function rebuildCentreline(hole){   // thread tee-mid → 200 → 150 → 100 → green through whatever exists
-  const H=data.holes[hole]; if(!H||!H.green) return;
-  const tm=_teeMid(hole), gc=_ctr(H.green), pts=[];
-  if(tm) pts.push(tm);
-  for(const k of ['mk200','mk150','mk100']) if(H[k]&&H[k].length) pts.push(H[k][0]);
-  pts.push(gc);
-  if(pts.length<2) return;
-  const latlngs=pts.map(p=>L.latLng(p[0],p[1]));
+function ensureCentreline(hole){   // straight tee-mid→green when none; else KEEP the user's dogleg bends, only snap the endpoints to tee + green
+  const H=data.holes[hole]; if(!H||!H.green) return; const tm=_teeMid(hole), gc=_ctr(H.green); if(!tm) return;
   let entry=layers.find(o=>o.hole===hole && o.key==='centreline');
-  if(entry){ entry.layer.setLatLngs(latlngs); }
-  else { const f=FT.find(x=>x.k==='centreline'); const lyr=L.polyline(latlngs,{color:f.c,weight:2}); lyr.options.pmIgnore=true; lyr.addTo(map); lyr.options._k='centreline'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'centreline'}); }
+  if(entry){ let arr=entry.layer.getLatLngs().map(p=>[p.lat,p.lng]); if(arr.length<2) arr=[tm,gc];
+    if(_dM(arr[0],gc) < _dM(arr[arr.length-1],gc)) arr.reverse();   // arr[0]=tee end
+    arr[0]=tm; arr[arr.length-1]=gc; entry.layer.setLatLngs(arr.map(p=>L.latLng(p[0],p[1]))); }
+  else { const f=FT.find(x=>x.k==='centreline'); const lyr=L.polyline([L.latLng(tm[0],tm[1]),L.latLng(gc[0],gc[1])],{color:f.c,weight:2}); lyr.addTo(map); lyr.options._k='centreline'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'centreline'}); }
 }
-function syncHole(hole){ autoMarkers(hole); rebuildCentreline(hole); store(); redraw(); }
+function deriveMarkers(hole){   // (re)place 100/150/200 ALONG the centreline at arc-distance from the green (non-interactive — shape via the line)
+  const H=data.holes[hole]; if(!H||!H.green||!H.centreline) return;
+  for(let i=layers.length-1;i>=0;i--){ const o=layers[i]; if(o.hole===hole && (o.key==='mk100'||o.key==='mk150'||o.key==='mk200')){ map.removeLayer(o.layer); layers.splice(i,1); } }
+  const cl=H.centreline; let holeLen=0; for(let i=1;i<cl.length;i++) holeLen+=_dM(cl[i-1],cl[i]);
+  for(const [key,dist] of [['mk100',100],['mk150',150],['mk200',200]]){ if(dist>holeLen-10) continue; const p=_markerPos(H,dist); if(!p) continue; const lyr=L.marker(p); lyr.options.pmIgnore=true; lyr.addTo(map); lyr.options._k=key; lyr.options._h=hole; layers.push({layer:lyr,hole,key}); }
+}
+function placeTees(hole){   // place each entered tee colour at its card distance ALONG the centreline (then drag to fine-tune)
+  const H=data.holes[hole]; if(!H||!H.green){ status('draw the green first'); return; }
+  if(!H.centreline){ status('place a tee first (so the centreline exists)'); return; }
+  let n=0; for(const [col,id] of [['black','td-black'],['blue','td-blue'],['white','td-white'],['red','td-red']]){ const el=document.getElementById(id); const v=el&&parseFloat(el.value); if(!v) continue;
+    const p=_markerPos(H,v); if(!p) continue;
+    for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key==='tee-'+col){ map.removeLayer(layers[i].layer); layers.splice(i,1); } }
+    placeMarker(hole,'tee-'+col,p); n++; }
+  if(n){ store(); syncHole(hole); status('placed '+n+' tee(s) by card distance along the line — drag to fine-tune'); } else status('enter at least one tee distance (m)');
+}
+function syncHole(hole){ ensureCentreline(hole); store(); deriveMarkers(hole); store(); redraw(); }
 function store(){
   data.name = document.getElementById('cname').value || data.name;
   data.holes = {};
@@ -216,7 +219,10 @@ document.getElementById('editmode').onclick = () => { editing=!editing; const b=
   if(editing){ map.pm.disableDraw(); map.pm.enableGlobalEditMode(); status('<b>Edit/drag mode ON</b> — drag any marker or vertex to reposition. Toggle off to add features.'); }
   else{ map.pm.disableGlobalEditMode(); store(); selectType(active); status('edit mode off — back to placing'); } };
 const _onMoved = e => { const lyr=e&&(e.layer||e.target); store(); const k=lyr&&lyr.options&&lyr.options._k, h=lyr&&lyr.options&&lyr.options._h;
-  if(h && k && (k.indexOf('tee-')===0||k==='green'||k==='mk100'||k==='mk150'||k==='mk200')) syncHole(h); else redraw(); };   // dragging a control point re-threads its centreline
+  if(!h||!k){ redraw(); return; }
+  if(k==='centreline'){ deriveMarkers(h); store(); redraw(); }       // bent the line for a dogleg → re-place markers along it
+  else if(k.indexOf('tee-')===0||k==='green'){ syncHole(h); }        // moved a tee / the green → snap the line endpoint + re-derive
+  else redraw(); };
 map.on('pm:edit', _onMoved); map.on('pm:dragend', _onMoved); map.on('pm:markerdragend', _onMoved);
 document.getElementById('export').onclick = () => { store();
   const blob = new Blob([JSON.stringify(data,null,1)], {type:'application/json'});
