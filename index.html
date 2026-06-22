@@ -7128,8 +7128,11 @@ function playHoleSvg(){
   // hole centreline (real OSM if baked), oriented tee->green
   let line=(geom&&geom.lines&&geom.lines[h.n]&&geom.lines[h.n].length>=2)?geom.lines[h.n].slice():[tee,cen];
   if(uv(line[0][0],line[0][1])[1] > uv(line[line.length-1][0],line[line.length-1][1])[1]) line.reverse();
-  // frame: tee, green targets and the centreline, padded for fairway width
+  // frame: tee, green targets, the centreline, AND this hole's own features (so edge trees/rough/OB/
+  // wide bunkers/water sit inside the frame instead of being culled), padded for fairway width
+  if(geom&&geom.features) _featOwner(geom);
   const anchors=[tee,tg.front,tg.cen,tg.back].concat(line); if(tg.pin)anchors.push(tg.pin);
+  if(geom&&geom.features) for(const f of geom.features){ if(f._own===h.n&&f.pts) for(const p of f.pts) anchors.push(p); }
   let uMin=Infinity,uMax=-Infinity,vMin=Infinity,vMax=-Infinity;
   for(const p of anchors){ const [a,b]=uv(p[0],p[1]); if(a<uMin)uMin=a;if(a>uMax)uMax=a;if(b<vMin)vMin=b;if(b>vMax)vMax=b; }
   const padU=Math.max(16,(uMax-uMin)*0.12), padV=12;   // tighter frame → the hole fills more of the map
@@ -7148,10 +7151,9 @@ function playHoleSvg(){
   let defs='';
   let s=`<rect x="0" y="0" width="${W}" height="${H}" rx="14" fill="#163009"/>`;
   if(geom&&geom.features){
-    _featOwner(geom);
     // punchy-comic cell shading: each owned surface gets flat tones + a texture pass + an ink edge.
     // Neighbours stay faded-flat for context. Drawn once here ⇒ every hole/course inherits the look.
-    const fill={fairway:'#3a8a2c',water:'#1d6fb8',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26'};
+    const fill={rough:'#356016',fairway:'#3a8a2c',water:'#1d6fb8',bunker:'#ecd9a6',green:'#54ab2c',tee:'#3b7a26',trees:'#1f5418',building:'#9a9da3'};
     // this hole's own footprint (fairway/green/tee) → cull any NEIGHBOUR feature that overlaps it
     // (the "directly underneath the current hole" bleed); distant neighbours stay as faint edge context.
     let core=null;
@@ -7159,7 +7161,7 @@ function playHoleSvg(){
       const b=featBox(f.pts); core=core?{x0:Math.min(core.x0,b.x0),y0:Math.min(core.y0,b.y0),x1:Math.max(core.x1,b.x1),y1:Math.max(core.y1,b.y1)}:b; } }
     const overlapsCore=b=> !!core && b.x1>core.x0 && b.x0<core.x1 && b.y1>core.y0 && b.y0<core.y1;
     let ci=0;
-    for(const layer of ['fairway','water','bunker','green','tee']){
+    for(const layer of ['rough','fairway','water','bunker','green','tee','trees','building']){
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const d=path(f.pts);
         if(f._own!==h.n){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; s+=`<path d="${d}Z" fill="${fill[layer]}" opacity="0.18"/>`; continue; }  // neighbours: faint, and hidden where they'd sit under this hole
@@ -7196,8 +7198,43 @@ function playHoleSvg(){
           for(let y=bb.y0+3;y<bb.y1;y+=8) gm+=`<rect x="${bb.x0.toFixed(1)}" y="${y.toFixed(1)}" width="${(bb.x1-bb.x0).toFixed(1)}" height="4" fill="#5ebb33" opacity="0.4"/>`;
           s+=gm+'</g>';
           s+=`<path d="${d}Z" fill="none" stroke="#214a10" stroke-width="1.6" stroke-linejoin="round"/>`;
-        } else {                                            // tee
+        } else if(layer==='rough'){                         // duller mid-green base + faint speckle + ink (drawn under fairway)
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="${fill.rough}"/>`;
+          let rg=`<g clip-path="url(#${cid})">`;
+          for(let y=bb.y0+5;y<bb.y1;y+=9) for(let x=bb.x0+5;x<bb.x1;x+=11) rg+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="1" fill="#4a8a26" opacity="0.45"/>`;
+          s+=rg+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#23460f" stroke-width="1.1"/>`;
+        } else if(layer==='trees'){                          // dark canopy of overlapping blobs + ink (art assets can replace later)
+          defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
+          s+=`<path d="${d}Z" fill="${fill.trees}"/>`;
+          let tg2=`<g clip-path="url(#${cid})">`;
+          for(let y=bb.y0+5;y<bb.y1;y+=10) for(let x=bb.x0+5;x<bb.x1;x+=12){ const r=4+((x+y)%3);
+            tg2+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${r}" fill="#2f6b2c" opacity="0.7"/><circle cx="${(x-1.5).toFixed(1)}" cy="${(y-1.5).toFixed(1)}" r="${(r*0.5).toFixed(1)}" fill="#3f8038" opacity="0.6"/>`; }
+          s+=tg2+'</g>';
+          s+=`<path d="${d}Z" fill="none" stroke="#123a10" stroke-width="1.3"/>`;
+        } else if(layer==='building'){                       // flat slab + ink
+          s+=`<path d="${d}Z" fill="${fill.building}" stroke="#3f4247" stroke-width="1.4" stroke-linejoin="round"/>`;
+        } else {                                             // tee
           s+=`<path d="${d}Z" fill="${fill.tee}" stroke="#1c4d12" stroke-width="1.1"/>`;
+        }
+      }
+    }
+    // line features: creek / cart-path / out-of-bounds — drawn over the filled areas (same neighbour cull)
+    for(const layer of ['creek','path','ob']){
+      for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
+        const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
+        const d=path(f.pts), op=own?1:0.22;
+        if(layer==='creek'){
+          s+=`<path d="${d}" fill="none" stroke="#0a3a66" stroke-width="${own?5:3}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+          s+=`<path d="${d}" fill="none" stroke="#2a86c8" stroke-width="${own?3:1.8}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+          if(own) s+=`<path d="${d}" fill="none" stroke="#9ccef2" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>`;
+        } else if(layer==='path'){
+          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?4:2.5}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
+          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"/>`;
+        } else {  // out-of-bounds: white dashed boundary + stake dots at vertices
+          s+=`<path d="${d}" fill="none" stroke="#f2f2f2" stroke-width="${own?1.6:1}" stroke-dasharray="2 5" stroke-linecap="round" opacity="${op}"/>`;
+          if(own) for(const p of f.pts){ const q=P(p[0],p[1]); s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="1.4" fill="#fff" stroke="#c0392b" stroke-width="0.5"/>`; }
         }
       }
     }
