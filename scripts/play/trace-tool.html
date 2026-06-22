@@ -321,7 +321,7 @@ function summary(){
 }
 function redraw(){ layers.forEach(o=>{ const cur=o.hole===hole; o.layer.setStyle && o.layer.setStyle({opacity:cur?1:0.4, fillOpacity:cur?0.4:0.12}); if(o.layer.setOpacity) o.layer.setOpacity(cur?1:0.45); }); _restack(); }
 function _restack(){   // stack like the APP renders it: rough/fairway at the bottom, green/bunkers/etc on top — so you can draw rough OVER them and they still show on top (markers live in Leaflet's marker pane, always above)
-  const Z=['rough','native','fairway','waste','water','bunker','green','teebox','trees','building','creek','path','ob','ditch','bridge','centreline','dragon'];
+  const Z=['rough','native','fairway','waste','trees','building','green','teebox','water','bunker','creek','path','ob','ditch','bridge','centreline','dragon'];   // hazards on top (match playHoleSvg)
   for(const key of Z) for(const o of layers){ if(o.key===key && o.layer.bringToFront) o.layer.bringToFront(); }
 }
 
