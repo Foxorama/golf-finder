@@ -1,6 +1,6 @@
 ---
 name: add-play-course
-description: The end-to-end workflow for adding a new course to the on-course Play feature (GPS rangefinder + hole maps + scorecard + handicap) in index.html — the two baked data structures, how to source them (OpenStreetMap when complete; open-data triangulation when OSM is sparse), how to QA-review every hole, and how to ship. Use this whenever you add another course to COURSE_PLAY so every course is built and checked the same way.
+description: The end-to-end workflow for adding a new course to the on-course Play feature (GPS rangefinder + hole maps + scorecard + handicap) in index.html — the two baked data structures, how to source them (the hand-trace tool is the PRIMARY path for an accurate-looking course; OpenStreetMap when complete; auto open-data triangulation only for a quick distance-only cut), the member-package-PDF recipe, per-course multi-tee config, how to QA-review every hole, and how to ship. Use this whenever you add another course to COURSE_PLAY so every course is built and checked the same way.
 ---
 
 # Adding a course to on-course Play
@@ -113,14 +113,42 @@ numbering/scorecard/tee distances you resolve) and emits the built `{play,geom}`
 `minnippi-golf-and-range.config.json` (absent — every hole placed by hand from the aerial) are the
 worked examples.
 
-**Auto vs accurate-display:** `gap-fill.mjs` is hands-off and good for **distance (±~15 m)**, but its
-auto-detected positions are fuzzy (oval greens, grass-corridor fairways, best-effort sand bunkers,
-config-coord tees) so the *display* drifts. When **placement accuracy matters more than being
-hands-off**, trace features by hand: open **`scripts/play/trace-tool.html`** in a browser, click each
-feature (tee/green/centreline/fairway/bunker/water) on the georeferenced Esri aerial (club PDF open
-alongside to identify them), then **`node from-traced.mjs <traced.json> <slug>.config.json`** merges
-the clicked geometry with the scorecard → a built course (real green polygons → true front/centre/back;
-tees/bunkers/water land exactly where placed). This is the path when the auto build looks off.
+**HAND-TRACE is the PRIMARY path for an accurate, good-looking course; the auto build is a quick
+distance-only cut.** `gap-fill.mjs` is hands-off and fine for **distance (±~15 m)**, but its
+auto-detected positions are fuzzy (oval greens, grass-corridor fairways, best-effort sand blobs,
+config-coord tees) so the *display* drifts — that's fine for a rough first pass, NOT for a course you
+want to look right (and the map now has real depth/bevel art, so sloppy geometry shows). For a course
+worth shipping, **trace it by hand on the aerial** (`scripts/play/`, README has the full guide):
+
+1. Open **`scripts/play/trace-tool.html`** in a browser (Leaflet + Leaflet-Geoman over Esri World
+   Imagery), club course-map PDF alongside to identify features. Pan = **right-drag**; **Draw / Edit /
+   Detect** are one mode at a time; nothing is pre-selected (so a stray click doesn't draw).
+2. Pick a hole + feature, click/drag it on the aerial. Full palette: tee markers (**any of
+   white/blue/black/red/gold/orange/yellow/green/silver** — match the card), tee box, green, centreline,
+   fairway, bunker, water, creek, rough, trees, building, bridge, OB, cart-path, ditch, waste, native,
+   100/150/200 markers, drop zone, here-be-dragons.
+3. **Lean on the automations** (they do most of the work): green + a tee → a straight **centreline**
+   auto-draws and the **100/150/200 markers derive along it** (Edit-drag the centreline midpoint for a
+   dogleg → markers re-place on the bent line); **Tee m** + **place tees** drop the colours by card
+   distance; **↳ fairway** generates a tapered ribbon you edit; **🪄 detect** flood-fills a **bunker or
+   water** outline from the imagery (it **refuses greens** — they colour-bleed; box-draw those); a **live
+   readout** cross-checks the centreline metres vs the card; navigating to an untraced hole auto-recentres.
+4. **Export** the geometry JSON → **`node from-traced.mjs <traced.json> <slug>.config.json`** merges it
+   with the scorecard → a built `{play,geom}`. Real green polygons → true front/centre/back; every clicked
+   feature lands exactly where you put it. Then bake (Step 3 below) and run the §3a per-hole QA.
+
+**First-pass trick — minimise clicks:** never trace 18 holes from scratch. If the course has ANY
+geometry already (an OSM outline, an earlier auto build, survey-pinned greens), convert it to the tool's
+**import JSON** first so you **DRAG existing shapes** instead of placing them (Gailes: survey-pin greens
+as ovals + config tees + straight centrelines, imported, then refined). One Node converter over the
+existing geom + config → a `.traced.json` you import.
+
+**Tee rule:** place the **rated (white) tee** per hole; `from-traced` derives the other colours from the
+card distances along the play line. It now **keeps any traced colour even with no card distance** (it
+unions the card + traced tee keys — a hand-placed red/orange/ladies tee is no longer dropped). For the
+app selector to SHOW a colour, give it a `teeSets:[{key,name,cr,slope}]` entry in the config (see *tees*
+below). The hole **length and the tee-shot club marker follow the SELECTED tee** (`holeTargets` builds
+the play-line from the effective tee), so forward tees read shorter and the marker moves with them.
 
 | feature | primary (best) | open-data gap-fill |
 |---|---|---|
@@ -145,6 +173,20 @@ pipeline (`scripts/play/`) is **pure Node** — built-in `fetch` + a vendored PN
 (>15% ⇒ flag), green-end vs bunkers, numbering vs map. A hole with **no OSM line at all** (Oxley hole
 7) is the hard case — place it from the course map + routing and **flag it for on-course Set-tee
 confirmation**; don't pretend it's surveyed.
+
+**Member-package PDF — the best single source for an outline-only club (Gailes path, reusable for
+Wolston).** Clubs whose OSM is just a boundary (Gailes, Wolston) usually publish a **New Member Package
+PDF** carrying both the **scorecard** (par/SI/CR/Slope **+ per-tee per-hole distances, incl. the Ladies/
+Red column on the right**) and an **official course map** (numbering + routing + rough green positions).
+Recipe: (1) **`pdftoppm` is NOT installed** and there's no ImageMagick, so to read an embedded scorecard/
+map image, in Node read the PDF as a Buffer, find each `stream` whose preceding dict has `/Image` +
+`/DCTDecode` (= raw JPEG), slice the bytes to `endstream`, write `.jpg` (sort by `/Width`×`/Height` for
+the big ones), then **Read** the jpg; **GDI+ crop+upscale** a region (`Graphics.DrawImage` srcRect→destRect,
+HighQualityBicubic) to read small print like the rating row. (2) Carve the **course-map** page for numbering/
+routing, **georeferenced by user-pinned control greens** (the user drops 3 green pins in Google Maps → an
+affine fixes numbering + gives real green centres; Gailes). (3) **Hand-trace** the rest on the aerial
+(above). Scorecard data are facts — read them, don't fabricate; Australian cards are **ACR/CCR** (no USGA
+Slope) so carry the course Slope. See the `play-trace-tool-accurate-display` + `icon-asset-rendering` memories.
 
 **Fully-absent courses (no OSM holes at all) — place every green + tee from the aerial.** There are
 no hole lines to anchor to, so trace each green + back-tee directly from open imagery (Minnippi, PR
@@ -272,8 +314,22 @@ shown) lands on the fairway; ✓ length ≈ card. Two real Oxley bugs this caugh
   (Oxley hole 8 ran 176 m past it to a car park → 449 m vs the real 273 m). **Fix:** trim `lines[n]`
   to tee→green and rebuild that hole's fairway from the trimmed line.
 
-### 4. Ship
-Branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-branch`
+### 4. Bake + Ship
+**Bake:** `node scripts/play/bake-play-course.mjs <index.html> <slug> <built.json>` emits the
+`COURSE_PLAY` entry + writes `play-geom/<slug>.json`. It only **ADDS** — it **aborts if the slug already
+exists**. To **REPLACE** a live course (iterating a build, or shipping a partial like Gailes-hole-1):
+a one-off Node script that regenerates the entry exactly as `bake` does, finds `  '<slug>': {` → the first
+`EOL+'  },'` after `holes:[` (the 6-space hole lines never match the 2-space entry close), splices the new
+entry over that range, and overwrites `play-geom/<slug>.json`. **An interim partial course is fine** — Gailes
+shipped as just hand-traced hole 1 (`holesN:1`) while 2–18 were traced; re-bake the full traced JSON to restore.
+
+**The hole map is 100% procedural** (`playHoleSvg`, one function, every course inherits it) — you bake
+*geometry*, not art. The look (hazards-on-top z-order; trees = deepest green; recessed `pmInset` bevel on
+bunkers/water/markers; domed green; soft-edge blur; vignette) is documented in `CLAUDE.md` + the
+`comic-map-restyle-plan` memory — **don't flatten it per-course**; if a feature reads wrong it's the colour
+hierarchy / the overlay gradients / the one layer-loop order, not per-shape opacity.
+
+**Ship:** branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-branch`
 (`CLAUDE.md` → "Change & versioning flow"). Windows/PowerShell gotchas that bite:
 - Write commit/PR text to a **UTF-8-no-BOM** file and use `-F` / `--body-file`
   (piping adds a BOM). `gh` is **not on PATH** — call the full path.
@@ -281,21 +337,27 @@ Branch → edit → commit → `gh pr create` → `gh pr merge --merge --delete-
 - **No `CACHE` bump needed** — `index.html` and the inline geometry are network-first
   in `sw.js`; only bump `CACHE` if you change the precache `SHELL` list.
 - Delete `.claude/launch.json` (+ any `serve.ps1`) when done; stage `index.html`
-  explicitly, never `git add .`.
+  explicitly, never `git add .`. (Building in an isolated `git worktree` keeps a parallel
+  session's WIP out of your commit — see `parallel-session-worktree`.)
 
 ## Not course data — don't bake these
 - **My Bag** (`gf_bag`) and **club stats** (`gf_club_stats`) are **per-user** localStorage,
   not per-course. Nothing to add.
-- **Multiple tees** (black/blue/white/red) ARE supported (PR #217 build + #218 refinements). Data:
-  per-hole `tees:{black:[lat,lng],…}` + course `teeSets:[{key,name,cr,slope}]` + `defaultTee` (one
-  `tee` + `cr`/`slope` stays the white/rated default for backward-compat). The **selector sits in the
-  map-tools row**; the choice is **per-hole with carry-forward** — picking a tee applies from that
-  hole onward and never rewrites earlier/played holes (`teeSelByHole`; a closed tee box on one hole
-  is a one-hole switch). `_effTee` / `holeTargets` (length) / `courseHandicap` all honour it
-  (handicap off the round's **primary** = hole-1 tee); the map tee marker is coloured to the tee.
-  **To populate a course**, put each tee's **card distance** in the build config (`tees:{black:343,…}`)
-  — the pipeline places them (white = the rated tee, others stepped back along the play line by the
-  card delta). Courses with no `teeSets` keep one tee + the **"Set tee" GPS tool**, unchanged.
+- **Multiple tees, ANY colours per course** ARE supported (PR #217/#218; per-course config #259/#262).
+  Data: per-hole `tees:{<colour>:[lat,lng],…}` + course `teeSets:[{key,name,cr,slope}]` + `defaultTee`.
+  Colours can be any of **black/blue/white/red/gold/orange/yellow/green/silver** (`TEE_DOT` has them all;
+  Minnippi uses orange, Gailes Red = the Ladies tee) — **set per course from its real card** (2, 3, 4+
+  tees). The **selector sits in the map-tools row**, **per-hole with carry-forward** (`teeSelByHole`;
+  picking a tee applies from that hole onward, never rewrites earlier/played holes). `_effTee` /
+  `holeTargets` / `courseHandicap` all honour it; **the hole length AND the tee-shot club marker follow
+  the SELECTED tee** (the play-line is built from the effective tee via `_teePlayLine`, so forward tees
+  like Red read shorter and the landing marker moves), and the map tee marker is coloured to the tee.
+  **To populate a course**, either trace each colour in the tool (`from-traced` keeps every traced colour),
+  or put each tee's **card distance** in the build config (`tees:{black:343,…}`) and the pipeline steps them
+  back along the play line (white = rated tee). For the selector to show a colour, it **must have a `teeSets`
+  entry** — a Ladies/Red tee often has its own par+SI (Gailes), which the app doesn't yet apply per-tee
+  (scoring uses men's par/SI for all tees); stash the Ladies card in `course._ladies` for the future
+  per-tee-par feature. Courses with no `teeSets` keep one tee + the **"Set tee" GPS tool**, unchanged.
 
 ## Quick reference — who reads what
 - `COURSE_PLAY` → `openPlay`, `holeTargets`, `playTotals`, `courseHandicap`,
