@@ -49,10 +49,10 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   metres vs the White card distance (ambers if >8% off). Navigating to a not-yet-traced hole **auto-recentres**
   the map near an adjacent traced green (where the next tee usually is). **🪄 detect (experimental):** with a
   polygon feature selected, click inside a green/bunker/water on the aerial and it **flood-fills the outline by
-  colour** (one click vs many) → convex hull → **Douglas–Peucker simplified to ~10 draggable points** (not 50),
-  then auto-enters Edit mode to fit it. It fetches the Esri tile separately via CORS — if pixel reads are
-  blocked it disables itself with a message and the basemap is unaffected. Convex, so pull a vertex in for a
-  concave green. A hole with a **here-be-dragons**
+  colour** (one click vs many) → **Moore boundary trace** (follows concave/bean outlines) → **Douglas–Peucker
+  simplified to ~12 draggable points** (not 50) → auto-enters Edit mode to fit it. It fetches the Esri tile
+  separately via CORS — if pixel reads are blocked it disables itself with a message and the basemap is
+  unaffected. A hole with a **here-be-dragons**
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
   map now and then (`window._playDragons=false` disables it; honours `prefers-reduced-motion`). Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
