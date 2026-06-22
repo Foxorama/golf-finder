@@ -31,6 +31,13 @@
     "name": "White",
     "cr": 71,
     "slope": 127
+   },
+   {
+    "key": "red",
+    "name": "Red",
+    "cr": 71,
+    "slope": 127,
+    "_note": "PLACEHOLDER rating (copied from White) — official Gailes red/ladies CR+Slope not yet sourced. The red POSITION is hand-traced (real); only the handicap rating is provisional. Replace cr/slope when the ladies card is confirmed."
    }
   ]
  },

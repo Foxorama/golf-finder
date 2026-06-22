@@ -1965,9 +1965,9 @@ const COURSE_PLAY = {
     ],
   },
   'gailes-golf-club': {
-    name:'Gailes Golf Club', par:73, holesN:1, cr:71, slope:127, src:'survey pins + course map', defaultTee:'white', teeSets:[{key:'black',name:'Black',cr:73,slope:127},{key:'blue',name:'Blue',cr:72,slope:127},{key:'white',name:'White',cr:71,slope:127}],
+    name:'Gailes Golf Club', par:73, holesN:1, cr:71, slope:127, src:'survey pins + course map', defaultTee:'white', teeSets:[{key:'black',name:'Black',cr:73,slope:127},{key:'blue',name:'Blue',cr:72,slope:127},{key:'white',name:'White',cr:71,slope:127},{key:'red',name:'Red',cr:71,slope:127}],
     holes:[
-      {n:1, par:5, si:15, tee:[-27.602956,152.917934], tees:{black:[-27.60287,152.918076],blue:[-27.60291,152.918009],white:[-27.602956,152.917934]}, cen:[-27.6053264,152.914046], pin:null, gbb:[-27.605412,152.913883,-27.605231,152.914215]},
+      {n:1, par:5, si:15, tee:[-27.602956,152.917934], tees:{black:[-27.60287,152.918076],blue:[-27.60291,152.918009],white:[-27.602956,152.917934],red:[-27.603007,152.91785]}, cen:[-27.6053264,152.914046], pin:null, gbb:[-27.605412,152.913883,-27.605231,152.914215]},
     ],
   },
 };
@@ -6815,6 +6815,19 @@ function playToggleClubMarker(){ if(playS){ playS.showClub=!playS.showClub; play
 function _pointAlong(line,distM){ if(!line||line.length<2) return line&&line[0];
   let acc=0; for(let i=1;i<line.length;i++){ const seg=_distM(line[i-1],line[i]); if(acc+seg>=distM){ const t=seg?(distM-acc)/seg:0; return [line[i-1][0]+(line[i][0]-line[i-1][0])*t, line[i-1][1]+(line[i][1]-line[i-1][1])*t]; } acc+=seg; }
   return line[line.length-1]; }
+// Closest point on segment a-b to p (clamped to the segment), in a local equirectangular metric.
+function _projSeg(p,a,b){ const k=Math.cos(p[0]*Math.PI/180);
+  const ax=(a[1]-p[1])*k, ay=a[0]-p[0], bx=(b[1]-p[1])*k, by=b[0]-p[0];
+  const dx=bx-ax, dy=by-ay, L2=dx*dx+dy*dy; let t=L2?-(ax*dx+ay*dy)/L2:0; t=Math.max(0,Math.min(1,t));
+  return [a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t]; }
+// The play-line from a tee (which may sit FORWARD of, behind, or beside the baked centreline
+// start) to the green: project the tee onto the corridor, then follow it in to the green. Forward
+// tees (e.g. red) start partway along; back tees (black) prepend their offset. `line` is the
+// centreline already oriented tee-end..green (green = last point). Returns [tee, …, green].
+function _teePlayLine(tee,line){
+  let bi=1, bp=line[0], bd=_distM(tee,line[0]);
+  for(let i=1;i<line.length;i++){ const q=_projSeg(tee,line[i-1],line[i]); const d=_distM(tee,q); if(d<bd){bd=d;bi=i;bp=q;} }
+  return [tee, bp, ...line.slice(bi)]; }
 // The "play this off the tee" club: the longest club in your bag that won't fly the green
 // (carry ≤ hole length), else your shortest club. Returns {club,dist} or null (empty bag).
 function teeShotClub(lenM){ const cs=clubSet(); if(!cs.length) return null;
@@ -7310,7 +7323,7 @@ function playHoleSvg(){
   // tee-shot club marker: a landing-zone target on the centreline at the club you'd "play"
   // off the tee (longest bag club that won't fly the green). Toggle via the map tools.
   const cm=(playS.showClub!==false)?teeShotClub(tg.len):null;
-  if(cm){ const lp=_pointAlong(line,cm.dist), L=P(lp[0],lp[1]);
+  if(cm){ const lp=_pointAlong(tg.pl||line,cm.dist), L=P(lp[0],lp[1]);   // measure from the SELECTED tee (tg.pl), not the baked white tee
     s+=`<circle cx="${L.x.toFixed(1)}" cy="${L.y.toFixed(1)}" r="7.5" fill="none" stroke="#ffcf6a" stroke-width="1.6" stroke-dasharray="3 3"/><circle cx="${L.x.toFixed(1)}" cy="${L.y.toFixed(1)}" r="2" fill="#ffcf6a"/>`;
     const bw=38, bx=Math.min(W-bw-4,Math.max(4,L.x-bw/2)), by=L.y+11;
     s+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw}" height="15" rx="7.5" fill="rgba(20,14,4,0.86)" stroke="#ffcf6a" stroke-width="0.6"/><text x="${(bx+bw/2).toFixed(1)}" y="${(by+10.7).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#ffcf6a">${cm.club} ${fmtDist(cm.dist)}</text>`;
@@ -7689,18 +7702,21 @@ function holeTargets(h){
     depth=Math.abs(dLat*Math.cos(th))+Math.abs(dLng*Math.sin(th)); const half=depth/2;
     front=_destPoint(h.cen,(brg+180)%360,half); back=_destPoint(h.cen,brg,half);
   }
-  // hole length along the play corridor (dogleg-aware), tee -> green centre
-  let len=_distM(tee,h.cen);
+  // hole length + play-line from the EFFECTIVE (selected) tee to the green, along the corridor
+  // (dogleg-aware). The play-line is anchored at the selected tee — forward tees (red) start
+  // partway down the corridor, back tees (black) prepend their offset — so length AND the tee-shot
+  // club marker both move with the tee selection (not stuck to the baked/white tee).
+  let len=_distM(tee,h.cen), pl=[tee,h.cen];
   const cl=geom&&geom.lines&&geom.lines[h.n];
   if(cl&&cl.length>=2){
     let line=cl.slice();
-    if(_distM(line[0],h.cen)<_distM(line[line.length-1],h.cen)) line.reverse();   // orient tee->green
-    if(_distM(h.tee,line[0])<20&&_distM(line[line.length-1],h.cen)<20){           // line spans baked(white) tee..green; back tees add their offset via d
-      let d=_distM(tee,line[0]); for(let i=1;i<line.length;i++) d+=_distM(line[i-1],line[i]); d+=_distM(line[line.length-1],h.cen);
-      len=d;
+    if(_distM(line[0],h.cen)<_distM(line[line.length-1],h.cen)) line.reverse();   // orient tee-end..green
+    if(_distM(h.tee,line[0])<25&&_distM(line[line.length-1],h.cen)<25){           // a real tee->green corridor
+      pl=_teePlayLine(tee,line);
+      let d=0; for(let i=1;i<pl.length;i++) d+=_distM(pl[i-1],pl[i]); len=d;
     }
   }
-  return {tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len};
+  return {tee, front, cen:h.cen, back, pin:h.pin, depth, brg, len, pl};
 }
 
 // intermediate data -> SVG string (full detail)
