@@ -190,9 +190,10 @@ function _markerPos(H, dist){   // point at arc-distance `dist` from the GREEN a
   const a=L2[L2.length-2], b=L2[L2.length-1]; return _dest(b, _brg(a,b), dist-acc);   // beyond the tee end → extend straight
 }
 function ensureCentreline(hole){   // straight tee-mid→green when none; else KEEP the user's dogleg bends, only snap the endpoints to tee + green
-  const H=data.holes[hole]; if(!H||!H.green) return; const tm=_teeMid(hole), gc=_ctr(H.green); if(!tm) return;
-  const cls=layers.filter(o=>o.hole===hole && o.key==='centreline');   // dedup: at most one centreline per hole (a stray 2nd one would win in store() and run long)
-  for(let i=1;i<cls.length;i++){ map.removeLayer(cls[i].layer); const idx=layers.indexOf(cls[i]); if(idx>=0) layers.splice(idx,1); }
+  const H=data.holes[hole], gc=(H&&H.green)?_ctr(H.green):null, tm=_teeMid(hole);
+  const cls=layers.filter(o=>o.hole===hole && o.key==='centreline');
+  if(!gc || !tm){ for(const c of cls){ map.removeLayer(c.layer); const idx=layers.indexOf(c); if(idx>=0) layers.splice(idx,1); } return; }   // no green or tee left → drop the now-orphaned centreline
+  for(let i=1;i<cls.length;i++){ map.removeLayer(cls[i].layer); const idx=layers.indexOf(cls[i]); if(idx>=0) layers.splice(idx,1); }   // dedup: at most one per hole
   let entry=cls[0];
   if(entry){ let arr=entry.layer.getLatLngs().map(p=>[p.lat,p.lng]); if(arr.length<2) arr=[tm,gc];
     if(_dM(arr[0],gc) < _dM(arr[arr.length-1],gc)) arr.reverse();   // arr[0]=tee end
@@ -200,8 +201,8 @@ function ensureCentreline(hole){   // straight tee-mid→green when none; else K
   else { const f=FT.find(x=>x.k==='centreline'); const lyr=L.polyline([L.latLng(tm[0],tm[1]),L.latLng(gc[0],gc[1])],{color:f.c,weight:2}); lyr.addTo(map); lyr.options._k='centreline'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'centreline'}); }
 }
 function deriveMarkers(hole){   // (re)place 100/150/200 ALONG the centreline at arc-distance from the green (non-interactive — shape via the line)
+  for(let i=layers.length-1;i>=0;i--){ const o=layers[i]; if(o.hole===hole && (o.key==='mk100'||o.key==='mk150'||o.key==='mk200')){ map.removeLayer(o.layer); layers.splice(i,1); } }   // clear existing first (so they vanish if the centreline is gone)
   const H=data.holes[hole]; if(!H||!H.green||!H.centreline) return;
-  for(let i=layers.length-1;i>=0;i--){ const o=layers[i]; if(o.hole===hole && (o.key==='mk100'||o.key==='mk150'||o.key==='mk200')){ map.removeLayer(o.layer); layers.splice(i,1); } }
   const cl=H.centreline; let holeLen=0; for(let i=1;i<cl.length;i++) holeLen+=_dM(cl[i-1],cl[i]);
   for(const [key,dist] of [['mk100',100],['mk150',150],['mk200',200]]){ if(dist>holeLen-10) continue; const p=_markerPos(H,dist); if(!p) continue; const lyr=L.marker(p); lyr.options.pmIgnore=true; lyr.addTo(map); lyr.options._k=key; lyr.options._h=hole; layers.push({layer:lyr,hole,key}); }
 }
