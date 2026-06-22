@@ -45,16 +45,20 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   the control points, since you need a bend *between* the tee and the 200 marker). Moving a tee/green
   snaps the line's endpoint + re-derives; the markers are non-interactive (steer them via the line).
   Type each tee's card metres into **Tee m** + **place tees** to drop the colours by distance along the line.
-  **↳ fairway** generates a tapered ribbon polygon along the centreline (≈34 m, narrower at the ends) you then
-  edit — instead of tracing 18 fairways by hand. A **live readout** under the controls shows the centreline's
+  **↳ green** drops an editable ~28 m oval green at the map centre (centre it on the real green first, then
+  Edit-drag) — instead of drawing each of 18 greens from scratch. **↳ fairway** / **↳ rough** generate a tapered
+  fairway ribbon (≈34 m) / a wide rough corridor (≈75 m, drawn under the fairway) along the centreline you then
+  edit — instead of tracing them by hand. A **live readout** under the controls shows the centreline's
   metres vs the White card distance (ambers if >8% off). Navigating to a not-yet-traced hole **auto-recentres**
-  the map near an adjacent traced green (where the next tee usually is). **🪄 detect (best for bunkers/water):**
-  click inside a feature and it **flood-fills the outline by colour** → fill holes + morphological close →
-  **Moore boundary trace** (follows concavities) → **Douglas–Peucker to ~12 draggable points** → auto-enters
-  Edit mode. **Works on high-contrast features (sand bunkers, water); it does NOT work on greens** — greens vary
-  in colour across the surface and blend into the surrounding grass, so a colour flood-fill under/over-fills
-  (verified on real Gailes imagery). When it can't get a clean outline (>18 points) it **bails with a message
-  ("Box-draw it by hand")** instead of dumping a spaghetti polygon. It fetches the Esri tile
+  the map near an adjacent traced green (where the next tee usually is). **🪄 detect:**
+  for **bunkers/water** it **flood-fills the outline by colour**; for **trees** it floods a **coverage mask**
+  (every dark, green-dominant, not-lush canopy pixel — calibrated on Esri, so it bridges the lit gaps between
+  trees and grabs a whole tree **mass** in one click, where a colour flood only got a single tree). Then: fill
+  holes + morphological close → **Moore boundary trace** (follows concavities) → **Douglas–Peucker** to a handful
+  of draggable points → auto-enters Edit mode. **It does NOT work on greens** — greens vary in colour across the
+  surface and blend into the surrounding grass, so a colour flood-fill under/over-fills (verified on real Gailes
+  imagery); they're **refused** (box-draw them). When it can't get a clean outline it **bails with a message**
+  instead of dumping a spaghetti polygon. It fetches the Esri tile
   separately via CORS — if pixel reads are blocked it disables itself with a message and the basemap is
   unaffected. A hole with a **here-be-dragons**
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
