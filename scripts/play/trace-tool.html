@@ -22,6 +22,7 @@
   h3{margin:.3em 0;color:#9fe07a;font-size:13px}
   .row{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}
   button,select,input{font:inherit;background:#1c3a16;color:#dfeccd;border:1px solid #356a28;border-radius:6px;padding:4px 7px;cursor:pointer}
+  button:disabled{opacity:0.35;cursor:not-allowed;border-color:#2a4520}
   button.on{background:#3f7e2c;border-color:#9fe07a;color:#fff}
   .ft{flex:1 0 44%}
   .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
@@ -122,10 +123,14 @@ function applyMode(){   // tear everything down, then enable just the active mod
   map.pm.disableDraw();
   try{ if(map.pm.globalEditModeEnabled && map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode(); }catch(e){}
   wandOn = (mode==='detect');
-  const eb=document.getElementById('editmode'), wb=document.getElementById('wand'), db=document.getElementById('drawmode');
-  if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect'); if(db) db.style.opacity = mode==='draw'?'1':'0.45';
   if(mode==='draw' && active){ curDraw=drawShapeOf(active); map.pm.enableDraw(curDraw, { continueDrawing:!!active.multi }); }   // no active feature ⇒ draw stays OFF (clicks do nothing)
   else if(mode==='edit'){ map.pm.enableGlobalEditMode(); }
+  // reflect button states: highlight the active mode; disable buttons that don't apply right now
+  const $=id=>document.getElementById(id), eb=$('editmode'), wb=$('wand'), db=$('drawmode'), fb=$('finish'), ub=$('undo');
+  if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect');
+  if(db) db.disabled = (mode!=='draw');                                   // Box/Outline only matters while drawing
+  const outline = mode==='draw' && active && (curDraw==='Polygon'||curDraw==='Line');   // Finish/Undo only do something for click-corner shapes
+  if(fb) fb.disabled = !outline; if(ub) ub.disabled = !outline;
 }
 function setMode(m){ mode=m; applyMode();
   status(m==='edit' ? '<b>Edit/drag ON</b> — drag a marker/vertex; drag a polygon edge-dot to reshape. Tap Edit again to draw.'
@@ -138,7 +143,9 @@ function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('h
   if(!traced){ const near=(data.holes[hole-1]&&data.holes[hole-1].green)||(data.holes[hole+1]&&data.holes[hole+1].green); if(near) map.panTo(L.latLng(_ctr(near)[0],_ctr(near)[1]),{animate:true}); }
   for(const c of ['black','blue','white','red']){ const e=document.getElementById('td-'+c); if(e) e.value=''; }
   updateReadout(); }
-function status(t){ document.getElementById('status').innerHTML=t; }
+function status(t){ const el=document.getElementById('status'); if(!el) return; el.innerHTML=t;
+  el.style.transition='none'; el.style.background='rgba(159,224,122,0.32)'; el.style.borderRadius='5px'; el.style.padding='3px 5px'; void el.offsetHeight;   // reflow → flash so feedback is noticed
+  el.style.transition='background .8s ease'; el.style.background='transparent'; }
 
 map.on('pm:create', e => {
   const lyr = e.layer, f = active; lyr.options._k=f.k; lyr.options._h=hole;
@@ -259,7 +266,8 @@ function _clean(m,W,H){   // fill interior holes + a small morphological close, 
   morph(true); morph(false);   // close (dilate→erode, radius 2) seals thin cracks
 }
 async function wandClick(e){
-  if(!wandOn) return; const f=active; if(!f||f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
+  if(!wandOn) return; const f=active; if(!f||f.s!=='Polygon'){ status('pick a polygon feature (bunker/water/…) for detect'); return; }
+  if(f.k==='green'){ status("🪄 greens blend into the grass and don't auto-detect — <b>Box-draw</b> the green (drag a box, then Edit-drag to fit). Detect is for bunkers/water."); return; }
   const z=Math.min(19,Math.max(1,Math.round(map.getZoom()))), wp=map.project(e.latlng,z), tx=Math.floor(wp.x/256), ty=Math.floor(wp.y/256), px=Math.floor(wp.x-tx*256), py=Math.floor(wp.y-ty*256);
   const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
   status('🪄 detecting…'); let img;
