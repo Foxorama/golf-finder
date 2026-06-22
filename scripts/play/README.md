@@ -34,9 +34,11 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   `playHoleSvg`. Pan the map with **right-click drag** (left is for drawing). Polygons draw as
   **drag-a-box (Box mode, default)**; toggle to **Outline mode** to click a precise outline (use it
   for greens, where the shape sets front/back distances). **Edit/drag mode** repositions any placed
-  point/vertex and pulls polygon edges out. **Drawing a green auto-drops 100/150/200 markers** along
-  the centreline (toward the tee) and **drawing a tee box auto-drops a White tee marker** on it —
-  just nudge them into place. A hole with a **here-be-dragons**
+  point/vertex and pulls polygon edges out. **Auto-build:** with the **green + a tee** placed, 100/150/200
+  markers drop (straight down green→tee) and a **centreline auto-threads tee-mid → 200 → 150 → 100 →
+  green**; it's **sticky** — drag any tee/marker/green and the line re-threads, so you shape doglegs by
+  dragging the markers onto the fairway (the line is derived, non-interactive). Type each tee's card
+  metres into **Tee m** + **place tees** to drop the colours by distance. A hole with a **here-be-dragons**
   zone renders an olde-map danger warning AND triggers a fire-breathing dragon that flies across the
   map now and then (`window._playDragons=false` disables it; honours `prefers-reduced-motion`). Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
