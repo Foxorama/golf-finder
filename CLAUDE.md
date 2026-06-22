@@ -356,6 +356,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   overlay** (`.play-map-tools` / `playMapToolsHtml`) that sits in the map's side dead-space; it
   is a **sibling of `#play-map`, not a child**, so the per-GPS-tick `innerHTML` re-render of the
   map doesn't wipe it (and its buttons `stopPropagation` so they don't drop a measure reticle).
+  **Layer z-order — HAZARDS ON TOP (PR #257):** the polygon draw loop is
+  `rough→native→fairway→waste→trees→building→green→tee→water→bunker` (lines then markers on top of
+  that). **Hazards (water/bunkers) are drawn LAST so they're never hidden** — the old order let the
+  green collar clip greenside bunkers and tree polygons cover bunkers/water under them, which is
+  backwards for a *playability* map. Green draws above trees so it stays visible too. The
+  `trace-tool.html` `_restack()` mirrors this order so the tracer previews real app stacking. If a
+  feature ever hides another, the fix is this one layer-loop order — not per-feature opacity.
   **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
