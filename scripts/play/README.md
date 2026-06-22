@@ -25,9 +25,11 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
 - **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. Open the tool
   in a browser, pick a hole + a feature and **click it on the georeferenced Esri aerial** (club PDF
   open alongside to identify features). Feature types: **tee (White; others derived from the card),
-  green, centreline, fairway, bunker, water, creek, rough, trees, building, out-of-bounds, cart-path**
-  — greens/fairway/bunker/water/rough/trees/building are polygons; centreline/creek/OB/cart-path are
-  lines. Pan the map with **right-click drag** (left is for drawing); **Edit/drag mode** repositions
+  green, centreline, fairway, bunker, water, creek, rough, trees, building, out-of-bounds, cart-path,
+  ditch, waste area, native/scrub, 100/150/200 markers, drop zone** — green/fairway/bunker/water/rough/
+  trees/building/waste/native are polygons; centreline/creek/OB/cart-path/ditch are lines; markers +
+  drop zone are points. Adding another type = one `FT` row in the tool + one render case in
+  `playHoleSvg`. Pan the map with **right-click drag** (left is for drawing); **Edit/drag mode** repositions
   any placed point or vertex. Export the geometry JSON, then
   `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
   (par/SI/per-tee distances/CR) → a built course. Real green polygons give true front/centre/back;
