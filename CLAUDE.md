@@ -312,7 +312,12 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   map** — GOOD tailwind = teal `#16e0a3`, MEDIUM crosswind = amber `#ffc233`, BAD headwind =
   red `#ff4d4d` — with a **coloured glow halo + arrow/ring weight that scale with wind
   strength** (`str=(spd-3)/37`) to amplify stronger wind, and the **speed/gust + "from
-  <dir>"** folded in below. It refreshes on every GPS tick in `playLiveUpdate`. **The wind is
+  <dir>"** folded in below. It refreshes on every GPS tick in `playLiveUpdate`, and is
+  **tap-to-refresh**: tapping the rose (`playMapTap` rose-region branch → `playRefreshWind`)
+  force-fetches a fresh Open-Meteo reading for the zone (deletes `weatherCache[wz]` then
+  re-fetches), **throttled** by a 30 s cooldown (`window._playWindCool`) + a concurrent-fetch
+  guard so it can't be spammed; a small circular-arrow glyph at the dial foot signals it's
+  tappable (`window._playWindRefresh=false` disables). **The wind is
   a regional Open-Meteo forecast, not a hyperlocal measurement** — fine for prevailing
   conditions, not precise for a specific hole/moment. The rangefinder also shows a
   **"plays-like"** wind-adjusted yardage to the green centre (`_playsLike`, `.pr-plays`):
