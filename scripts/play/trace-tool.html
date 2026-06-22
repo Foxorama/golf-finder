@@ -124,7 +124,8 @@ map.on('pm:create', e => {
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   layers.push({layer:lyr, hole, key:f.k});
   store(); redraw();
-  if(f.k==='green') autoMarkers(hole);   // drop 100/150/200 markers along the line — then drag them onto the fairway
+  if(f.k==='green') autoMarkers(hole);    // drop 100/150/200 markers along the line — then drag them onto the fairway
+  if(f.k==='teebox') autoTeeMarker(hole); // drop a White tee marker on the box — then nudge to the real tee spot
 });
 
 function coordsOf(lyr){
@@ -157,6 +158,13 @@ function autoMarkers(hole){
     const p=_markerPos(H,dist); if(!p) continue;
     const lyr=L.marker(p); lyr.addTo(map); lyr.options._k=key; lyr.options._h=hole; layers.push({layer:lyr,hole,key});
   }
+  store(); redraw();
+}
+function autoTeeMarker(hole){   // a White tee marker at the just-drawn tee box centre (others derive from the card)
+  const H=data.holes[hole]; if(!H||!H.teeboxes||!H.teeboxes.length) return;
+  if(H.tees && H.tees.white) return;   // already have a White tee marker
+  const c=_ctr(H.teeboxes[H.teeboxes.length-1]);
+  const lyr=L.marker(c); lyr.addTo(map); lyr.options._k='tee-white'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'tee-white'});
   store(); redraw();
 }
 function store(){
