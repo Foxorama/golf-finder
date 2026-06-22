@@ -31,7 +31,9 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   waste/native/dragon are polygons; centreline/creek/OB/cart-path/ditch are lines; tee markers +
   distance markers + drop zone are points. The tee BOX is the mowed teeing ground (multiple tee
   markers can sit on it). Adding another type = one `FT` row in the tool + one render case in
-  `playHoleSvg`. Pan the map with **right-click drag** (left is for drawing). Polygons draw as
+  `playHoleSvg`. Pan the map with **right-click drag**; a **right single-click cancels the shape you're
+  drawing**. **Draw / Edit / Detect are one mode at a time** (turning on Edit or Detect turns the other
+  off; picking a feature returns to Draw). Polygons draw as
   **drag-a-box (Box mode, default)**; toggle to **Outline mode** to click a precise outline (use it
   for greens, where the shape sets front/back distances). **Edit/drag mode** repositions any placed
   point/vertex and pulls polygon edges out. **Auto-build:** with the **green + a tee** placed, a straight

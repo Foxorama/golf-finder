@@ -98,13 +98,14 @@ L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/
   { maxZoom: 22, maxNativeZoom: 19, attribution:'Esri World Imagery' }).addTo(map);
 map.pm.setGlobalOptions({ snappable:true, snapDistance:12 });
 
-// Pan with the RIGHT mouse button so LEFT is purely for drawing/clicking features.
+// Right mouse: DRAG = pan; single CLICK (no drag) = cancel the current drawing. Left is for drawing.
 map.dragging.disable();
-(()=>{ const mc=map.getContainer(); let panning=false,lx=0,ly=0;
+(()=>{ const mc=map.getContainer(); let panning=false,lx=0,ly=0,sx=0,sy=0,moved=false;
   mc.addEventListener('contextmenu', e=>e.preventDefault());
-  mc.addEventListener('mousedown', e=>{ if(e.button!==2) return; panning=true; lx=e.clientX; ly=e.clientY; e.preventDefault(); e.stopPropagation(); });
-  window.addEventListener('mousemove', e=>{ if(!panning) return; map.panBy([lx-e.clientX, ly-e.clientY],{animate:false}); lx=e.clientX; ly=e.clientY; });
-  window.addEventListener('mouseup', e=>{ if(e.button===2) panning=false; });
+  mc.addEventListener('mousedown', e=>{ if(e.button!==2) return; panning=true; lx=sx=e.clientX; ly=sy=e.clientY; moved=false; e.preventDefault(); e.stopPropagation(); });
+  window.addEventListener('mousemove', e=>{ if(!panning) return; if(Math.abs(e.clientX-sx)+Math.abs(e.clientY-sy)>4) moved=true; map.panBy([lx-e.clientX, ly-e.clientY],{animate:false}); lx=e.clientX; ly=e.clientY; });
+  window.addEventListener('mouseup', e=>{ if(e.button!==2) return; panning=false;
+    if(!moved && mode==='draw' && map.pm.Draw[curDraw] && map.pm.Draw[curDraw].enabled && map.pm.Draw[curDraw].enabled()){ map.pm.disableDraw(); applyMode(); status('cancelled — start a new '+active.l); } });
 })();
 
 // build feature-type buttons
@@ -113,14 +114,24 @@ FT.forEach(f => { const b = document.createElement('button'); b.className='ft'; 
   b.innerHTML = `<span class="dot" style="background:${f.c}"></span>${f.l}`;
   b.onclick = () => selectType(f); ftDiv.appendChild(b); });
 
-// Box draw (default): polygons are drawn as drag-a-rectangle, then reshaped in Edit mode.
-// Outline draw: polygons are click-each-corner (for precise green/bunker outlines). Lines/markers unaffected.
-let drawMode='box', curDraw='Polygon';
+// ONE mode at a time: 'draw' (place features) | 'edit' (drag/reshape) | 'detect' (magic-wand).
+// Edit and Detect are mutually exclusive; picking a feature returns to Draw. Box/Outline is a draw sub-toggle.
+let drawMode='box', curDraw='Polygon', mode='draw';
 const drawShapeOf = f => f.s==='Polygon' ? (drawMode==='box'?'Rectangle':'Polygon') : f.s;
-function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k));
-  map.pm.disableDraw(); curDraw=drawShapeOf(f); map.pm.enableDraw(curDraw, { continueDrawing:!!f.multi });
-  const how = curDraw==='Marker'?'click the spot' : curDraw==='Line'?'click points along it' : curDraw==='Rectangle'?'drag a box (then Edit/drag mode to reshape)' : 'click each corner, then Finish';
-  status(`placing <b>${f.l}</b> on hole ${hole} — ${how}`); }
+function applyMode(){   // tear everything down, then enable just the active mode + reflect button states
+  map.pm.disableDraw();
+  try{ if(map.pm.globalEditModeEnabled && map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode(); }catch(e){}
+  wandOn = (mode==='detect');
+  const eb=document.getElementById('editmode'), wb=document.getElementById('wand'), db=document.getElementById('drawmode');
+  if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect'); if(db) db.style.opacity = mode==='draw'?'1':'0.45';
+  if(mode==='draw'){ curDraw=drawShapeOf(active); map.pm.enableDraw(curDraw, { continueDrawing:!!active.multi }); }
+  else if(mode==='edit'){ map.pm.enableGlobalEditMode(); }
+}
+function setMode(m){ mode=m; applyMode();
+  status(m==='edit' ? '<b>Edit/drag ON</b> — drag a marker/vertex; drag a polygon edge-dot to reshape. Tap Edit again to draw.'
+       : m==='detect' ? '🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> to auto-trace it. Tap detect again to draw.'
+       : 'drawing <b>'+active.l+'</b> — '+(curDraw==='Marker'?'click the spot':curDraw==='Line'?'click points':curDraw==='Rectangle'?'drag a box':'click corners, then Finish')); }
+function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k)); setMode('draw'); }
 function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active);
   // auto-recentre: arriving at a not-yet-traced hole pans near an adjacent traced green (the next tee is usually there)
   const H=data.holes[hole], traced=H&&(H.green||H.tees||H.centreline);
@@ -219,28 +230,28 @@ function updateReadout(){
 //    Fetches the Esri tile SEPARATELY via CORS (never touches the display layer), so if pixel reads are
 //    blocked the basemap is unaffected — the wand just disables itself. ──
 let wandOn=false;
-function toggleWand(){ wandOn=!wandOn; const b=document.getElementById('wand'); b.classList.toggle('on',wandOn);
-  if(wandOn){ map.pm.disableDraw(); if(editing){editing=false;document.getElementById('editmode').classList.remove('on');map.pm.disableGlobalEditMode();} status('🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> on the aerial to auto-trace it'); }
-  else status('detect off'); }
-function _floodFill(d,W,Hh,sx,sy,tol){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i0+1],sb=d[i0+2],seen=new Uint8Array(W*Hh),out=[],st=[sy*W+sx],t2=tol*tol; seen[sy*W+sx]=1;
-  while(st.length && out.length<9000){ const k=st.pop(),x=k%W,y=(k/W)|0,i=k*4,dr=d[i]-sr,dg=d[i+1]-sg,db=d[i+2]-sb; if(dr*dr+dg*dg+db*db>t2) continue; out.push([x,y]);
+function _floodFill(d,W,Hh,sx,sy,tol,maxR){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i0+1],sb=d[i0+2],seen=new Uint8Array(W*Hh),out=[],st=[sy*W+sx],t2=tol*tol,r2=maxR*maxR; seen[sy*W+sx]=1;
+  while(st.length && out.length<7000){ const k=st.pop(),x=k%W,y=(k/W)|0; if((x-sx)*(x-sx)+(y-sy)*(y-sy)>r2) continue;   // radius cap stops the splatter
+    const i=k*4,dr=d[i]-sr,dg=d[i+1]-sg,db=d[i+2]-sb; if(dr*dr+dg*dg+db*db>t2) continue; out.push([x,y]);
     if(x>0&&!seen[k-1]){seen[k-1]=1;st.push(k-1);} if(x<W-1&&!seen[k+1]){seen[k+1]=1;st.push(k+1);} if(y>0&&!seen[k-W]){seen[k-W]=1;st.push(k-W);} if(y<Hh-1&&!seen[k+W]){seen[k+W]=1;st.push(k+W);} } return out; }
-function _regionPoly(region,W){ const set=new Set(region.map(([x,y])=>y*W+x)); let cx=0,cy=0; for(const [x,y] of region){cx+=x;cy+=y;} cx/=region.length;cy/=region.length;
-  const bnd=[]; for(const [x,y] of region){ if(!set.has(y*W+x-1)||!set.has(y*W+x+1)||!set.has((y-1)*W+x)||!set.has((y+1)*W+x)) bnd.push([x,y]); }
-  bnd.sort((a,b)=>Math.atan2(a[1]-cy,a[0]-cx)-Math.atan2(b[1]-cy,b[0]-cx)); const N=Math.min(30,bnd.length),step=bnd.length/N,out=[]; for(let i=0;i<N;i++) out.push(bnd[Math.floor(i*step)]); return out; }
+function _hull(pts){   // convex hull (monotone chain) → a clean, simple polygon (no spikes)
+  if(pts.length<3) return pts; pts=pts.slice().sort((a,b)=>a[0]-b[0]||a[1]-b[1]); const n=pts.length, cr=(o,a,b)=>(a[0]-o[0])*(b[1]-o[1])-(a[1]-o[1])*(b[0]-o[0]);
+  const lo=[]; for(const p of pts){ while(lo.length>=2&&cr(lo[lo.length-2],lo[lo.length-1],p)<=0) lo.pop(); lo.push(p); }
+  const up=[]; for(let i=n-1;i>=0;i--){ const p=pts[i]; while(up.length>=2&&cr(up[up.length-2],up[up.length-1],p)<=0) up.pop(); up.push(p); }
+  lo.pop(); up.pop(); return lo.concat(up); }
 async function wandClick(e){
   if(!wandOn) return; const f=active; if(f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
   const z=Math.min(19,Math.max(1,Math.round(map.getZoom()))), wp=map.project(e.latlng,z), tx=Math.floor(wp.x/256), ty=Math.floor(wp.y/256), px=Math.floor(wp.x-tx*256), py=Math.floor(wp.y-ty*256);
   const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
   status('🪄 detecting…'); let img;
   try{ const r=await fetch(url,{mode:'cors'}); const bm=await createImageBitmap(await r.blob()); const cv=document.createElement('canvas'); cv.width=256;cv.height=256; const cx=cv.getContext('2d'); cx.drawImage(bm,0,0); img=cx.getImageData(0,0,256,256).data; }
-  catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); wandOn=false; document.getElementById('wand').classList.remove('on'); return; }
-  const region=_floodFill(img,256,256,px,py,38); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
-  const poly=_regionPoly(region,256).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
+  catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); setMode('draw'); return; }
+  const region=_floodFill(img,256,256,px,py,30,60); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
+  const poly=_hull(region).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
   if(poly.length<3){ status('region too small'); return; }
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=f.k; lyr.options._h=hole; layers.push({layer:lyr,hole,key:f.k});
-  store(); redraw(); if(f.k==='green') syncHole(hole); status('detected a '+f.l+' ('+region.length+' px) — Edit-mode-drag any edge to fix');
+  store(); redraw(); if(f.k==='green') syncHole(hole); setMode('edit'); status('detected a '+f.l+' — now in Edit mode: drag its dots to fit (tap a feature to draw again)');
 }
 function store(){
   data.name = document.getElementById('cname').value || data.name;
@@ -272,18 +283,15 @@ document.getElementById('cname').onchange = store;
 document.getElementById('finish').onclick = () => { map.pm.Draw[curDraw] && map.pm.Draw[curDraw]._finishShape && map.pm.Draw[curDraw]._finishShape(); };
 document.getElementById('undo').onclick = () => { const d=map.pm.Draw[curDraw]; d && d._removeLastVertex && d._removeLastVertex(); };
 document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box'?'outline':'box'; const b=document.getElementById('drawmode');
-  b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; b.classList.toggle('on',drawMode==='outline'); if(active) selectType(active); };
+  b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; if(mode==='draw') applyMode(); status('polygon draw: <b>'+(drawMode==='box'?'drag-a-box':'click-outline')+'</b>'); };
 document.getElementById('td-place').onclick = () => placeTees(hole);
 document.getElementById('fw-auto').onclick = () => autoFairway(hole);
-document.getElementById('wand').onclick = toggleWand;
+document.getElementById('wand').onclick = () => setMode(mode==='detect'?'draw':'detect');
+document.getElementById('editmode').onclick = () => setMode(mode==='edit'?'draw':'edit');
 map.on('click', wandClick);   // no-op unless detect mode is on
 document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
-  const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
+  const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } applyMode(); };
   layers.forEach(o=>o.layer.once('click', h)); };
-let editing=false;
-document.getElementById('editmode').onclick = () => { editing=!editing; const b=document.getElementById('editmode'); b.classList.toggle('on',editing);
-  if(editing){ map.pm.disableDraw(); map.pm.enableGlobalEditMode(); status('<b>Edit/drag mode ON</b> — drag any marker or vertex to reposition. Toggle off to add features.'); }
-  else{ map.pm.disableGlobalEditMode(); store(); selectType(active); status('edit mode off — back to placing'); } };
 const _onMoved = e => { const lyr=e&&(e.layer||e.target); store(); const k=lyr&&lyr.options&&lyr.options._k, h=lyr&&lyr.options&&lyr.options._h;
   if(!h||!k){ redraw(); return; }
   if(k==='centreline'){ deriveMarkers(h); store(); redraw(); }       // bent the line for a dogleg → re-place markers along it
