@@ -42,7 +42,7 @@
       <button id="hprev">‹</button><button id="hnext">›</button></div>
     <h3>Feature to place</h3>
     <div class="row" id="ftypes"></div>
-    <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
+    <div class="row"><button id="finish">Finish shape</button><button id="undo">↶ Undo last</button><button id="del">🗑 Delete mode</button></div>
     <div class="row"><button id="drawmode">▭ Box draw</button><button id="editmode">✥ Edit / drag mode</button><button id="wand">🪄 detect</button></div>
     <div class="row" style="align-items:center;gap:3px">Tee m
       <input id="td-black" type="number" placeholder="Bk" title="Black tee metres" style="width:34px;padding:3px">
@@ -51,7 +51,7 @@
       <input id="td-red"   type="number" placeholder="Rd" title="Red tee metres"   style="width:34px;padding:3px">
       <button id="td-place">↳ place tees</button><button id="fw-auto">↳ fairway</button></div>
     <div id="cl-readout" style="font:11px var(--mono,monospace);color:#88a472;min-height:14px"></div>
-    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line.</div>
+    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). <b>Deselect</b> (so clicks stop drawing): press <b>Esc</b>, click empty panel space, or click the highlighted feature again. <b>↶ Undo last</b> removes the last placed feature; <b>🗑 Delete mode</b> → click any feature to delete it. Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line.</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
     <div id="data">{}</div>
@@ -113,7 +113,7 @@ map.dragging.disable();
 const ftDiv = document.getElementById('ftypes');
 FT.forEach(f => { const b = document.createElement('button'); b.className='ft'; b.dataset.k=f.k;
   b.innerHTML = `<span class="dot" style="background:${f.c}"></span>${f.l}`;
-  b.onclick = () => selectType(f); ftDiv.appendChild(b); });
+  b.onclick = () => (active && active.k===f.k && mode==='draw') ? deselect() : selectType(f); ftDiv.appendChild(b); });
 
 // ONE mode at a time: 'draw' (place features) | 'edit' (drag/reshape) | 'detect' (magic-wand).
 // Edit and Detect are mutually exclusive; picking a feature returns to Draw. Box/Outline is a draw sub-toggle.
@@ -122,21 +122,29 @@ const drawShapeOf = f => f.s==='Polygon' ? (drawMode==='box'?'Rectangle':'Polygo
 function applyMode(){   // tear everything down, then enable just the active mode + reflect button states
   map.pm.disableDraw();
   try{ if(map.pm.globalEditModeEnabled && map.pm.globalEditModeEnabled()) map.pm.disableGlobalEditMode(); }catch(e){}
+  try{ if(map.pm.globalRemovalModeEnabled && map.pm.globalRemovalModeEnabled()) map.pm.disableGlobalRemovalMode(); }catch(e){}
   wandOn = (mode==='detect');
   if(mode==='draw' && active){ curDraw=drawShapeOf(active); map.pm.enableDraw(curDraw, { continueDrawing:!!active.multi }); }   // no active feature ⇒ draw stays OFF (clicks do nothing)
   else if(mode==='edit'){ map.pm.enableGlobalEditMode(); }
+  else if(mode==='delete'){ map.pm.enableGlobalRemovalMode(); }
   // reflect button states: highlight the active mode; disable buttons that don't apply right now
-  const $=id=>document.getElementById(id), eb=$('editmode'), wb=$('wand'), db=$('drawmode'), fb=$('finish'), ub=$('undo');
-  if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect');
+  const $=id=>document.getElementById(id), eb=$('editmode'), wb=$('wand'), db=$('drawmode'), fb=$('finish'), ub=$('undo'), xb=$('del');
+  if(eb) eb.classList.toggle('on', mode==='edit'); if(wb) wb.classList.toggle('on', mode==='detect'); if(xb) xb.classList.toggle('on', mode==='delete');
   if(db) db.disabled = (mode!=='draw');                                   // Box/Outline only matters while drawing
-  const outline = mode==='draw' && active && (curDraw==='Polygon'||curDraw==='Line');   // Finish/Undo only do something for click-corner shapes
-  if(fb) fb.disabled = !outline; if(ub) ub.disabled = !outline;
+  if(fb) fb.disabled = !(mode==='draw' && active && (curDraw==='Polygon'||curDraw==='Line'));   // Finish only for click-corner shapes
+  if(ub) ub.disabled = !layers.some(o=>!['centreline','mk100','mk150','mk200'].includes(o.key));   // Undo = remove last placed feature
 }
 function setMode(m){ mode=m; applyMode();
   status(m==='edit' ? '<b>Edit/drag ON</b> — drag a marker/vertex; drag a polygon edge-dot to reshape. Tap Edit again to draw.'
        : m==='detect' ? (active ? '🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> to auto-trace it. Tap detect again to draw.' : '🪄 <b>Detect ON</b> — pick a polygon feature on the left first.')
        : (active ? 'drawing <b>'+active.l+'</b> — '+(curDraw==='Marker'?'click the spot':curDraw==='Line'?'click points':curDraw==='Rectangle'?'drag a box':'click corners, then Finish') : '<b>pick a feature</b> on the left to start drawing')); }
 function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k)); setMode('draw'); }
+function deselect(){ active=null; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.remove('on')); mode='draw'; applyMode(); status('<b>nothing selected</b> — click a feature to draw; right-click-drag pans'); }
+function undoLastFeature(){   // remove the most-recently-placed feature (skips the auto centreline/markers)
+  for(let i=layers.length-1;i>=0;i--){ const k=layers[i].key; if(['centreline','mk100','mk150','mk200'].includes(k)) continue;
+    const h=layers[i].hole; map.removeLayer(layers[i].layer); layers.splice(i,1); store();
+    if(k==='green'||k.indexOf('tee-')===0) syncHole(h); else redraw(); applyMode(); status('undid last '+k); return; }
+  status('nothing to undo'); }
 function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active);
   // auto-recentre: arriving at a not-yet-traced hole pans near an adjacent traced green (the next tee is usually there)
   const H=data.holes[hole], traced=H&&(H.green||H.tees||H.centreline);
@@ -297,6 +305,7 @@ function store(){
   }
   document.getElementById('data').textContent = summary();
   updateReadout();
+  const ub=document.getElementById('undo'); if(ub) ub.disabled = !layers.some(o=>!['centreline','mk100','mk150','mk200'].includes(o.key));   // keep Undo enabled whenever there's a feature to remove
 }
 function summary(){
   const out = []; for(let n=1;n<=18;n++){ const h=data.holes[n]; if(!h) continue;
@@ -313,7 +322,7 @@ document.getElementById('hprev').onclick = () => setHole(hole-1);
 document.getElementById('hnext').onclick = () => setHole(hole+1);
 document.getElementById('cname').onchange = store;
 document.getElementById('finish').onclick = () => { map.pm.Draw[curDraw] && map.pm.Draw[curDraw]._finishShape && map.pm.Draw[curDraw]._finishShape(); };
-document.getElementById('undo').onclick = () => { const d=map.pm.Draw[curDraw]; d && d._removeLastVertex && d._removeLastVertex(); };
+document.getElementById('undo').onclick = () => undoLastFeature();
 document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box'?'outline':'box'; const b=document.getElementById('drawmode');
   b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; if(mode==='draw') applyMode(); status('polygon draw: <b>'+(drawMode==='box'?'drag-a-box':'click-outline')+'</b>'); };
 document.getElementById('td-place').onclick = () => placeTees(hole);
@@ -321,9 +330,11 @@ document.getElementById('fw-auto').onclick = () => autoFairway(hole);
 document.getElementById('wand').onclick = () => setMode(mode==='detect'?'draw':'detect');
 document.getElementById('editmode').onclick = () => setMode(mode==='edit'?'draw':'edit');
 map.on('click', wandClick);   // no-op unless detect mode is on
-document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
-  const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } applyMode(); };
-  layers.forEach(o=>o.layer.once('click', h)); };
+document.getElementById('del').onclick = () => setMode(mode==='delete'?'draw':'delete');   // Delete mode: click features to remove them
+map.on('pm:remove', e => { const i=layers.findIndex(o=>o.layer===e.layer); if(i<0) return; const k=layers[i].key, h=layers[i].hole; layers.splice(i,1); store(); if(k==='green'||k.indexOf('tee-')===0) syncHole(h); else redraw(); applyMode(); status('deleted '+k); });
+// Deselect: Escape (also leaves any mode), or click empty space in the side panel
+document.addEventListener('keydown', e => { if(e.key!=='Escape') return; if(mode!=='draw') setMode('draw'); else if(active) deselect(); });
+document.getElementById('side').addEventListener('click', e => { if(e.target.closest('button,input,select,label,a')) return; if(mode==='draw' && active) deselect(); });
 const _onMoved = e => { const lyr=e&&(e.layer||e.target); store(); const k=lyr&&lyr.options&&lyr.options._k, h=lyr&&lyr.options&&lyr.options._h;
   if(!h||!k){ redraw(); return; }
   if(k==='centreline'){ deriveMarkers(h); store(); redraw(); }       // bent the line for a dogleg → re-place markers along it
