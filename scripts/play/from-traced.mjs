@@ -54,6 +54,8 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   for (const dt of t.ditch || []) if (dt.length >= 2) feats.push({ t: 'ditch', pts: simp(dt) });
   for (const wa of t.waste || []) if (wa.length >= 3) feats.push({ t: 'waste', pts: simp(wa) });
   for (const nv of t.native || []) if (nv.length >= 3) feats.push({ t: 'native', pts: simp(nv) });
+  for (const tb of t.teeboxes || []) if (tb.length >= 3) feats.push({ t: 'tee', pts: simp(tb) });   // tee box → reuse the 'tee' renderer
+  for (const br of t.bridges || []) if (br.length >= 3) feats.push({ t: 'bridge', pts: simp(br) });
   // point markers — pts is a single [lat,lng] wrapped as one-vertex array
   for (const m of t.mk100 || []) feats.push({ t: 'mk100', pts: [m] });
   for (const m of t.mk150 || []) feats.push({ t: 'mk150', pts: [m] });

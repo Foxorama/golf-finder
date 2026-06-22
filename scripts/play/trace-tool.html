@@ -42,7 +42,7 @@
     <h3>Feature to place</h3>
     <div class="row" id="ftypes"></div>
     <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
-    <div class="row"><button id="editmode">✥ Edit / drag mode</button></div>
+    <div class="row"><button id="drawmode">▭ Box draw</button><button id="editmode">✥ Edit / drag mode</button></div>
     <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features).</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
@@ -59,6 +59,7 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'tee-blue',  l:'Tee Blue',  s:'Marker', c:'#3b6fd4', field:'tees', multi:false},
   {k:'tee-black', l:'Tee Black', s:'Marker', c:'#1c1c1c', field:'tees', multi:false},
   {k:'tee-red',   l:'Tee Red',   s:'Marker', c:'#d6453b', field:'tees', multi:false},
+  {k:'teebox',    l:'Tee box',     s:'Polygon',c:'#3b7a26', field:'teeboxes',   multi:true},
   {k:'green',     l:'Green',       s:'Polygon',c:'#83d94f', field:'green',      multi:false},
   {k:'centreline',l:'Centreline',  s:'Line',   c:'#ffd24a', field:'centreline', multi:false},
   {k:'fairway',   l:'Fairway',     s:'Polygon',c:'#3f7e2c', field:'fairway',    multi:false},
@@ -68,6 +69,7 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'rough',     l:'Rough',       s:'Polygon',c:'#6f8f48', field:'rough',      multi:true},
   {k:'trees',     l:'Trees',       s:'Polygon',c:'#245a24', field:'trees',      multi:true},
   {k:'building',  l:'Building',    s:'Polygon',c:'#9a9da3', field:'buildings',  multi:true},
+  {k:'bridge',    l:'Bridge',      s:'Polygon',c:'#8a6d4a', field:'bridges',    multi:true},
   {k:'ob',        l:'Out of bounds',s:'Line',  c:'#f2f2f2', field:'ob',         multi:true},
   {k:'path',      l:'Cart path',   s:'Line',   c:'#c9bfa6', field:'paths',      multi:true},
   {k:'ditch',     l:'Ditch (dry)', s:'Line',   c:'#7a6238', field:'ditch',      multi:true},
@@ -103,9 +105,14 @@ FT.forEach(f => { const b = document.createElement('button'); b.className='ft'; 
   b.innerHTML = `<span class="dot" style="background:${f.c}"></span>${f.l}`;
   b.onclick = () => selectType(f); ftDiv.appendChild(b); });
 
+// Box draw (default): polygons are drawn as drag-a-rectangle, then reshaped in Edit mode.
+// Outline draw: polygons are click-each-corner (for precise green/bunker outlines). Lines/markers unaffected.
+let drawMode='box', curDraw='Polygon';
+const drawShapeOf = f => f.s==='Polygon' ? (drawMode==='box'?'Rectangle':'Polygon') : f.s;
 function selectType(f){ active=f; document.querySelectorAll('#ftypes button').forEach(b=>b.classList.toggle('on', b.dataset.k===f.k));
-  map.pm.disableDraw(); map.pm.enableDraw(f.s, { continueDrawing:!!f.multi });
-  status(`placing <b>${f.l}</b> on hole ${hole} — ${f.s==='Marker'?'click the spot':'click corners, then Finish'}`); }
+  map.pm.disableDraw(); curDraw=drawShapeOf(f); map.pm.enableDraw(curDraw, { continueDrawing:!!f.multi });
+  const how = curDraw==='Marker'?'click the spot' : curDraw==='Line'?'click points along it' : curDraw==='Rectangle'?'drag a box (then Edit/drag mode to reshape)' : 'click each corner, then Finish';
+  status(`placing <b>${f.l}</b> on hole ${hole} — ${how}`); }
 function setHole(n){ hole=Math.max(1,Math.min(18,n)); document.getElementById('holein').value=hole; redraw(); status(`hole ${hole}`); if(active) selectType(active); }
 function status(t){ document.getElementById('status').innerHTML=t; }
 
@@ -149,8 +156,10 @@ document.getElementById('holein').onchange = e => setHole(+e.target.value);
 document.getElementById('hprev').onclick = () => setHole(hole-1);
 document.getElementById('hnext').onclick = () => setHole(hole+1);
 document.getElementById('cname').onchange = store;
-document.getElementById('finish').onclick = () => { map.pm.Draw[active.s] && map.pm.Draw[active.s]._finishShape && map.pm.Draw[active.s]._finishShape(); };
-document.getElementById('undo').onclick = () => { const d=map.pm.Draw[active.s]; d && d._removeLastVertex && d._removeLastVertex(); };
+document.getElementById('finish').onclick = () => { map.pm.Draw[curDraw] && map.pm.Draw[curDraw]._finishShape && map.pm.Draw[curDraw]._finishShape(); };
+document.getElementById('undo').onclick = () => { const d=map.pm.Draw[curDraw]; d && d._removeLastVertex && d._removeLastVertex(); };
+document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box'?'outline':'box'; const b=document.getElementById('drawmode');
+  b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; b.classList.toggle('on',drawMode==='outline'); if(active) selectType(active); };
 document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
   const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
   layers.forEach(o=>o.layer.once('click', h)); };
