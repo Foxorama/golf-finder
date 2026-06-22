@@ -8,3 +8,4 @@ scripts/play/g_*.png
 scripts/play/gailes_*.png
 scripts/play/gailes_*.json
 scripts/play/gailes_place.mjs
+_tooltest/
