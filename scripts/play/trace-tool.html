@@ -43,7 +43,7 @@
     <div class="row" id="ftypes"></div>
     <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
     <div class="row"><button id="editmode">✥ Edit / drag mode</button></div>
-    <div class="hint">Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features).</div>
+    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features).</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
     <div id="data">{}</div>
@@ -74,6 +74,15 @@ const map = L.map('map').setView([-27.600, 152.916], 16);
 L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
   { maxZoom: 22, maxNativeZoom: 19, attribution:'Esri World Imagery' }).addTo(map);
 map.pm.setGlobalOptions({ snappable:true, snapDistance:12 });
+
+// Pan with the RIGHT mouse button so LEFT is purely for drawing/clicking features.
+map.dragging.disable();
+(()=>{ const mc=map.getContainer(); let panning=false,lx=0,ly=0;
+  mc.addEventListener('contextmenu', e=>e.preventDefault());
+  mc.addEventListener('mousedown', e=>{ if(e.button!==2) return; panning=true; lx=e.clientX; ly=e.clientY; e.preventDefault(); e.stopPropagation(); });
+  window.addEventListener('mousemove', e=>{ if(!panning) return; map.panBy([lx-e.clientX, ly-e.clientY],{animate:false}); lx=e.clientX; ly=e.clientY; });
+  window.addEventListener('mouseup', e=>{ if(e.button===2) panning=false; });
+})();
 
 // build feature-type buttons
 const ftDiv = document.getElementById('ftypes');
