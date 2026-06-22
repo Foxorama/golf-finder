@@ -13,7 +13,7 @@
   "cr": 64,
   "slope": 113,
   "defaultTee": "white",
-  "src": "green pins (user survey) + scorecard tees/lengths + straight fairways (bunkers/water pending)",
+  "src": "hand-traced display (in progress) + green/tee pins + scorecard",
   "teeSets": [
    {
     "key": "blue",
