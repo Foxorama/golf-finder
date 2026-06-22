@@ -3,7 +3,8 @@
   "Greens = surveyed pins (user-dropped in Google Maps, 2026-06-22), survey-grade.",
   "Numbering/routing from the OFFICIAL course map in the Gailes New Member Package PDF (gitignored), georeferenced to the 3 control greens.",
   "Tees placed at the official per-tee card distances (Black/Blue/White, gailesgolf.com.au per-hole pages) along each hole line; fairways traced from Esri World Imagery; centrelines straight tee->green so displayed length == card.",
-  "par/SI/CR-Slope are official scorecard facts. No bunkers/water yet (greens+fairways+lengths only)."
+  "par/SI/CR-Slope are official scorecard facts. No bunkers/water yet (greens+fairways+lengths only).",
+  "Red = Ladies tee from the member-package scorecard image (img_9): per-hole Red metres, Ladies ACR 73, Ladies par/SI captured in course._ladies. Read 2026-06-22."
  ],
  "name": "Gailes Golf Club",
  "slug": "gailes-golf-club",
@@ -35,11 +36,75 @@
    {
     "key": "red",
     "name": "Red",
-    "cr": 71,
+    "cr": 73,
     "slope": 127,
-    "_note": "PLACEHOLDER rating (copied from White) — official Gailes red/ladies CR+Slope not yet sourced. The red POSITION is hand-traced (real); only the handicap rating is provisional. Replace cr/slope when the ladies card is confirmed."
+    "_note": "Ladies (Red) tee — ACR 73 from the Gailes member-package scorecard. The card is an ACR/CCR card with no USGA slope, so slope carries the course value (127). Ladies have their own par/SI (see course._ladies); the app uses men par/SI for all tees until per-tee par/SI lands."
    }
-  ]
+  ],
+  "_ladies": {
+   "acr": 73,
+   "par": [
+    5,
+    4,
+    3,
+    4,
+    4,
+    3,
+    4,
+    4,
+    5,
+    4,
+    4,
+    3,
+    4,
+    4,
+    5,
+    4,
+    4,
+    5
+   ],
+   "si": [
+    3,
+    1,
+    15,
+    18,
+    5,
+    13,
+    8,
+    7,
+    9,
+    6,
+    16,
+    11,
+    2,
+    12,
+    17,
+    4,
+    14,
+    10
+   ],
+   "dist": [
+    455,
+    307,
+    123,
+    219,
+    345,
+    153,
+    357,
+    326,
+    428,
+    315,
+    275,
+    108,
+    320,
+    278,
+    384,
+    334,
+    251,
+    397
+   ],
+   "note": "Official Ladies card (member package). par sum 73 (out 36/in 37); not yet applied per-tee in scoring."
+  }
  },
  "options": {
   "traceFairways": true,
@@ -62,7 +127,8 @@
    "tees": {
     "black": 482,
     "blue": 474,
-    "white": 465
+    "white": 465,
+    "red": 455
    }
   },
   {
@@ -80,7 +146,8 @@
    "tees": {
     "black": 466,
     "blue": 454,
-    "white": 448
+    "white": 448,
+    "red": 307
    }
   },
   {
@@ -98,7 +165,8 @@
    "tees": {
     "black": 176,
     "blue": 169,
-    "white": 147
+    "white": 147,
+    "red": 123
    }
   },
   {
@@ -116,7 +184,8 @@
    "tees": {
     "black": 238,
     "blue": 234,
-    "white": 230
+    "white": 230,
+    "red": 219
    }
   },
   {
@@ -134,7 +203,8 @@
    "tees": {
     "black": 370,
     "blue": 364,
-    "white": 358
+    "white": 358,
+    "red": 345
    }
   },
   {
@@ -152,7 +222,8 @@
    "tees": {
     "black": 201,
     "blue": 193,
-    "white": 167
+    "white": 167,
+    "red": 153
    }
   },
   {
@@ -170,7 +241,8 @@
    "tees": {
     "black": 392,
     "blue": 385,
-    "white": 379
+    "white": 379,
+    "red": 357
    }
   },
   {
@@ -188,7 +260,8 @@
    "tees": {
     "black": 358,
     "blue": 348,
-    "white": 340
+    "white": 340,
+    "red": 326
    }
   },
   {
@@ -206,7 +279,8 @@
    "tees": {
     "black": 503,
     "blue": 497,
-    "white": 493
+    "white": 493,
+    "red": 428
    }
   },
   {
@@ -224,7 +298,8 @@
    "tees": {
     "black": 384,
     "blue": 380,
-    "white": 377
+    "white": 377,
+    "red": 315
    }
   },
   {
@@ -242,7 +317,8 @@
    "tees": {
     "black": 329,
     "blue": 324,
-    "white": 317
+    "white": 317,
+    "red": 275
    }
   },
   {
@@ -260,7 +336,8 @@
    "tees": {
     "black": 134,
     "blue": 126,
-    "white": 117
+    "white": 117,
+    "red": 108
    }
   },
   {
@@ -278,7 +355,8 @@
    "tees": {
     "black": 351,
     "blue": 345,
-    "white": 333
+    "white": 333,
+    "red": 320
    }
   },
   {
@@ -296,7 +374,8 @@
    "tees": {
     "black": 343,
     "blue": 343,
-    "white": 336
+    "white": 336,
+    "red": 278
    }
   },
   {
@@ -314,7 +393,8 @@
    "tees": {
     "black": 403,
     "blue": 403,
-    "white": 390
+    "white": 390,
+    "red": 384
    }
   },
   {
@@ -332,7 +412,8 @@
    "tees": {
     "black": 367,
     "blue": 367,
-    "white": 353
+    "white": 353,
+    "red": 334
    }
   },
   {
@@ -350,7 +431,8 @@
    "tees": {
     "black": 276,
     "blue": 268,
-    "white": 260
+    "white": 260,
+    "red": 251
    }
   },
   {
@@ -368,7 +450,8 @@
    "tees": {
     "black": 481,
     "blue": 477,
-    "white": 474
+    "white": 474,
+    "red": 397
    }
   }
  ]
