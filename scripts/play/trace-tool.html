@@ -42,7 +42,7 @@
     <h3>Feature to place</h3>
     <div class="row" id="ftypes"></div>
     <div class="row"><button id="finish">Finish shape</button><button id="undo">Undo last</button><button id="del">Delete @click</button></div>
-    <div class="row"><button id="drawmode">▭ Box draw</button><button id="editmode">✥ Edit / drag mode</button></div>
+    <div class="row"><button id="drawmode">▭ Box draw</button><button id="editmode">✥ Edit / drag mode</button><button id="wand">🪄 detect</button></div>
     <div class="row" style="align-items:center;gap:3px">Tee m
       <input id="td-black" type="number" placeholder="Bk" title="Black tee metres" style="width:34px;padding:3px">
       <input id="td-blue"  type="number" placeholder="Bl" title="Blue tee metres"  style="width:34px;padding:3px">
@@ -215,6 +215,33 @@ function updateReadout(){
   el.innerHTML = bits.join(' · ');
   if(H.centreline&&H.centreline.length>=2){ const wEl=document.getElementById('td-white'), w=wEl&&parseFloat(wEl.value); let L=0; for(let i=1;i<H.centreline.length;i++) L+=_dM(H.centreline[i-1],H.centreline[i]); el.style.color = (w && Math.abs(L-w)>w*0.08) ? '#e0a23a' : '#88a472'; }
 }
+// ── Magic-wand: click inside a green/bunker/water/etc → flood-fill the feature by colour from the aerial.
+//    Fetches the Esri tile SEPARATELY via CORS (never touches the display layer), so if pixel reads are
+//    blocked the basemap is unaffected — the wand just disables itself. ──
+let wandOn=false;
+function toggleWand(){ wandOn=!wandOn; const b=document.getElementById('wand'); b.classList.toggle('on',wandOn);
+  if(wandOn){ map.pm.disableDraw(); if(editing){editing=false;document.getElementById('editmode').classList.remove('on');map.pm.disableGlobalEditMode();} status('🪄 <b>Detect ON</b> — click inside a <b>'+active.l+'</b> on the aerial to auto-trace it'); }
+  else status('detect off'); }
+function _floodFill(d,W,Hh,sx,sy,tol){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i0+1],sb=d[i0+2],seen=new Uint8Array(W*Hh),out=[],st=[sy*W+sx],t2=tol*tol; seen[sy*W+sx]=1;
+  while(st.length && out.length<9000){ const k=st.pop(),x=k%W,y=(k/W)|0,i=k*4,dr=d[i]-sr,dg=d[i+1]-sg,db=d[i+2]-sb; if(dr*dr+dg*dg+db*db>t2) continue; out.push([x,y]);
+    if(x>0&&!seen[k-1]){seen[k-1]=1;st.push(k-1);} if(x<W-1&&!seen[k+1]){seen[k+1]=1;st.push(k+1);} if(y>0&&!seen[k-W]){seen[k-W]=1;st.push(k-W);} if(y<Hh-1&&!seen[k+W]){seen[k+W]=1;st.push(k+W);} } return out; }
+function _regionPoly(region,W){ const set=new Set(region.map(([x,y])=>y*W+x)); let cx=0,cy=0; for(const [x,y] of region){cx+=x;cy+=y;} cx/=region.length;cy/=region.length;
+  const bnd=[]; for(const [x,y] of region){ if(!set.has(y*W+x-1)||!set.has(y*W+x+1)||!set.has((y-1)*W+x)||!set.has((y+1)*W+x)) bnd.push([x,y]); }
+  bnd.sort((a,b)=>Math.atan2(a[1]-cy,a[0]-cx)-Math.atan2(b[1]-cy,b[0]-cx)); const N=Math.min(30,bnd.length),step=bnd.length/N,out=[]; for(let i=0;i<N;i++) out.push(bnd[Math.floor(i*step)]); return out; }
+async function wandClick(e){
+  if(!wandOn) return; const f=active; if(f.s!=='Polygon'){ status('pick a polygon feature (green/bunker/water…) for detect'); return; }
+  const z=Math.min(19,Math.max(1,Math.round(map.getZoom()))), wp=map.project(e.latlng,z), tx=Math.floor(wp.x/256), ty=Math.floor(wp.y/256), px=Math.floor(wp.x-tx*256), py=Math.floor(wp.y-ty*256);
+  const url='https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/'+z+'/'+ty+'/'+tx;
+  status('🪄 detecting…'); let img;
+  try{ const r=await fetch(url,{mode:'cors'}); const bm=await createImageBitmap(await r.blob()); const cv=document.createElement('canvas'); cv.width=256;cv.height=256; const cx=cv.getContext('2d'); cx.drawImage(bm,0,0); img=cx.getImageData(0,0,256,256).data; }
+  catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); wandOn=false; document.getElementById('wand').classList.remove('on'); return; }
+  const region=_floodFill(img,256,256,px,py,38); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
+  const poly=_regionPoly(region,256).map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
+  if(poly.length<3){ status('region too small'); return; }
+  if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
+  const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=f.k; lyr.options._h=hole; layers.push({layer:lyr,hole,key:f.k});
+  store(); redraw(); if(f.k==='green') syncHole(hole); status('detected a '+f.l+' ('+region.length+' px) — Edit-mode-drag any edge to fix');
+}
 function store(){
   data.name = document.getElementById('cname').value || data.name;
   data.holes = {};
@@ -248,6 +275,8 @@ document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box
   b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; b.classList.toggle('on',drawMode==='outline'); if(active) selectType(active); };
 document.getElementById('td-place').onclick = () => placeTees(hole);
 document.getElementById('fw-auto').onclick = () => autoFairway(hole);
+document.getElementById('wand').onclick = toggleWand;
+map.on('click', wandClick);   // no-op unless detect mode is on
 document.getElementById('del').onclick = () => { status('click a placed feature to delete it'); map.pm.disableDraw();
   const h = ev => { const t=ev.target; const i=layers.findIndex(o=>o.layer===t); if(i>=0){ map.removeLayer(t); layers.splice(i,1); store(); redraw(); } selectType(active); };
   layers.forEach(o=>o.layer.once('click', h)); };
