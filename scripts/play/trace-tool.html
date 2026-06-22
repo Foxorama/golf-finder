@@ -54,16 +54,22 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/@geoman-io/leaflet-geoman-free@2.17.0/dist/leaflet-geoman.min.js"></script>
 <script>
-const FT = [   // feature types: key, label, geoman shape, colour, multi(per hole)?
-  {k:'tee-white', l:'Tee White', s:'Marker', c:'#eaeaea', multi:false},
-  {k:'tee-blue',  l:'Tee Blue',  s:'Marker', c:'#3b6fd4', multi:false},
-  {k:'tee-black', l:'Tee Black', s:'Marker', c:'#1c1c1c', multi:false},
-  {k:'tee-red',   l:'Tee Red',   s:'Marker', c:'#d6453b', multi:false},
-  {k:'green',     l:'Green',      s:'Polygon',c:'#83d94f', multi:false},
-  {k:'centreline',l:'Centreline', s:'Line',   c:'#ffd24a', multi:false},
-  {k:'fairway',   l:'Fairway',    s:'Polygon',c:'#3f7e2c', multi:false},
-  {k:'bunker',    l:'Bunker',     s:'Polygon',c:'#e4d2a0', multi:true},
-  {k:'water',     l:'Water',      s:'Polygon',c:'#1d5fa0', multi:true},
+const FT = [   // feature types: key, label, geoman shape, colour, JSON field, multi(per hole)?
+  {k:'tee-white', l:'Tee White', s:'Marker', c:'#eaeaea', field:'tees', multi:false},
+  {k:'tee-blue',  l:'Tee Blue',  s:'Marker', c:'#3b6fd4', field:'tees', multi:false},
+  {k:'tee-black', l:'Tee Black', s:'Marker', c:'#1c1c1c', field:'tees', multi:false},
+  {k:'tee-red',   l:'Tee Red',   s:'Marker', c:'#d6453b', field:'tees', multi:false},
+  {k:'green',     l:'Green',       s:'Polygon',c:'#83d94f', field:'green',      multi:false},
+  {k:'centreline',l:'Centreline',  s:'Line',   c:'#ffd24a', field:'centreline', multi:false},
+  {k:'fairway',   l:'Fairway',     s:'Polygon',c:'#3f7e2c', field:'fairway',    multi:false},
+  {k:'bunker',    l:'Bunker',      s:'Polygon',c:'#e4d2a0', field:'bunkers',    multi:true},
+  {k:'water',     l:'Water',       s:'Polygon',c:'#1d5fa0', field:'water',      multi:true},
+  {k:'creek',     l:'Creek',       s:'Line',   c:'#2a86c8', field:'creeks',     multi:true},
+  {k:'rough',     l:'Rough',       s:'Polygon',c:'#6f8f48', field:'rough',      multi:true},
+  {k:'trees',     l:'Trees',       s:'Polygon',c:'#245a24', field:'trees',      multi:true},
+  {k:'building',  l:'Building',    s:'Polygon',c:'#9a9da3', field:'buildings',  multi:true},
+  {k:'ob',        l:'Out of bounds',s:'Line',  c:'#f2f2f2', field:'ob',         multi:true},
+  {k:'path',      l:'Cart path',   s:'Line',   c:'#c9bfa6', field:'paths',      multi:true},
 ];
 const r6 = v => +v.toFixed(6);
 const data = { name:'', holes:{} };
@@ -115,16 +121,18 @@ function store(){
   data.holes = {};
   for(const {layer,hole,key} of layers){
     const h = data.holes[hole] = data.holes[hole] || {};
-    const c = coordsOf(layer);
+    const c = coordsOf(layer); const f = FT.find(x=>x.k===key);
     if(key.startsWith('tee-')){ (h.tees=h.tees||{})[key.slice(4)] = c; }
-    else if(key==='bunker' || key==='water'){ (h[key]=h[key]||[]).push(c); }
-    else h[key] = c;   // green, centreline, fairway
+    else if(f.multi){ (h[f.field]=h[f.field]||[]).push(c); }   // bunkers/water/rough/trees/buildings/ob/paths
+    else h[f.field] = c;                                       // green/centreline/fairway
   }
   document.getElementById('data').textContent = summary();
 }
 function summary(){
   const out = []; for(let n=1;n<=18;n++){ const h=data.holes[n]; if(!h) continue;
-    const bits=[]; if(h.tees) bits.push('tee:'+Object.keys(h.tees).join('/')); if(h.green) bits.push('green'); if(h.centreline) bits.push('line'); if(h.fairway) bits.push('fairway'); if(h.bunkers) bits.push('bunk×'+h.bunkers.length); if(h.water) bits.push('water×'+h.water.length);
+    const bits=[]; if(h.tees) bits.push('tee:'+Object.keys(h.tees).join('/'));
+    for(const f of FT){ if(f.field==='tees') continue; const v=h[f.field]; if(v==null) continue;
+      bits.push(f.multi ? (f.k+'×'+v.length) : f.k); }
     out.push('h'+n+': '+bits.join(', ')); }
   return out.join('\n') || '(nothing yet)';
 }
@@ -150,8 +158,10 @@ document.getElementById('export').onclick = () => { store();
 document.getElementById('impbtn').onclick = () => document.getElementById('impfile').click();
 document.getElementById('impfile').onchange = e => { const f=e.target.files[0]; if(!f) return; const rd=new FileReader();
   rd.onload = () => { try{ const d=JSON.parse(rd.result); document.getElementById('cname').value=d.name||''; layers.splice(0).forEach(o=>map.removeLayer(o.layer));
-    for(const n in d.holes){ const h=d.holes[n]; const add=(key,coords)=>{ const f=FT.find(x=>x.k===key); let lyr; if(f.s==='Marker') lyr=L.marker(coords); else if(f.s==='Line') lyr=L.polyline(coords); else lyr=L.polygon(coords); lyr.setStyle&&lyr.setStyle({color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=key; lyr.options._h=+n; layers.push({layer:lyr,hole:+n,key}); };
-      if(h.tees) for(const t in h.tees) add('tee-'+t, h.tees[t]); if(h.green) add('green',h.green); if(h.centreline) add('centreline',h.centreline); if(h.fairway) add('fairway',h.fairway); (h.bunkers||[]).forEach(b=>add('bunker',b)); (h.water||[]).forEach(w=>add('water',w)); }
+    for(const n in d.holes){ const h=d.holes[n]; if(h.bunker&&!h.bunkers){h.bunkers=h.bunker;delete h.bunker;}  // migrate old singular key
+      const add=(key,coords)=>{ const f=FT.find(x=>x.k===key); let lyr; if(f.s==='Marker') lyr=L.marker(coords); else if(f.s==='Line') lyr=L.polyline(coords); else lyr=L.polygon(coords); lyr.setStyle&&lyr.setStyle({color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=key; lyr.options._h=+n; layers.push({layer:lyr,hole:+n,key}); };
+      if(h.tees) for(const t in h.tees) add('tee-'+t, h.tees[t]);
+      for(const f of FT){ if(f.field==='tees') continue; const v=h[f.field]; if(v==null) continue; if(f.multi) v.forEach(item=>add(f.k,item)); else add(f.k,v); } }
     store(); const first=Object.keys(d.holes)[0]; if(first) map.fitBounds(L.featureGroup(layers.map(o=>o.layer)).getBounds().pad(0.2)); status('imported'); }catch(x){ alert('bad JSON: '+x.message); } };
   rd.readAsText(f); };
 

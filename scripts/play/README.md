@@ -23,11 +23,17 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
   sand blobs, tees are config coords), so the *display* drifts — fine for a rough course, not for
   pixel placement.
 - **Hand-traced (`trace-tool.html` → `from-traced.mjs`)** — for **accurate display**. Open the tool
-  in a browser, pick a hole + a feature (tee / green / centreline / fairway / bunker / water), and
-  **click it on the georeferenced Esri aerial** (use the club PDF/map open alongside to identify
-  features). Export the geometry JSON, then `node from-traced.mjs <traced.json> <slug>.config.json`
-  merges it with the scorecard (par/SI/per-tee distances/CR) → a built course. Real green polygons
-  give true front/centre/back; clicked tees + bunkers + water land exactly where you put them.
+  in a browser, pick a hole + a feature and **click it on the georeferenced Esri aerial** (club PDF
+  open alongside to identify features). Feature types: **tee (White; others derived from the card),
+  green, centreline, fairway, bunker, water, creek, rough, trees, building, out-of-bounds, cart-path**
+  — greens/fairway/bunker/water/rough/trees/building are polygons; centreline/creek/OB/cart-path are
+  lines. Pan the map with **right-click drag** (left is for drawing); **Edit/drag mode** repositions
+  any placed point or vertex. Export the geometry JSON, then
+  `node from-traced.mjs <traced.json> <slug>.config.json` merges it with the scorecard
+  (par/SI/per-tee distances/CR) → a built course. Real green polygons give true front/centre/back;
+  every clicked feature lands exactly where you put it, and the hole map's frame expands to include
+  the hole's own edge features (trees/rough/OB) so they're never culled. Procedural flat-shading
+  renders each type now; nicer art assets can be layered on later.
 
 ## Run
 ```

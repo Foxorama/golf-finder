@@ -41,10 +41,16 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   }
   if (Object.keys(tees).length) tees.white = tees.white || tee;
   holes.push({ n, par: hc.par, si: hc.si, tee, ...(Object.keys(tees).length ? { tees } : {}), cen, pin: null, gbb });
-  // traced fairway / bunkers / water → features
+  // traced area features (polygons ≥3 pts) and line features (creek/OB/path ≥2 pts) → geom features
   if (t.fairway && t.fairway.length >= 3) feats.push({ t: 'fairway', pts: simp(t.fairway) });
   for (const b of t.bunkers || []) if (b.length >= 3) feats.push({ t: 'bunker', pts: simp(b) });
   for (const w of t.water || []) if (w.length >= 3) feats.push({ t: 'water', pts: simp(w) });
+  for (const r of t.rough || []) if (r.length >= 3) feats.push({ t: 'rough', pts: simp(r) });
+  for (const tr of t.trees || []) if (tr.length >= 3) feats.push({ t: 'trees', pts: simp(tr) });
+  for (const bd of t.buildings || []) if (bd.length >= 3) feats.push({ t: 'building', pts: simp(bd) });
+  for (const ck of t.creeks || []) if (ck.length >= 2) feats.push({ t: 'creek', pts: simp(ck) });
+  for (const o of t.ob || []) if (o.length >= 2) feats.push({ t: 'ob', pts: simp(o) });
+  for (const p of t.paths || []) if (p.length >= 2) feats.push({ t: 'path', pts: simp(p) });
   // cross-check vs card length
   if (white != null) { const d = Math.round(distM(tee, cen)); if (Math.abs(d - white) > white * 0.2) qa.push(`h${n}: tee→green ${d} m vs card ${white} m (>20%)`); }
 }
@@ -54,6 +60,6 @@ const out = { play, geom: { features: feats, lines } };
 const outPath = tracedPath.replace(/\.json$/, '_built.json');
 fs.writeFileSync(outPath, JSON.stringify(out));
 const cnt = t => feats.filter(f => f.t === t).length;
-console.error(`holes=${holes.length} par=${parSum} | greens ${cnt('green')} bunkers ${cnt('bunker')} water ${cnt('water')} fairways ${cnt('fairway')} | lines=${Object.keys(lines).length} | tees ${holes.filter(h => h.tees).length}/${holes.length}`);
+console.error(`holes=${holes.length} par=${parSum} | greens ${cnt('green')} fairways ${cnt('fairway')} bunkers ${cnt('bunker')} water ${cnt('water')} creeks ${cnt('creek')} rough ${cnt('rough')} trees ${cnt('trees')} buildings ${cnt('building')} ob ${cnt('ob')} paths ${cnt('path')} | lines=${Object.keys(lines).length} | tees ${holes.filter(h => h.tees).length}/${holes.length}`);
 console.error('QA:' + (qa.length ? '\n  - ' + qa.join('\n  - ') : ' all traced'));
 console.error('-> ' + outPath);
