@@ -130,9 +130,12 @@ worth shipping, **trace it by hand on the aerial** (`scripts/play/`, README has 
 3. **Lean on the automations** (they do most of the work): green + a tee → a straight **centreline**
    auto-draws and the **100/150/200 markers derive along it** (Edit-drag the centreline midpoint for a
    dogleg → markers re-place on the bent line); **Tee m** + **place tees** drop the colours by card
-   distance; **↳ fairway** generates a tapered ribbon you edit; **🪄 detect** flood-fills a **bunker or
-   water** outline from the imagery (it **refuses greens** — they colour-bleed; box-draw those); a **live
-   readout** cross-checks the centreline metres vs the card; navigating to an untraced hole auto-recentres.
+   distance; **↳ green** drops an editable ~28 m oval at the map centre (centre it on the real green first);
+   **↳ fairway** / **↳ rough** generate a tapered fairway ribbon / a wide rough corridor along the centreline
+   to edit; **🪄 detect** does **bunkers/water** by colour flood-fill AND **tree canopy by a coverage mask**
+   (click dense canopy → a whole tree mass in one click; greens are **refused** — they colour-bleed, box-draw
+   those); a **live readout** cross-checks the centreline metres vs the card; navigating to an untraced hole
+   auto-recentres.
 4. **Export** the geometry JSON → **`node from-traced.mjs <traced.json> <slug>.config.json`** merges it
    with the scorecard → a built `{play,geom}`. Real green polygons → true front/centre/back; every clicked
    feature lands exactly where you put it. Then bake (Step 3 below) and run the §3a per-hole QA.

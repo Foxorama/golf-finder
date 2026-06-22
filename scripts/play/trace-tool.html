@@ -49,9 +49,9 @@
       <input id="td-blue"  type="number" placeholder="Bl" title="Blue tee metres"  style="width:34px;padding:3px">
       <input id="td-white" type="number" placeholder="Wh" title="White tee metres" style="width:34px;padding:3px">
       <input id="td-red"   type="number" placeholder="Rd" title="Red tee metres"   style="width:34px;padding:3px">
-      <button id="td-place">↳ place tees</button><button id="fw-auto">↳ fairway</button></div>
+      <button id="td-place">↳ place tees</button><button id="gr-oval">↳ green</button><button id="fw-auto">↳ fairway</button><button id="rf-auto">↳ rough</button></div>
     <div id="cl-readout" style="font:11px var(--mono,monospace);color:#88a472;min-height:14px"></div>
-    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). <b>Deselect</b> (so clicks stop drawing): press <b>Esc</b>, click empty panel space, or click the highlighted feature again. <b>↶ Undo last</b> removes the last placed feature; <b>🗑 Delete mode</b> → click any feature to delete it. Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line.</div>
+    <div class="hint"><b>Right-click-drag pans the map</b> (left click is for drawing). <b>Deselect</b> (so clicks stop drawing): press <b>Esc</b>, click empty panel space, or click the highlighted feature again. <b>↶ Undo last</b> removes the last placed feature; <b>🗑 Delete mode</b> → click any feature to delete it. Polygons: click each corner, then <b>Finish</b> (or click the first point). Tee/green-pt = single click. Bunkers &amp; water: place several per hole. <b>Edit/drag mode</b>: drag any placed marker or vertex to reposition (toggle off to add new features). <b>Auto-build:</b> draw the green + place a tee → a straight <b>centreline</b> appears with 100/150/200 markers derived along it. For a <b>dogleg</b>, Edit-mode-drag the centreline (pull its midpoint to the corner) — the markers re-place along the bent line, always on the fairway. Moving a tee/green snaps the line's end. <b>Tee m</b>: type each tee's card metres + <b>place tees</b> to drop them by distance along the line. <b>↳ green</b> drops a ~28 m oval green at the map centre (centre it on the real green first, then Edit-drag); <b>↳ rough</b> lays a wide rough corridor along the centreline to widen/clip. <b>🪄 detect</b> does <b>bunkers/water</b> by colour AND <b>tree canopy</b> by coverage mask (click dense canopy → a whole tree mass in one go; greens are refused — Box-draw those).</div>
     <div id="status">pick a hole + feature, then click the aerial.</div>
     <h3>Captured</h3>
     <div id="data">{}</div>
@@ -240,6 +240,22 @@ function autoFairway(hole){
   const f=FT.find(x=>x.k==='fairway'); const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k='fairway'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'fairway'});
   store(); redraw(); status('fairway ribbon from the centreline — Edit-mode-drag to fit, or widen/narrow the edges');
 }
+// Oval green STARTER: drop an editable ~28 m oval at the map centre to drag-fit, instead of drawing
+// each green from scratch. (Centre the green in view first; then Edit-mode-drag the dots.)
+function ovalPoly(center, rxM, ryM, sides=16){ const rad=Math.PI/180, kx=Math.cos(center[0]*rad)*111320, ky=111320, out=[];
+  for(let i=0;i<sides;i++){ const a=2*Math.PI*i/sides; out.push([r6(center[0]+Math.cos(a)*ryM/ky), r6(center[1]+Math.sin(a)*rxM/kx)]); } return out; }
+function autoGreenOval(hole){ const c=map.getCenter(), poly=ovalPoly([c.lat,c.lng],14,11);
+  for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key==='green'){ map.removeLayer(layers[i].layer); layers.splice(i,1); } }
+  const f=FT.find(x=>x.k==='green'); const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k='green'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'green'});
+  store(); syncHole(hole); redraw(); status('dropped a ~28 m oval green at the map centre — centre it on the real green and Edit-mode-drag the dots to fit');
+}
+// Rough corridor STARTER: a wide ribbon along the centreline (drawn UNDER the fairway), to widen/clip
+// to the tree line — fills the big rough background in one click instead of tracing it.
+function autoRough(hole){ const H=data.holes[hole]; if(!H||!H.centreline){ status('draw the green + a tee first (need a centreline for the rough corridor)'); return; }
+  const poly=fairwayRibbon(H.centreline, 75); if(!poly) return;
+  const f=FT.find(x=>x.k==='rough'); const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.3}); lyr.addTo(map); lyr.options._k='rough'; lyr.options._h=hole; layers.push({layer:lyr,hole,key:'rough'});
+  store(); redraw(); status('rough corridor from the centreline (draws under the fairway) — Edit-drag/widen to the tree line; re-run adds another');
+}
 // Live readout: centreline length (+ tee→green) vs the White card distance entered in Tee m.
 function updateReadout(){
   const el=document.getElementById('cl-readout'); if(!el) return; const H=data.holes[hole]; if(!H){ el.textContent=''; return; }
@@ -254,8 +270,23 @@ function updateReadout(){
 //    Fetches the Esri tile SEPARATELY via CORS (never touches the display layer), so if pixel reads are
 //    blocked the basemap is unaffected — the wand just disables itself. ──
 let wandOn=false;
-function _floodFill(d,W,Hh,sx,sy,tol,maxR){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i0+1],sb=d[i0+2],seen=new Uint8Array(W*Hh),out=[],st=[sy*W+sx],t2=tol*tol,r2=maxR*maxR; seen[sy*W+sx]=1;
-  while(st.length && out.length<7000){ const k=st.pop(),x=k%W,y=(k/W)|0; if((x-sx)*(x-sx)+(y-sy)*(y-sy)>r2) continue;   // radius cap stops the splatter
+// per-feature detect params: trees are big + textured (canopy varies, no sharp single colour), so they
+// need a bigger radius/tolerance/pixel budget + a coarser simplify + a higher point budget than a
+// compact bunker/water blob. (Greens are refused entirely — they colour-bleed into grass.)
+const DET={ trees:{maxR:120,maxPx:44000,maxPts:48,eps:4.8}, _def:{tol:30,maxR:60,maxPx:7000,maxPts:18,eps:2.5} };
+// Tree canopy = DARK + green-dominant but NOT lush-green (calibrated on Esri: canopy bri≈50–95, G−R≤~18;
+// lit grass is brighter, bri>100, G−R≈27; water is dark but blue G−B<0). So trees flood over a coverage
+// MASK (every canopy pixel, not one seed colour) — that bridges the lit gaps between trees so a whole
+// tree BAND comes in one click, where the colour flood only ever grabbed a single tree.
+function _isTree(d,i){ const r=d[i],g=d[i+1],b=d[i+2], bri=(r+g+b)/3; return bri<98 && (g-r)<=20 && (g-b)>=2; }
+function _floodMask(d,W,Hh,sx,sy,pred,maxR,maxPx){ const seen=new Uint8Array(W*Hh),out=[],st=[],r2=maxR*maxR;
+  let s0=-1; for(let rr=0;rr<=5&&s0<0;rr++) for(let yy=Math.max(0,sy-rr);yy<=Math.min(Hh-1,sy+rr)&&s0<0;yy++) for(let xx=Math.max(0,sx-rr);xx<=Math.min(W-1,sx+rr);xx++){ if(pred(d,(yy*W+xx)*4)){ s0=yy*W+xx; sx=xx; sy=yy; break; } }
+  if(s0<0) return out; seen[s0]=1; st.push(s0);
+  while(st.length && out.length<(maxPx||44000)){ const k=st.pop(),x=k%W,y=(k/W)|0; if((x-sx)*(x-sx)+(y-sy)*(y-sy)>r2) continue; if(!pred(d,k*4)) continue; out.push([x,y]);
+    if(x>0&&!seen[k-1]){seen[k-1]=1;st.push(k-1);} if(x<W-1&&!seen[k+1]){seen[k+1]=1;st.push(k+1);} if(y>0&&!seen[k-W]){seen[k-W]=1;st.push(k-W);} if(y<Hh-1&&!seen[k+W]){seen[k+W]=1;st.push(k+W);} }
+  return out; }
+function _floodFill(d,W,Hh,sx,sy,tol,maxR,maxPx){ const i0=(sy*W+sx)*4,sr=d[i0],sg=d[i0+1],sb=d[i0+2],seen=new Uint8Array(W*Hh),out=[],st=[sy*W+sx],t2=tol*tol,r2=maxR*maxR; seen[sy*W+sx]=1;
+  while(st.length && out.length<(maxPx||7000)){ const k=st.pop(),x=k%W,y=(k/W)|0; if((x-sx)*(x-sx)+(y-sy)*(y-sy)>r2) continue;   // radius cap stops the splatter
     const i=k*4,dr=d[i]-sr,dg=d[i+1]-sg,db=d[i+2]-sb; if(dr*dr+dg*dg+db*db>t2) continue; out.push([x,y]);
     if(x>0&&!seen[k-1]){seen[k-1]=1;st.push(k-1);} if(x<W-1&&!seen[k+1]){seen[k+1]=1;st.push(k+1);} if(y>0&&!seen[k-W]){seen[k-W]=1;st.push(k-W);} if(y<Hh-1&&!seen[k+W]){seen[k+W]=1;st.push(k+W);} } return out; }
 function _contour(mask,W,H){   // Moore boundary trace (clockwise) → ordered outline that follows CONCAVITIES (bean greens)
@@ -290,13 +321,16 @@ async function wandClick(e){
   status('🪄 detecting…'); let img;
   try{ const r=await fetch(url,{mode:'cors'}); const bm=await createImageBitmap(await r.blob()); const cv=document.createElement('canvas'); cv.width=256;cv.height=256; const cx=cv.getContext('2d'); cx.drawImage(bm,0,0); img=cx.getImageData(0,0,256,256).data; }
   catch(err){ status('🚫 the map tiles block pixel reads (CORS) — magic-wand unavailable here; trace by hand'); setMode('draw'); return; }
-  const region=_floodFill(img,256,256,px,py,30,60); if(region.length<12){ status('no clear region there — click a more uniform patch, or trace by hand'); return; }
+  const dp=DET[f.k]||DET._def;
+  const region = f.k==='trees' ? _floodMask(img,256,256,px,py,_isTree,dp.maxR,dp.maxPx)   // tree coverage mask (whole band)
+                               : _floodFill(img,256,256,px,py,dp.tol,dp.maxR,dp.maxPx);    // colour flood (compact bunker/water)
+  if(region.length<12){ status(f.k==='trees'?'no tree canopy there — click denser/darker canopy':'no clear region there — click a more uniform patch, or trace by hand'); return; }
   const mask=new Uint8Array(256*256); for(const [qx,qy] of region) mask[qy*256+qx]=1;
   _clean(mask,256,256);   // fill holes + seal cracks first
-  const simp=_rdp(_contour(mask,256,256),2.5);
-  // bail cleanly rather than dump a spaghetti polygon — greens blend into the grass so they rarely trace clean
+  const simp=_rdp(_contour(mask,256,256),dp.eps);
+  // bail cleanly rather than dump a spaghetti polygon
   if(simp.length<3){ status('region too small — trace by hand'); return; }
-  if(simp.length>18){ status("🪄 couldn't get a clean outline here — auto-detect works best on <b>bunkers/water</b> (high contrast); greens blend into the grass, so Box-draw this one by hand."); return; }
+  if(simp.length>dp.maxPts){ status(f.k==='trees' ? "🪄 couldn't get a clean tree outline here — try a denser part of the canopy, or Box-draw it (big tree masses span tiles; detect a clump then extend by hand)." : "🪄 couldn't get a clean outline here — auto-detect works best on <b>bunkers/water</b> (high contrast); Box-draw this one by hand."); return; }
   const poly=simp.map(([qx,qy])=>{ const ll=map.unproject(L.point(tx*256+qx,ty*256+qy),z); return [r6(ll.lat),r6(ll.lng)]; });
   if(!f.multi){ for(let i=layers.length-1;i>=0;i--){ if(layers[i].hole===hole && layers[i].key===f.k){ map.removeLayer(layers[i].layer); layers.splice(i,1); } } }
   const lyr=L.polygon(poly,{color:f.c,fillColor:f.c,weight:2,fillOpacity:0.35}); lyr.addTo(map); lyr.options._k=f.k; lyr.options._h=hole; layers.push({layer:lyr,hole,key:f.k});
@@ -339,7 +373,9 @@ document.getElementById('undo').onclick = () => undoLastFeature();
 document.getElementById('drawmode').onclick = () => { drawMode = drawMode==='box'?'outline':'box'; const b=document.getElementById('drawmode');
   b.textContent = drawMode==='box'?'▭ Box draw':'⬠ Outline draw'; if(mode==='draw') applyMode(); status('polygon draw: <b>'+(drawMode==='box'?'drag-a-box':'click-outline')+'</b>'); };
 document.getElementById('td-place').onclick = () => placeTees(hole);
+document.getElementById('gr-oval').onclick = () => autoGreenOval(hole);
 document.getElementById('fw-auto').onclick = () => autoFairway(hole);
+document.getElementById('rf-auto').onclick = () => autoRough(hole);
 document.getElementById('wand').onclick = () => setMode(mode==='detect'?'draw':'detect');
 document.getElementById('editmode').onclick = () => setMode(mode==='edit'?'draw':'edit');
 map.on('click', wandClick);   // no-op unless detect mode is on
