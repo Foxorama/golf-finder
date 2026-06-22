@@ -7047,6 +7047,27 @@ function windVsHole(dir,spd,brgDeg){
   const crossTxt=cross>0.26?'left → right':cross<-0.26?'right → left':'';
   return {d,head,cross,tag,cls,crossTxt,spd};
 }
+// Tap the hole-map compass to pull a FRESH wind reading from Open-Meteo. Throttled so it can't be
+// spammed: a per-tap cooldown (default 30 s, window._playWindCool) + a concurrent-fetch guard, so
+// rapid taps never hammer the API. window._playWindRefresh=false disables it; in preview the
+// _playWindTest override stands in for live data, so a refresh just re-confirms it.
+let _windCoolUntil=0, _windBusy=false;
+async function playRefreshWind(){
+  if(!playS||window._playWindRefresh===false) return;
+  if(_windBusy){ return; }
+  const now=Date.now();
+  if(now<_windCoolUntil){ playToast(`Wind just refreshed — wait ${Math.ceil((_windCoolUntil-now)/1000)} s.`); return; }
+  if(window._playWindTest){ playToast('Wind is overridden in test mode.'); return; }
+  const wz=window._gpsFar?skyWxZone():(window._gpsZone||'brisbane_metro');
+  _windBusy=true; window._playWindBusy=true; playToast('Refreshing wind…');
+  try{
+    delete weatherCache[wz];                        // force a network re-fetch (else fetchWeatherZone returns the cache)
+    const r=await fetchWeatherZone(wz);
+    if(r&&r.ok){ _windCoolUntil=Date.now()+(window._playWindCool||30000); playToast('Wind updated.'); }
+    else playToast('Could not refresh wind — kept the last reading.');
+  }catch(e){ playToast('Could not refresh wind right now.'); }
+  finally{ _windBusy=false; window._playWindBusy=false; if(playS&&playRender) playRender(); }
+}
 // "Plays-like" wind-adjusted distance: a headwind plays longer, a tailwind shorter,
 // a crosswind barely changes carry. wv is shot-relative (player->green). CONSERVATIVE
 // default (~0.7%/mph headwind, ~0.4%/mph tailwind — the wind is a regional forecast,
@@ -7104,7 +7125,7 @@ function playMapTap(evt){
   pt=pt.matrixTransform(ctm.inverse());
   const pr=window._playMapProj; if(!pr) return;
   if(pt.x<0||pt.x>pr.W||pt.y<0||pt.y>pr.H) return;     // ignore taps outside the map
-  if(pr.rose){ const rx=pt.x-pr.rose.cx, ry=pt.y-pr.rose.cy; if(rx*rx+ry*ry<=pr.rose.r*pr.rose.r) return; }  // ignore taps on the wind rose
+  if(pr.rose){ const rx=pt.x-pr.rose.cx, ry=pt.y-pr.rose.cy; if(rx*rx+ry*ry<=pr.rose.r*pr.rose.r){ playRefreshWind(); return; } }  // tap the wind rose → pull a fresh (throttled) reading instead of dropping a measure reticle
   const u=(pt.x-pr.offX)/pr.scl+pr.uMin, v=pr.vMax-(pt.y-pr.offY)/pr.scl;
   const e=u*pr.cosB+v*pr.sinB, n=-u*pr.sinB+v*pr.cosB;
   playS.measure=[pr.tee[0]+n/pr.ky, pr.tee[1]+e/pr.kx];
@@ -7382,6 +7403,10 @@ function playHoleSvg(){
     s+=`<line x1="${(wcx+ux*(R-5)).toFixed(1)}" y1="${(wcy+uy*(R-5)).toFixed(1)}" x2="${(wcx+ux*(R-1)).toFixed(1)}" y2="${(wcy+uy*(R-1)).toFixed(1)}" stroke="${isN?'#e8eef5':'#5a6b78'}" stroke-width="${isN?1.8:1.1}"/>`; }
   { const a=(-brgDeg)*Math.PI/180, ux=Math.sin(a), uy=-Math.cos(a);
     s+=`<text x="${(wcx+ux*(R-11)).toFixed(1)}" y="${(wcy+uy*(R-11)+3).toFixed(1)}" text-anchor="middle" font-family="sans-serif" font-size="8.5" fill="#9fb0bd">N</text>`; }
+  // tap-to-refresh affordance: a small circular arrow at the dial foot (the rose is a tap target).
+  if(window._playWindRefresh!==false){ const busy=window._playWindBusy, rcx=wcx, rcy=wcy+R-11, rr=3.6, rc=busy?'#ffd24a':'#74909e';
+    s+=`<path d="M ${(rcx).toFixed(1)} ${(rcy-rr).toFixed(1)} A ${rr} ${rr} 0 1 1 ${(rcx-rr).toFixed(1)} ${(rcy+0.1).toFixed(1)}" fill="none" stroke="${rc}" stroke-width="1.1" stroke-linecap="round"/>`;
+    s+=`<polygon points="${(rcx-0.4).toFixed(1)},${(rcy-rr-2).toFixed(1)} ${(rcx+2.4).toFixed(1)},${(rcy-rr+0.1).toFixed(1)} ${(rcx-0.7).toFixed(1)},${(rcy-rr+1.6).toFixed(1)}" fill="${rc}"/>`; }
   if(wv){
     // teal/amber/red arrow points where the wind BLOWS TO (wv.d): up = downwind/helping toward the green
     const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=4.4+str*3, al=8+str*4;
