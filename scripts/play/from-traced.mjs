@@ -33,9 +33,11 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   // centreline: traced, else [tee, cen]
   const line = (t.centreline && t.centreline.length >= 2) ? round6(t.centreline) : [tee, cen];
   lines[n] = line;
-  // per-tee positions: use clicked tees where present; derive the rest from card deltas along the play line
+  // per-tee positions: use clicked tees where present; derive the rest from card deltas along the
+  // play line. Keys = union of card colours AND any traced tee colour, so a colour you placed by
+  // hand (e.g. red) is kept even when the scorecard config has no card distance for it.
   const tees = {}; const back = bearing(line[1] || cen, line[0]);
-  for (const k of Object.keys(card)) {
+  for (const k of new Set([...Object.keys(card), ...Object.keys(t.tees || {})])) {
     if (t.tees?.[k]) tees[k] = t.tees[k].map(r7);
     else if (white != null) tees[k] = k === 'white' ? tee : dest(tee, back, card[k] - white).map(r7);
   }
