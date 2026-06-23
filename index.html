@@ -133,7 +133,11 @@ body.mode-melt #course-list{animation:modeFade .5s ease both;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100dvh;overscroll-behavior:none;}
 body{padding-bottom:env(safe-area-inset-bottom,20px);}
-.app{max-width:480px;margin:0 auto;padding:0 16px 32px;}
+.app{max-width:480px;margin:0 auto;padding:0 16px 32px;transition:transform .32s cubic-bezier(.2,.8,.3,1);}
+/* While the finger is actively dragging, the app must track it 1:1 with no easing;
+   the transition above only runs for the snap-back / busy-hold. */
+body.ptr-pull .app{transition:none;}
+body.ptr-busy .app{transform:translateY(60px);}
 
 /* ── Header ── */
 .header{padding:18px 0 2px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
@@ -165,22 +169,23 @@ body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
 .hero-zone{min-height:0;}  /* hero card height now matches in both modes; filters moved into the day hero */
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
-/* ── Pull-to-refresh indicator (replaces the old header ↻ button). A floating
-   pill that follows the finger down from the top of the page; tips green when
-   past the trigger threshold and spins while init() reloads. Driven by the PTR
-   touch handler below — inline transform/opacity during the drag, `.drag` kills
-   the snap-back transition so the pull tracks the finger 1:1. ── */
+/* ── Pull-to-refresh indicator (replaces the old header ↻ button). The whole .app
+   slides down under the finger; this pill rides in the gap that opens above it,
+   tips green when past the threshold, then spins centred in the gap while init()
+   reloads. The PTR touch handler sets inline transforms during the drag (body
+   .ptr-pull kills easing so it tracks 1:1); on release the transitions snap both
+   the app and the pill back. ── */
 .ptr{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-48px);z-index:1200;
   width:40px;height:40px;border-radius:50%;background:var(--sur2);border:1px solid var(--bdr);
   color:var(--gg);display:flex;align-items:center;justify-content:center;font-size:21px;
   opacity:0;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,0.45);will-change:transform,opacity;
-  transition:transform .3s cubic-bezier(.2,.8,.3,1),opacity .3s ease,border-color .15s,background .15s;}
-.ptr.drag{transition:border-color .15s,background .15s;}
+  transition:transform .32s cubic-bezier(.2,.8,.3,1),opacity .3s ease,border-color .15s,background .15s;}
+body.ptr-pull .ptr{transition:border-color .15s,background .15s;}
 .ptr.ready{border-color:var(--gl);background:var(--green);box-shadow:0 8px 26px rgba(0,0,0,0.5),0 0 14px -2px var(--gl);}
 .ptr-icon{display:block;line-height:1;}
-body.ptr-busy .ptr{opacity:1!important;transform:translateX(-50%) translateY(18px)!important;border-color:var(--gl);}
-body.ptr-busy .ptr-icon{animation:spin 0.8s linear infinite;transform:none!important;}
-@media (prefers-reduced-motion:reduce){.ptr{transition:opacity .2s ease;}.ptr-icon{transition:none!important;}}
+body.ptr-busy .ptr{opacity:1;transform:translateX(-50%) translateY(10px);border-color:var(--gl);}
+body.ptr-busy .ptr-icon{animation:spin 0.8s linear infinite;}
+@media (prefers-reduced-motion:reduce){.app,.ptr{transition-duration:.18s;}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
 .daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;transition:background 1.2s ease;}
@@ -6838,45 +6843,49 @@ async function init(){
 // passive — at scrollTop 0 a downward drag can't scroll up, and overscroll-behavior
 // (set on html,body) already kills the native bounce, so nothing needs preventing.
 (function(){
-  const TH=78, MAX=150;          // finger px to trigger; cap on tracked distance
+  const ARM=58, RB=0.5, MAX=110;   // gap (px) that arms a refresh; finger→gap damping; gap cap
   const ind=document.getElementById('ptr'), icon=ind&&ind.querySelector('.ptr-icon');
-  if(!ind) return;
-  let startY=0, pulling=false, armed=false, dist=0;
+  const app=document.querySelector('.app');
+  if(!ind||!app) return;
+  let startY=0, pulling=false, armed=false, gap=0;
   // Bail whenever an overlay owns the screen: every modal/sheet locks the page
   // with body overflow:hidden, and the immersive sky adds .sky-full-on — in those
   // states a downward swipe is the overlay's own gesture (e.g. swipe-to-close a
   // story card), not a page refresh.
   const blocked=()=>document.body.style.overflow==='hidden'||document.body.classList.contains('sky-full-on');
   const atTop=()=>(window.scrollY||document.documentElement.scrollTop||0)<=0;
-  const reset=()=>{ pulling=false; armed=false; ind.classList.remove('drag','ready'); ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
+  // Clear every inline transform so the CSS (base, or .ptr-busy) takes over and the
+  // .app + pill animate back. ptr-pull off re-enables their transitions for the snap.
+  const clearUI=()=>{ document.body.classList.remove('ptr-pull'); ind.classList.remove('ready'); app.style.transform=''; ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
   addEventListener('touchstart',e=>{
     if(window._pullRefresh===false||e.touches.length!==1||blocked()||!atTop()||document.body.classList.contains('ptr-busy')) return;
-    startY=e.touches[0].clientY; pulling=true; armed=false; dist=0;
+    startY=e.touches[0].clientY; pulling=true; armed=false; gap=0;
   },{passive:true});
-  // Non-passive: once a downward pull from the top is under way we preventDefault
-  // so the browser's own scroll / native pull-to-refresh can't swallow the gesture
-  // (that's what hid our indicator and showed Chrome's built-in spinner instead).
+  // Non-passive: once a downward pull from the top is under way we preventDefault so
+  // the browser's own scroll / native pull-to-refresh can't swallow it (that native
+  // gesture is what showed a stray spinner and stopped our pull from moving the app).
   addEventListener('touchmove',e=>{
     if(!pulling) return;
-    dist=e.touches[0].clientY-startY;
-    if(dist<=0||!atTop()){ if(!armed){ pulling=false; } return; }  // reversed / scrolled away before arming → let the page scroll
+    const dist=e.touches[0].clientY-startY;
+    if(dist<=0||!atTop()){ if(!armed) pulling=false; return; }  // reversed / not at top before arming → let the page scroll
     e.preventDefault();
     armed=true;
-    ind.classList.add('drag');
-    const d=Math.min(dist,MAX);
-    // pill slides from -48px (hidden) to ~+20px, fully out by the threshold; opacity
-    // and a 270° icon spin ramp to "ready" so there's feedback from the first ~10px.
-    const y=-48+Math.min(d*0.78,72), prog=Math.min(d/TH,1);
-    ind.style.transform='translateX(-50%) translateY('+y+'px)';
-    ind.style.opacity=Math.min(d/28,1);
+    document.body.classList.add('ptr-pull');
+    gap=Math.min(dist*RB,MAX);                 // the whole app slides down by `gap`
+    app.style.transform='translateY('+gap+'px)';
+    // pill rides centred in the opening gap; opacity + a 270° spin ramp to "ready".
+    const prog=Math.min(gap/ARM,1);
+    ind.style.transform='translateX(-50%) translateY('+Math.min(gap/2-20,18)+'px)';
+    ind.style.opacity=Math.min(gap/24,1);
     if(icon) icon.style.transform='rotate('+(prog*270)+'deg)';
-    ind.classList.toggle('ready',dist>=TH);
+    ind.classList.toggle('ready',gap>=ARM);
   },{passive:false});
   const end=()=>{
     if(!pulling&&!armed) return;
-    const fire=armed&&dist>=TH;
-    reset();
-    if(fire) triggerRefresh();
+    const fire=armed&&gap>=ARM;
+    pulling=false; armed=false;
+    if(fire) triggerRefresh();   // adds ptr-busy first, so clearing inline holds the app open + spins
+    clearUI();
   };
   addEventListener('touchend',end,{passive:true});
   addEventListener('touchcancel',end,{passive:true});
@@ -6884,7 +6893,10 @@ async function init(){
 function triggerRefresh(){
   if(document.body.classList.contains('ptr-busy')) return;
   document.body.classList.add('ptr-busy');
-  Promise.resolve(init()).catch(()=>{}).finally(()=>document.body.classList.remove('ptr-busy'));
+  let done=false;
+  const clear=()=>{ if(done) return; done=true; document.body.classList.remove('ptr-busy'); };
+  Promise.resolve(init()).catch(()=>{}).finally(clear);
+  setTimeout(clear,8000);  // safety: a hung GPS/weather fetch must never leave the spinner stuck
 }
 
 // Pause weather animations when the tab is backgrounded (battery)
