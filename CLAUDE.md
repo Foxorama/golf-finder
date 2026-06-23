@@ -361,8 +361,14 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   shots, within ~14 m) is nearest — so into a headwind the longer plays-like number bumps
   the suggestion up. Hidden until you've tagged enough shots. **My Bag** (the 🎒 button in
   the main-screen header → `showBag`/`renderBag` panel; `gf_bag = {club:metres}`) lets you
-  curate which clubs you carry and **set each club's carry distance by hand** (with a
-  "use tracked" shortcut to copy the tagged-shot average). `clubDist(club)` resolves a
+  curate which clubs you carry (WITB tab) and **set each club's carry distance by hand** (with a
+  "use tracked" shortcut to copy the tagged-shot average). **`CLUBS` is the full bag taxonomy**
+  (Dr, MD, 2–7 woods, 3/4/7 hybrids, 1–9 irons, PW, 50°–60° wedges — keys longest→shortest;
+  **degree-wedge keys literally contain `°`**, fine in JS/HTML/localStorage). **No putter** —
+  putts are the per-hole `putts` counter, not a tagged club. A one-time `gf_club_schema`
+  migration (IIFE by `CLUBS`) remapped the old short list's retired keys (`Hyb`→`4H`, `GW`→`50°`,
+  `SW`→`56°`, `LW`→`60°`) across bag/stats/WITB/saved-round legs; matching keys (Dr, woods, irons,
+  PW) were left identical so existing data carried over. `clubDist(club)` resolves a
   manual bag value first, else the tracked average (≥3 shots); `clubSet()` is the union used
   by `suggestClub` and the History "Your clubs" card — so the on-course club suggestion runs
   off your real bag even before you've tagged any shots. The bag also drives a **tee-shot

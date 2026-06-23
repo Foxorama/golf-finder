@@ -992,7 +992,7 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .play-confirm{position:absolute;inset:0;background:rgba(4,8,6,0.62);display:flex;align-items:center;justify-content:center;padding:24px;opacity:0;pointer-events:none;transition:opacity .18s ease;z-index:45;}
 .play-confirm.show{opacity:1;pointer-events:auto;}
-.pc-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:16px;padding:20px 18px 16px;max-width:330px;width:100%;box-shadow:0 18px 50px -16px rgba(0,0,0,0.7);}
+.pc-card{background:var(--bg3);border:1px solid var(--bdr);border-radius:16px;padding:20px 18px 16px;max-width:330px;width:100%;max-height:calc(100% - 8px);overflow-y:auto;box-shadow:0 18px 50px -16px rgba(0,0,0,0.7);}
 .pc-msg{font-family:var(--sans);font-size:14.5px;color:var(--tx);line-height:1.4;text-align:center;margin-bottom:16px;}
 .pc-row{display:flex;gap:10px;}
 .pc-row button{flex:1;padding:11px;border-radius:11px;border:1px solid var(--bdr2);font-family:var(--sans);font-weight:700;font-size:14px;cursor:pointer;}
@@ -6818,8 +6818,30 @@ function fmtDist(m){ if(m==null) return '--'; return Math.round(playS.units==='y
 
 // ── Club tracking: per-club carry stats built from tagged shot legs (cross-round) ──
 // gf_club_stats = { 'Dr':[230,235,…], '7i':[150,…] } in metres, last 40 per club.
-const CLUBS=['Dr','3W','5W','Hyb','3i','4i','5i','6i','7i','8i','9i','PW','GW','SW','LW'];
-const CLUB_NAMES={Dr:'Driver','3W':'3 Wood','5W':'5 Wood',Hyb:'Hybrid','3i':'3 Iron','4i':'4 Iron','5i':'5 Iron','6i':'6 Iron','7i':'7 Iron','8i':'8 Iron','9i':'9 Iron',PW:'Pitching Wedge',GW:'Gap Wedge',SW:'Sand Wedge',LW:'Lob Wedge'};
+// Full bag taxonomy, longest → shortest (the order also drives display + loft tiebreaks).
+// Keys that pre-date this list (Dr, 3W, 5W, 3i–9i, PW) are kept identical so existing bag /
+// tracked / saved-round data carries over untouched; the old generic 'Hyb' and named wedges
+// 'GW'/'SW'/'LW' are remapped once by the migration below (→ 4H / 50° / 56° / 60°).
+const CLUBS=['Dr','MD','2W','3W','4W','5W','6W','7W','3H','4H','7H','1i','2i','3i','4i','5i','6i','7i','8i','9i','PW','50°','52°','54°','56°','58°','60°'];
+const CLUB_NAMES={Dr:'Driver',MD:'Mini-driver','2W':'2 Wood','3W':'3 Wood','4W':'4 Wood','5W':'5 Wood','6W':'6 Wood','7W':'7 Wood','3H':'3 Hybrid','4H':'4 Hybrid','7H':'7 Hybrid','1i':'1 Iron','2i':'2 Iron','3i':'3 Iron','4i':'4 Iron','5i':'5 Iron','6i':'6 Iron','7i':'7 Iron','8i':'8 Iron','9i':'9 Iron',PW:'Pitching Wedge','50°':'50° Wedge','52°':'52° Wedge','54°':'54° Wedge','56°':'56° Wedge','58°':'58° Wedge','60°':'60° Wedge'};
+// One-time migration of the old short club list to the full one above. Maps the retired keys
+// to their closest new club across the bag, tracked stats, WITB selection and saved-round legs,
+// so nothing is silently lost. Guarded by gf_club_schema so it runs at most once.
+(function _migrateClubKeys(){
+  try{
+    if(localStorage.getItem('gf_club_schema')==='2') return;
+    const map={Hyb:'4H',GW:'50°',SW:'56°',LW:'60°'};
+    const remapObj=key=>{ const j=localStorage.getItem(key); if(!j) return; let o; try{o=JSON.parse(j);}catch(e){return;}
+      let ch=false; for(const old in map){ if(o[old]!=null && o[map[old]]==null){ o[map[old]]=o[old]; delete o[old]; ch=true; } }
+      if(ch) localStorage.setItem(key,JSON.stringify(o)); };
+    remapObj('gf_bag'); remapObj('gf_club_stats');
+    const wj=localStorage.getItem('gf_witb'); if(wj){ try{ let w=JSON.parse(wj); if(Array.isArray(w)) localStorage.setItem('gf_witb',JSON.stringify([...new Set(w.map(c=>map[c]||c))])); }catch(e){} }
+    const rj=localStorage.getItem('gf_rounds'); if(rj){ try{ const rs=JSON.parse(rj); let ch=false;
+      rs.forEach(r=>{ if(r.legs) for(const k in r.legs) r.legs[k].forEach(lg=>{ if(lg&&lg.club&&map[lg.club]){ lg.club=map[lg.club]; ch=true; } }); });
+      if(ch) localStorage.setItem('gf_rounds',JSON.stringify(rs)); }catch(e){} }
+    localStorage.setItem('gf_club_schema','2');
+  }catch(e){}
+})();
 let bagTab='bag';   // My Bag panel active tab: 'bag' | 'witb'
 function loadClubStats(){ try{ return JSON.parse(localStorage.getItem('gf_club_stats')||'{}'); }catch(e){ return {}; } }
 function saveClubStats(s){ try{ localStorage.setItem('gf_club_stats',JSON.stringify(s)); }catch(e){} }
