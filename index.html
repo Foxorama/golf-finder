@@ -752,15 +752,35 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-subtitle{font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.07em;margin-top:2px;}
 .play-close{background:var(--sur2);border:none;border-radius:50%;width:32px;height:32px;color:var(--tx2);cursor:pointer;font-size:15px;margin-left:auto;flex-shrink:0;}
 .play-back{background:var(--sur2);border:none;border-radius:50%;width:32px;height:32px;color:var(--tx2);cursor:pointer;font-size:16px;flex-shrink:0;}
+.play-back.on{background:var(--green);color:var(--gg);box-shadow:0 0 0 1px var(--gl);}
 .play-layouts{display:flex;flex-direction:column;gap:12px;padding:18px 16px;}
 .pl-intro{color:var(--tx2);font-size:13px;line-height:1.5;margin-bottom:2px;}
 .pl-card{display:flex;flex-direction:column;gap:4px;text-align:left;background:var(--sur);border:1px solid var(--bdr2);border-radius:14px;padding:16px 18px;cursor:pointer;box-shadow:inset 0 0 24px -18px var(--acc);}
 .pl-card:hover{border-color:var(--acc);}
 .pl-name{font-family:var(--sans);font-size:17px;font-weight:700;color:var(--tx);}
 .pl-meta{font-size:12.5px;color:var(--tx2);}
-.play-tabs{display:flex;gap:6px;padding:10px 12px;border-bottom:1px solid var(--bdr);}
-.play-tab{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:9px 4px;color:var(--tx2);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;}
+.play-tabs{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--bdr);align-items:stretch;}
+.play-tab{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:var(--sur);border:1px solid var(--bdr2);border-radius:10px;padding:6px 13px;color:var(--tx2);font-family:var(--sans);font-size:11px;font-weight:600;cursor:pointer;line-height:1;}
+.play-tab .pt-ico{font-size:16px;}
 .play-tab.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
+/* Sticky centre-of-green distance, flanked by the Play/Card tabs. The number is colour-coded as a
+   SWING-POWER gauge: how full a swing your suggested club needs — green ≥90% (commit to a full
+   swing) · amber 50-90% (take something off) · red <50% (big gap / awkward partial) · grey = even
+   your longest club can't reach (true "black/unreachable", but a dark UI needs a visible muted grey). */
+.play-dist{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:3px 6px;cursor:pointer;font-family:var(--mono);}
+.pd-num{display:block;font-size:27px;font-weight:800;line-height:1;letter-spacing:-1px;color:var(--gg);}
+.pd-u{font-size:12px;font-weight:600;color:var(--tx3);margin-left:2px;letter-spacing:0;}
+.pd-sub{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;}
+.pd-club{font-weight:700;color:var(--tx);font-size:12px;letter-spacing:0;}
+.pd-wait{font-family:var(--mono);font-size:12px;color:var(--tx3);align-self:center;}
+.play-dist.gauge-full .pd-num{color:#16e0a3;} .play-dist.gauge-med .pd-num{color:#ffc233;}
+.play-dist.gauge-low .pd-num{color:#ff4d4d;} .play-dist.gauge-unreach .pd-num{color:#8a93a3;}
+.play-dist.gauge-full{border-color:rgba(22,224,163,0.45);} .play-dist.gauge-med{border-color:rgba(255,194,51,0.45);}
+.play-dist.gauge-low{border-color:rgba(255,77,77,0.45);}
+/* "Last time here" — clubs hit on this hole in your most recent saved round (not sticky). */
+.play-lastclub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--tx3);background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:7px 11px;margin:2px 0 4px;}
+.play-lastclub b{color:var(--tx2);font-weight:700;letter-spacing:0.02em;}
+.plc-when{margin-left:auto;opacity:0.8;}
 .play-body{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:14px 16px calc(env(safe-area-inset-bottom,16px) + 24px);}
 /* hole header + nav */
 .play-holehdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
@@ -780,20 +800,15 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-pip.on{background:var(--gb);border-color:var(--gb);color:#06140a;font-weight:700;}
 /* rangefinder readout */
 .pr-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:8px 14px;}
-.pr-side{text-align:center;flex:0 0 auto;padding-bottom:3px;}
-.pr-centre{text-align:center;flex:1;}
+.pr-side{text-align:center;flex:1;padding-bottom:3px;}
 .pr-lbl{font-family:var(--mono);font-size:8px;color:var(--tx3);letter-spacing:0.06em;}
 .pr-num{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--tx2);}
-.pr-big{font-size:34px;font-weight:800;color:var(--gg);line-height:1;letter-spacing:-1px;}
-.pr-u{font-size:13px;color:var(--tx3);margin-left:2px;font-weight:600;}
+.pr-cen-num{color:var(--tx);font-weight:700;}
 .pr-plays{text-align:center;font-family:var(--mono);font-size:13px;color:var(--tx2);margin-top:9px;}
 .pr-plays-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--tx3);}
 .pr-plays b{font-size:18px;font-weight:700;}
 .pr-plays.hurt b{color:#ff6b5a;} .pr-plays.help b{color:#5fd06a;}
 .pr-plays-tag{display:block;font-size:10px;color:var(--tx3);margin-top:1px;letter-spacing:0.02em;}
-.pr-club{text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx3);margin-top:7px;text-transform:uppercase;letter-spacing:0.06em;}
-.pr-club b{color:var(--gg);font-size:16px;margin-left:3px;letter-spacing:0;}
-.pr-club-sub{display:block;font-size:10px;color:var(--tx3);margin-top:1px;text-transform:none;letter-spacing:0;}
 .pr-foot{display:flex;justify-content:center;gap:10px;margin-top:8px;}
 .pr-acc,.pr-note{font-family:var(--mono);font-size:10px;color:var(--tx3);}
 .pr-nogps{text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:22px 16px;font-size:14px;color:var(--tx2);}
@@ -7668,34 +7683,90 @@ function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
   if(_playAutoAdvance()) return;   // a hole switch already did a full re-render
   const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
+  playRefreshDist();
   const m=document.getElementById('play-map'); if(m){ m.innerHTML=playHoleSvg(); playApplyMapZoom(); }
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
 }
 
+// One shared read of the shot you face on the current hole — front/centre/back distances, the
+// plays-like adjustment, the suggested club, and the SWING-POWER gauge (how full a swing that
+// club needs). Both the sticky distance bar and the body rangefinder use this so they agree.
+function _playShotInfo(){
+  const pos=playPos(); if(!pos) return null;
+  const h=playS.course.holes[playS.hole-1], tg=holeTargets(h);
+  const dF=_distM(pos,tg.front), dC=_distM(pos,tg.cen), dB=_distM(pos,tg.back);
+  // plays-like to the centre, using the actual shot direction (player -> green)
+  const wind=playWind(), pl=_playsLike(dC,windVsHole(wind.dir,wind.spd,_bearingDeg(pos,tg.cen)));
+  const playDist=pl?pl.adj:dC;                       // the distance the shot actually plays
+  // No marks yet on this hole ⇒ you're on the tee, so the driver stays in play even with DOD off.
+  const fromTee=(playS.shots[playS.hole]||[]).length===0;
+  const sug=suggestClub(playDist,null,fromTee);
+  // Gauge: % of the suggested club's carry you need. reach-mode returns the shortest club that
+  // reaches, so if its carry is still < the distance, even your longest club can't get there.
+  let cls='none', pct=null, reachable=true;
+  if(sug){
+    reachable=sug.avg>=playDist-1;
+    pct=Math.min(100,Math.round(playDist/sug.avg*100));
+    cls=!reachable?'unreach':pct>=90?'full':pct>=50?'med':'low';
+  }
+  return {pos,tg,dF,dC,dB,pl,playDist,sug,cls,pct,reachable};
+}
 function playRangeHtml(){
-  const h=playS.course.holes[playS.hole-1], tg=holeTargets(h), pos=playPos(), u=playUnit();
-  if(!pos){
+  const si=_playShotInfo(), u=playUnit();
+  if(!si){
     const msg=playS.gpsErr===1?'Location permission denied':'Waiting for GPS lock…';
     return `<div class="pr-nogps">📍 ${msg}<div class="pr-nogps-sub">distances to the green appear once your phone has a fix</div></div>`;
   }
-  const dF=_distM(pos,tg.front), dC=_distM(pos,tg.cen), dB=_distM(pos,tg.back);
+  const {dF,dC,dB,pl}=si;
   const acc=playS.acc?`<span class="pr-acc">GPS ±${Math.round(playS.acc)} m${(playS.rawAcc&&playS.rawAcc>Math.round(playS.acc)+2)?` · raw ±${playS.rawAcc}`:''}</span>`:'';
-  // plays-like to the centre, using the actual shot direction (player -> green)
-  const wind=playWind(), pl=_playsLike(dC,windVsHole(wind.dir,wind.spd,_bearingDeg(pos,tg.cen)));
   const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
     ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
     : '';
-  // club suggestion off your tagged-shot averages, for the distance it actually plays.
-  // No marks yet on this hole ⇒ you're on the tee, so the driver stays in play even with DOD off.
-  const fromTee=(playS.shots[playS.hole]||[]).length===0;
-  const sug=suggestClub(pl?pl.adj:dC,null,fromTee);
-  const sugRow=sug?`<div class="pr-club">play <b>${sug.club}</b><span class="pr-club-sub">your carry ${fmtDist(sug.avg)} ${u}${sug.manual?'':' · tracked'}</span></div>`:'';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
-      <div class="pr-centre"><div class="pr-lbl">CENTRE OF GREEN</div><div class="pr-big">${fmtDist(dC)}<span class="pr-u">${u}</span></div></div>
+      <div class="pr-side"><div class="pr-lbl">CENTRE</div><div class="pr-num pr-cen-num">${fmtDist(dC)}</div></div>
       <div class="pr-side"><div class="pr-lbl">BACK</div><div class="pr-num">${fmtDist(dB)}</div></div>
-    </div>${playsRow}${sugRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · ${playS.course.src||'OSM'} green data</span></div>`;
+    </div>${playsRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · ${playS.course.src||'OSM'} green data</span></div>`;
+}
+// The sticky centre-of-green gauge that sits between the Play/Card tabs.
+function playDistBarHtml(si){
+  const u=playUnit();
+  if(!si) return `<span class="pd-wait">📍 GPS…</span>`;
+  const {dC,sug,pct,reachable}=si;
+  let sub=`<span class="pd-club">centre</span>`;
+  if(sug) sub=reachable
+    ? `<span class="pd-club">${sug.club}</span><span>${pct}%</span>`
+    : `<span class="pd-club">${sug.club}</span><span>past range</span>`;
+  return `<span class="pd-num">${fmtDist(dC)}<span class="pd-u">${u}</span></span><span class="pd-sub">${sub}</span>`;
+}
+// Refresh the sticky gauge: sets its colour class (the swing-power gauge) and content. Hidden on
+// the History tab and on scorecard-only (no-GPS) courses, where there's no live distance to show.
+function playRefreshDist(){
+  const el=document.getElementById('play-dist'); if(!el) return;
+  const show=playS&&!playS.historyOnly&&!playS.picker&&!playS.course.noGps&&playS.tab!=='history';
+  if(!show){ el.style.display='none'; el.innerHTML=''; el.className='play-dist'; return; }
+  el.style.display='';
+  const si=_playShotInfo();
+  el.className='play-dist'+(si&&si.sug?' gauge-'+si.cls:'');
+  el.innerHTML=playDistBarHtml(si);
+}
+// "Last time here" — the clubs you hit on this hole in your most recent saved round on this course.
+// Non-sticky, above the map: handy ("what did I use last time") without keeping History on screen.
+function playLastClubHtml(){
+  if(!playS||playS.course.noGps) return '';
+  const h=playS.course.holes[playS.hole-1];
+  for(const r of loadRounds()){
+    if(r.slug!==playS.slug) continue;
+    const lg=r.legs&&r.legs[h.n];
+    if(!lg||!lg.length) continue;
+    const clubs=lg.map(x=>x.club).filter(Boolean);
+    if(!clubs.length) continue;
+    const days=Math.floor((Date.now()-(r.id||0))/86400000);
+    const when=days<=0?'today':days===1?'yesterday':days<14?days+'d ago':days<70?Math.round(days/7)+'w ago':Math.round(days/30)+'mo ago';
+    return `<div class="play-lastclub">🕑 Last time here <b>${clubs.join(' · ')}</b><span class="plc-when">${when}</span></div>`;
+  }
+  return '';
 }
 
 // Live wind for the Play hole map — same source as the day-hero compass.
@@ -8269,6 +8340,7 @@ function playTabHtml(){
       <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
     </div>
     <div id="play-range">${playRangeHtml()}</div>
+    ${playLastClubHtml()}
     <div class="play-mapwrap">
       <div id="play-map" onclick="playMapTap(event)">${playHoleSvg()}</div>
       <div class="play-map-tools">${playMapToolsHtml()}</div>
@@ -8491,6 +8563,7 @@ function playRender(){
   if(!playS)return;
   const tabs=document.querySelector('.play-tabs'), backBtn=document.getElementById('play-back');
   const hioBtn=document.getElementById('play-hio-btn'), foot=document.getElementById('play-foot');
+  const histBtn=document.getElementById('play-hist-btn');
   const ttl0=document.getElementById('play-title'), sub0=document.getElementById('play-subtitle'), body0=document.getElementById('play-body');
   const hideFoot=()=>{ if(foot){ foot.style.display='none'; foot.innerHTML=''; } };
   if(playS.historyOnly){   // dedicated "Rounds & Stats" view opened from the header (no course / GPS)
@@ -8499,6 +8572,7 @@ function playRender(){
     if(tabs) tabs.style.display='none';
     if(backBtn) backBtn.style.display='none';
     if(hioBtn) hioBtn.style.display='none';
+    if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0){ body0.setAttribute('aria-labelledby','play-title'); body0.innerHTML=historyTabHtml(); }
     return;
@@ -8509,6 +8583,7 @@ function playRender(){
     if(tabs) tabs.style.display='none';
     if(backBtn) backBtn.style.display='none';
     if(hioBtn) hioBtn.style.display='none';
+    if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0) body0.innerHTML=layoutPickerHtml(playS.course);
     return;
@@ -8516,6 +8591,7 @@ function playRender(){
   if(tabs) tabs.style.display='';
   if(backBtn) backBtn.style.display=playS.parentName?'':'none';   // back-to-courses only for a layout of a multi-course site
   if(hioBtn) hioBtn.style.display='';
+  if(histBtn){ histBtn.style.display=''; histBtn.classList.toggle('on',playS.tab==='history'); }
   const noGps=!!playS.course.noGps;
   if(noGps&&playS.tab==='play') playS.tab='card';   // no rangefinder tab for scorecard-only courses
   const playTabBtn=document.getElementById('play-tab-play'); if(playTabBtn) playTabBtn.style.display=noGps?'none':'';
@@ -8523,10 +8599,11 @@ function playRender(){
   document.querySelectorAll('.play-tab').forEach(t=>{ const on=t.dataset.tab===playS.tab; t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); });
   const ttl=document.getElementById('play-title'); if(ttl) ttl.textContent=playS.course.name;
   const b=document.getElementById('play-body'); if(!b)return;
-  b.setAttribute('aria-labelledby','play-tab-'+playS.tab);   // tabpanel labelled by its active tab
+  b.setAttribute('aria-labelledby',playS.tab==='history'?'play-hist-btn':'play-tab-'+playS.tab);   // tabpanel labelled by its active tab (history's button lives in the header)
   b.innerHTML = playS.tab==='play'?playTabHtml() : playS.tab==='card'?cardTabHtml() : historyTabHtml();
   // the scoring console footer rides only the Play tab (GPS courses) — Card/History get full height
   if(foot){ const showFoot=playS.tab==='play'&&!noGps; foot.style.display=showFoot?'':'none'; foot.innerHTML=showFoot?playFootHtml():''; }
+  playRefreshDist();
   playDragonInit();
   if(playS.tab==='play'&&!noGps){ playMapZoomInit(); playApplyMapZoom(); }   // bind pinch/zoom + re-apply any stored zoom
 }
@@ -8827,13 +8904,14 @@ showTestBanner();
         <div class="play-title" id="play-title">Course</div>
         <div class="play-subtitle" id="play-subtitle">GPS rangefinder · scorecard</div>
       </div>
+      <button class="play-back" id="play-hist-btn" onclick="playSetTab('history')" aria-label="Round history and stats" title="History &amp; stats">📊</button>
       <button class="play-back" id="play-hio-btn" onclick="showHio()" aria-label="Hole-in-one tracker" title="Record a hole-in-one">🏆</button>
       <button class="play-close" onclick="closePlay()" aria-label="Close play">✕</button>
     </div>
-    <div class="play-tabs" role="tablist" aria-label="Play, scorecard and history">
-      <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')">⛳ Play</button>
-      <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')">📋 Card</button>
-      <button class="play-tab" id="play-tab-history" data-tab="history" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('history')">📊 History</button>
+    <div class="play-tabs" role="tablist" aria-label="Play and scorecard">
+      <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')"><span class="pt-ico">⛳</span>Play</button>
+      <button class="play-dist" id="play-dist" type="button" onclick="playSetTab('play')" aria-label="Distance to centre of green"></button>
+      <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')"><span class="pt-ico">📋</span>Card</button>
     </div>
     <div class="play-body" id="play-body" role="tabpanel" tabindex="0" aria-labelledby="play-tab-play"></div>
     <div class="play-foot" id="play-foot" style="display:none;"></div>
