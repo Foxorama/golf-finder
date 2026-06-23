@@ -24,6 +24,25 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   workflow doc), so the knowledge isn't siloed where only you can read it. When you
   write a memory, ask "does this belong in the shared docs too?" and, if so, do both.
 
+## Reports & idea backlog (living docs)
+- **A "report" is a file, not a chat message.** Whenever the user asks for a report /
+  write-up / summary (what's done, not-done, suggestions, an end-of-session report, a status
+  update…), WRITE IT TO A FILE in the repo and COMMIT it to the working branch — don't just
+  answer in chat. Chat is lost between sessions and this environment can't email, so an
+  uncommitted report is a report that evaporates. Put end-of-session / one-off reports in
+  `reports/<topic>-YYYY-MM-DD.md`, then point to it in chat. (This rule exists because a
+  requested suggestions follow-up was lost when it lived only in a prior session's chat.)
+- **Two living idea docs are the standing backlog** — `IDEAS-GOLF.md` (day course-finder +
+  on-course Play) and `IDEAS-STARS.md` (night sky). Any suggestion worth keeping goes into
+  the right one instead of evaporating in chat. They are **living, not append-only**: on each
+  pass you must be able to **scan, rerank, adjust, modify, merge and retire** existing items,
+  not only add. So every time you touch them — **(1)** re-read the current items, **(2)**
+  rerank by priority as reality changes, **(3)** edit/merge/split entries to match the code as
+  it is now, **(4)** move shipped ideas to **Done** (link the PR) and bad ones to **Dropped**
+  (say why), **(5)** add new ideas with the next stable ID, **(6)** bump *Last reviewed* + *Next
+  ID*. **IDs are stable and never reused.** Each file's own "How this doc works" footer is the
+  authoritative format spec — follow it.
+
 ## Three lenses (read every change through these)
 A persona incantation ("act as a pro golfer") does little on its own — but *this* app
 genuinely lives or dies on three axes, so put every change through all three before you
