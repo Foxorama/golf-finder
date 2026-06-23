@@ -170,17 +170,17 @@ body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
    past the trigger threshold and spins while init() reloads. Driven by the PTR
    touch handler below — inline transform/opacity during the drag, `.drag` kills
    the snap-back transition so the pull tracks the finger 1:1. ── */
-.ptr{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-46px);z-index:1200;
-  width:38px;height:38px;border-radius:50%;background:var(--sur);border:1px solid var(--bdr2);
-  color:var(--tx2);display:flex;align-items:center;justify-content:center;font-size:19px;
-  opacity:0;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,0.35);
-  transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .28s ease,border-color .15s,color .15s;}
-.ptr.drag{transition:none;}
-.ptr.ready{border-color:var(--gl);color:var(--gg);}
+.ptr{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-48px);z-index:1200;
+  width:40px;height:40px;border-radius:50%;background:var(--sur2);border:1px solid var(--bdr);
+  color:var(--gg);display:flex;align-items:center;justify-content:center;font-size:21px;
+  opacity:0;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,0.45);will-change:transform,opacity;
+  transition:transform .3s cubic-bezier(.2,.8,.3,1),opacity .3s ease,border-color .15s,background .15s;}
+.ptr.drag{transition:border-color .15s,background .15s;}
+.ptr.ready{border-color:var(--gl);background:var(--green);box-shadow:0 8px 26px rgba(0,0,0,0.5),0 0 14px -2px var(--gl);}
 .ptr-icon{display:block;line-height:1;}
-body.ptr-busy .ptr{opacity:1!important;transform:translateX(-50%) translateY(14px)!important;}
+body.ptr-busy .ptr{opacity:1!important;transform:translateX(-50%) translateY(18px)!important;border-color:var(--gl);}
 body.ptr-busy .ptr-icon{animation:spin 0.8s linear infinite;transform:none!important;}
-@media (prefers-reduced-motion:reduce){.ptr{transition:opacity .2s ease;}}
+@media (prefers-reduced-motion:reduce){.ptr{transition:opacity .2s ease;}.ptr-icon{transition:none!important;}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
 .daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;transition:background 1.2s ease;}
@@ -6838,35 +6838,43 @@ async function init(){
 // passive — at scrollTop 0 a downward drag can't scroll up, and overscroll-behavior
 // (set on html,body) already kills the native bounce, so nothing needs preventing.
 (function(){
-  const TH=70, MAX=96, RB=0.5;   // trigger px, visual cap, rubber-band factor
+  const TH=78, MAX=150;          // finger px to trigger; cap on tracked distance
   const ind=document.getElementById('ptr'), icon=ind&&ind.querySelector('.ptr-icon');
   if(!ind) return;
-  let startY=0, pulling=false, dist=0;
+  let startY=0, pulling=false, armed=false, dist=0;
   // Bail whenever an overlay owns the screen: every modal/sheet locks the page
   // with body overflow:hidden, and the immersive sky adds .sky-full-on — in those
   // states a downward swipe is the overlay's own gesture (e.g. swipe-to-close a
   // story card), not a page refresh.
   const blocked=()=>document.body.style.overflow==='hidden'||document.body.classList.contains('sky-full-on');
   const atTop=()=>(window.scrollY||document.documentElement.scrollTop||0)<=0;
-  const reset=()=>{ ind.classList.remove('drag','ready'); ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
+  const reset=()=>{ pulling=false; armed=false; ind.classList.remove('drag','ready'); ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
   addEventListener('touchstart',e=>{
     if(window._pullRefresh===false||e.touches.length!==1||blocked()||!atTop()||document.body.classList.contains('ptr-busy')) return;
-    startY=e.touches[0].clientY; pulling=true; dist=0;
+    startY=e.touches[0].clientY; pulling=true; armed=false; dist=0;
   },{passive:true});
+  // Non-passive: once a downward pull from the top is under way we preventDefault
+  // so the browser's own scroll / native pull-to-refresh can't swallow the gesture
+  // (that's what hid our indicator and showed Chrome's built-in spinner instead).
   addEventListener('touchmove',e=>{
     if(!pulling) return;
     dist=e.touches[0].clientY-startY;
-    if(dist<=0||!atTop()){ pulling=false; reset(); return; }
-    const d=Math.min(dist*RB,MAX);
+    if(dist<=0||!atTop()){ if(!armed){ pulling=false; } return; }  // reversed / scrolled away before arming → let the page scroll
+    e.preventDefault();
+    armed=true;
     ind.classList.add('drag');
-    ind.style.transform='translateX(-50%) translateY('+(d-46)+'px)';
-    ind.style.opacity=Math.min(d/TH,1);
-    if(icon) icon.style.transform='rotate('+(d/TH*300)+'deg)';
-    ind.classList.toggle('ready',d>=TH);
-  },{passive:true});
+    const d=Math.min(dist,MAX);
+    // pill slides from -48px (hidden) to ~+20px, fully out by the threshold; opacity
+    // and a 270° icon spin ramp to "ready" so there's feedback from the first ~10px.
+    const y=-48+Math.min(d*0.78,72), prog=Math.min(d/TH,1);
+    ind.style.transform='translateX(-50%) translateY('+y+'px)';
+    ind.style.opacity=Math.min(d/28,1);
+    if(icon) icon.style.transform='rotate('+(prog*270)+'deg)';
+    ind.classList.toggle('ready',dist>=TH);
+  },{passive:false});
   const end=()=>{
-    if(!pulling) return; pulling=false;
-    const fire=dist*RB>=TH;
+    if(!pulling&&!armed) return;
+    const fire=armed&&dist>=TH;
     reset();
     if(fire) triggerRefresh();
   };
