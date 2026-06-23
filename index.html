@@ -1078,8 +1078,17 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 .ld-bsk-bodyglow{animation:ld-bsk-flick 0.3s steps(2,end) infinite;}
 .ld-bsk-eyes circle{filter:drop-shadow(0 0 2.4px #9bff52);animation:ld-bsk-pulse 0.9s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%;}
 .ld-bsk-tail{transform-box:fill-box;transform-origin:100% 50%;animation:ld-tail 2.6s ease-in-out infinite;filter:drop-shadow(0 0 2px #9bff5288);}
-/* charged wings stay clearly visible — dark membrane, luminous green/purple energy edges */
-.ld-night-scene.ld-berserk .ld-wings path{stroke:#a8ff63;stroke-width:2;filter:drop-shadow(0 0 3px #8fff4f) drop-shadow(0 0 7px #8a3bff77);}
+/* A glowing energy wing on EITHER SIDE of the mane, revealed WITH the transformation:
+   these live in .ld-berserk-fx so ld-bsk-reveal gates them to the bite (~40%) — no
+   premature glow during the fly-in. The real manta wings recede as it transforms so the
+   symmetric energy pair frames the hair, then return as the creature flies off. */
+.ld-bsk-wings path{transform-box:fill-box;filter:drop-shadow(0 0 3px #8fff4f) drop-shadow(0 0 7px #8a3bff66);}
+.ld-bsk-wings .bw-l{transform-origin:86% 100%;animation:ld-bsk-flapl 0.95s ease-in-out infinite;}
+.ld-bsk-wings .bw-r{transform-origin:14% 100%;animation:ld-bsk-flapr 0.95s ease-in-out infinite;}
+@keyframes ld-bsk-flapl{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-8deg);}}
+@keyframes ld-bsk-flapr{0%,100%{transform:rotate(0deg);}50%{transform:rotate(8deg);}}
+.ld-night-scene.ld-berserk .ld-wings{animation:ld-bsk-wingfade 6s ease-in-out infinite;}
+@keyframes ld-bsk-wingfade{0%,36%{opacity:1;}44%{opacity:0.22;}82%{opacity:0.22;}90%,100%{opacity:1;}}
 .ld-bsk-glow{transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-pulse 0.9s ease-in-out infinite;}
 .ld-bsk-glow.p2{animation-duration:1.3s;animation-delay:-0.45s;}
 @keyframes ld-bsk-pulse{0%,100%{transform:scale(0.9);opacity:0.55;}50%{transform:scale(1.14);opacity:0.98;}}
@@ -1171,6 +1180,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <radialGradient id="ldb-aura-g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#eaffce" stop-opacity="0"/><stop offset="36%" stop-color="#9bff52" stop-opacity="0.5"/><stop offset="64%" stop-color="#39d11f" stop-opacity="0.26"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0"/></radialGradient>
       <radialGradient id="ldb-aura-p" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0e0ff" stop-opacity="0"/><stop offset="38%" stop-color="#c489ff" stop-opacity="0.5"/><stop offset="70%" stop-color="#7a2cff" stop-opacity="0.24"/><stop offset="100%" stop-color="#7a2cff" stop-opacity="0"/></radialGradient>
       <radialGradient id="ldb-body" cx="50%" cy="38%" r="68%"><stop offset="0%" stop-color="#eaffc4" stop-opacity="0.5"/><stop offset="48%" stop-color="#9bff52" stop-opacity="0.34"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0.12"/></radialGradient>
+      <linearGradient id="ldb-wing" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#39d11f" stop-opacity="0.26"/><stop offset="55%" stop-color="#7cff3a" stop-opacity="0.36"/><stop offset="100%" stop-color="#c489ff" stop-opacity="0.44"/></linearGradient>
       <linearGradient id="ldship-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bccbe8"/><stop offset="50%" stop-color="#6b7ea8"/><stop offset="100%" stop-color="#36435f"/></linearGradient>
       <radialGradient id="ldship-dome" cx="50%" cy="32%" r="75%"><stop offset="0%" stop-color="#e2f6ff"/><stop offset="55%" stop-color="#7fc8ff"/><stop offset="100%" stop-color="#2f7fd0"/></radialGradient>
       <mask id="ldbitemask"><rect x="0" y="0" width="400" height="280" fill="black"/><circle cx="255" cy="100" r="35" fill="white"/><circle class="ld-bite" cx="273" cy="93" r="33" fill="black"/></mask>
@@ -1207,6 +1217,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <g class="ld-berserk-fx">
         <path class="ld-bsk-bodyglow" d="M72,-6 C70,-14 60,-18 48,-19 C30,-21 8,-21 -12,-18 C-26,-16 -34,-12 -40,-7 C-37,-3 -37,1 -40,6 C-33,10 -24,12 -12,12 C6,14 24,14 40,11 C48,9 54,7 58,4 C62,2 67,0 72,-2 C73,-3 73,-5 72,-6 Z" fill="url(#ldb-body)" stroke="#9bff52" stroke-width="1.3" opacity="0.78"/>
         <g class="ld-bsk-eyes"><circle cx="50" cy="-11" r="3.4" fill="#ecffd2"/><circle cx="62" cy="-9" r="2.9" fill="#ecffd2"/></g>
+        <g class="ld-bsk-wings">
+          <path class="bw-l" d="M-8,-15 C-26,-38 -50,-64 -70,-78 C-62,-56 -46,-34 -32,-20 C-24,-17 -14,-15 -8,-15 Z" fill="url(#ldb-wing)" stroke="#a8ff63" stroke-width="1.5"/>
+          <path class="bw-r" d="M18,-15 C36,-38 56,-58 72,-72 C66,-52 52,-32 40,-20 C32,-17 24,-15 18,-15 Z" fill="url(#ldb-wing)" stroke="#a8ff63" stroke-width="1.5"/>
+        </g>
         <g class="ld-bsk-mane">
           <g class="ld-bsk-wisp" fill="none" stroke="url(#ldb-mane)" stroke-linecap="round">
             <path d="M-45,-15 C-66,-21 -86,-18 -104,-28" stroke-width="3.4"/>
