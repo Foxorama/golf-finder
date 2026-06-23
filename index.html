@@ -165,6 +165,22 @@ body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
 .hero-zone{min-height:0;}  /* hero card height now matches in both modes; filters moved into the day hero */
 .spin{animation:spin 0.8s linear infinite;display:inline-block;}
 @keyframes spin{to{transform:rotate(360deg);}}
+/* ── Pull-to-refresh indicator (replaces the old header ↻ button). A floating
+   pill that follows the finger down from the top of the page; tips green when
+   past the trigger threshold and spins while init() reloads. Driven by the PTR
+   touch handler below — inline transform/opacity during the drag, `.drag` kills
+   the snap-back transition so the pull tracks the finger 1:1. ── */
+.ptr{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-46px);z-index:1200;
+  width:38px;height:38px;border-radius:50%;background:var(--sur);border:1px solid var(--bdr2);
+  color:var(--tx2);display:flex;align-items:center;justify-content:center;font-size:19px;
+  opacity:0;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,0.35);
+  transition:transform .28s cubic-bezier(.2,.8,.3,1),opacity .28s ease,border-color .15s,color .15s;}
+.ptr.drag{transition:none;}
+.ptr.ready{border-color:var(--gl);color:var(--gg);}
+.ptr-icon{display:block;line-height:1;}
+body.ptr-busy .ptr{opacity:1!important;transform:translateX(-50%) translateY(14px)!important;}
+body.ptr-busy .ptr-icon{animation:spin 0.8s linear infinite;transform:none!important;}
+@media (prefers-reduced-motion:reduce){.ptr{transition:opacity .2s ease;}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
 .daybar{background:var(--sur);border:1px solid var(--bdr2);border-radius:16px;padding:16px 18px 14px;margin-bottom:14px;transition:background 1.2s ease;}
@@ -1151,6 +1167,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 @keyframes ld-boom-deb{0%,41%{transform:translate(0,0) scale(1);opacity:0;}45%{opacity:1;}70%{transform:translate(var(--dx,0),var(--dy,0)) scale(0.35);opacity:0;}100%{opacity:0;}}</style>
 </head>
 <body>
+<div id="ptr" aria-hidden="true"><span class="ptr-icon">↻</span></div>
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs>
@@ -1383,7 +1400,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   <div class="header">
     <div>
       <div class="app-title" id="app-title">SEQ <span>Golf</span> Finder</div>
-      <div class="app-meta" id="updated-ts">tap refresh to load</div>
+      <div class="app-meta" id="updated-ts">pull down to refresh</div>
     </div>
     <div class="hdr-actions">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
@@ -1391,7 +1408,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <button id="btn-stats" class="hdr-btn" onclick="showStats()" aria-label="Your rounds and stats">📊</button>
         <button id="btn-bag" class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
         <button id="btn-hio" class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
-        <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
       </div>
     </div>
   </div>
@@ -6751,7 +6767,7 @@ function shareCourse(name, suburb, drive){
 })();
 async function init(){
   const icon=document.getElementById('refresh-icon');
-  icon.className='spin';
+  if(icon) icon.className='spin';
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.add('pulse'));
   document.getElementById('loc-status').textContent='getting location...';
   document.getElementById('loc-status').className='app-meta loc-est';
@@ -6803,7 +6819,7 @@ async function init(){
   { const _rs=document.getElementById('region-select'); if(_rs) _rs.value=''; }
   document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
-  icon.className='';
+  if(icon) icon.className='';
   render();
   clearInterval(window._iv);
   window._iv=setInterval(()=>{
@@ -6812,6 +6828,55 @@ async function init(){
     render();
     document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   },60000);
+}
+
+// ── Pull-to-refresh — the gesture that replaced the header ↻ button. When the
+// page is scrolled to the very top, dragging down past the threshold reloads the
+// app via init() (the same job the old button did, in both day and night modes).
+// The #ptr pill follows the finger (rubber-banded), tips green when armed, then
+// spins while init() runs. window._pullRefresh=false disables it. The handlers are
+// passive — at scrollTop 0 a downward drag can't scroll up, and overscroll-behavior
+// (set on html,body) already kills the native bounce, so nothing needs preventing.
+(function(){
+  const TH=70, MAX=96, RB=0.5;   // trigger px, visual cap, rubber-band factor
+  const ind=document.getElementById('ptr'), icon=ind&&ind.querySelector('.ptr-icon');
+  if(!ind) return;
+  let startY=0, pulling=false, dist=0;
+  // Bail whenever an overlay owns the screen: every modal/sheet locks the page
+  // with body overflow:hidden, and the immersive sky adds .sky-full-on — in those
+  // states a downward swipe is the overlay's own gesture (e.g. swipe-to-close a
+  // story card), not a page refresh.
+  const blocked=()=>document.body.style.overflow==='hidden'||document.body.classList.contains('sky-full-on');
+  const atTop=()=>(window.scrollY||document.documentElement.scrollTop||0)<=0;
+  const reset=()=>{ ind.classList.remove('drag','ready'); ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
+  addEventListener('touchstart',e=>{
+    if(window._pullRefresh===false||e.touches.length!==1||blocked()||!atTop()||document.body.classList.contains('ptr-busy')) return;
+    startY=e.touches[0].clientY; pulling=true; dist=0;
+  },{passive:true});
+  addEventListener('touchmove',e=>{
+    if(!pulling) return;
+    dist=e.touches[0].clientY-startY;
+    if(dist<=0||!atTop()){ pulling=false; reset(); return; }
+    const d=Math.min(dist*RB,MAX);
+    ind.classList.add('drag');
+    ind.style.transform='translateX(-50%) translateY('+(d-46)+'px)';
+    ind.style.opacity=Math.min(d/TH,1);
+    if(icon) icon.style.transform='rotate('+(d/TH*300)+'deg)';
+    ind.classList.toggle('ready',d>=TH);
+  },{passive:true});
+  const end=()=>{
+    if(!pulling) return; pulling=false;
+    const fire=dist*RB>=TH;
+    reset();
+    if(fire) triggerRefresh();
+  };
+  addEventListener('touchend',end,{passive:true});
+  addEventListener('touchcancel',end,{passive:true});
+})();
+function triggerRefresh(){
+  if(document.body.classList.contains('ptr-busy')) return;
+  document.body.classList.add('ptr-busy');
+  Promise.resolve(init()).catch(()=>{}).finally(()=>document.body.classList.remove('ptr-busy'));
 }
 
 // Pause weather animations when the tab is backgrounded (battery)
