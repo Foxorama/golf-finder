@@ -578,6 +578,14 @@ call it done. They map to the three hats the user keeps asking for:
 - `main` is **branch-protected** — never commit to it directly. Each change:
   `git checkout -b <topic>` → edit → commit → push → `gh pr create` →
   `gh pr merge <branch> --merge --delete-branch` → `git checkout main && git pull`.
+- **In the remote / web environment (Claude Code on the web), finish every change
+  by shipping it — don't stop at "pushed".** There's no local `gh`; use the GitHub
+  MCP tools (`mcp__github__create_pull_request` → `mcp__github__merge_pull_request`
+  with `merge_method:"merge"`), then sync local with `git checkout main &&
+  git pull origin main` and delete the merged feature branch. So the standing
+  default here is: commit → push → **PR → merge → sync local to main** in one go,
+  unless I say otherwise. (PR bodies end with the `🤖 Generated with Claude Code`
+  line; don't open a PR for work I've asked you to hold.)
 - The app has **no version number**; git history + merged PRs are the record.
   Commit messages should explain the *why*. End commits with the
   `Co-Authored-By: Claude` trailer.
