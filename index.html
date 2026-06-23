@@ -679,8 +679,11 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .share-btn:active{transform:scale(1.2);opacity:1;}
 
 /* ── Hole-in-one panel ── */
-.hio-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:100;backdrop-filter:blur(2px);}
-.hio-sheet{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--sur);border-top:1px solid var(--bdr2);border-radius:20px 20px 0 0;z-index:101;padding:20px 20px env(safe-area-inset-bottom,16px);max-height:85dvh;overflow-y:auto;}
+/* z above the Play sheet (1100) so My Bag / the ace tracker can be opened from inside a
+   round (the History tab's "Edit my bag") and layer over it, not behind it; below the
+   immersive night view (2000) and loader. */
+.hio-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1500;backdrop-filter:blur(2px);}
+.hio-sheet{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--sur);border-top:1px solid var(--bdr2);border-radius:20px 20px 0 0;z-index:1501;padding:20px 20px env(safe-area-inset-bottom,16px);max-height:85dvh;overflow-y:auto;}
 .hio-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
 .hio-title{font-size:17px;font-weight:700;color:var(--tx);}
 .hio-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:2px;}
@@ -828,6 +831,13 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .ps-lie{display:inline-flex;align-items:center;gap:2px;font-size:10px;line-height:1;color:var(--lc,var(--tx3));background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 5px;}
 .ps-live{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;margin-top:6px;}
 .ps-live b{color:var(--al);} .ps-live .ps-lie{font-size:11px;}
+.ps-score{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;margin-top:8px;}
+.ps-score b{color:var(--gg);font-size:15px;}
+.ps-score.muted{color:var(--tx3);font-size:11px;}
+.ps-score-tag{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--gg);border:1px solid var(--gl);border-radius:4px;padding:0 3px;margin-left:3px;vertical-align:middle;}
+.ps-usetrack,.play-usetrack{font-family:var(--mono);color:var(--al);background:rgba(245,184,68,0.12);border:1px dashed var(--al);border-radius:6px;cursor:pointer;}
+.ps-usetrack{font-size:10px;padding:1px 6px;margin-left:4px;}
+.play-usetrack{font-size:10px;padding:2px 7px;margin-left:6px;vertical-align:middle;}
 .play-shotbar2{display:flex;gap:8px;margin:-2px 0 8px;}
 .play-act2{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:8px 6px;color:var(--tx2);font-family:var(--sans);font-weight:600;font-size:12px;cursor:pointer;}
 .play-act2:active{transform:scale(0.98);}
@@ -874,6 +884,7 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 /* per-hole score row */
 .play-scorerow{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:12px 14px;margin-top:12px;}
 .play-scorelbl{font-family:var(--mono);font-size:11px;color:var(--tx3);}
+.play-auto{display:inline-block;font-family:var(--mono);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--gg);background:var(--green);border:1px solid var(--gl);border-radius:5px;padding:1px 5px;margin-left:4px;vertical-align:middle;}
 .play-stepper{display:flex;align-items:center;gap:10px;margin-left:auto;}
 .play-stepper>button{width:40px;height:40px;border-radius:11px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-size:22px;cursor:pointer;}
 .play-scoreval{min-width:46px;text-align:center;font-size:30px;font-weight:800;color:var(--tx);position:relative;}
@@ -6919,7 +6930,7 @@ function openPlay(courseName, layoutKey){
           hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
           shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), shotMan:(draft.shotMan||{}), pens:(draft.pens||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
-          scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
+          scores:(draft.scores||{}), putts:(draft.putts||{}), scoreAuto:(draft.scoreAuto||{}), showClub:true,
           startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
   // keep the per-leg arrays aligned with shots (drafts from before lie/auto tracking lack them)
@@ -7000,12 +7011,21 @@ function playCycleTee(){ const c=playS&&playS.course; if(!c||!c.teeSets||c.teeSe
 function _clampPutts(n){ const sc=playS.scores[n], pu=playS.putts[n]; if(pu==null) return;
   if(sc==null){ delete playS.putts[n]; return; }
   playS.putts[n]=Math.max(0,Math.min(sc-1,pu)); }
-function playBumpScore(n,d){ const par=playS.course.holes[n-1].par; let v=playS.scores[n]; v=(v==null)?(d<0?Math.max(1,par-1):par):Math.max(1,Math.min(15,v+d)); playS.scores[n]=v; _clampPutts(n); playPersistDraft(); playSyncAce(n); playRender(); }
-function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playPersistDraft(); playSyncAce(n); playRender(); }
-function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; const cap=Math.max(0,sc-1);
-  let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
-  playS.putts[n]=v; playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
+function playBumpScore(n,d){ const par=playS.course.holes[n-1].par; let v=playS.scores[n]; v=(v==null)?(d<0?Math.max(1,par-1):par):Math.max(1,Math.min(15,v+d)); playS.scores[n]=v; playS.scoreAuto[n]=false; _clampPutts(n); playPersistDraft(); playSyncAce(n); playRender(); }   // tapping the stepper takes the score over by hand
+function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; delete playS.scoreAuto[n]; playPersistDraft(); playSyncAce(n); playRender(); }
+// Re-adopt the tracked total as your gross (one tap from the shot tracker when you've taken
+// the score over by hand but want it back in step with what you've marked).
+function playScoreFromShots(n){ if(!playS) return; playS.scoreAuto[n]=true; _deriveAutoScore(n); playPersistDraft(); playRender(); }
+function playBumpPutts(n,d){ const auto=playS.scoreAuto[n];
+  if(!auto && playS.scores[n]==null) return;   // manual scoring still needs a gross first
+  if(auto){   // on an auto-tracked hole the gross grows with your putts, so they're not capped by it
+    let v=playS.putts[n]; v=(v==null)?Math.max(0,d>0?1:0):Math.max(0,Math.min(9,v+d));
+    playS.putts[n]=v; _deriveAutoScore(n);
+  } else { const cap=Math.max(0,playS.scores[n]-1);
+    let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
+    playS.putts[n]=v; }
+  playPersistDraft(); playRender(); }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,scoreAuto:playS.scoreAuto,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -7053,6 +7073,31 @@ function _lieAt(pos){
   return best||'rough';
 }
 
+// ── auto-score: let the shot tracker keep your gross for you ───────────────────
+// Marking shots as you play already records each stroke; the score should follow from it
+// instead of being dialled in by hand a second time. The strokes implied by what you've
+// tracked on a hole = each Mark (a stroke that moved the ball) + each logged penalty +
+// the putts you've entered. When you mark as you go, that IS your gross.
+function _impliedGross(n){
+  const marks=(playS.shots[n]||[]).length;
+  const pens=((playS.pens&&playS.pens[n])||[]).length;
+  const putts=playS.putts[n]||0;
+  return marks+pens+putts;
+}
+// Re-derive an auto-tracked hole's gross from its tracked shots / penalties / putts.
+// Deliberately does NOT touch the hole-in-one tracker: a transient gross of 1 (your tee
+// shot resting on the map) isn't an ace, so aces still register only from the manual
+// stepper / the 🏆 tracker. window._playAutoScore=false disables auto-scoring entirely.
+function _deriveAutoScore(n){
+  playS.scores[n]=Math.max(1,Math.min(15,_impliedGross(n)));
+  _clampPutts(n);
+}
+// Should marking a shot on this hole drive the score? Only if you haven't taken the score
+// over by hand (the manual stepper clears the auto flag). A blank hole engages on first mark.
+function _autoScoreOn(n){
+  return window._playAutoScore!==false && (playS.scoreAuto[n] || playS.scores[n]==null);
+}
+
 // ── shot-distance tracker (between dropped marks) ──
 // Each mark closes a leg. Parallel per-hole arrays index by leg: shotClubs[hole][i] is
 // the club for leg i, shotLies[hole][i] is where that leg ENDED (the lie auto-read at the
@@ -7067,9 +7112,13 @@ function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix ye
   (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(auto?auto.club:null);
   (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(!!auto);
   (playS.shotMan[playS.hole]=playS.shotMan[playS.hole]||[]).push(false);   // a real GPS mark (not manually added)
+  if(_autoScoreOn(playS.hole)){ playS.scoreAuto[playS.hole]=true; _deriveAutoScore(playS.hole); }   // the stroke counts toward your gross
   playPersistDraft(); playRender(); }
 function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop();
   ['shotClubs','shotLies','shotAuto','shotMan'].forEach(k=>{ const arr=playS[k]&&playS[k][playS.hole]; if(arr)arr.pop(); });
+  if(playS.scoreAuto[playS.hole]){   // keep an auto-tracked gross in step with the remaining shots
+    if(_impliedGross(playS.hole)<1){ delete playS.scores[playS.hole]; delete playS.putts[playS.hole]; delete playS.scoreAuto[playS.hole]; }
+    else _deriveAutoScore(playS.hole); }
   playPersistDraft(); playRender(); } }
 
 // ── Penalties & lost balls ──────────────────────────────────────────────────
@@ -7090,13 +7139,16 @@ function playPenaltyPicker(){
 function playClosePenPick(){ const el=document.getElementById('play-penpick'); if(el) el.classList.remove('show'); }
 function playAddPenalty(type){ if(!playS||!PEN_INFO[type]) return; const n=playS.hole;
   (playS.pens[n]=playS.pens[n]||[]).push(type);
-  const cur=playS.scores[n], base=cur!=null?cur:Math.max(1,(playS.shots[n]||[]).length);
-  playS.scores[n]=Math.min(15,base+1);   // +1 penalty stroke (seed an unscored hole from shots taken; always ≥2, never lands on 1)
+  if(playS.scoreAuto[n] && (playS.shots[n]||[]).length>=1) _deriveAutoScore(n);   // auto gross already counts penalties (and stays ≥2 here)
+  else { const cur=playS.scores[n], base=cur!=null?cur:Math.max(1,(playS.shots[n]||[]).length);
+    playS.scores[n]=Math.min(15,base+1); }   // +1 penalty stroke (seed an unscored hole from shots taken; always ≥2, never lands on 1)
   _clampPutts(n); playClosePenPick(); playPersistDraft(); playSyncAce(n); playRender();   // safe: a penalty score is always ≥2, so this can only CLEAR a stale ace, never create one
   playToast(`${PEN_INFO[type].ico} ${PEN_INFO[type].lbl} — +1 penalty stroke.`);
 }
 function playRemovePenalty(i){ if(!playS) return; const n=playS.hole, arr=playS.pens[n]; if(!arr||arr[i]==null) return;
-  arr.splice(i,1); const cur=playS.scores[n]; if(cur!=null) playS.scores[n]=Math.max(1,cur-1);   // hand the stroke back
+  arr.splice(i,1);
+  if(playS.scoreAuto[n] && (playS.shots[n]||[]).length>=1) _deriveAutoScore(n);
+  else { const cur=playS.scores[n]; if(cur!=null) playS.scores[n]=Math.max(1,cur-1); }   // hand the stroke back
   _clampPutts(n); playPersistDraft(); playRender();
 }
 
@@ -7132,6 +7184,7 @@ function playAddManualShot(){
   (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(window._addShotClub||null);
   (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(false);
   (playS.shotMan[playS.hole]=playS.shotMan[playS.hole]||[]).push(true);
+  if(_autoScoreOn(playS.hole)){ playS.scoreAuto[playS.hole]=true; _deriveAutoScore(playS.hole); }   // a recovered shot counts toward your gross too
   playCloseAddShot(); playPersistDraft(); playRender(); playToast('Shot added.');
 }
 // Effective tee for a hole: a GPS "Set tee" override for this round, else the baked tee.
@@ -7389,7 +7442,7 @@ function _commitRound(t){
     legs:legsByHole, holeStats:_buildHoleStats() });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.startedAt=Date.now();
+  playS.scores={}; playS.putts={}; playS.scoreAuto={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
@@ -8002,13 +8055,18 @@ function playShotLiveHtml(){
     if(nl||dTxt) live=`<div class="ps-live">${nl?`you're on <span class="ps-lie" style="--lc:${nl.col}">${nl.ico} ${nl.lbl}</span>`:''}${dTxt}</div>`; }
   const pens=(playS.pens&&playS.pens[playS.hole])||[];
   const penHtml=pens.length?`<div class="ps-pens" aria-label="Logged penalties this hole">${pens.map((p,i)=>{ const pi=PEN_INFO[p]||{ico:'⚠',lbl:p}; return `<span class="ps-pen">${pi.ico} ${pi.lbl}<button onclick="playRemovePenalty(${i})" aria-label="Remove ${pi.lbl} penalty">✕</button></span>`; }).join('')}</div>`:'';
-  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is from the tee; the club is auto-picked from your bag and the lie auto-read from the map — tap a chip to change.</div>${penHtml}${live}`;
+  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot — your score then counts itself as you go. First leg is from the tee; the club is auto-picked from your bag and the lie auto-read from the map — tap a chip to change.</div>${penHtml}${live}`;
   const rows=legs.map((l,i)=>{ const c=clubs[i], auto=autos[i], lie=lies[i], li=lie&&LIE_INFO[lie], man=(playS.shotMan&&(playS.shotMan[playS.hole]||[])[i]);
     const name=l.tee?'tee':'shot '+i;
     const clubPill=c?`<span class="ps-club${auto?' auto':''}">${c}${auto?'<i class="ps-autotag">auto</i>':''}</span>`:`<span class="ps-club none">+ club</span>`;
     const liePill=li?`<span class="ps-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:'';
     return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="${name}, ${fmtDist(l.d)} ${u}${li?', ended in '+li.lbl:''}${c?', '+(auto?'auto-':'')+'club '+c:''}${man?', added manually':''} — tap to set club">${name}${man?' ✎':''} <b>${fmtDist(l.d)}</b>${u}${liePill}${clubPill}</button>`; }).join('');
-  return `<div class="ps-chips">${rows}</div>${penHtml}${live}`;
+  // running-score readout: the shot tracker keeps your gross, so show what it's counting
+  const sAuto=playS.scoreAuto[playS.hole], pN=playS.putts[playS.hole]||0, sc=playS.scores[playS.hole];
+  const scoreNote = sAuto
+    ? `<div class="ps-score">scoring <b>${sc}</b> · ${legs.length} shot${legs.length>1?'s':''}${pN?` + ${pN} putt${pN>1?'s':''}`:''} <span class="ps-score-tag">auto</span></div>`
+    : `<div class="ps-score muted">${legs.length} shot${legs.length>1?'s':''} tracked${(sc!=null&&_impliedGross(playS.hole)!==sc)?` · <button class="ps-usetrack" onclick="playScoreFromShots(${playS.hole})">score it ${_impliedGross(playS.hole)}</button>`:''}</div>`;
+  return `<div class="ps-chips">${rows}</div>${scoreNote}${penHtml}${live}`;
 }
 // Tap a shot chip to tag (or clear) its club; tagged legs feed your club stats on save.
 function playClubPicker(legIdx){
@@ -8041,6 +8099,14 @@ function playTabHtml(){
   const pips=playS.course.holes.filter(x=>x.n>=lo&&x.n<=hi).map(x=>{ const s=playS.scores[x.n]; const cls=x.n===playS.hole?'on':(s!=null?'done':''); return `<button class="play-pip ${cls}" onclick="playSetHole(${x.n})" aria-label="Hole ${x.n}">${x.n}</button>`; }).join('');
   const nineBar=`<div class="play-ninebar" role="tablist" aria-label="Choose nine"><button class="play-nine${view===1?' on':''}" onclick="playSetNine(1)">Front 9</button><button class="play-nine${view===2?' on':''}" onclick="playSetNine(2)">Back 9</button></div>`;
   const puts=playS.putts[h.n];
+  // Score source: auto (the shot tracker is keeping your gross) vs a hand-set score that no
+  // longer matches what you've tracked (offer a one-tap re-sync).
+  const auto=playS.scoreAuto[h.n], marksN=(playS.shots[h.n]||[]).length, implied=_impliedGross(h.n);
+  const scoreLbl = auto
+    ? `Your score <span class="play-auto" title="Your marked shots + putts are keeping this score. Tap +/− to set it by hand.">⛳ auto</span>`
+    : (marksN>=1 && sc!=null && implied!==sc)
+      ? `Your score <button class="play-usetrack" onclick="playScoreFromShots(${h.n})" aria-label="Set score to ${implied} from your tracked shots">= ${implied} from shots</button>`
+      : 'Your score';
   const teeSet=playS.teePos&&playS.teePos[h.n], lenDisp=tg.len;
   return `
     ${nineBar}
@@ -8067,7 +8133,7 @@ function playTabHtml(){
     </div>
     <div id="play-shotlive">${playShotLiveHtml()}</div>
     <div class="play-scorerow">
-      <div class="play-scorelbl">Your score</div>
+      <div class="play-scorelbl">${scoreLbl}</div>
       <div class="play-stepper">
         <button onclick="playBumpScore(${h.n},-1)" aria-label="Lower score">–</button>
         <div class="play-scoreval">${sc!=null?sc:'·'}<span class="play-scorerel ${rel<0?'under':rel>0?'over':''}">${relStr}</span></div>

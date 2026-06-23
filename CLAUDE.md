@@ -423,6 +423,27 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   and points columns; History shows the entered index, the round-based **form** estimate
   (`handicapEstimate`, still a personal figure) and per-round net. Rounds save to
   `gf_rounds` (now incl. `hcpIndex`/`courseHcp`/`net`/`stableford`).
+- **Auto-score from tracked shots (`scoreAuto` / the tracker keeps your gross).** The shot
+  tracker and the scorecard used to be two separate jobs — you marked every shot AND then
+  hand-dialled the gross + putts. Now **marking shots builds the gross for you**: a per-hole
+  `playS.scoreAuto[n]` flag engages on the first `Mark` (or `add past shot`) of a hole that
+  isn't already hand-scored, and `_deriveAutoScore(n)` sets `scores[n] = _impliedGross(n) =
+  marks + penalties + putts`. So on an auto hole the gross grows as you Mark, and putts flow
+  straight into it (`playBumpPutts` re-derives instead of capping at gross−1; putts become
+  enterable as soon as you've marked, since the gross is no longer null). Penalties re-derive
+  too (no double-count). **The manual stepper always wins** — `playBumpScore` sets
+  `scoreAuto[n]=false` and you have full control; a hand-set score that drifts from the marks
+  shows a one-tap **"= N from shots"** reconcile (`playScoreFromShots`) in the score row + shot
+  tracker. **Auto-derive deliberately never touches the ace tracker** (`playSyncAce` is NOT
+  called from the auto path) — a transient gross of 1 (your tee shot resting on the map) is not
+  a hole-in-one; aces still register only from the manual stepper / the 🏆 tracker. A pure
+  scorecard user who never Marks is completely unaffected (stepper + putts behave as before).
+  `scoreAuto` is in the draft + reset on save; `window._playAutoScore=false` disables the whole
+  thing. The score row shows an `⛳ auto` chip (themed `var(--green)`/`--gg`, so it stays
+  harmonious day↔night), and the shot tracker shows a live `scoring N · X shots + Y putts`
+  readout. **My Bag + the 🏆 tracker now layer ABOVE the Play sheet** (their `.hio-overlay`/
+  `.hio-sheet` z bumped 100/101 → 1500/1501, over Play's 1100) so the History tab's "Edit my
+  bag" works mid-round instead of opening behind the sheet.
 - **Stats engine + detailed History dashboard (PLAY-STATS-CORE).** Saved rounds are now
   **schema `v:2`**: each carries a `holeStats[]` (one record per scored hole —
   `{n,par,score,putts,fir,gir,miss,bunkers,penalties,ballsLost,driveM,scrambleTry/Win,
