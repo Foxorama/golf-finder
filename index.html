@@ -800,6 +800,25 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pr-nogps-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:6px;}
 .play-mapwrap{position:relative;margin:10px 0 4px;border-radius:14px;overflow:hidden;}
 .play-yourtee{color:var(--gg);}
+/* the hole map owns the pinch gesture: touch-action:pan-y keeps one-finger page
+   scroll but stops the browser pinch-zooming the WHOLE screen — instead we zoom the
+   SVG's viewBox (playMapZoomInit), so the hole zooms and the Mark buttons stay put. */
+#play-map{touch-action:pan-y;-webkit-user-select:none;user-select:none;}
+#play-map svg{touch-action:pan-y;}
+.play-mapwrap.zoomed #play-map{cursor:grab;}
+/* idle "alive" compass — a real magnetic needle never sits dead still. The map SVG is
+   re-rendered every GPS tick, so each render restamps a negative animation-delay
+   (from window._pcT0) to keep the phase continuous across the redraw. */
+@keyframes pcNeedle{0%{transform:rotate(-1.7deg)}50%{transform:rotate(1.7deg)}100%{transform:rotate(-1.7deg)}}
+@keyframes pcHub{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
+@keyframes pcRing{0%,100%{opacity:.12}50%{opacity:.34}}
+#play-map .pc-needle{animation:pcNeedle 3.6s ease-in-out infinite;}
+#play-map .pc-hub{animation:pcHub 3.6s ease-in-out infinite;}
+#play-map .pc-ring{opacity:.12;animation:pcRing 3.6s ease-in-out infinite;}
+@media (prefers-reduced-motion: reduce){#play-map .pc-needle,#play-map .pc-hub,#play-map .pc-ring{animation:none;}}
+/* "fit" (reset-zoom) tool — only shown while the map is zoomed in */
+#pmt-fit{display:none;}
+.play-mapwrap.zoomed #pmt-fit{display:flex;}
 /* right-side overlay tools on the hole map (use the map's side dead-space) */
 .play-map-tools{position:absolute;right:6px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:7px;z-index:5;}
 /* "Here be dragons" Easter egg: a fire-breathing dragon flies across on a hole with a dragon zone */
@@ -6940,6 +6959,7 @@ function toggleDod(){ localStorage.setItem('gf_dod', dodOn()?'0':'1'); renderBag
 function openPlay(courseName, layoutKey){
   const slug=slugify(courseName), course=COURSE_PLAY[slug];
   if(!course) return;
+  _mapZoom=null;   // fresh course ⇒ no carried-over map zoom
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }   // drop any prior GPS watch (e.g. switching layouts)
   document.getElementById('play-panel').style.display='block';
   document.body.style.overflow='hidden';
@@ -6974,7 +6994,7 @@ function closePlay(){
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }
   document.getElementById('play-panel').style.display='none';
   document.body.style.overflow='';
-  playS=null;
+  playS=null; _mapZoom=null;
 }
 // ── GPS smoothing (constant-position Kalman) ───────────────────────────────────
 // watchPosition reports a single-fix accuracy (often ±10–15 m on a phone). Fusing
@@ -7252,7 +7272,8 @@ function teeShotClub(lenM){ const cs=clubSet(); if(!cs.length) return null;
 function playMapToolsHtml(){
   const teeSet=!!(playS.teePos&&playS.teePos[playS.hole]);
   return `<button class="pmt-btn${teeSet?' on':''}" onclick="event.stopPropagation();playSetTeeHere()" aria-label="${teeSet?'Reset tee to course default':'Set tee from your location'}" title="${teeSet?'Tee set here — tap to reset':'Set the tee from your GPS'}">📍<span class="pmt-lbl">${teeSet?'tee ✓':'set tee'}</span></button>
-    <button class="pmt-btn${playS.showClub?' on':''}" onclick="event.stopPropagation();playToggleClubMarker()" aria-label="Toggle tee-shot club marker" title="Show/hide the tee-shot club marker">🏌<span class="pmt-lbl">club</span></button>${playTeeSelHtml()}`;
+    <button class="pmt-btn${playS.showClub?' on':''}" onclick="event.stopPropagation();playToggleClubMarker()" aria-label="Toggle tee-shot club marker" title="Show/hide the tee-shot club marker">🏌<span class="pmt-lbl">club</span></button>
+    <button class="pmt-btn" id="pmt-fit" onclick="event.stopPropagation();playZoomReset()" aria-label="Reset map zoom to fit the hole" title="Zoom out to fit the hole">⊟<span class="pmt-lbl">fit</span></button>${playTeeSelHtml()}`;
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -7647,7 +7668,7 @@ function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
   if(_playAutoAdvance()) return;   // a hole switch already did a full re-render
   const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
-  const m=document.getElementById('play-map'); if(m) m.innerHTML=playHoleSvg();
+  const m=document.getElementById('play-map'); if(m){ m.innerHTML=playHoleSvg(); playApplyMapZoom(); }
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
 }
@@ -7777,6 +7798,7 @@ function _featOwner(geom){
 // viewBox letterboxing for free.
 function playMapTap(evt){
   if(!playS) return;
+  if(window._playMapDragged){ window._playMapDragged=false; return; }   // this click ended a pan/pinch — don't drop a measure reticle
   const svg=document.querySelector('#play-map svg'); if(!svg||!svg.getScreenCTM) return;
   const ctm=svg.getScreenCTM(); if(!ctm) return;
   let pt=svg.createSVGPoint(); pt.x=evt.clientX; pt.y=evt.clientY;
@@ -7798,6 +7820,83 @@ function playMeasureStripHtml(){
   const main=toPt!=null?`<b>${fmtDist(toPt)}</b> ${u} to point`:`<span class="pm-nogps">no GPS fix</span>`;
   return `<div class="play-measure"><span class="pm-ico">📏</span><span class="pm-txt">${main} · ${fmtDist(ptCen)} ${u} from there to centre</span><button class="pm-clr" onclick="playClearMeasure()" aria-label="Clear measurement">✕</button></div>`;
 }
+
+// ── Pinch / wheel zoom on the hole map (the SVG only, never the page) ──────────
+// The map's viewBox is overridden to a zoomed window; the state survives the per-GPS-tick
+// innerHTML regen by being re-applied in playApplyMapZoom(). touch-action:pan-y (CSS) keeps
+// one-finger page scroll working, so a two-finger pinch zooms the HOLE instead of the whole
+// screen (which used to scroll the Mark buttons off). When zoomed, one finger pans; a tap
+// still measures; double-tap or the ⊟ "fit" tool resets. Zoom resets on a hole change.
+// Levers: window._playMapZoom=false disables; window._mapMaxZoom tunes the max (default 5).
+let _mapZoom=null;   // {hole,x,y,w,h} — the zoomed viewBox window in SVG user units (null = fit)
+function _mapMax(){ return (typeof window._mapMaxZoom==='number')?window._mapMaxZoom:5; }
+function _mapSvgEl(){ const m=document.getElementById('play-map'); return m?m.querySelector('svg'):null; }
+function _mapBase(svg){ return {W:(+svg.dataset.bw)||320, H:(+svg.dataset.bh)||480}; }   // base (un-zoomed) viewBox dims, stashed by playApplyMapZoom pre-override
+function _syncZoomUi(){ const w=document.querySelector('.play-mapwrap'); if(w) w.classList.toggle('zoomed', !!(_mapZoom&&playS&&_mapZoom.hole===playS.hole)); }
+function playZoomReset(){ _mapZoom=null; const svg=_mapSvgEl(); if(svg){ const b=_mapBase(svg); svg.setAttribute('viewBox',`0 0 ${b.W} ${b.H}`); } _syncZoomUi(); }
+// Re-apply the stored zoom after every map regen. Called after each innerHTML rebuild; the
+// fresh SVG arrives with its base "0 0 W H" viewBox, so we capture the base dims first.
+function playApplyMapZoom(){
+  const svg=_mapSvgEl(); if(!svg) return;
+  const vb=(svg.getAttribute('viewBox')||'').split(/\s+/).map(Number);
+  if(vb.length===4){ svg.dataset.bw=vb[2]; svg.dataset.bh=vb[3]; }   // base dims, captured before any override
+  if(_mapZoom && playS && _mapZoom.hole===playS.hole){ const z=_mapZoom;
+    svg.setAttribute('viewBox',`${z.x.toFixed(2)} ${z.y.toFixed(2)} ${z.w.toFixed(2)} ${z.h.toFixed(2)}`); }
+  else _mapZoom=null;   // hole changed (or none) ⇒ fit
+  _syncZoomUi();
+}
+function _mapWin(svg){ if(_mapZoom&&playS&&_mapZoom.hole===playS.hole) return {x:_mapZoom.x,y:_mapZoom.y,w:_mapZoom.w,h:_mapZoom.h}; const b=_mapBase(svg); return {x:0,y:0,w:b.W,h:b.H}; }
+function _mapSet(svg,x,y,w){   // clamp + commit a viewBox window (height locked to the base aspect)
+  if(!playS) return; const {W,H}=_mapBase(svg);
+  w=Math.max(W/_mapMax(),Math.min(W,w)); const h=w*H/W;
+  const mx=W*0.16, my=H*0.16;                                  // a little overscroll so edges are reachable
+  x=Math.max(-mx,Math.min(W-w+mx,x)); y=Math.max(-my,Math.min(H-h+my,y));
+  if(w>=W-0.5){ _mapZoom=null; svg.setAttribute('viewBox',`0 0 ${W} ${H}`); }
+  else { _mapZoom={hole:playS.hole,x,y,w,h}; svg.setAttribute('viewBox',`${x.toFixed(2)} ${y.toFixed(2)} ${w.toFixed(2)} ${h.toFixed(2)}`); }
+  _syncZoomUi();
+}
+function _mapZoomAt(svg,factor,sx,sy){   // zoom by `factor` keeping the content under (sx,sy) screen-fixed
+  const ctm=svg.getScreenCTM(); if(!ctm) return;
+  let p=svg.createSVGPoint(); p.x=sx; p.y=sy; p=p.matrixTransform(ctm.inverse());
+  const c=_mapWin(svg), b=_mapBase(svg);
+  let nw=c.w/factor; nw=Math.max(b.W/_mapMax(),Math.min(b.W,nw)); const f=c.w/nw;
+  _mapSet(svg, p.x-(p.x-c.x)/f, p.y-(p.y-c.y)/f, nw);
+}
+function _mapPan(svg,dxPx,dyPx){ const ctm=svg.getScreenCTM(); if(!ctm||!ctm.a) return; const k=1/ctm.a; const c=_mapWin(svg); _mapSet(svg, c.x-dxPx*k, c.y-dyPx*k, c.w); }
+// Bind the gestures once per #play-map element (it's recreated on a full playRender, so the
+// new element re-binds; the per-tick innerHTML regen keeps the same div, so bindings persist).
+function playMapZoomInit(){
+  if(window._playMapZoom===false) return;
+  const map=document.getElementById('play-map'); if(!map||map._zoomBound) return;
+  map._zoomBound=true;
+  const D=(a,b)=>Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
+  const M=(a,b)=>({x:(a.clientX+b.clientX)/2,y:(a.clientY+b.clientY)/2});
+  let pinch=null, pan=null, lastTap=0, md=null;
+  map.addEventListener('touchstart',e=>{
+    if(e.touches.length===2){ pinch={d:D(e.touches[0],e.touches[1]),m:M(e.touches[0],e.touches[1])}; pan=null; window._playMapDragged=true; e.preventDefault(); }
+    else if(e.touches.length===1){ window._playMapDragged=false; const t=e.touches[0]; pan={x:t.clientX,y:t.clientY,moved:false};
+      const now=Date.now(); if(now-lastTap<320){ playZoomReset(); window._playMapDragged=true; } lastTap=now; }
+  },{passive:false});
+  map.addEventListener('touchmove',e=>{
+    const svg=map.querySelector('svg'); if(!svg) return;
+    if(e.touches.length===2&&pinch){ e.preventDefault();
+      const d=D(e.touches[0],e.touches[1]), m=M(e.touches[0],e.touches[1]);
+      if(pinch.d>0){ _mapZoomAt(svg,d/pinch.d,m.x,m.y); _mapPan(svg,m.x-pinch.m.x,m.y-pinch.m.y); }
+      pinch={d,m}; window._playMapDragged=true;
+    } else if(e.touches.length===1&&pan){
+      const t=e.touches[0], dx=t.clientX-pan.x, dy=t.clientY-pan.y, zoomed=_mapZoom&&_mapZoom.hole===playS.hole;
+      if(zoomed&&(pan.moved||Math.hypot(dx,dy)>5)){ e.preventDefault(); _mapPan(svg,dx,dy); pan.x=t.clientX; pan.y=t.clientY; pan.moved=true; window._playMapDragged=true; }
+    }
+  },{passive:false});
+  map.addEventListener('touchend',e=>{ if(e.touches.length===0){ pinch=null; pan=null; } });
+  // desktop / preview: ctrl-wheel (or trackpad pinch) zooms around the cursor; drag pans when zoomed
+  map.addEventListener('wheel',e=>{ if(!e.ctrlKey) return; const svg=map.querySelector('svg'); if(!svg) return; e.preventDefault(); _mapZoomAt(svg, e.deltaY<0?1.15:1/1.15, e.clientX, e.clientY); },{passive:false});
+  map.addEventListener('mousedown',e=>{ window._playMapDragged=false; if(_mapZoom&&_mapZoom.hole===playS.hole) md={x:e.clientX,y:e.clientY,moved:false}; });
+  map.addEventListener('mousemove',e=>{ if(!md) return; const svg=map.querySelector('svg'); if(!svg) return; const dx=e.clientX-md.x, dy=e.clientY-md.y; if(md.moved||Math.hypot(dx,dy)>4){ _mapPan(svg,dx,dy); md.x=e.clientX; md.y=e.clientY; md.moved=true; window._playMapDragged=true; } });
+  map.addEventListener('mouseup',()=>{ md=null; });
+  map.addEventListener('mouseleave',()=>{ md=null; });
+}
+function _supportsTB(){ if(window._tbSup===undefined){ try{ window._tbSup=!!(window.CSS&&CSS.supports&&CSS.supports('transform-box','view-box')); }catch(e){ window._tbSup=false; } } return window._tbSup; }
 
 // Detailed, PLAY-LINE-UP map of the current hole: real OSM fairway / green / bunkers
 // / water cropped to the hole, the play line, your GPS dot, and a wind compass rose
@@ -8057,6 +8156,16 @@ function playHoleSvg(){
   const R=31, wcx=W-R-12, wcy=R+14;
   const wcol=wv?(wv.cls==='help'?'#16e0a3':wv.cls==='hurt'?'#ff4d4d':'#ffc233'):'#9fc6e8';
   const str=wv?Math.max(0.1,Math.min(1,(wv.spd-3)/37)):0;   // 0..1 strength (≈40 km/h = full)
+  // idle "alive" attrs — a real magnetic needle sways and the dial breathes. Phase is kept
+  // continuous across the per-tick map redraw by a negative animation-delay measured from a
+  // persistent epoch (window._pcT0). window._playCompassLive=false stops it; needle/hub need
+  // transform-box:view-box (feature-detected) so they pivot on the dial centre.
+  const _cLive=window._playCompassLive!==false, _cTB=_cLive&&_supportsTB();
+  if(_cLive&&!window._pcT0) window._pcT0=performance.now();
+  const _ph=_cLive?((performance.now()-window._pcT0)/1000):0;
+  const ringAttr=_cLive?` class="pc-ring" style="animation-delay:-${_ph.toFixed(2)}s"`:'';
+  const hubAttr=_cTB?` class="pc-hub" style="transform-box:view-box;transform-origin:${wcx}px ${wcy}px;animation-delay:-${(_ph+0.4).toFixed(2)}s"`:'';
+  const needleAttr=_cTB?` class="pc-needle" style="transform-box:view-box;transform-origin:${wcx}px ${wcy}px;animation-delay:-${(_ph+0.2).toFixed(2)}s"`:'';
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
   window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+16}};
@@ -8065,6 +8174,7 @@ function playHoleSvg(){
   s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+2}" fill="rgba(4,10,7,0.55)"/>`;
   s+=`<circle cx="${wcx}" cy="${wcy}" r="${R}" fill="#0b1712" stroke="#33454f" stroke-width="1.4"/>`;
   s+=`<circle cx="${wcx}" cy="${wcy}" r="${R-5}" fill="#0e2230"/>`;
+  s+=`<circle cx="${wcx}" cy="${wcy}" r="${R-1}" fill="none" stroke="${wcol}" stroke-width="1.1"${ringAttr}/>`;   // breathing accent ring (idle life, both wind + no-data states)
   // cardinal graduation ticks oriented to TRUE north relative to the play line; N highlighted
   for(const bC of [0,90,180,270]){ const a=(-brgDeg+bC)*Math.PI/180, ux=Math.sin(a), uy=-Math.cos(a), isN=bC===0;
     s+=`<line x1="${(wcx+ux*(R-5)).toFixed(1)}" y1="${(wcy+uy*(R-5)).toFixed(1)}" x2="${(wcx+ux*(R-1)).toFixed(1)}" y2="${(wcy+uy*(R-1)).toFixed(1)}" stroke="${isN?'#e8eef5':'#5a6b78'}" stroke-width="${isN?1.8:1.1}"/>`; }
@@ -8078,9 +8188,10 @@ function playHoleSvg(){
     // teal/amber/red arrow points where the wind BLOWS TO (wv.d): up = downwind/helping toward the green
     const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=4.4+str*3, al=8+str*4;
     const tailX=wcx-dx*(R-13), tailY=wcy-dy*(R-13), headX=wcx+dx*(R-6), headY=wcy+dy*(R-6);
-    s+=`<line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3+str*3).toFixed(1)}" stroke-linecap="round"/>`;
-    s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/>`;
-    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.6" fill="#0e2230" stroke="${wcol}" stroke-width="1.1"/>`;
+    // the needle (line + head) lives in one group that gently sways around the dial centre
+    s+=`<g${needleAttr}><line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3+str*3).toFixed(1)}" stroke-linecap="round"/>`;
+    s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/></g>`;
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.6" fill="#0e2230" stroke="${wcol}" stroke-width="1.1"${hubAttr}/>`;
     const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
     s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
     s+=`<text x="${wcx}" y="${(wcy+R+24).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#cfe0ee">from ${compass16(wind.dir)}</text>`;
@@ -8417,6 +8528,7 @@ function playRender(){
   // the scoring console footer rides only the Play tab (GPS courses) — Card/History get full height
   if(foot){ const showFoot=playS.tab==='play'&&!noGps; foot.style.display=showFoot?'':'none'; foot.innerHTML=showFoot?playFootHtml():''; }
   playDragonInit();
+  if(playS.tab==='play'&&!noGps){ playMapZoomInit(); playApplyMapZoom(); }   // bind pinch/zoom + re-apply any stored zoom
 }
 // Read-only "Rounds & Stats" panel straight from the home header — the easiest path to your
 // history without first opening a course's Play sheet. Reuses the Play panel + History tab.
