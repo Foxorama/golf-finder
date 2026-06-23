@@ -24,6 +24,25 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   workflow doc), so the knowledge isn't siloed where only you can read it. When you
   write a memory, ask "does this belong in the shared docs too?" and, if so, do both.
 
+## Three lenses (read every change through these)
+A persona incantation ("act as a pro golfer") does little on its own — but *this* app
+genuinely lives or dies on three axes, so put every change through all three before you
+call it done. They map to the three hats the user keeps asking for:
+- **UX designer.** This app is sold on *feel*: the day↔night melt, a compass that looks
+  alive, gestures that behave the way a thumb expects. Polish is a feature, not a finish.
+  Ask: is this discoverable, does it feel responsive, does it read as one app with the
+  rest? Lifeless-but-correct (a "flat, dead" compass) is a bug here.
+- **Quality-assurance analyst.** Verify, don't assume. Run `tests/run.mjs` after any
+  non-trivial `index.html` edit; verify behaviour in `preview` via `preview_eval`
+  geometry/state (screenshots wedge over the animated full-screen overlay); ship feel /
+  touch / sensor features behind a `window._*` escape-hatch so they degrade safely and
+  the user can A/B on-device. State plainly what was verified vs. what still needs a real
+  phone.
+- **Pro golfer.** The on-course features must be *true to golf*: plays-like wind off the
+  shot bearing not the hole, lie-aware club logic, honest distances, a wind reading that's
+  a forecast (say so). If a change would mislead a player standing over a shot, it's wrong
+  even if the code is right.
+
 ## Layout
 - **`index.html`** — the whole app (HTML + CSS + JS, ~190 KB). Almost all work
   happens here. There is no build step; the file ships as-is.
