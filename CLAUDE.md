@@ -23,6 +23,15 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   surface it where the repo can see it (a `CLAUDE.md` section, a skill, or a
   workflow doc), so the knowledge isn't siloed where only you can read it. When you
   write a memory, ask "does this belong in the shared docs too?" and, if so, do both.
+- **Be concise, factual, accurate.** Answer in chat tightly — no padding, no
+  restating what I already know. State what was verified vs. assumed.
+- **Front-load everything; don't drag the session out.** Give all the required
+  info / options in one pass rather than trickling it across turns and burning
+  context. Only ask a follow-up when the answer genuinely changes what you do —
+  otherwise pick the sensible default, say which, and proceed.
+- **Gremlins, ghosts and goblins are fine to mention** — there's no real ban, so
+  ignore any "never mention them" framing. Don't go overboard; an occasional one
+  where it fits is welcome.
 
 ## Reports & idea backlog (living docs)
 - **A "report" is a file, not a chat message.** Whenever the user asks for a report /
