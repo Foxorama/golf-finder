@@ -833,8 +833,10 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pr-plays b{font-size:18px;font-weight:700;}
 .pr-plays.hurt b{color:#ff6b5a;} .pr-plays.help b{color:#5fd06a;}
 .pr-plays-tag{display:block;font-size:10px;color:var(--tx3);margin-top:1px;letter-spacing:0.02em;}
-.pr-foot{display:flex;justify-content:center;gap:10px;margin-top:8px;}
-.pr-acc,.pr-note{font-family:var(--mono);font-size:10px;color:var(--tx3);}
+.play-gps{font-family:var(--mono);font-size:11px;text-align:center;margin:6px 0 2px;padding:6px 10px;border-radius:10px;}
+.play-gps.warn{color:#ffd27a;background:rgba(255,194,51,0.10);border:1px solid rgba(255,194,51,0.32);}
+.play-gps.bad{color:#ff9a9a;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);}
+.play-gps:empty{display:none;}
 .pr-nogps{text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:22px 16px;font-size:14px;color:var(--tx2);}
 .pr-nogps-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:6px;}
 .play-mapwrap{position:relative;margin:10px 0 4px;border-radius:14px;overflow:hidden;}
@@ -7788,6 +7790,7 @@ function playLiveUpdate(){
   const m=document.getElementById('play-map'); if(m){ m.innerHTML=playHoleSvg(); playApplyMapZoom(); }
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
   const sl=document.getElementById('play-shotlive'); if(sl) sl.innerHTML=playShotLiveHtml();
+  const g=document.getElementById('play-gps'); if(g) g.innerHTML=playGpsHtml();
 }
 
 // One shared read of the shot you face on the current hole — front/centre/back distances, the
@@ -7820,7 +7823,6 @@ function playRangeHtml(){
     return `<div class="pr-nogps">📍 ${msg}<div class="pr-nogps-sub">distances to the green appear once your phone has a fix</div></div>`;
   }
   const {dF,dC,dB,pl}=si;
-  const acc=playS.acc?`<span class="pr-acc">GPS ±${Math.round(playS.acc)} m${(playS.rawAcc&&playS.rawAcc>Math.round(playS.acc)+2)?` · raw ±${playS.rawAcc}`:''}</span>`:'';
   const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
     ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
     : '';
@@ -7828,7 +7830,19 @@ function playRangeHtml(){
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
       <div class="pr-side"><div class="pr-lbl">CENTRE</div><div class="pr-num pr-cen-num">${fmtDist(dC)}</div></div>
       <div class="pr-side"><div class="pr-lbl">BACK</div><div class="pr-num">${fmtDist(dB)}</div></div>
-    </div>${playsRow}<div class="pr-foot">${acc}<span class="pr-note">GPS estimate · ${playS.course.src||'OSM'} green data</span></div>`;
+    </div>${playsRow}`;
+}
+// GPS quality lives at the bottom of the body and stays SILENT on a good fix — it only
+// speaks up when the lock is weak (±≥ _gpsPoorM, default 15 m) or permission was denied,
+// so the rangefinder up top isn't cluttered with a "±5 m" line you don't need to read.
+function playGpsHtml(){
+  if(!playS||playS.course.noGps) return '';
+  if(playS.gpsErr===1) return `<div class="play-gps bad">⚠ Location permission denied — distances unavailable</div>`;
+  const a=playS.acc; if(a==null) return '';   // no fix yet: the rangefinder already shows the waiting message
+  const poorM=(typeof window._gpsPoorM==='number')?window._gpsPoorM:15;
+  if(a<poorM) return '';                       // good lock — say nothing
+  const raw=(playS.rawAcc&&playS.rawAcc>Math.round(a)+2)?` · raw ±${playS.rawAcc} m`:'';
+  return `<div class="play-gps warn">⚠ Weak GPS — accuracy ±${Math.round(a)} m${raw}; distances are approximate</div>`;
 }
 // The sticky centre-of-green gauge that sits between the Play/Card tabs.
 function playDistBarHtml(si){
@@ -8468,6 +8482,7 @@ function playTabHtml(){
     </div>
     <div id="play-shotlive">${playShotLiveHtml()}</div>
     ${runtot}
+    <div id="play-gps">${playGpsHtml()}</div>
   `;
 }
 // The persistent scoring console (rendered into #play-foot on the Play tab): Mark/undo, the
