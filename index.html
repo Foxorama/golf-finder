@@ -820,6 +820,13 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .ps-lie{display:inline-flex;align-items:center;gap:2px;font-size:10px;line-height:1;color:var(--lc,var(--tx3));background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 5px;}
 .ps-live{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;margin-top:6px;}
 .ps-live b{color:var(--al);} .ps-live .ps-lie{font-size:11px;}
+.play-shotbar2{display:flex;gap:8px;margin:-2px 0 8px;}
+.play-act2{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:8px 6px;color:var(--tx2);font-family:var(--sans);font-weight:600;font-size:12px;cursor:pointer;}
+.play-act2:active{transform:scale(0.98);}
+.ps-pens{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px;}
+.ps-pen{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:11px;color:#ffb4a0;background:rgba(255,77,77,0.12);border:1px solid rgba(255,77,77,0.42);border-radius:7px;padding:3px 4px 3px 7px;}
+.ps-pen button{background:none;border:none;color:inherit;cursor:pointer;font-size:12px;line-height:1;opacity:0.65;padding:0 1px;}
+.ps-pen button:hover{opacity:1;}
 /* club picker grid (in the play-confirm overlay) */
 .cp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px;}
 .cp-club{padding:10px 0;border-radius:9px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;}
@@ -828,6 +835,14 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .cp-accept{display:block;width:100%;margin:0 0 12px;padding:11px;border-radius:10px;border:1px solid var(--al);background:rgba(245,184,68,0.14);color:var(--al);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;}
 .cp-accept b{font-weight:800;}
 .cp-accept:active{transform:scale(0.99);}
+/* penalty picker + manual add-shot form (share the play-confirm overlay) */
+.cp-pengrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px;}
+.cp-pen{padding:12px 8px;border-radius:9px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-family:var(--sans);font-size:13px;font-weight:600;cursor:pointer;}
+.cp-pen:active{transform:scale(0.97);}
+.as-row{display:flex;align-items:center;gap:8px;margin:6px 0 12px;font-family:var(--sans);font-size:13px;color:var(--tx2);}
+.as-row input{flex:1;max-width:130px;background:var(--sur);border:1px solid var(--bdr2);border-radius:8px;padding:9px;color:var(--tx);font-family:var(--mono);font-size:15px;}
+.as-lbl{font-family:var(--sans);font-size:12px;color:var(--tx3);margin-bottom:6px;}
+.as-grid{margin-bottom:14px;}
 .pc-leg-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
 .pc-leg{font-family:var(--mono);font-size:12px;color:var(--tx2);} .pc-leg b{color:var(--tx);}
 .pc-lie{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:var(--lc,var(--tx3));background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 6px;}
@@ -904,6 +919,37 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .ph-del:active{color:var(--rl);}
 .ph-net{font-family:var(--mono);font-size:11px;color:var(--gg);margin-top:3px;}
 .ph-net b{color:var(--gg);}
+/* detailed history dashboard — overall + per-course stats (mirrors the night .stat idiom) */
+.psd-scope{display:flex;flex-wrap:wrap;gap:6px;margin:14px 0 10px;}
+.psd-scope button{font-family:var(--sans);font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx2);cursor:pointer;}
+.psd-scope button.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
+.psd-tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.psd-tile{background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:11px 8px 9px;text-align:center;position:relative;overflow:hidden;}
+.psd-tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--gl);opacity:0.55;}
+.psd-num{font-family:var(--sans);font-weight:800;font-size:21px;color:var(--tx);line-height:1;}
+.psd-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.04em;text-transform:uppercase;color:var(--tx3);margin-top:6px;}
+.psd-sub{font-family:var(--mono);font-size:9.5px;color:var(--tx2);margin-top:3px;min-height:11px;}
+.psd-sec{margin-top:15px;}
+.psd-sec-h{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--tx);margin:0 0 8px;display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+.psd-sec-h span{font-family:var(--mono);font-size:9.5px;color:var(--tx3);font-weight:400;text-transform:uppercase;letter-spacing:0.04em;}
+.psd-bypar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.psd-miss{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.psd-par{background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:9px 6px;text-align:center;}
+.psd-par b{display:block;font-family:var(--sans);font-size:18px;font-weight:800;color:var(--tx);margin:2px 0;}
+.psd-par .pv{font-family:var(--mono);font-size:9.5px;color:var(--tx3);}
+.psd-dist{display:flex;gap:5px;}
+.psd-dcell{flex:1;text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:9px;padding:7px 2px;}
+.psd-dcell b{display:block;font-family:var(--sans);font-weight:800;font-size:16px;color:var(--tx);}
+.psd-dcell span{font-family:var(--mono);font-size:8.5px;text-transform:uppercase;letter-spacing:0.03em;color:var(--tx3);}
+.psd-note{font-family:var(--mono);font-size:10.5px;color:var(--tx3);text-align:center;padding:10px;background:var(--bg3);border:1px dashed var(--bdr2);border-radius:10px;}
+.pcd-table{width:100%;border-collapse:collapse;}
+.pcd-table th{font-family:var(--sans);font-size:9.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--tx3);font-weight:600;text-align:right;padding:4px 6px;border-bottom:1px solid var(--bdr2);}
+.pcd-table th:first-child{text-align:left;}
+.pcd-table td{font-family:var(--mono);font-size:12px;text-align:right;padding:6px;color:var(--tx2);border-bottom:1px solid rgba(255,255,255,0.045);}
+.pcd-table td.pcd-c{text-align:left;color:var(--gg);font-weight:700;}
+.psd-backup{display:flex;gap:8px;}
+.psd-backup button{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:9px;color:var(--tx2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;}
+.psd-backup-note{font-family:var(--mono);font-size:10px;color:var(--tx3);text-align:center;margin-top:6px;}
 /* handicap bar on the Card tab */
 .play-hcp-bar{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:11px 14px;margin-bottom:4px;}
 .phb-lbl{font-family:var(--mono);font-size:10px;line-height:1.1;color:var(--tx3);text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;}
@@ -6794,11 +6840,21 @@ function saveWitb(a){ try{ localStorage.setItem('gf_witb',JSON.stringify(CLUBS.f
 function toggleWitb(c){ const w=loadWitb(), i=w.indexOf(c); if(i>=0) w.splice(i,1); else w.push(c); saveWitb(w); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 // Every carried club with a usable distance (witb ∩ (bag ∪ tracked)), in CLUBS order.
 function clubSet(){ const b=loadBag(), w=new Set(loadWitb()), out=[]; for(const c of CLUBS){ if(!w.has(c)) continue; const d=clubDist(c); if(d!=null) out.push({club:c,dist:d,manual:b[c]!=null}); } return out; }
-// Suggest the club whose carry is nearest a target distance (within ~14 m), else null.
-// Pass the plays-like distance. Uses your bag (manual distances + tracked fallbacks).
-function suggestClub(distM){ if(distM==null) return null; let best=null,bd=Infinity;
-  for(const x of clubSet()){ const d=Math.abs(x.dist-distM); if(d<bd){ bd=d; best={club:x.club,avg:x.dist,manual:x.manual}; } }
-  return (best&&bd<=14)?best:null; }
+// Suggest a club for a target distance from your bag (manual carries + tracked fallbacks).
+// Two modes — always returns a club when the bag has any usable carry (never null then):
+//   'reach' (default, the rangefinder before you swing): the LONGEST club that won't fly the
+//           target; if every club overshoots (a very short shot) the shortest club — i.e. the
+//           longest club that reaches mid-green, or the one that gets closest. Mirrors the
+//           tee-shot teeShotClub() "don't fly the green" logic.
+//   'nearest' (leg inference when you Mark): the club whose carry is closest to the measured
+//           distance — the honest guess of what you just hit (a 230 m leg ⇒ driver).
+function suggestClub(distM,mode){ if(distM==null) return null; const cs=clubSet(); if(!cs.length) return null;
+  let pick;
+  if(mode==='nearest'){ pick=cs.reduce((a,b)=>Math.abs(b.dist-distM)<Math.abs(a.dist-distM)?b:a); }
+  else { const fit=cs.filter(x=>x.dist<=distM+1);
+    pick = fit.length ? fit.reduce((a,b)=>b.dist>a.dist?b:a)   // longest that won't fly the target
+                      : cs.reduce((a,b)=>b.dist<a.dist?b:a); }  // all overshoot ⇒ shortest (closest)
+  return {club:pick.club, avg:pick.dist, manual:pick.manual}; }
 
 // units helpers that work outside a Play session (the Bag panel opens from the main screen)
 function _bagUnit(){ return localStorage.getItem('gf_units')==='yd'?'yd':'m'; }
@@ -6866,13 +6922,13 @@ function openPlay(courseName, layoutKey){
   playS={ slug:activeSlug, course:active, parentSlug:(L?slug:null), parentName:(L?course.name:null), layoutKey:(L?L.key:null),
           hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
-          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
+          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), shotMan:(draft.shotMan||{}), pens:(draft.pens||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
           scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
           startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
   // keep the per-leg arrays aligned with shots (drafts from before lie/auto tracking lack them)
   Object.keys(playS.shots).forEach(k=>{ const n=playS.shots[k].length;
-    [['shotClubs',null],['shotLies',null],['shotAuto',false]].forEach(([a,fill])=>{ const arr=playS[a][k]=playS[a][k]||[]; while(arr.length<n) arr.push(fill); }); });
+    [['shotClubs',null],['shotLies',null],['shotAuto',false],['shotMan',false]].forEach(([a,fill])=>{ const arr=playS[a][k]=playS[a][k]||[]; while(arr.length<n) arr.push(fill); }); });
   if(!active.noGps){ playStartGps(); loadCourseGeom(activeSlug); }   // GPS courses: start the rangefinder + lazy-load the hole-map geometry
   playRender();
 }
@@ -6953,7 +7009,7 @@ function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playP
 function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; const cap=Math.max(0,sc-1);
   let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
   playS.putts[n]=v; playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -7008,15 +7064,80 @@ function _lieAt(pos){
 function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix yet — wait for a location lock.'); return; }
   (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice());
   (playS.shotLies[playS.hole]=playS.shotLies[playS.hole]||[]).push(_lieAt(pos));   // auto-track where it ended up
-  // auto-pick the club for the leg just closed: nearest bag club to that distance (1-tap to change)
+  // auto-pick the club for the leg just closed: the club whose carry is nearest that distance
+  // (the honest "what did I just hit"); always assigns one now (1-tap on the chip to change).
   const lg=playShotLegs(playS.course.holes[playS.hole-1]).legs, last=lg[lg.length-1];
-  const auto=(window._playAutoClub!==false&&last)?suggestClub(last.d):null;
+  const auto=(window._playAutoClub!==false&&last)?suggestClub(last.d,'nearest'):null;
   (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(auto?auto.club:null);
   (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(!!auto);
+  (playS.shotMan[playS.hole]=playS.shotMan[playS.hole]||[]).push(false);   // a real GPS mark (not manually added)
   playPersistDraft(); playRender(); }
 function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop();
-  ['shotClubs','shotLies','shotAuto'].forEach(k=>{ const arr=playS[k]&&playS[k][playS.hole]; if(arr)arr.pop(); });
+  ['shotClubs','shotLies','shotAuto','shotMan'].forEach(k=>{ const arr=playS[k]&&playS[k][playS.hole]; if(arr)arr.pop(); });
   playPersistDraft(); playRender(); } }
+
+// ── Penalties & lost balls ──────────────────────────────────────────────────
+// Each logged penalty is one penalty stroke (water / OB / lost = a lost ball too; a drop /
+// unplayable keeps the ball). Logging it adds the stroke to the hole score (so the running
+// total stays honest — adjust on the stepper if you want) and feeds the penalties / balls-lost
+// history stats. Per-hole list in playS.pens[hole]; removing a penalty hands the stroke back.
+const PEN_INFO={ water:{lbl:'Water',ico:'💧'}, ob:{lbl:'Out of bounds',ico:'🚫'}, lost:{lbl:'Lost ball',ico:'🔍'}, drop:{lbl:'Unplayable',ico:'↩'} };
+function playPenaltyPicker(){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet) return;
+  let el=document.getElementById('play-penpick');
+  if(!el){ el=document.createElement('div'); el.id='play-penpick'; el.className='play-confirm'; sheet.appendChild(el); }
+  const btns=Object.keys(PEN_INFO).map(k=>`<button class="cp-pen" onclick="playAddPenalty('${k}')">${PEN_INFO[k].ico} ${PEN_INFO[k].lbl}</button>`).join('');
+  el.innerHTML=`<div class="pc-card"><div class="pc-msg">Penalty on hole ${playS.hole}<div class="pc-leg-row">adds one penalty stroke + tracks it in your stats</div></div><div class="cp-pengrid">${btns}</div><div class="pc-row"><button class="pc-cancel" onclick="playClosePenPick()">Cancel</button></div></div>`;
+  el.onclick=e=>{ if(e.target===el) playClosePenPick(); };
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+function playClosePenPick(){ const el=document.getElementById('play-penpick'); if(el) el.classList.remove('show'); }
+function playAddPenalty(type){ if(!playS||!PEN_INFO[type]) return; const n=playS.hole;
+  (playS.pens[n]=playS.pens[n]||[]).push(type);
+  const cur=playS.scores[n], base=cur!=null?cur:Math.max(1,(playS.shots[n]||[]).length);
+  playS.scores[n]=Math.min(15,base+1);   // +1 penalty stroke (seed an unscored hole from shots taken; always ≥2, never lands on 1)
+  _clampPutts(n); playClosePenPick(); playPersistDraft(); playSyncAce(n); playRender();   // safe: a penalty score is always ≥2, so this can only CLEAR a stale ace, never create one
+  playToast(`${PEN_INFO[type].ico} ${PEN_INFO[type].lbl} — +1 penalty stroke.`);
+}
+function playRemovePenalty(i){ if(!playS) return; const n=playS.hole, arr=playS.pens[n]; if(!arr||arr[i]==null) return;
+  arr.splice(i,1); const cur=playS.scores[n]; if(cur!=null) playS.scores[n]=Math.max(1,cur-1);   // hand the stroke back
+  _clampPutts(n); playPersistDraft(); playRender();
+}
+
+// ── Manual "add a shot you forgot to Mark" ──────────────────────────────────
+// Appends a synthesized mark from your last position (or the tee) toward the green by the
+// distance you enter, with a chosen club — so a forgotten shot still lands in the shot list,
+// the club store and the map without needing a GPS fix at the time it was played.
+function playAddShotPicker(){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet) return;
+  let el=document.getElementById('play-addshot');
+  if(!el){ el=document.createElement('div'); el.id='play-addshot'; el.className='play-confirm'; sheet.appendChild(el); }
+  const u=playUnit(), marks=playS.shots[playS.hole]||[], fromTxt=marks.length?('shot '+marks.length):'the tee';
+  const sug=clubSet().length?'':' (set carries in My Bag for an auto-suggested club)';
+  const btns=CLUBS.map(c=>`<button class="cp-club" onclick="playAddPickClub(this,'${c}')">${c}</button>`).join('');
+  el.innerHTML=`<div class="pc-card"><div class="pc-msg">Add a forgotten shot<div class="pc-leg-row">starts from <b>${fromTxt}</b>, plays toward the green${sug}</div></div>
+    <div class="as-row"><label for="as-dist">Distance</label><input id="as-dist" type="number" inputmode="numeric" placeholder="—" aria-label="Shot distance in ${u}"><span>${u}</span></div>
+    <div class="as-lbl">Club (optional)</div><div class="cp-grid as-grid">${btns}</div>
+    <div class="pc-row"><button class="pc-cancel" onclick="playCloseAddShot()">Cancel</button><button class="pc-ok" onclick="playAddManualShot()">Add shot</button></div></div>`;
+  el.onclick=e=>{ if(e.target===el) playCloseAddShot(); };
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show'); window._addShotClub=null;
+}
+function playAddPickClub(btn,c){ window._addShotClub=c; btn.parentElement.querySelectorAll('.cp-club').forEach(b=>b.classList.remove('on')); btn.classList.add('on'); }
+function playCloseAddShot(){ const el=document.getElementById('play-addshot'); if(el) el.classList.remove('show'); }
+function playAddManualShot(){
+  const inp=document.getElementById('as-dist'); if(!inp) return;
+  const dv=parseFloat(inp.value); if(!isFinite(dv)||dv<=0){ playToast('Enter the shot distance.'); return; }
+  const D=playS.units==='yd'?dv/1.09361:dv;                            // display units → metres
+  const h=playS.course.holes[playS.hole-1], marks=playS.shots[playS.hole]=playS.shots[playS.hole]||[];
+  const start=marks.length?marks[marks.length-1]:_effTee(h), cen=holeTargets(h).cen;
+  const endpoint=_destPoint(start,_bearingDeg(start,cen),D);          // D metres along the line to the green ⇒ leg ≈ D
+  marks.push(endpoint);
+  (playS.shotLies[playS.hole]=playS.shotLies[playS.hole]||[]).push(_lieAt(endpoint));
+  (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(window._addShotClub||null);
+  (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(false);
+  (playS.shotMan[playS.hole]=playS.shotMan[playS.hole]||[]).push(true);
+  playCloseAddShot(); playPersistDraft(); playRender(); playToast('Shot added.');
+}
 // Effective tee for a hole: a GPS "Set tee" override for this round, else the baked tee.
 function _effTee(h){ if(playS.teePos&&playS.teePos[h.n]) return playS.teePos[h.n]; const s=_selTeeKey(h.n); if(s&&h.tees&&h.tees[s]) return h.tees[s]; return h.tee; }
 function playShotLegs(h){ // legs from the (effective) tee through each mark, plus a live leg to current pos
@@ -7063,6 +7184,192 @@ function playMapToolsHtml(){
     <button class="pmt-btn${playS.showClub?' on':''}" onclick="event.stopPropagation();playToggleClubMarker()" aria-label="Toggle tee-shot club marker" title="Show/hide the tee-shot club marker">🏌<span class="pmt-lbl">club</span></button>${playTeeSelHtml()}`;
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// PLAY-STATS-CORE-START  —  pure, DOM-free, references NO app globals.
+// tests/play-stats.test.mjs slices out exactly this region (between the START/END
+// markers) and evals it in a bare Node vm, so keep it self-contained: no DOM, no
+// localStorage, no outer constants (CLUBS etc.). Everything it needs is an argument.
+//
+// Enriched-round shape it consumes (one per saved round):
+//   { slug, course, date, par, holesPlayed, gross, vsPar, putts,
+//     holeStats:[{ n,par,score,putts,
+//                  fir,            // true|false|null  fairway hit off the tee (par≥4)
+//                  gir,            // true|false|null  green in regulation
+//                  miss,           // 'short'|'long'|'left'|'right'|null  (green-miss direction)
+//                  bunkers,        // # shots finishing in a bunker this hole
+//                  penalties,      // penalty strokes incurred
+//                  ballsLost,      // balls lost (water/ob/lost)
+//                  driveM,         // tee-shot carry (par≥4), else null
+//                  scrambleTry, scrambleWin,   // missed GIR → got up & down?
+//                  sandTry, sandWin }],         // greenside bunker → up & down?
+//     legs:{ '1':[{d,club,lie,pen}], … } }   // legs feed the per-club tallies
+// holeStats[] is authoritative for hole-level aggregation; legs feed per-club stats.
+const PS_GOOD_LIES=['fairway','green','tee'];      // finishing here = "in play / a good result"
+function psGirFromScore(score,putts,par){ if(score==null||putts==null||par==null) return null; return (score-putts)<=(par-2); }
+function psFirFromLie(par,teeLie){ if(par==null||par<4||teeLie==null) return null; return teeLie==='fairway'; }
+// Green-miss direction from the approach's green-relative resting offset (metres):
+// forward(+)=past the pin ⇒ long, lateral(+)=right of the play line ⇒ right. Dominant axis wins.
+function psClassifyMiss(forwardM,lateralM){
+  if(forwardM==null||lateralM==null) return null;
+  return Math.abs(forwardM)>=Math.abs(lateralM) ? (forwardM>=0?'long':'short') : (lateralM>=0?'right':'left');
+}
+function psBallsLostFromPens(pens){ let n=0; for(const p of (pens||[])) if(p==='water'||p==='ob'||p==='lost') n++; return n; }
+function psMean(a){ return a.length? a.reduce((x,y)=>x+y,0)/a.length : null; }
+function psStdev(a){ if(a.length<2) return 0; const m=psMean(a); return Math.sqrt(a.reduce((s,x)=>s+(x-m)*(x-m),0)/a.length); }
+// 10%-trimmed mean of carries for a club (mirrors the running clubAvg() so the history
+// per-club distance lines up with the My-Bag tracked figure).
+function psTrimmedMean(a){ if(!a.length) return null; let v=a.slice().sort((x,y)=>x-y);
+  if(v.length>=5){ const cut=Math.floor(v.length*0.1); v=v.slice(cut,v.length-cut); }
+  return Math.round(v.reduce((x,y)=>x+y,0)/v.length); }
+function psPct(n,d){ return d>0?Math.round(n/d*100):null; }
+
+// Aggregate a set of enriched rounds into the full stats object the history UI renders.
+// Pure: same input ⇒ same output, no side effects. `rounds` may be all rounds, or a
+// single course's rounds (per-course breakdown) — the caller filters.
+function psAggregate(rounds){
+  rounds=rounds||[];
+  const out={ rounds:rounds.length, holes:0,
+    scoring:{ scores:[], vsPar:[], par:{3:{s:[],vp:[]},4:{s:[],vp:[]},5:{s:[],vp:[]}},
+              dist:{eagle:0,birdie:0,par:0,bogey:0,dbl:0,triplePlus:0} },
+    fir:{hit:0,of:0}, gir:{hit:0,of:0},
+    putts:{total:0,holes:0,girPutts:[],three:0,one:0,puttHoles:0},
+    miss:{short:0,long:0,left:0,right:0,of:0},
+    bunkers:0, penalties:0, ballsLost:0,
+    scramble:{win:0,of:0}, sand:{win:0,of:0},
+    driving:{carries:[]},
+    byClub:{} };
+  for(const r of rounds){
+    const hs=r.holeStats||[];
+    for(const h of hs){
+      out.holes++;
+      if(h.score!=null){
+        out.scoring.scores.push(h.score);
+        if(h.par!=null){ const vp=h.score-h.par; out.scoring.vsPar.push(vp);
+          const pk=h.par<=3?3:h.par>=5?5:4, b=out.scoring.par[pk]; b.s.push(h.score); b.vp.push(vp);
+          if(vp<=-2)out.scoring.dist.eagle++; else if(vp===-1)out.scoring.dist.birdie++;
+          else if(vp===0)out.scoring.dist.par++; else if(vp===1)out.scoring.dist.bogey++;
+          else if(vp===2)out.scoring.dist.dbl++; else out.scoring.dist.triplePlus++; }
+      }
+      if(h.fir===true||h.fir===false){ out.fir.of++; if(h.fir)out.fir.hit++; }
+      if(h.gir===true||h.gir===false){ out.gir.of++; if(h.gir)out.gir.hit++; }
+      if(h.putts!=null){ out.putts.total+=h.putts; out.putts.holes++; out.putts.puttHoles++;
+        if(h.putts>=3)out.putts.three++; if(h.putts===1)out.putts.one++;
+        if(h.gir===true)out.putts.girPutts.push(h.putts); }
+      if(h.miss&&out.miss[h.miss]!=null){ out.miss[h.miss]++; out.miss.of++; }
+      out.bunkers+=h.bunkers||0; out.penalties+=h.penalties||0; out.ballsLost+=h.ballsLost||0;
+      if(h.scrambleTry){ out.scramble.of++; if(h.scrambleWin)out.scramble.win++; }
+      if(h.sandTry){ out.sand.of++; if(h.sandWin)out.sand.win++; }
+      if(h.driveM!=null&&h.driveM>=50) out.driving.carries.push(h.driveM);
+    }
+    const legs=r.legs||{};
+    for(const k in legs){ for(const lg of legs[k]){ if(!lg||!lg.club) continue;
+      const c=out.byClub[lg.club]||(out.byClub[lg.club]={dists:[],n:0,good:0,lieN:0,roundSet:{}});
+      c.n++; if(lg.d!=null&&lg.d>=20)c.dists.push(lg.d);
+      if(lg.lie!=null){ c.lieN++; if(PS_GOOD_LIES.indexOf(lg.lie)>=0)c.good++; }
+      c.roundSet[r.id!=null?r.id:(r.date||k)]=1; } }
+  }
+  // ── reduce the accumulators into reportable figures ──
+  const sc=out.scoring;
+  const parStat=p=>({ n:p.s.length, avg:psMean(p.s), avgVsPar:psMean(p.vp) });
+  const result={
+    rounds:out.rounds, holes:out.holes,
+    scoring:{ avg:psMean(sc.scores), avgVsPar:psMean(sc.vsPar),
+      par3:parStat(sc.par[3]), par4:parStat(sc.par[4]), par5:parStat(sc.par[5]), dist:sc.dist },
+    fir:{ hit:out.fir.hit, of:out.fir.of, pct:psPct(out.fir.hit,out.fir.of) },
+    gir:{ hit:out.gir.hit, of:out.gir.of, pct:psPct(out.gir.hit,out.gir.of) },
+    putts:{ total:out.putts.total, holes:out.putts.holes,
+      perRound: out.rounds?Math.round(out.putts.total/out.rounds*10)/10:null,
+      perHole: out.putts.holes?Math.round(out.putts.total/out.putts.holes*100)/100:null,
+      perGir: out.putts.girPutts.length?Math.round(psMean(out.putts.girPutts)*100)/100:null,
+      threePuttPct:psPct(out.putts.three,out.putts.puttHoles), onePuttPct:psPct(out.putts.one,out.putts.puttHoles) },
+    miss:{ short:out.miss.short, long:out.miss.long, left:out.miss.left, right:out.miss.right, of:out.miss.of },
+    bunkers:{ total:out.bunkers, perRound: out.rounds?Math.round(out.bunkers/out.rounds*10)/10:null },
+    penalties:{ total:out.penalties, perRound: out.rounds?Math.round(out.penalties/out.rounds*10)/10:null },
+    ballsLost:{ total:out.ballsLost, perRound: out.rounds?Math.round(out.ballsLost/out.rounds*10)/10:null },
+    scrambling:{ win:out.scramble.win, of:out.scramble.of, pct:psPct(out.scramble.win,out.scramble.of) },
+    sand:{ win:out.sand.win, of:out.sand.of, pct:psPct(out.sand.win,out.sand.of) },
+    driving:{ avgM: out.driving.carries.length?Math.round(psMean(out.driving.carries)):null,
+      longestM: out.driving.carries.length?Math.round(Math.max(...out.driving.carries)):null, n:out.driving.carries.length },
+    byClub:{} };
+  for(const club in out.byClub){ const c=out.byClub[club];
+    const cv = c.dists.length>=2 ? psStdev(c.dists)/(psMean(c.dists)||1) : null;
+    result.byClub[club]={ n:c.n, rounds:Object.keys(c.roundSet).length,
+      perRound: out.rounds?Math.round(c.n/out.rounds*10)/10:null,
+      avgM: psTrimmedMean(c.dists), shots:c.dists.length,
+      accuracyPct: psPct(c.good,c.lieN), goodN:c.good, lieN:c.lieN,
+      consistencyPct: cv==null?null:Math.max(0,Math.round((1-Math.min(1,cv))*100)) };
+  }
+  return result;
+}
+// PLAY-STATS-CORE-END
+// ════════════════════════════════════════════════════════════════════════════
+
+// Geo offset (metres) of point p from the green centre, decomposed along the play line:
+// {forward:+ past the pin (long), lateral:+ right of the play line}. brgDeg = tee→green bearing.
+function _greenOffset(p,cen,brgDeg){
+  const th=brgDeg*Math.PI/180, k=Math.cos(cen[0]*Math.PI/180);
+  const e=(p[1]-cen[1])*111320*k, n=(p[0]-cen[0])*111320;
+  return { forward:e*Math.sin(th)+n*Math.cos(th), lateral:e*Math.cos(th)-n*Math.sin(th) };
+}
+// Assemble the per-hole stat records for the round being saved. The pure ps* helpers do the
+// classification; this glue gathers the live inputs (marks + auto-read lies + logged penalties
+// + geometry). GIR is score-based (robust, geometry-free); FIR / miss-direction / sand need the
+// mapped lies, so they degrade to null on a course with no geometry. See the STATS CORE block.
+function _buildHoleStats(){
+  const out=[];
+  playS.course.holes.forEach(h=>{ const n=h.n, score=playS.scores[n];
+    if(score==null) return;                                  // only holes you actually scored
+    const par=h.par, putts=playS.putts[n]!=null?playS.putts[n]:null;
+    const lies=playS.shotLies[n]||[], pens=(playS.pens&&playS.pens[n])||[];
+    const {legs}=playShotLegs(h);
+    const gir=psGirFromScore(score,putts,par);
+    const fir=psFirFromLie(par, lies.length?lies[0]:null);    // tee shot's resting lie
+    let bunkers=0; for(const lie of lies) if(lie==='bunker') bunkers++;
+    const driveM=(par>=4&&legs.length&&legs[0].d>=50)?Math.round(legs[0].d):null;
+    let miss=null;
+    if(gir===false){                                          // where did the approach finish vs the green?
+      const tg=holeTargets(h), cen=tg.cen, marks=playS.shots[n]||[];
+      let best=null,bd=Infinity;
+      for(let i=0;i<marks.length;i++){ if(lies[i]==='green') continue; const d=_distM(marks[i],cen); if(d<bd){bd=d;best=marks[i];} }
+      if(best&&bd<=60){ const o=_greenOffset(best,cen,tg.brg); miss=psClassifyMiss(o.forward,o.lateral); }
+    }
+    let sandTry=false;                                        // a greenside (≤40 m) bunker shot ⇒ sand-save chance
+    if(bunkers){ const tg=holeTargets(h), cen=tg.cen, marks=playS.shots[n]||[];
+      for(let i=0;i<marks.length;i++){ if(lies[i]==='bunker'&&_distM(marks[i],cen)<=40){ sandTry=true; break; } } }
+    const scrambleTry=gir===false, scrambleWin=scrambleTry?(score<=par):null;
+    out.push({ n, par, score, putts, fir, gir, miss, bunkers,
+      penalties:pens.length, ballsLost:psBallsLostFromPens(pens), driveM,
+      scrambleTry, scrambleWin, sandTry, sandWin: sandTry?(score<=par):null });
+  });
+  return out;
+}
+
+// Resolve a saved round's slug back to its course hole list (handles multi-course
+// layout slugs '<base>-<key>'). Used to backfill stats for legacy rounds.
+function _courseHolesForSlug(slug){
+  if(!slug) return null;
+  const direct=COURSE_PLAY[slug]; if(direct&&direct.holes) return direct.holes;
+  for(const base in COURSE_PLAY){ const c=COURSE_PLAY[base]; if(!c.layouts) continue;
+    for(const L of c.layouts){ if(base+'-'+L.key===slug&&L.holes) return L.holes; } }
+  return null;
+}
+// holeStats for a round: the saved v2 array if present, else a partial set derived from the
+// course pars + stored per-hole scores (legacy rounds saved no per-hole putts/lies, so their
+// GIR/FIR/miss stay null — they still contribute scoring + par-3/4/5 averages).
+function holeStatsForRound(round){
+  if(round.holeStats) return round.holeStats;
+  const holes=_courseHolesForSlug(round.slug); if(!holes||!round.scores) return [];
+  const out=[];
+  for(let i=0;i<holes.length;i++){ const score=round.scores[i]; if(score==null) continue;
+    out.push({ n:holes[i].n, par:holes[i].par, score, putts:null, fir:null, gir:null, miss:null,
+      bunkers:0, penalties:0, ballsLost:0, driveM:null, scrambleTry:false, scrambleWin:null, sandTry:false, sandWin:null }); }
+  return out;
+}
+// All saved rounds (optionally one course) enriched with holeStats, ready for psAggregate().
+function enrichedRounds(slug){
+  return loadRounds().filter(r=>!slug||r.slug===slug).map(r=>Object.assign({},r,{holeStats:holeStatsForRound(r),legs:r.legs||{}}));
+}
+
 function playSaveRound(){
   const t=playTotals();
   if(t.holesPlayed===0){ playToast('Enter at least one hole score first.'); return; }
@@ -7078,19 +7385,50 @@ function _commitRound(t){
     const tagged=legs.map((l,i)=>({d:Math.round(l.d),club:cl[i]||null,lie:li[i]||null})).filter(x=>x.d>=20);
     if(tagged.length){ legsByHole[h.n]=tagged; tagged.forEach(x=>{ if(x.club) addClubShot(x.club,x.d); }); } });
   const rounds=loadRounds();
-  rounds.unshift({ id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
+  rounds.unshift({ v:2, id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
     date:new Date().toISOString(),
     scores:playS.course.holes.map(h=>playS.scores[h.n]??null),
     gross:t.gross, parPlayed:t.parPlayed, vsPar:t.vsPar, putts:t.putts, holesPlayed:t.holesPlayed,
     hcpIndex:getHcpIndex(), courseHcp:t.ch, net:(t.ch!=null?t.net:null), stableford:(t.ch!=null?t.points:null),
-    legs:legsByHole });
+    legs:legsByHole, holeStats:_buildHoleStats() });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.startedAt=Date.now();
+  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
 function playDeleteRound(id){ playConfirm('Delete this round from your history?','Delete',()=>{ saveRounds(loadRounds().filter(r=>r.id!==id)); playRender(); },true); }
+
+// ── Backup / restore ────────────────────────────────────────────────────────
+// Your rounds, bag, club stats, handicap and trophies live only in this device's
+// localStorage (one cache wipe loses them). Export bundles them into a JSON file;
+// import restores it. Keys are namespaced gf_* so import only ever touches our own.
+const _BACKUP_KEYS=['gf_rounds','gf_bag','gf_witb','gf_club_stats','gf_hcp_index','gf_hios','gf_units'];
+function playExportData(){
+  const out={ app:'golf-finder', kind:'play-backup', v:2, exported:new Date().toISOString(), data:{} };
+  _BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+  try{
+    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+    a.download='golf-finder-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
+    playToast('Backup downloaded.');
+  }catch(e){ playToast('Could not export right now.'); }
+}
+function playImportPick(){ const inp=document.getElementById('play-import-file'); if(inp) inp.click(); }
+function playImportData(input){
+  const f=input.files&&input.files[0]; if(!f) return;
+  const rd=new FileReader();
+  rd.onload=()=>{ let obj; try{ obj=JSON.parse(rd.result); }catch(e){ obj=null; }
+    if(!obj||obj.kind!=='play-backup'||!obj.data){ playToast('That file is not a Golf Finder backup.'); input.value=''; return; }
+    playConfirm('Restore this backup? It replaces your saved rounds, bag and stats on this device.','Restore',()=>{
+      Object.keys(obj.data).forEach(k=>{ if(/^gf_/.test(k)&&typeof obj.data[k]==='string') localStorage.setItem(k,obj.data[k]); });
+      _histScope=null; playToast('Backup restored.'); if(playS) playRender();
+    });
+    input.value=''; };
+  rd.readAsText(f);
+}
 
 // Honest, WHS-flavoured handicap estimate from saved rounds (best-of differentials,
 // 0.96 factor). Clearly NOT an official Golf Australia handicap — no slope/rating.
@@ -7664,13 +8002,15 @@ function playShotLiveHtml(){
   if(pos){ const nowLie=_lieAt(pos), nl=nowLie&&LIE_INFO[nowLie];
     const dTxt=(last)?(()=>{ const d=_distM(last,pos); return d>=2?` · <b>${fmtDist(d)}</b> ${u} from last mark`:''; })():'';
     if(nl||dTxt) live=`<div class="ps-live">${nl?`you're on <span class="ps-lie" style="--lc:${nl.col}">${nl.ico} ${nl.lbl}</span>`:''}${dTxt}</div>`; }
-  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is from the tee; the club is auto-picked from your bag and the lie auto-read from the map — tap a chip to change.</div>${live}`;
-  const rows=legs.map((l,i)=>{ const c=clubs[i], auto=autos[i], lie=lies[i], li=lie&&LIE_INFO[lie];
+  const pens=(playS.pens&&playS.pens[playS.hole])||[];
+  const penHtml=pens.length?`<div class="ps-pens" aria-label="Logged penalties this hole">${pens.map((p,i)=>{ const pi=PEN_INFO[p]||{ico:'⚠',lbl:p}; return `<span class="ps-pen">${pi.ico} ${pi.lbl}<button onclick="playRemovePenalty(${i})" aria-label="Remove ${pi.lbl} penalty">✕</button></span>`; }).join('')}</div>`:'';
+  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is from the tee; the club is auto-picked from your bag and the lie auto-read from the map — tap a chip to change.</div>${penHtml}${live}`;
+  const rows=legs.map((l,i)=>{ const c=clubs[i], auto=autos[i], lie=lies[i], li=lie&&LIE_INFO[lie], man=(playS.shotMan&&(playS.shotMan[playS.hole]||[])[i]);
     const name=l.tee?'tee':'shot '+i;
     const clubPill=c?`<span class="ps-club${auto?' auto':''}">${c}${auto?'<i class="ps-autotag">auto</i>':''}</span>`:`<span class="ps-club none">+ club</span>`;
     const liePill=li?`<span class="ps-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:'';
-    return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="${name}, ${fmtDist(l.d)} ${u}${li?', ended in '+li.lbl:''}${c?', '+(auto?'auto-':'')+'club '+c:''} — tap to set club">${name} <b>${fmtDist(l.d)}</b>${u}${liePill}${clubPill}</button>`; }).join('');
-  return `<div class="ps-chips">${rows}</div>${live}`;
+    return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="${name}, ${fmtDist(l.d)} ${u}${li?', ended in '+li.lbl:''}${c?', '+(auto?'auto-':'')+'club '+c:''}${man?', added manually':''} — tap to set club">${name}${man?' ✎':''} <b>${fmtDist(l.d)}</b>${u}${liePill}${clubPill}</button>`; }).join('');
+  return `<div class="ps-chips">${rows}</div>${penHtml}${live}`;
 }
 // Tap a shot chip to tag (or clear) its club; tagged legs feed your club stats on save.
 function playClubPicker(legIdx){
@@ -7679,7 +8019,7 @@ function playClubPicker(legIdx){
   if(!el){ el=document.createElement('div'); el.id='play-clubpick'; el.className='play-confirm'; sheet.appendChild(el); }
   const cur=(playS.shotClubs[playS.hole]||[])[legIdx];
   const {legs}=playShotLegs(playS.course.holes[playS.hole-1]), leg=legs[legIdx];
-  const sug=leg?suggestClub(leg.d):null, u=playUnit();
+  const sug=leg?suggestClub(leg.d,'nearest'):null, u=playUnit();
   const lie=(playS.shotLies[playS.hole]||[])[legIdx], li=lie&&LIE_INFO[lie];
   const sub=`${leg?`<span class="pc-leg"><b>${fmtDist(leg.d)}</b> ${u}</span>`:''}${li?`<span class="pc-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:''}`;
   // 1-button accept of the suggested club (highlighted in the grid too); hidden if it's already set
@@ -7722,6 +8062,10 @@ function playTabHtml(){
     <div class="play-shotbar">
       <button class="play-mark" onclick="playMarkShot()">⛳ Mark shot</button>
       <button class="play-mark ghost" onclick="playUndoShot()" aria-label="Undo last mark">↩ undo</button>
+    </div>
+    <div class="play-shotbar2">
+      <button class="play-act2" onclick="playPenaltyPicker()" aria-label="Log a penalty or lost ball">⚠ penalty / lost ball</button>
+      <button class="play-act2" onclick="playAddShotPicker()" aria-label="Add a shot you forgot to mark">✎ add past shot</button>
     </div>
     <div id="play-shotlive">${playShotLiveHtml()}</div>
     <div class="play-scorerow">
@@ -7788,25 +8132,84 @@ function cardTabHtml(){
   `;
 }
 
+// History dashboard scope: null = all courses, else a round slug. Auto-includes any new
+// course the moment a round at it is saved (the pills are built from the saved rounds).
+let _histScope=null;
+function playSetHistScope(s){ _histScope=s; playRender(); }
+function _psPct(v){ return v==null?'–':v+'%'; }
+function _psR2(v){ return v==null?'–':Math.round(v*100)/100; }
+function _psVp(v){ if(v==null)return''; const r=Math.round(v*100)/100; return (r>0?'+':'')+r; }
+
+// The stat tiles + breakdowns for the current scope. Pure read of psAggregate over the
+// enriched (holeStats-backfilled) rounds — so legacy rounds contribute scoring while
+// GIR/FIR/miss simply read '–' until shot-tracked rounds fill them in.
+function statsDashboardHtml(){
+  const rounds=enrichedRounds(_histScope); if(!rounds.length) return '';
+  const a=psAggregate(rounds), u=playUnit(), dM=m=> m==null?'–':fmtDist(m)+' '+u;
+  const tile=(num,lbl,sub)=>`<div class="psd-tile"><div class="psd-num">${num}</div><div class="psd-lbl">${lbl}</div><div class="psd-sub">${sub||''}</div></div>`;
+  const tiles=[
+    tile(_psPct(a.gir.pct),'Greens / reg', a.gir.of?`${a.gir.hit}/${a.gir.of}`:'no data'),
+    tile(_psPct(a.fir.pct),'Fairways', a.fir.of?`${a.fir.hit}/${a.fir.of}`:'no data'),
+    tile(a.putts.perRound!=null?a.putts.perRound:'–','Putts / rd', a.putts.perGir!=null?`${a.putts.perGir} per GIR`:''),
+    tile(_psPct(a.scrambling.pct),'Scrambling', a.scrambling.of?`${a.scrambling.win}/${a.scrambling.of}`:'no data'),
+    tile(_psPct(a.sand.pct),'Sand saves', a.sand.of?`${a.sand.win}/${a.sand.of}`:'no data'),
+    tile(_psPct(a.putts.threePuttPct),'3-putts', a.putts.onePuttPct!=null?`${a.putts.onePuttPct}% 1-putt`:''),
+    tile(dM(a.driving.avgM),'Avg drive', a.driving.longestM!=null?`long ${dM(a.driving.longestM)}`:''),
+    tile(a.penalties.perRound!=null?a.penalties.perRound:'–','Penalties / rd', a.penalties.total?`${a.penalties.total} total`:''),
+    tile(a.ballsLost.perRound!=null?a.ballsLost.perRound:'–','Balls lost / rd', a.ballsLost.total?`${a.ballsLost.total} total`:''),
+  ].join('');
+  const parCell=(k,lbl)=>{ const p=a.scoring[k]; return `<div class="psd-par"><div class="psd-lbl">${lbl}</div><b>${_psR2(p.avg)}</b><div class="pv">${p.n?`vs par ${_psVp(p.avgVsPar)}`:'no data'}</div></div>`; };
+  const byPar=`<div class="psd-bypar">${parCell('par3','Par 3')}${parCell('par4','Par 4')}${parCell('par5','Par 5')}</div>`;
+  const d=a.scoring.dist, dc=(n,l)=>`<div class="psd-dcell"><b>${n}</b><span>${l}</span></div>`;
+  const dist=`<div class="psd-dist">${dc(d.eagle,'eagle')}${dc(d.birdie,'birdie')}${dc(d.par,'par')}${dc(d.bogey,'bogey')}${dc(d.dbl,'dbl')}${dc(d.triplePlus,'3+')}</div>`;
+  const m=a.miss, missHtml=m.of
+    ? `<div class="psd-miss">${['short','long','left','right'].map(k=>`<div class="psd-dcell"><b>${m[k]}</b><span>${k}</span></div>`).join('')}</div>`
+    : `<div class="psd-note">No green-miss data yet — track approach shots on a mapped course to build this.</div>`;
+  return `<div class="psd-tiles">${tiles}</div>
+    <div class="psd-sec"><div class="psd-sec-h">Scoring by par <span>avg · vs par</span></div>${byPar}</div>
+    <div class="psd-sec"><div class="psd-sec-h">Scoring spread</div>${dist}</div>
+    <div class="psd-sec"><div class="psd-sec-h">Green-miss tendency</div>${missHtml}</div>`;
+}
+// Per-club detail for the current scope: carry, average shots/round, and accuracy (% of that
+// club's shots finishing in a good spot — fairway/green/tee). Union of your bag and any club
+// you've logged shots with, in CLUBS order.
+function clubsDetailHtml(){
+  const a=psAggregate(enrichedRounds(_histScope)), bag=clubSet(), u=playUnit();
+  const present=new Set([...bag.map(b=>b.club),...Object.keys(a.byClub)]);
+  const rows=CLUBS.filter(c=>present.has(c)).map(c=>{ const b=bag.find(x=>x.club===c), cs=a.byClub[c];
+    const carry=b?(fmtDist(b.dist)+' '+u):(cs&&cs.avgM!=null?fmtDist(cs.avgM)+' '+u:'–');
+    const per=cs&&cs.perRound!=null?cs.perRound:'–';
+    const acc=cs&&cs.accuracyPct!=null?cs.accuracyPct+'%':'–';
+    return `<tr><td class="pcd-c">${c}</td><td>${carry}</td><td>${per}</td><td>${acc}</td></tr>`; }).join('');
+  if(!rows) return `<div class="play-clubs"><div class="pcl-h">Your clubs</div><div class="bag-note" style="margin:0;">No clubs set. <button class="bag-units" onclick="showBag()">Open My Bag</button> to add carries, or tag shots on Play to build them.</div></div>`;
+  return `<div class="psd-sec"><div class="psd-sec-h">Your clubs <span>carry · use/rd · accuracy</span></div>
+    <table class="pcd-table"><thead><tr><th>Club</th><th>Carry</th><th>Use</th><th>Acc</th></tr></thead><tbody>${rows}</tbody></table>
+    <div class="bag-foot" style="margin-top:9px;"><button class="bag-units" onclick="showBag()">🎒 Edit my bag</button></div></div>`;
+}
+
 function historyTabHtml(){
-  const rounds=loadRounds(), he=handicapEstimate(null), idx=getHcpIndex();
+  const allRounds=loadRounds(), he=handicapEstimate(null), idx=getHcpIndex();
   const hcpCard=`<div class="play-hcp">
       <div class="play-hcp-num">${idx!=null?idx:'–'}</div>
       <div class="play-hcp-side"><div class="play-hcp-lbl">Handicap index</div>
         <input class="phb-input phb-input-wide" type="number" inputmode="decimal" step="0.1" placeholder="enter e.g. 18.4" value="${idx!=null?idx:''}" onchange="setHcpIndex(this.value)" aria-label="Your handicap index">
         <div class="play-hcp-sub">${he?`form ${he.hcp} · best ${he.usedN} of ${he.n} round${he.n>1?'s':''}`:'play &amp; save a round to estimate your form'}</div></div></div>
       <div class="play-hcp-disc">Your Golf Australia handicap index. On a rated course's Card it becomes a course handicap (from that course's white-tee CR / Slope) and is allotted by each hole's stroke index for net + Stableford. Saved rounds also estimate your form — still a personal figure, not an official GA handicap.</div>`;
-  const cs=clubSet();
-  const clubCard=cs.length
-    ? `<div class="play-clubs"><div class="pcl-h">Your clubs <span>carry · bag + tracked</span></div><div class="pcl-grid">${cs.map(r=>{ const tr=clubAvg(r.club), sub=r.manual?'bag':(tr?`${tr.n} shot${tr.n>1?'s':''}`:''); return `<div class="pcl-item"><span class="pcl-club">${r.club}</span><span class="pcl-avg">${fmtDist(r.dist)} ${playUnit()}</span><span class="pcl-n">${sub}</span></div>`; }).join('')}</div><div class="bag-foot" style="margin-top:10px;"><button class="bag-units" onclick="showBag()">🎒 Edit my bag</button></div></div>`
-    : `<div class="play-clubs"><div class="pcl-h">Your clubs</div><div class="bag-note" style="margin:0;">No clubs set. <button class="bag-units" onclick="showBag()">Open My Bag</button> to add your carry distances, or tag shots on Play to build them.</div></div>`;
-  if(!rounds.length) return hcpCard+clubCard+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save.</div>`;
-  const list=rounds.map(r=>{ const d=new Date(r.date), ds=d.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
+  if(!allRounds.length) return hcpCard+clubsDetailHtml()+`<div class="ph-empty">No rounds saved yet. Score a round on the Card tab and hit Save — your stats build automatically.</div>`;
+  // scope pills: All + one per distinct course played (auto-includes new courses)
+  const seen={}, courses=[]; allRounds.forEach(r=>{ if(!seen[r.slug]){ seen[r.slug]=1; courses.push({slug:r.slug,name:r.course}); } });
+  if(_histScope&&!seen[_histScope]) _histScope=null;   // a deleted course's scope falls back to All
+  const scope=`<div class="psd-scope"><button class="${_histScope==null?'on':''}" onclick="playSetHistScope(null)">All courses</button>${courses.map(c=>`<button class="${_histScope===c.slug?'on':''}" onclick="playSetHistScope('${c.slug}')">${c.name}</button>`).join('')}</div>`;
+  const rounds=_histScope?allRounds.filter(r=>r.slug===_histScope):allRounds;
+  const list=rounds.map(r=>{ const dt=new Date(r.date), ds=dt.toLocaleDateString('en-AU',{day:'numeric',month:'short',year:'numeric'});
     const vp=r.vsPar===0?'E':r.vsPar>0?'+'+r.vsPar:''+r.vsPar;
     const partial=r.holesPlayed<18?` · ${r.holesPlayed} holes`:'';
     const netTxt=(r.net!=null)?`<div class="ph-net">net <b>${r.net}</b>${r.stableford!=null?` · ${r.stableford} pts`:''}${r.courseHcp!=null?` · ch ${r.courseHcp}`:''}</div>`:'';
     return `<div class="ph-row"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}</div>${netTxt}</div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><button class="ph-del" onclick="playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
-  return hcpCard+clubCard+`<div class="ph-list">${list}</div>`;
+  const backup=`<div class="psd-sec" style="margin-top:18px;"><div class="psd-backup"><button onclick="playExportData()">⤓ Export backup</button><button onclick="playImportPick()">⤴ Import</button><input type="file" id="play-import-file" accept="application/json,.json" style="display:none" onchange="playImportData(this)"></div><div class="psd-backup-note">Your rounds &amp; stats live only on this device — export a backup to keep them safe.</div></div>`;
+  return hcpCard+scope+statsDashboardHtml()+clubsDetailHtml()
+    +`<div class="psd-sec"><div class="psd-sec-h">Rounds <span>${rounds.length}${_histScope?' · this course':''}</span></div><div class="ph-list">${list}</div></div>`
+    +backup;
 }
 
 function playRender(){
