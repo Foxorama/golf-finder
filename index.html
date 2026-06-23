@@ -1062,44 +1062,42 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 .ld-tail{transform-box:fill-box;transform-origin:100% 50%;animation:ld-tail 2.6s ease-in-out infinite;}
 @keyframes ld-tail{0%,100%{transform:rotate(-4deg);}50%{transform:rotate(6deg);}}
 /* ===== Rare night-loader variants (JS rolls the dice: 1-in-10 berserker, 1-in-50 UFO) ===== */
-/* --- BERSERKER: the Y'orb flies in + bites the moon as usual, but at the chomp it
-   erupts a Super-Saiyan mane down its spine, an energy aura, and four-colour
-   (green/purple/white/near-black) lightning. The FX live inside .ld-yorb so they
-   fly with it; one 6s clock reveals them at the bite (~40%) and hides them as it
-   leaves, matching the master ld-fly/ld-bite timeline. --- */
-.ld-berserk-aura,.ld-berserk-fx{display:none;}
-.ld-night-scene.ld-berserk .ld-berserk-aura,.ld-night-scene.ld-berserk .ld-berserk-fx{display:block;animation:ld-bsk-reveal 6s ease-in-out infinite;}
-@keyframes ld-bsk-reveal{0%,34%{opacity:0;}40%{opacity:1;}86%{opacity:1;}92%,100%{opacity:0;}}
-/* Berserker flight: arrive, bite (~42%), then HOVER at the moon transformed for ~1.3s
-   (still flapping/crackling) so the transformation is actually seen, then peel away. */
+/* --- BERSERKER: the Y'orb flies in and bites the moon, then at the chomp a flash erupts
+   and a brand-new Super-Saiyan SPACE MANTA — rear view: a central spine with a flame
+   mane running down it, a wing to EITHER side of the spine, tail trailing — bursts out of
+   the flash and flies off into the stars. The side-view Y'orb is left undecorated (it
+   just bites and dissolves into the flash) so the transform is a clean reveal of the new
+   form. One 6s clock. --- */
+/* Y'orb: fly in, bite (~42%), hold a beat, then dissolve into the flash (~52%) */
 .ld-night-scene.ld-berserk .ld-yorb{animation:ld-fly-bsk 6s ease-in-out infinite;}
-@keyframes ld-fly-bsk{0%{transform:translate(-260px,150px);opacity:0;}7%{opacity:1;}28%{transform:translate(170px,108px);}38%{transform:translate(202px,99px);}43%{transform:translate(212px,95px);}48%{transform:translate(214px,94px);}64%{transform:translate(217px,90px);}72%{transform:translate(262px,76px);}82%{transform:translate(440px,12px);}90%{transform:translate(630px,-56px);opacity:1;}95%{transform:translate(720px,-94px);opacity:0;}100%{transform:translate(720px,-94px);opacity:0;}}
-/* the creature itself is charged — body glows + green rim, eyes blaze, tails crackle */
-.ld-bsk-bodyglow{animation:ld-bsk-flick 0.3s steps(2,end) infinite;}
-.ld-bsk-eyes circle{filter:drop-shadow(0 0 2.4px #9bff52);animation:ld-bsk-pulse 0.9s ease-in-out infinite;transform-box:fill-box;transform-origin:50% 50%;}
-.ld-bsk-tail{transform-box:fill-box;transform-origin:100% 50%;animation:ld-tail 2.6s ease-in-out infinite;filter:drop-shadow(0 0 2px #9bff5288);}
-/* The creature's OWN swept-back wings light up WITH the transformation — gated to the
-   bite (~40%) so there's no premature glow on the fly-in. It's the real wings, so the
-   shape + flap are exactly the manta's; only a green/purple energy rim+glow fades in.
-   stroke is set ONLY in the lit keyframes, so each wing interpolates from its own inline
-   colour and the pre-transform Y'orb is untouched. */
-.ld-night-scene.ld-berserk .ld-wings path{animation:ld-bsk-wingcharge 6s ease-in-out infinite;}
-@keyframes ld-bsk-wingcharge{0%,34%{filter:drop-shadow(0 0 0 #8fff4f00) drop-shadow(0 0 0 #8a3bff00);}42%{filter:drop-shadow(0 0 3px #8fff4f) drop-shadow(0 0 9px #8a3bffaa);stroke:#a8ff63;stroke-width:1.8;}84%{filter:drop-shadow(0 0 3px #8fff4f) drop-shadow(0 0 9px #8a3bffaa);stroke:#a8ff63;stroke-width:1.8;}92%,100%{filter:drop-shadow(0 0 0 #8fff4f00) drop-shadow(0 0 0 #8a3bff00);}}
-.ld-bsk-glow{transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-pulse 0.9s ease-in-out infinite;}
+@keyframes ld-fly-bsk{0%{transform:translate(-260px,150px);opacity:0;}7%{opacity:1;}28%{transform:translate(170px,108px);}40%{transform:translate(206px,98px);}46%{transform:translate(214px,95px);opacity:1;}52%{transform:translate(216px,93px);opacity:0;}100%{transform:translate(216px,93px);opacity:0;}}
+/* the transformation flash at the moon */
+.ld-bsk-flash{display:none;}
+.ld-night-scene.ld-berserk .ld-bsk-flash{display:block;transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-flash 6s ease-out infinite;}
+@keyframes ld-bsk-flash{0%,44%{transform:scale(0.2);opacity:0;}49%{transform:scale(1.05);opacity:1;}58%{transform:scale(2.6);opacity:0;}100%{opacity:0;}}
+/* the new manta: hidden until the flash, then bursts out and flies off into the stars.
+   transform-box:view-box + origin 0 0 so translate/scale/rotate act about its drawn
+   centre (it is drawn centred on the local 0,0). */
+.ld-bsk-manta{display:none;}
+.ld-night-scene.ld-berserk .ld-bsk-manta{display:block;transform-box:view-box;transform-origin:0 0;animation:ld-manta-fly 6s ease-in-out infinite;}
+@keyframes ld-manta-fly{0%,45%{opacity:0;transform:translate(252px,98px) scale(0.16) rotate(12deg);}50%{opacity:1;transform:translate(254px,95px) scale(0.42) rotate(12deg);}57%{transform:translate(266px,86px) scale(0.4) rotate(17deg);}80%{opacity:1;transform:translate(326px,26px) scale(0.24) rotate(29deg);}92%,100%{opacity:0;transform:translate(436px,-64px) scale(0.1) rotate(37deg);}}
+/* manta internals */
+.ld-bsk-glow{transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-pulse 0.95s ease-in-out infinite;}
 .ld-bsk-glow.p2{animation-duration:1.3s;animation-delay:-0.45s;}
-@keyframes ld-bsk-pulse{0%,100%{transform:scale(0.9);opacity:0.55;}50%{transform:scale(1.14);opacity:0.98;}}
-.ld-bsk-mane{transform-box:fill-box;transform-origin:60% 100%;animation:ld-bsk-mane 0.72s ease-in-out infinite;filter:drop-shadow(0 0 3.4px #ffe14d) drop-shadow(0 0 6px #9be63577);}
-@keyframes ld-bsk-mane{0%,100%{transform:scaleY(1) skewX(0deg);}50%{transform:scaleY(1.1) skewX(-3deg);}}
-.ld-bsk-mane-core{animation:ld-bsk-flick 0.3s steps(2,end) infinite;}
-@keyframes ld-bsk-flick{0%,100%{opacity:0.78;}50%{opacity:1;}}
-.ld-bsk-wisp{transform-box:fill-box;transform-origin:90% 50%;animation:ld-bsk-wisp 1.1s ease-in-out infinite;}
-@keyframes ld-bsk-wisp{0%,100%{transform:translateY(0) scaleX(1);}50%{transform:translateY(-2px) scaleX(1.05);}}
+@keyframes ld-bsk-pulse{0%,100%{transform:scale(0.92);opacity:0.6;}50%{transform:scale(1.12);opacity:0.98;}}
+.m-mane{transform-box:fill-box;transform-origin:50% 100%;animation:m-mane 0.7s ease-in-out infinite;filter:drop-shadow(0 0 3px #ffe14d) drop-shadow(0 0 6px #9be63577);}
+@keyframes m-mane{0%,100%{transform:scaleY(1) skewX(0);}50%{transform:scaleY(1.06) skewX(2deg);}}
+.mw-near{transform-box:fill-box;transform-origin:0% 32%;animation:m-flapr 1.1s ease-in-out infinite;}
+.mw-far{transform-box:fill-box;transform-origin:100% 32%;animation:m-flapl 1.1s ease-in-out infinite;}
+@keyframes m-flapr{0%,100%{transform:rotate(0);}50%{transform:rotate(4deg);}}
+@keyframes m-flapl{0%,100%{transform:rotate(0);}50%{transform:rotate(-4deg);}}
+.m-tail{transform-box:fill-box;transform-origin:50% 0%;animation:m-tail 1.6s ease-in-out infinite;}
+@keyframes m-tail{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
 .ld-bsk-bolt{animation:ld-bsk-zap 0.42s steps(1,end) infinite;animation-delay:var(--bd,0s);}
-@keyframes ld-bsk-zap{0%{opacity:0;}6%{opacity:1;}16%{opacity:0.1;}26%{opacity:1;}40%{opacity:0;}100%{opacity:0;}}
+@keyframes ld-bsk-zap{0%{opacity:0;}8%{opacity:1;}20%{opacity:.1;}30%{opacity:1;}44%{opacity:0;}100%{opacity:0;}}
 .bz-g{filter:drop-shadow(0 0 1.7px #57ff57);}
 .bz-p{filter:drop-shadow(0 0 1.7px #c07bff);}
 .bz-w{filter:drop-shadow(0 0 1.5px #ffffff);}
-.bz-k{filter:drop-shadow(0 0 2.4px #8a3bff);}
 /* --- UFO: an alien saucer flies in, blasts the moon to debris, then leaves. The
    Y'orb is benched and the bite cancelled for this run (the moon stays whole until
    the laser hits, then fades to the explosion). --- */
@@ -1176,6 +1174,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <radialGradient id="ldb-aura-g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#eaffce" stop-opacity="0"/><stop offset="36%" stop-color="#9bff52" stop-opacity="0.5"/><stop offset="64%" stop-color="#39d11f" stop-opacity="0.26"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0"/></radialGradient>
       <radialGradient id="ldb-aura-p" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0e0ff" stop-opacity="0"/><stop offset="38%" stop-color="#c489ff" stop-opacity="0.5"/><stop offset="70%" stop-color="#7a2cff" stop-opacity="0.24"/><stop offset="100%" stop-color="#7a2cff" stop-opacity="0"/></radialGradient>
       <radialGradient id="ldb-body" cx="50%" cy="38%" r="68%"><stop offset="0%" stop-color="#eaffc4" stop-opacity="0.5"/><stop offset="48%" stop-color="#9bff52" stop-opacity="0.34"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0.12"/></radialGradient>
+      <radialGradient id="ldb-wingm" cx="22%" cy="34%" r="95%"><stop offset="0%" stop-color="#7a5fc8"/><stop offset="45%" stop-color="#4a3a86"/><stop offset="78%" stop-color="#37505a"/><stop offset="100%" stop-color="#2f7a36"/></radialGradient>
+      <radialGradient id="ldb-flash" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="38%" stop-color="#e6ffc8"/><stop offset="68%" stop-color="#9bff52" stop-opacity="0.6"/><stop offset="100%" stop-color="#9bff52" stop-opacity="0"/></radialGradient>
       <linearGradient id="ldship-body" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#bccbe8"/><stop offset="50%" stop-color="#6b7ea8"/><stop offset="100%" stop-color="#36435f"/></linearGradient>
       <radialGradient id="ldship-dome" cx="50%" cy="32%" r="75%"><stop offset="0%" stop-color="#e2f6ff"/><stop offset="55%" stop-color="#7fc8ff"/><stop offset="100%" stop-color="#2f7fd0"/></radialGradient>
       <mask id="ldbitemask"><rect x="0" y="0" width="400" height="280" fill="black"/><circle cx="255" cy="100" r="35" fill="white"/><circle class="ld-bite" cx="273" cy="93" r="33" fill="black"/></mask>
@@ -1191,10 +1191,6 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       </g>
     </g>
     <g class="ld-yorb">
-      <g class="ld-berserk-aura">
-        <ellipse class="ld-bsk-glow" cx="6" cy="-6" rx="116" ry="92" fill="url(#ldb-aura-g)"/>
-        <ellipse class="ld-bsk-glow p2" cx="6" cy="-6" rx="138" ry="110" fill="url(#ldb-aura-p)"/>
-      </g>
       <g class="ld-tail" fill="none" stroke-linecap="round"><path d="M-36,-3 C-78,-12 -116,-2 -150,-16 C-168,-24 -166,-38 -178,-40" stroke="#8a5cd8" stroke-width="3" opacity="0.5"/><path d="M-38,1 C-84,-2 -136,8 -182,1 C-206,-3 -216,10 -236,6" stroke="#6b46c0" stroke-width="3.5" opacity="0.55"/><path d="M-36,4 C-72,11 -112,8 -146,20 C-166,27 -164,40 -178,42" stroke="#7a4fcf" stroke-width="3" opacity="0.5"/><path d="M-34,0 C-70,-6 -112,0 -148,-10" stroke="#a86ce0" stroke-width="1.8" opacity="0.4"/></g>
       <g class="ld-wings"><path d="M-10,-17 C-24,-44 -50,-76 -80,-84 C-64,-62 -50,-40 -38,-28 C-28,-24 -18,-20 -10,-17 Z" fill="#2a1d57" stroke="#3a2a72" stroke-width="1"><animate attributeName="d" dur="0.95s" begin="-0.12s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.42;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" values="M-10,-17 C-24,-44 -50,-76 -80,-84 C-64,-62 -50,-40 -38,-28 C-28,-24 -18,-20 -10,-17 Z;M-10,-17 C-26,-34 -56,-52 -84,-52 C-64,-44 -48,-30 -38,-18 C-28,-18 -18,-17 -10,-17 Z;M-10,-17 C-24,-44 -50,-76 -80,-84 C-64,-62 -50,-40 -38,-28 C-28,-24 -18,-20 -10,-17 Z"/></path></g>
       <g class="ld-body">
@@ -1209,35 +1205,35 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       </g>
       <g class="ld-maw"><path d="M58,4 C62,3 67,1 72,-2 C75,1 75,6 71,10 C66,13 60,12 56,9 C56,7 57,5 58,4 Z" fill="#7c4fd1" stroke="#20124a" stroke-width="1.5" stroke-linejoin="round"/><path d="M60,9 C65,11 70,10 73,7 C70,13 63,14 59,11 Z" fill="#5733a4"/><g fill="#fff4fa"><path d="M59,5 L61,1 L63,6 Z"/><path d="M64,3 L66,-1 L68,4 Z"/><path d="M69,1 L71,-2 L72,3 Z"/></g></g>
       <g class="ld-wings"><path d="M8,-19 C-10,-48 -38,-82 -68,-92 C-54,-70 -42,-44 -30,-30 C-18,-26 -4,-22 8,-19 Z" fill="#4c3596" stroke="#6a4fc0" stroke-width="1.1"><animate attributeName="d" dur="0.95s" repeatCount="indefinite" calcMode="spline" keyTimes="0;0.42;1" keySplines="0.45 0 0.55 1;0.45 0 0.55 1" values="M8,-19 C-10,-48 -38,-82 -68,-92 C-54,-70 -42,-44 -30,-30 C-18,-26 -4,-22 8,-19 Z;M8,-19 C-14,-38 -50,-58 -82,-58 C-60,-48 -44,-32 -34,-20 C-22,-18 -8,-18 8,-19 Z;M8,-19 C-10,-48 -38,-82 -68,-92 C-54,-70 -42,-44 -30,-30 C-18,-26 -4,-22 8,-19 Z"/></path></g>
-      <g class="ld-berserk-fx">
-        <path class="ld-bsk-bodyglow" d="M72,-6 C70,-14 60,-18 48,-19 C30,-21 8,-21 -12,-18 C-26,-16 -34,-12 -40,-7 C-37,-3 -37,1 -40,6 C-33,10 -24,12 -12,12 C6,14 24,14 40,11 C48,9 54,7 58,4 C62,2 67,0 72,-2 C73,-3 73,-5 72,-6 Z" fill="url(#ldb-body)" stroke="#9bff52" stroke-width="1.3" opacity="0.78"/>
-        <g class="ld-bsk-eyes"><circle cx="50" cy="-11" r="3.4" fill="#ecffd2"/><circle cx="62" cy="-9" r="2.9" fill="#ecffd2"/></g>
-        <g class="ld-bsk-mane">
-          <path d="M56,-13 L52,-27 L47,-16 L41,-41 L34,-17 L27,-53 L20,-18 L13,-63 L5,-19 L-3,-59 L-11,-19 L-19,-51 L-27,-17 L-36,-45 L-45,-15 L-55,-39 L-52,-11 C-30,-12 -6,-14 26,-14 L56,-13 Z" fill="url(#ldb-mane)" stroke="#23103f" stroke-width="2.2" stroke-linejoin="round"/>
-          <path class="ld-bsk-mane-core" d="M26,-49 L21,-30 L15,-50 L8,-30 L1,-56 L-6,-30 L-13,-50 L-19,-30 L-12,-22 C-2,-26 13,-26 24,-23 Z" fill="#fffce4" opacity="0.9"/>
-        </g>
-        <g class="ld-bsk-wisp" fill="none" stroke="url(#ldb-mane)" stroke-linecap="round">
-          <path d="M-20,-15 C-54,-16 -98,-7 -150,-16" stroke-width="3"/>
-          <path d="M-22,-11 C-66,-9 -122,3 -180,-3" stroke-width="2.4"/>
-          <path d="M-17,-17 C-47,-20 -88,-16 -132,-25" stroke-width="2.1"/>
-          <path d="M-24,-8 C-72,-1 -124,6 -164,0" stroke-width="1.9"/>
-        </g>
-        <g class="ld-bsk-tail" fill="none" stroke-linecap="round">
-          <path d="M-36,-2 C-80,-11 -120,-1 -150,-15 C-168,-23 -166,-37 -178,-39" stroke="#9bff52" stroke-width="1.7" opacity="0.92"/>
-          <path d="M-38,1 C-84,-2 -136,8 -182,1 C-206,-3 -216,10 -236,6" stroke="#ffe14d" stroke-width="1.5" opacity="0.88"/>
-          <path d="M-36,4 C-72,11 -112,8 -146,20 C-166,27 -164,40 -178,42" stroke="#c489ff" stroke-width="1.5" opacity="0.82"/>
-          <path d="M-34,0 C-70,-6 -112,0 -148,-10" stroke="#eafcff" stroke-width="1" opacity="0.7"/>
-        </g>
-        <g class="ld-bsk-lightning" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <polyline class="ld-bsk-bolt bz-g" style="--bd:0s" stroke="#5dff5d" points="-40,4 -52,1 -46,-5 -58,-9 -52,-14"/>
-          <polyline class="ld-bsk-bolt bz-p" style="--bd:.08s" stroke="#bf86ff" points="70,-2 82,-6 76,-12 88,-16"/>
-          <polyline class="ld-bsk-bolt bz-w" style="--bd:.14s" stroke="#ffffff" points="40,12 48,22 42,24 52,30"/>
-          <polyline class="ld-bsk-bolt bz-k" style="--bd:.05s" stroke="#1b0b34" points="-10,12 -16,22 -8,22 -18,30"/>
-          <polyline class="ld-bsk-bolt bz-g" style="--bd:.18s" stroke="#5dff5d" points="14,-22 10,-32 18,-30 14,-42"/>
-          <polyline class="ld-bsk-bolt bz-p" style="--bd:.11s" stroke="#bf86ff" points="-24,-18 -30,-28 -22,-28 -30,-40"/>
-          <polyline class="ld-bsk-bolt bz-w" style="--bd:.22s" stroke="#eafcff" stroke-width="1.1" points="58,2 66,8 60,12 70,16"/>
-          <polyline class="ld-bsk-bolt bz-k" style="--bd:.15s" stroke="#1b0b34" points="-44,-6 -54,-10 -48,-16 -58,-20"/>
-        </g>
+    </g>
+    <!-- BERSERKER transformation flash + the new Super-Saiyan space manta that flies off -->
+    <circle class="ld-bsk-flash" cx="255" cy="100" r="42" fill="url(#ldb-flash)"/>
+    <g class="ld-bsk-manta">
+      <g class="m-aura"><ellipse class="ld-bsk-glow" cx="0" cy="-2" rx="116" ry="112" fill="url(#ldb-aura-g)"/><ellipse class="ld-bsk-glow p2" cx="0" cy="-2" rx="140" ry="134" fill="url(#ldb-aura-p)"/></g>
+      <g class="mw-far" opacity="0.9"><path d="M-8,-17 C-42,-29 -82,-26 -110,-9 C-91,5 -65,14 -43,19 C-29,22 -17,26 -9,23 C-8,9 -8,-5 -8,-17 Z" fill="url(#ldb-wingm)" stroke="#54e84a" stroke-width="1.8" filter="url(#ldglow)"/></g>
+      <g class="m-body">
+        <path d="M0,-46 C9,-42 13,-20 12,-6 C11,8 6,26 3,40 C1.5,44 -1.5,44 -3,40 C-6,26 -11,8 -12,-6 C-13,-20 -9,-42 0,-46 Z" fill="#7c4fd1" stroke="#20124a" stroke-width="1.6"/>
+        <path d="M0,-46 C9,-42 13,-20 12,-6 C11,8 6,26 3,40 C1.5,44 -1.5,44 -3,40 C-6,26 -11,8 -12,-6 C-13,-20 -9,-42 0,-46 Z" fill="url(#ldb-body)" stroke="#9bff52" stroke-width="1.2" opacity="0.8"/>
+        <path d="M-3,-44 C-6,-52 -9,-60 -5,-64 C-2,-58 -1,-50 0,-46 Z" fill="#6a40c0"/>
+        <path d="M3,-44 C6,-52 9,-60 5,-64 C2,-58 1,-50 0,-46 Z" fill="#6a40c0"/>
+        <circle cx="-4" cy="-40" r="2.4" fill="#ecffd2" filter="url(#ldglow)"/><circle cx="4" cy="-40" r="2.4" fill="#ecffd2" filter="url(#ldglow)"/>
+      </g>
+      <g class="mw-near"><path d="M8,-17 C42,-29 82,-26 110,-9 C91,5 65,14 43,19 C29,22 17,26 9,23 C8,9 8,-5 8,-17 Z" fill="url(#ldb-wingm)" stroke="#7dff5d" stroke-width="2" filter="url(#ldglow)"/></g>
+      <g class="m-mane">
+        <path d="M0,28 C-9,12 -5,4 -11,-6 C-4,-10 -7,-22 -11,-32 C-4,-34 -6,-46 -9,-56 C-3,-54 -1,-62 0,-66 C1,-62 3,-54 9,-56 C6,-46 4,-34 11,-32 C7,-22 4,-10 11,-6 C5,4 9,12 0,28 Z" fill="url(#ldb-mane)" stroke="#2c8a16" stroke-width="1" stroke-linejoin="round"/>
+        <path d="M0,18 C-4,8 -2,2 -6,-8 C-1,-12 -3,-24 -5,-34 C-1,-38 -3,-48 -4,-56 C-1,-56 0,-62 0,-62 C0,-58 1,-48 4,-46 C2,-36 1,-26 5,-22 C2,-14 1,-6 3,-4 C1,4 2,10 0,18 Z" fill="#fffce4" opacity="0.85"/>
+      </g>
+      <g class="m-tail" fill="none" stroke-linecap="round">
+        <path d="M0,40 C-3,54 4,68 -2,84 C-5,92 -1,100 1,108" stroke="#7c4fd1" stroke-width="3.2"/>
+        <path d="M0,42 C2,56 -3,70 3,86 C6,96 2,104 0,112" stroke="#9bff52" stroke-width="1.6" opacity="0.85"/>
+        <path d="M0,42 C-2,56 3,72 -2,88" stroke="#ffe14d" stroke-width="1.2" opacity="0.8"/>
+      </g>
+      <g fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+        <polyline class="ld-bsk-bolt bz-g" style="--bd:0s" stroke="#5dff5d" points="-30,-2 -42,-6 -36,-12 -48,-16"/>
+        <polyline class="ld-bsk-bolt bz-p" style="--bd:.1s" stroke="#bf86ff" points="30,-2 42,-6 36,-12 48,-16"/>
+        <polyline class="ld-bsk-bolt bz-w" style="--bd:.18s" stroke="#ffffff" points="-6,40 -12,50 -4,50 -12,60"/>
+        <polyline class="ld-bsk-bolt bz-g" style="--bd:.24s" stroke="#5dff5d" points="14,28 22,36 16,40 26,46"/>
+        <polyline class="ld-bsk-bolt bz-p" style="--bd:.14s" stroke="#bf86ff" points="-16,30 -24,38 -18,42 -28,48"/>
       </g>
     </g>
     <!-- 1-in-50 UFO: saucer flies in (translate via .ld-ship keyframes), blasts the moon, leaves -->
@@ -1389,7 +1385,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   /* A rare variant holds the loader open (see tryHideLoader) so its sequence is seen:
      the UFO's blast lands ~3s in, and the berserker dwells at the moon after the bite. */
   if(force==='ufo'||(!force&&r<0.02)){ scene.classList.add('ld-ufo'); window._loaderHoldUntil=Date.now()+4400; }
-  else if(force==='berserk'||(!force&&r<0.12)){ scene.classList.add('ld-berserk'); window._loaderHoldUntil=Date.now()+4900; }
+  else if(force==='berserk'||(!force&&r<0.12)){ scene.classList.add('ld-berserk'); window._loaderHoldUntil=Date.now()+5200; }
 })();</script>
 <div class="app">
 
