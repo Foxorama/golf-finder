@@ -1,0 +1,95 @@
+<!doctype html><html><head><meta charset="utf-8"><title>Berserker Space Manta (saved loader asset)</title>
+<!--
+  SAVED ASSET — the "Super-Saiyan space manta" built for the night-loader berserker
+  easter egg, then shelved (PR history around #293–#295). Kept because it's cool and
+  may be reused. This file renders it standalone + animated. Everything needed to drop
+  it back into index.html's <svg class="ld-night-scene"> is here:
+    1. the <defs> gradients below (ldb-aura-g/p, ldb-body, ldb-mane, ldb-wingm, ldb-flash)
+    2. the manta <g class="ld-bsk-manta"> markup + the <circle class="ld-bsk-flash">
+    3. the per-creature CSS (.ld-bsk-glow / .m-mane / .mw-* / .m-tail / .ld-bsk-bolt / .bz-*)
+    4. the loader-wiring keyframes (commented at the bottom): the dice roll added a
+       .ld-berserk class to the scene; ld-fly-bsk flew the side-view Y'orb in to bite the
+       moon then dissolved it into ld-bsk-flash (a white/green burst that MASKS the swap),
+       and ld-manta-fly emerged this manta from the fading flash, hovered it a beat, then
+       banked it off into the stars (translate + scale-down + rotate). It was dropped
+       because a true side-view-Y'orb -> rear-view-manta MORPH isn't doable cleanly in SVG,
+       so the "transformation" only ever read as one creature swapped for another.
+  Uses ldglow (a feGaussianBlur stdDeviation=1.6 filter) in index.html — redefined here.
+-->
+<style>
+  html,body{margin:0;height:100%;background:linear-gradient(180deg,#06091a 0%,#0c1228 55%,#171231 100%);}
+  body{display:flex;align-items:center;justify-content:center;}
+  svg{width:min(96vw,520px);height:auto;}
+  .ld-bsk-glow{transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-pulse 0.95s ease-in-out infinite;}
+  .ld-bsk-glow.p2{animation-duration:1.3s;animation-delay:-0.45s;}
+  @keyframes ld-bsk-pulse{0%,100%{transform:scale(0.92);opacity:0.6;}50%{transform:scale(1.12);opacity:0.98;}}
+  .m-mane{transform-box:fill-box;transform-origin:50% 100%;animation:m-mane 0.7s ease-in-out infinite;filter:drop-shadow(0 0 3px #ffe14d) drop-shadow(0 0 6px #9be63577);}
+  @keyframes m-mane{0%,100%{transform:scaleY(1) skewX(0);}50%{transform:scaleY(1.06) skewX(2deg);}}
+  .mw-near{transform-box:fill-box;transform-origin:0% 32%;animation:m-flapr 1.1s ease-in-out infinite;}
+  .mw-far{transform-box:fill-box;transform-origin:100% 32%;animation:m-flapl 1.1s ease-in-out infinite;}
+  @keyframes m-flapr{0%,100%{transform:rotate(0);}50%{transform:rotate(4deg);}}
+  @keyframes m-flapl{0%,100%{transform:rotate(0);}50%{transform:rotate(-4deg);}}
+  .m-tail{transform-box:fill-box;transform-origin:50% 0%;animation:m-tail 1.6s ease-in-out infinite;}
+  @keyframes m-tail{0%,100%{transform:rotate(-3deg);}50%{transform:rotate(3deg);}}
+  .ld-bsk-bolt{animation:ld-bsk-zap 0.42s steps(1,end) infinite;animation-delay:var(--bd,0s);}
+  @keyframes ld-bsk-zap{0%{opacity:0;}8%{opacity:1;}20%{opacity:.1;}30%{opacity:1;}44%{opacity:0;}100%{opacity:0;}}
+  .bz-g{filter:drop-shadow(0 0 1.7px #57ff57);}.bz-p{filter:drop-shadow(0 0 1.7px #c07bff);}.bz-w{filter:drop-shadow(0 0 1.5px #fff);}
+</style></head><body>
+<svg viewBox="-130 -120 260 260" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <radialGradient id="ldb-aura-g" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#eaffce" stop-opacity="0"/><stop offset="36%" stop-color="#9bff52" stop-opacity="0.5"/><stop offset="64%" stop-color="#39d11f" stop-opacity="0.26"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ldb-aura-p" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#f0e0ff" stop-opacity="0"/><stop offset="38%" stop-color="#c489ff" stop-opacity="0.5"/><stop offset="70%" stop-color="#7a2cff" stop-opacity="0.24"/><stop offset="100%" stop-color="#7a2cff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="ldb-body" cx="50%" cy="38%" r="68%"><stop offset="0%" stop-color="#eaffc4" stop-opacity="0.5"/><stop offset="48%" stop-color="#9bff52" stop-opacity="0.34"/><stop offset="100%" stop-color="#39d11f" stop-opacity="0.12"/></radialGradient>
+    <linearGradient id="ldb-mane" x1="0" y1="1" x2="0" y2="0"><stop offset="0%" stop-color="#8fe22f"/><stop offset="46%" stop-color="#ffe14d"/><stop offset="100%" stop-color="#fffce4"/></linearGradient>
+    <radialGradient id="ldb-wingm" cx="22%" cy="34%" r="95%"><stop offset="0%" stop-color="#7a5fc8"/><stop offset="45%" stop-color="#4a3a86"/><stop offset="78%" stop-color="#37505a"/><stop offset="100%" stop-color="#2f7a36"/></radialGradient>
+    <radialGradient id="ldb-flash" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff"/><stop offset="38%" stop-color="#e6ffc8"/><stop offset="68%" stop-color="#9bff52" stop-opacity="0.6"/><stop offset="100%" stop-color="#9bff52" stop-opacity="0"/></radialGradient>
+    <filter id="ldglow" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="1.6"/></filter>
+  </defs>
+  <g class="ld-bsk-manta">
+    <g class="m-aura"><ellipse class="ld-bsk-glow" cx="0" cy="-2" rx="116" ry="112" fill="url(#ldb-aura-g)"/><ellipse class="ld-bsk-glow p2" cx="0" cy="-2" rx="140" ry="134" fill="url(#ldb-aura-p)"/></g>
+    <g class="mw-far" opacity="0.9"><path d="M-8,-17 C-42,-29 -82,-26 -110,-9 C-91,5 -65,14 -43,19 C-29,22 -17,26 -9,23 C-8,9 -8,-5 -8,-17 Z" fill="url(#ldb-wingm)" stroke="#54e84a" stroke-width="1.8" filter="url(#ldglow)"/></g>
+    <g class="m-body">
+      <path d="M0,-46 C9,-42 13,-20 12,-6 C11,8 6,26 3,40 C1.5,44 -1.5,44 -3,40 C-6,26 -11,8 -12,-6 C-13,-20 -9,-42 0,-46 Z" fill="#7c4fd1" stroke="#20124a" stroke-width="1.6"/>
+      <path d="M0,-46 C9,-42 13,-20 12,-6 C11,8 6,26 3,40 C1.5,44 -1.5,44 -3,40 C-6,26 -11,8 -12,-6 C-13,-20 -9,-42 0,-46 Z" fill="url(#ldb-body)" stroke="#9bff52" stroke-width="1.2" opacity="0.8"/>
+      <path d="M-3,-44 C-6,-52 -9,-60 -5,-64 C-2,-58 -1,-50 0,-46 Z" fill="#6a40c0"/>
+      <path d="M3,-44 C6,-52 9,-60 5,-64 C2,-58 1,-50 0,-46 Z" fill="#6a40c0"/>
+      <circle cx="-4" cy="-40" r="2.4" fill="#ecffd2" filter="url(#ldglow)"/><circle cx="4" cy="-40" r="2.4" fill="#ecffd2" filter="url(#ldglow)"/>
+    </g>
+    <g class="mw-near"><path d="M8,-17 C42,-29 82,-26 110,-9 C91,5 65,14 43,19 C29,22 17,26 9,23 C8,9 8,-5 8,-17 Z" fill="url(#ldb-wingm)" stroke="#7dff5d" stroke-width="2" filter="url(#ldglow)"/></g>
+    <g class="m-mane">
+      <path d="M0,28 C-9,12 -5,4 -11,-6 C-4,-10 -7,-22 -11,-32 C-4,-34 -6,-46 -9,-56 C-3,-54 -1,-62 0,-66 C1,-62 3,-54 9,-56 C6,-46 4,-34 11,-32 C7,-22 4,-10 11,-6 C5,4 9,12 0,28 Z" fill="url(#ldb-mane)" stroke="#2c8a16" stroke-width="1" stroke-linejoin="round"/>
+      <path d="M0,18 C-4,8 -2,2 -6,-8 C-1,-12 -3,-24 -5,-34 C-1,-38 -3,-48 -4,-56 C-1,-56 0,-62 0,-62 C0,-58 1,-48 4,-46 C2,-36 1,-26 5,-22 C2,-14 1,-6 3,-4 C1,4 2,10 0,18 Z" fill="#fffce4" opacity="0.85"/>
+    </g>
+    <g class="m-tail" fill="none" stroke-linecap="round">
+      <path d="M0,40 C-3,54 4,68 -2,84 C-5,92 -1,100 1,108" stroke="#7c4fd1" stroke-width="3.2"/>
+      <path d="M0,42 C2,56 -3,70 3,86 C6,96 2,104 0,112" stroke="#9bff52" stroke-width="1.6" opacity="0.85"/>
+      <path d="M0,42 C-2,56 3,72 -2,88" stroke="#ffe14d" stroke-width="1.2" opacity="0.8"/>
+    </g>
+    <g fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+      <polyline class="ld-bsk-bolt bz-g" style="--bd:0s" stroke="#5dff5d" points="-30,-2 -42,-6 -36,-12 -48,-16"/>
+      <polyline class="ld-bsk-bolt bz-p" style="--bd:.1s" stroke="#bf86ff" points="30,-2 42,-6 36,-12 48,-16"/>
+      <polyline class="ld-bsk-bolt bz-w" style="--bd:.18s" stroke="#ffffff" points="-6,40 -12,50 -4,50 -12,60"/>
+      <polyline class="ld-bsk-bolt bz-g" style="--bd:.24s" stroke="#5dff5d" points="14,28 22,36 16,40 26,46"/>
+      <polyline class="ld-bsk-bolt bz-p" style="--bd:.14s" stroke="#bf86ff" points="-16,30 -24,38 -18,42 -28,48"/>
+    </g>
+  </g>
+</svg>
+<!--
+  LOADER WIRING (the 6s-clock keyframes it used in index.html, for reuse):
+
+  // dice (in the night controller script):
+  //   else if(force==='berserk'||(!force&&r<0.12)){ scene.classList.add('ld-berserk'); window._loaderHoldUntil=Date.now()+5500; }
+  // tryHideLoader honours window._loaderHoldUntil so the loader stays up long enough to see it.
+
+  .ld-bsk-flash{display:none;}  // <circle class="ld-bsk-flash" cx="255" cy="100" r="42" fill="url(#ldb-flash)"/>
+  .ld-night-scene.ld-berserk .ld-bsk-flash{display:block;transform-box:fill-box;transform-origin:50% 50%;animation:ld-bsk-flash 6s ease-out infinite;}
+  @keyframes ld-bsk-flash{0%,42%{transform:scale(0.2);opacity:0;}46%{transform:scale(1.5);opacity:1;}50%{transform:scale(1.9);opacity:1;}56%{transform:scale(3);opacity:0;}100%{transform:scale(3);opacity:0;}}
+
+  .ld-night-scene.ld-berserk .ld-yorb{animation:ld-fly-bsk 6s ease-in-out infinite;}  // side-view Y'orb flies in, bites, dissolves into the flash
+  @keyframes ld-fly-bsk{0%{transform:translate(-260px,150px);opacity:0;}7%{opacity:1;}28%{transform:translate(170px,108px);}40%{transform:translate(206px,98px);}44%{transform:translate(213px,95px);opacity:1;}47%{transform:translate(214px,94px);opacity:0;}100%{transform:translate(214px,94px);opacity:0;}}
+
+  .ld-bsk-manta{display:none;}
+  .ld-night-scene.ld-berserk .ld-bsk-manta{display:block;transform-box:view-box;transform-origin:0 0;animation:ld-manta-fly 6s ease-in-out infinite;}
+  @keyframes ld-manta-fly{0%,48%{opacity:0;transform:translate(252px,96px) scale(0.17) rotate(10deg);}53%{opacity:1;transform:translate(254px,95px) scale(0.45) rotate(10deg);}64%{opacity:1;transform:translate(266px,82px) scale(0.44) rotate(15deg);}84%{opacity:1;transform:translate(346px,14px) scale(0.24) rotate(28deg);}94%,100%{opacity:0;transform:translate(452px,-70px) scale(0.1) rotate(37deg);}}
+-->
+</body></html>
