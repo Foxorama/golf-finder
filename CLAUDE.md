@@ -416,6 +416,41 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   and points columns; History shows the entered index, the round-based **form** estimate
   (`handicapEstimate`, still a personal figure) and per-round net. Rounds save to
   `gf_rounds` (now incl. `hcpIndex`/`courseHcp`/`net`/`stableford`).
+- **Stats engine + detailed History dashboard (PLAY-STATS-CORE).** Saved rounds are now
+  **schema `v:2`**: each carries a `holeStats[]` (one record per scored hole —
+  `{n,par,score,putts,fir,gir,miss,bunkers,penalties,ballsLost,driveM,scrambleTry/Win,
+  sandTry/Win}`) assembled at save by `_buildHoleStats()` from the marks + auto-read lies +
+  logged penalties + geometry. **GIR is score-based** (`(score−putts)≤par−2` — robust, needs
+  no geometry); **FIR / green-miss direction / sand** read the mapped lies, so they degrade to
+  `null` on a course with no geometry. The **`PLAY-STATS-CORE-START…END` block is pure and
+  DOM-free** (no app globals): `psAggregate(rounds)` rolls enriched rounds into the whole stat
+  set (scoring by par 3/4/5, scoring spread, FIR/GIR%, putts incl. per-GIR + 3-/1-putt%,
+  green-miss tendency, bunkers, penalties, balls-lost, scrambling%, sand-save%, driving
+  avg/longest, and per-club avg/use-per-round/accuracy) + `psGirFromScore`/`psFirFromLie`/
+  `psClassifyMiss`/`psBallsLostFromPens` helpers. **It is unit-tested** — `tests/` slices that
+  exact region out of index.html, evals it in a Node `vm`, and asserts (see Testing below).
+  Legacy (pre-v2) rounds are backfilled by `holeStatsForRound()` (par + scores only ⇒ scoring
+  stats yes, GIR/FIR/miss `null`). The History tab is a **dashboard**: a **scope pill row**
+  (`_histScope`, All courses + one per saved-round slug — **auto-includes any new course** the
+  moment a round is saved there) drives `statsDashboardHtml()` (stat tiles + by-par + spread +
+  miss) and `clubsDetailHtml()` (carry · use/rd · accuracy), then the scoped round list, then a
+  **backup row** (`playExportData`/`playImportData` — gf_* keys to/from a JSON file, since
+  localStorage is the only copy).
+- **Shot tracking completeness.** Auto-club now has **two modes** (`suggestClub(d,mode)`):
+  `'reach'` (rangefinder default — the **longest club that won't fly the target, else the
+  shortest/closest**; mirrors `teeShotClub`) and `'nearest'` (used when you Mark / accept a
+  club for a *completed* leg — the club whose carry is closest to the measured distance, the
+  honest "what did I just hit"). Both **always** return a club when the bag has any carry (the
+  old ≤14 m null gap is gone), so a marked shot is always tagged. **Penalties / lost balls**
+  (`playPenaltyPicker`→`playAddPenalty`, `PEN_INFO` water/ob/lost/drop) log per-hole in
+  `playS.pens[n]`, add one penalty stroke to the score (seed ≥2, so a penalty never false-fires
+  the ace tracker) and feed penalties/balls-lost stats; water/ob/lost = a lost ball. **Manual
+  add-shot** (`playAddShotPicker`→`playAddManualShot`) appends a *synthesized* mark from your
+  last position toward the green by an entered distance + club (`shotMan[]` flags it), so a
+  forgotten shot still lands in the shot list/club store/map without a GPS fix — single-source
+  (marks) model intact. A GPS shot inside no drawn polygon is already `rough` (`_lieAt`). New
+  per-hole parallel array `shotMan[]` joins `shotClubs`/`shotLies`/`shotAuto` (+ `pens`) in the
+  draft, backfill and save reset.
 - **Hole-in-one trophies (`hios` / `gf_hios`).** The global `hios` load was **missing**
   (the tracker referenced an undeclared var and threw — fixed). Aces are now **auto-
   registered from the scorecard**: scoring a **1** on any hole calls `playSyncAce(n)` which
@@ -425,6 +460,20 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   tracker (`recordHio`) is unchanged and its entries carry no `src`, so auto-sync never
   touches them.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
+
+## Testing (regression guard)
+- **`tests/` is a zero-dependency Node harness** (no build, no deps). Run it with the
+  portable Node: `"$LOCALAPPDATA\gf-node\node-v24.17.0-win-x64\node.exe" tests/run.mjs`
+  (Bash path: `/c/Users/<you>/AppData/Local/gf-node/node-v24.17.0-win-x64/node.exe`).
+  `tests/run.mjs` discovers every `*.test.mjs` and runs the functions on its exported
+  `tests` object. Two suites today: **`syntax.test.mjs`** parses *every* inline `<script>`
+  in index.html with `new vm.Script` (catches stray-brace / bad-template-literal / TDZ edits
+  that otherwise only show as a stuck loader — run this after any non-trivial index.html
+  edit), and **`play-stats.test.mjs`** evals the `PLAY-STATS-CORE` block in a `vm` and asserts
+  the stats math on synthetic rounds. `tests/core.mjs` does the slicing; `tests/assert.mjs`
+  is the tiny `ok/eq/close` lib. **CI:** `.github/workflows/tests.yml` runs `node tests/run.mjs`
+  on every push/PR. To cover new stats logic, add a `*.test.mjs` (and keep new pure logic
+  inside the CORE markers so it's reachable from Node).
 
 ## Change & versioning flow
 - `main` is **branch-protected** — never commit to it directly. Each change:
