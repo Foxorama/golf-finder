@@ -83,8 +83,18 @@ export const tests = {
     eq(dr.n,2); eq(dr.avgM,235); eq(dr.accuracyPct,50); eq(dr.rounds,1); close(dr.perRound,1);
     eq(i7.n,1); eq(i7.avgM,150); eq(i7.accuracyPct,100); close(i7.perRound,0.5);
   },
+  'aggregate: strokes-lost split (fairway/green cost)'(){
+    const a = S.psAggregate(fixtures());
+    // firHitVp=[0,-1]→-0.5, firMissVp=[1]→1, cost = miss-hit = 1.5
+    close(a.loss.fairway.hit,-0.5); close(a.loss.fairway.miss,1); close(a.loss.fairway.cost,1.5);
+    eq(a.loss.fairway.hitN,2); eq(a.loss.fairway.missN,1);
+    // girHitVp=[0,-1]→-0.5 (r1 n1, r2 n1), girMissVp=[1,1]→1 (r1 n2, r1 n3), cost = 1.5
+    close(a.loss.green.hit,-0.5); close(a.loss.green.miss,1); close(a.loss.green.cost,1.5);
+    eq(a.loss.green.hitN,2); eq(a.loss.green.missN,2);
+  },
   'aggregate: empty input is safe'(){
     const a = S.psAggregate([]);
     eq(a.rounds,0); eq(a.fir.pct,null); eq(a.scoring.avg,null); eq(a.driving.avgM,null);
+    eq(a.loss.fairway.cost,null); eq(a.loss.green.cost,null); eq(a.loss.fairway.hitN,0);
   },
 };

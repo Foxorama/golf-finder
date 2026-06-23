@@ -421,7 +421,9 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   handicaps give one back on the highest SIs). `playTotals()` then yields **net +
   Stableford** (`max(0,(par−gross)+recv+2)`). The Card shows SI, a stroke-received dot, net
   and points columns; History shows the entered index, the round-based **form** estimate
-  (`handicapEstimate`, still a personal figure) and per-round net. Rounds save to
+  (`handicapEstimate`, still a personal figure) and per-round net. Each round's gross is
+  **net-double-bogey capped** (`_roundAdjGross` — every hole `min(score, par+2+recv)`) for the
+  form differential, so a blow-up / picked-up hole can't poison your form. Rounds save to
   `gf_rounds` (now incl. `hcpIndex`/`courseHcp`/`net`/`stableford`).
 - **Auto-score from tracked shots (`scoreAuto` / the tracker keeps your gross).** The shot
   tracker and the scorecard used to be two separate jobs — you marked every shot AND then
@@ -433,17 +435,34 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   enterable as soon as you've marked, since the gross is no longer null). Penalties re-derive
   too (no double-count). **The manual stepper always wins** — `playBumpScore` sets
   `scoreAuto[n]=false` and you have full control; a hand-set score that drifts from the marks
-  shows a one-tap **"= N from shots"** reconcile (`playScoreFromShots`) in the score row + shot
+  shows a one-tap **"score it N"** reconcile (`playScoreFromShots`) in the shot
   tracker. **Auto-derive deliberately never touches the ace tracker** (`playSyncAce` is NOT
   called from the auto path) — a transient gross of 1 (your tee shot resting on the map) is not
   a hole-in-one; aces still register only from the manual stepper / the 🏆 tracker. A pure
   scorecard user who never Marks is completely unaffected (stepper + putts behave as before).
   `scoreAuto` is in the draft + reset on save; `window._playAutoScore=false` disables the whole
-  thing. The score row shows an `⛳ auto` chip (themed `var(--green)`/`--gg`, so it stays
-  harmonious day↔night), and the shot tracker shows a live `scoring N · X shots + Y putts`
-  readout. **My Bag + the 🏆 tracker now layer ABOVE the Play sheet** (their `.hio-overlay`/
-  `.hio-sheet` z bumped 100/101 → 1500/1501, over Play's 1100) so the History tab's "Edit my
-  bag" works mid-round instead of opening behind the sheet.
+  thing. The footer score cell shows an `⛳ auto`/`max` tag, and the shot tracker shows a live
+  `scoring N · X shots + Y putts` readout. **My Bag + the 🏆 tracker now layer ABOVE the Play
+  sheet** (their `.hio-overlay`/`.hio-sheet` z bumped 100/101 → 1500/1501, over Play's 1100) so
+  the History tab's "Edit my bag" works mid-round instead of opening behind the sheet. The 🏆
+  tracker also has a button in the **Play header** and **prefills the course + current hole**
+  (`showHio`) when opened mid-round.
+- **Per-hole scoring console — the Play-tab footer (`playFootHtml` → `#play-foot`).** Mark/undo,
+  the gross + putt steppers and **Finish hole** live in a **persistent footer**: a real flex
+  child of `.play-sheet` (NOT an overlay — the body shrinks above it, so there's no
+  screenshot-wedge / covered-content risk a sticky overlay would carry), rendered only on the
+  Play tab of a GPS course (`playRender` toggles `#play-foot`; Card/History/no-GPS get full
+  height). So the primary action — **Mark** — and putts are one thumb-tap away no matter how far
+  the tall (`86vh`) hole map has scrolled (the old in-flow `.play-shotbar` Mark bar + `.play-scorerow`
+  are gone; their CSS is now dead). **Finish hole** (`playFinishHole`) advances to the next hole
+  (or routes the last hole to the Card to save) — the explicit "holed out" gesture that
+  complements GPS auto-advance. **"Round so far" (`.play-runtot`) now counts only FINISHED holes:
+  it excludes the hole you're on and labels it "hole N playing"** — so a mid-hole auto-score
+  can't inflate the total before you hole out. **Pick up / max** (`playPickUp`, a button in the
+  `.play-shotbar2` row) records the current hole at its **net double bogey**
+  (`par + 2 + strokesForSI(courseHcp, si)`, capped 15), flags `playS.picked[n]` (persisted in the
+  draft, reset on save, cleared if the stepper later overrides), and stops auto-growth — a clean
+  no-score for a blow-up. Steppers are still `playBumpScore`/`playBumpPutts`.
 - **Stats engine + detailed History dashboard (PLAY-STATS-CORE).** Saved rounds are now
   **schema `v:2`**: each carries a `holeStats[]` (one record per scored hole —
   `{n,par,score,putts,fir,gir,miss,bunkers,penalties,ballsLost,driveM,scrambleTry/Win,
@@ -463,7 +482,14 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   moment a round is saved there) drives `statsDashboardHtml()` (stat tiles + by-par + spread +
   miss) and `clubsDetailHtml()` (carry · use/rd · accuracy), then the scoped round list, then a
   **backup row** (`playExportData`/`playImportData` — gf_* keys to/from a JSON file, since
-  localStorage is the only copy).
+  localStorage is the only copy). `statsDashboardHtml` also renders a **"Where your strokes go"**
+  card from `psAggregate(...).loss` — your own scoring split (avg vs-par on holes where you HIT
+  vs MISSED the fairway / green ⇒ the extra strokes a miss costs you, shown once ≥4 holes each
+  side) plus the penalty bleed: a data-grounded **strokes-lost-lite**, deliberately NOT a generic
+  strokes-gained baseline (full shot-by-shot SG needs per-shot distance-to-pin capture we don't
+  store). The whole dashboard is reachable **without first opening a course** via the day-only
+  **📊 header button** (`showStats()` → a `historyOnly` Play panel: tabs + footer hidden, History
+  only) — the easiest path to your history.
 - **Shot tracking completeness.** Auto-club has **two modes** (`suggestClub(d,mode,fromTee)`):
   `'reach'` (rangefinder default — the **shortest club whose carry will REACH mid-green**
   (carry ≥ distance), i.e. the club capable of getting there on the fly that you swing softer to
