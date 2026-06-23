@@ -133,11 +133,11 @@ body.mode-melt #course-list{animation:modeFade .5s ease both;}
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
 html,body{background:var(--bg);color:var(--tx);font-family:var(--sans);min-height:100dvh;overscroll-behavior:none;}
 body{padding-bottom:env(safe-area-inset-bottom,20px);}
-.app{max-width:480px;margin:0 auto;padding:0 16px 32px;transition:transform .32s cubic-bezier(.2,.8,.3,1);}
+.app{max-width:480px;margin:0 auto;padding:0 16px 32px;transition:transform .34s cubic-bezier(.22,.7,.25,1);}
 /* While the finger is actively dragging, the app must track it 1:1 with no easing;
-   the transition above only runs for the snap-back / busy-hold. */
-body.ptr-pull .app{transition:none;}
-body.ptr-busy .app{transform:translateY(60px);}
+   the transition above only runs for the snap-back. The app is NOT held down during
+   the refresh — it snaps straight back and only the spinner stays at the top. */
+body.ptr-pull .app{transition:none;will-change:transform;}
 
 /* ── Header ── */
 .header{padding:18px 0 2px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
@@ -171,20 +171,23 @@ body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
 @keyframes spin{to{transform:rotate(360deg);}}
 /* ── Pull-to-refresh indicator (replaces the old header ↻ button). The whole .app
    slides down under the finger; this pill rides in the gap that opens above it,
-   tips green when past the threshold, then spins centred in the gap while init()
-   reloads. The PTR touch handler sets inline transforms during the drag (body
-   .ptr-pull kills easing so it tracks 1:1); on release the transitions snap both
-   the app and the pill back. ── */
+   tips green when past the threshold. On release the app snaps back and the pill
+   stays pinned at the top showing a spinning RING (not the ↻ glyph — a glyph
+   rotates about its font box and visibly orbits; a symmetric ring spins clean in
+   place). The PTR touch handler sets inline transforms during the drag (body
+   .ptr-pull kills easing so it tracks 1:1); on release the transitions snap back. ── */
 .ptr{position:fixed;top:0;left:50%;transform:translateX(-50%) translateY(-48px);z-index:1200;
   width:40px;height:40px;border-radius:50%;background:var(--sur2);border:1px solid var(--bdr);
   color:var(--gg);display:flex;align-items:center;justify-content:center;font-size:21px;
   opacity:0;pointer-events:none;box-shadow:0 8px 22px rgba(0,0,0,0.45);will-change:transform,opacity;
-  transition:transform .32s cubic-bezier(.2,.8,.3,1),opacity .3s ease,border-color .15s,background .15s;}
+  transition:transform .34s cubic-bezier(.22,.7,.25,1),opacity .3s ease,border-color .15s,background .15s;}
 body.ptr-pull .ptr{transition:border-color .15s,background .15s;}
 .ptr.ready{border-color:var(--gl);background:var(--green);box-shadow:0 8px 26px rgba(0,0,0,0.5),0 0 14px -2px var(--gl);}
-.ptr-icon{display:block;line-height:1;}
-body.ptr-busy .ptr{opacity:1;transform:translateX(-50%) translateY(10px);border-color:var(--gl);}
-body.ptr-busy .ptr-icon{animation:spin 0.8s linear infinite;}
+.ptr-icon{display:block;line-height:1;transform-origin:50% 50%;}
+.ptr-ring{display:none;width:20px;height:20px;border-radius:50%;border:2.6px solid var(--gl);border-top-color:transparent;box-sizing:border-box;}
+body.ptr-busy .ptr{opacity:1;transform:translateX(-50%) translateY(10px);border-color:var(--gl);background:var(--sur2);}
+body.ptr-busy .ptr-icon{display:none;}
+body.ptr-busy .ptr-ring{display:block;animation:spin 0.7s linear infinite;}
 @media (prefers-reduced-motion:reduce){.app,.ptr{transition-duration:.18s;}}
 
 /* ── DAYLIGHT BAR — hero redesign ── */
@@ -1172,7 +1175,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 @keyframes ld-boom-deb{0%,41%{transform:translate(0,0) scale(1);opacity:0;}45%{opacity:1;}70%{transform:translate(var(--dx,0),var(--dy,0)) scale(0.35);opacity:0;}100%{opacity:0;}}</style>
 </head>
 <body>
-<div id="ptr" aria-hidden="true"><span class="ptr-icon">↻</span></div>
+<div id="ptr" aria-hidden="true"><span class="ptr-icon">↻</span><span class="ptr-ring"></span></div>
 <div id="loader" aria-hidden="true">
   <svg class="ld-day-scene" viewBox="0 0 400 280" preserveAspectRatio="xMidYMid slice">
     <defs>
@@ -6843,48 +6846,58 @@ async function init(){
 // passive — at scrollTop 0 a downward drag can't scroll up, and overscroll-behavior
 // (set on html,body) already kills the native bounce, so nothing needs preventing.
 (function(){
-  const ARM=58, RB=0.5, MAX=110;   // gap (px) that arms a refresh; finger→gap damping; gap cap
+  const PULLMAX=150, ARM=72;   // max app travel (px); gap that arms a refresh
   const ind=document.getElementById('ptr'), icon=ind&&ind.querySelector('.ptr-icon');
   const app=document.querySelector('.app');
   if(!ind||!app) return;
-  let startY=0, pulling=false, armed=false, gap=0;
+  let startY=0, active=false, armed=false, curY=0, raf=0;
   // Bail whenever an overlay owns the screen: every modal/sheet locks the page
   // with body overflow:hidden, and the immersive sky adds .sky-full-on — in those
   // states a downward swipe is the overlay's own gesture (e.g. swipe-to-close a
   // story card), not a page refresh.
   const blocked=()=>document.body.style.overflow==='hidden'||document.body.classList.contains('sky-full-on');
   const atTop=()=>(window.scrollY||document.documentElement.scrollTop||0)<=0;
-  // Clear every inline transform so the CSS (base, or .ptr-busy) takes over and the
-  // .app + pill animate back. ptr-pull off re-enables their transitions for the snap.
-  const clearUI=()=>{ document.body.classList.remove('ptr-pull'); ind.classList.remove('ready'); app.style.transform=''; ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
+  // Rubber-band: ~1:1 at the start, easing to PULLMAX — smoother than a flat factor.
+  const rubber=d=>d<=0?0:PULLMAX*(1-Math.exp(-d/130));
+  // All visual writes happen here, batched into one rAF, so a fast drag can't thrash
+  // layout (that was the jank). curY is the latest raw finger delta.
+  function paint(){
+    raf=0;
+    const gap=rubber(curY), prog=Math.min(gap/ARM,1);
+    app.style.transform=gap>0?'translateY('+gap.toFixed(1)+'px)':'';
+    ind.style.opacity=Math.min(gap/26,1);
+    ind.style.transform='translateX(-50%) translateY('+(Math.min(gap*0.45,28)).toFixed(1)+'px)';
+    if(icon) icon.style.transform='rotate('+(prog*270).toFixed(1)+'deg)';
+    ind.classList.toggle('ready',gap>=ARM);
+  }
+  const schedule=()=>{ if(!raf) raf=requestAnimationFrame(paint); };
+  // Clear inline transforms so the CSS (base, or .ptr-busy) takes over and the app +
+  // pill animate back. ptr-pull off re-enables their snap-back transitions.
+  const clearUI=()=>{ if(raf){cancelAnimationFrame(raf);raf=0;} document.body.classList.remove('ptr-pull'); ind.classList.remove('ready'); app.style.transform=''; ind.style.transform=''; ind.style.opacity=''; if(icon) icon.style.transform=''; };
   addEventListener('touchstart',e=>{
     if(window._pullRefresh===false||e.touches.length!==1||blocked()||!atTop()||document.body.classList.contains('ptr-busy')) return;
-    startY=e.touches[0].clientY; pulling=true; armed=false; gap=0;
+    startY=e.touches[0].clientY; active=true; armed=false; curY=0;
   },{passive:true});
   // Non-passive: once a downward pull from the top is under way we preventDefault so
-  // the browser's own scroll / native pull-to-refresh can't swallow it (that native
-  // gesture is what showed a stray spinner and stopped our pull from moving the app).
+  // the browser's own scroll / native pull-to-refresh can't swallow it.
   addEventListener('touchmove',e=>{
-    if(!pulling) return;
-    const dist=e.touches[0].clientY-startY;
-    if(dist<=0||!atTop()){ if(!armed) pulling=false; return; }  // reversed / not at top before arming → let the page scroll
-    e.preventDefault();
-    armed=true;
-    document.body.classList.add('ptr-pull');
-    gap=Math.min(dist*RB,MAX);                 // the whole app slides down by `gap`
-    app.style.transform='translateY('+gap+'px)';
-    // pill rides centred in the opening gap; opacity + a 270° spin ramp to "ready".
-    const prog=Math.min(gap/ARM,1);
-    ind.style.transform='translateX(-50%) translateY('+Math.min(gap/2-20,18)+'px)';
-    ind.style.opacity=Math.min(gap/24,1);
-    if(icon) icon.style.transform='rotate('+(prog*270)+'deg)';
-    ind.classList.toggle('ready',gap>=ARM);
+    if(!active) return;
+    const d=e.touches[0].clientY-startY;
+    if(!armed){
+      if(d<=0||!atTop()){ active=false; return; }  // first move was up / not at top → leave it to the page scroller
+      armed=true; document.body.classList.add('ptr-pull');
+    }
+    e.preventDefault();          // we own the gesture now
+    curY=Math.max(d,0);          // sliding back up shrinks the gap toward 0 → disarms (no refresh)
+    schedule();
   },{passive:false});
+  // Refresh fires ONLY here, on release, and only if the finger is still past the
+  // threshold — slide back up before lifting and nothing happens.
   const end=()=>{
-    if(!pulling&&!armed) return;
-    const fire=armed&&gap>=ARM;
-    pulling=false; armed=false;
-    if(fire) triggerRefresh();   // adds ptr-busy first, so clearing inline holds the app open + spins
+    if(!armed){ active=false; return; }
+    const fire=rubber(curY)>=ARM;
+    active=false; armed=false;
+    if(fire) triggerRefresh();   // adds ptr-busy; clearUI then snaps the app back, leaving the pinned spinner
     clearUI();
   };
   addEventListener('touchend',end,{passive:true});
