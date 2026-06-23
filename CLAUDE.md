@@ -639,29 +639,23 @@ it with the preview tool:
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
   `setWx()` restores live weather.
-- `?yorb=berserk|ufo|normal` — force a **night-loader** variant (must be in night
-  mode, e.g. `&time=21:00`). The night loader rolls once: **1-in-10 berserker**
-  (`.ld-berserk`) — the normal Y'orb flies in and bites the moon **undecorated**,
-  then at the chomp a **flash** (`ld-bsk-flash`) erupts and a **brand-new
-  Super-Saiyan space manta** (`.ld-bsk-manta`, a *separate* scene-level creature —
-  **rear view**: a central spine with a flame mane down it, **one wing to either
-  side** of the spine, tail trailing, charged green body, blazing eyes, aura +
-  four-colour lightning) bursts out and **flies off into the stars** (`ld-manta-fly`
-  emerges it at the moon, then translate+scale-down+bank). The side-view Y'orb is
-  **not** decorated (`ld-fly-bsk` just fades it into the flash) — earlier attempts to
-  retrofit a mane/wings onto the side-view Y'orb never worked because its two wings
-  both sweep back (no honest near/far side of the spine); the new creature is drawn
-  rear-view precisely so "a wing either side of the spine + hair down the spine" is
-  possible. **1-in-50 UFO** (`.ld-ufo`) — an **alien saucer** flies in and blasts the
-  moon with a green laser instead of the Y'orb (benches the Y'orb, cancels the bite,
-  moon explodes to debris). A rolled variant **holds the loader open** (`tryHideLoader`
-  honours `window._loaderHoldUntil`; ~5.2s berserker / ~4.4s UFO) so the payoff is
-  actually seen — the loader normally hides on first render, often sub-second. Both
-  are pure inline SVG/CSS gated on a 6s clock (the loader is first-paint + offline, so
-  **no Flux/raster** in it); the dice roll is the short night controller script just
-  after the day loader controller. Verify via the loader-rebuild overlay recipe below
-  (the live page's `<style>` is stale after edits — reload `?fresh=` first, then
-  re-inject; freeze the manta at a fly pose by overriding its inline `transform`).
+- `?yorb=ufo|normal` — force a **night-loader** variant (must be in night mode, e.g.
+  `&time=21:00`). The night loader rolls once: **1-in-10 UFO** (`.ld-ufo`) — instead
+  of the Y'orb, an **alien saucer** flies in and blasts the moon with a green laser
+  (benches the Y'orb, cancels the bite, moon explodes to debris). It **holds the loader
+  open** (`tryHideLoader` honours `window._loaderHoldUntil`; ~4.4s) so the blast (~3s
+  in) is actually seen — the loader normally hides on first render, often sub-second.
+  Pure inline SVG/CSS gated on a 6s clock (the loader is first-paint + offline, so **no
+  Flux/raster** in it); the dice roll is the short night controller script just after
+  the day loader controller. Verify via the loader-rebuild overlay recipe below (the
+  live page's `<style>` is stale after edits — reload `?fresh=` first, then re-inject).
+  **A Super-Saiyan "space manta" berserker variant was trialled and dropped** — a true
+  side-view-Y'orb → rear-view-manta *morph* can't be done cleanly in SVG, so it only
+  ever read as one creature swapped for another (a big shape bites the moon, a different
+  small shape flies off). The manta art is **preserved, standalone + animated, in
+  `assets/night-loader-space-manta.html`** (with the full loader-wiring recipe in a
+  comment) if it's ever wanted again. **Lesson: don't keep iterating a loader easter
+  egg — if the core idea (here, a real transformation) isn't cleanly achievable, cut it.**
 - Weather/sun data come from open-meteo + sunrisesunset.io with month-based SEQ
   fallbacks (QLD has no DST) when the APIs fail.
 
