@@ -335,13 +335,28 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   `window._playAutoHole=false` disables it, `window._playTeeNear` tunes the radius — a GPS
   feature whose *feel* can only be judged on-course. (An auto next-hazard "carry" strip was
   trialled and removed — too noisy on the tee with multiple bunkers/water; tap-to-measure
-  covers it.) **Club tracking:** each marked shot leg can be
-  **tagged with a club** (tap the leg chip → `playClubPicker` grid, `CLUBS` set); tagged
-  legs feed a cross-round **per-club carry store** (`gf_club_stats`, `addClubShot`/
+  covers it.) **Auto shot tracking (lie + club):** marking a shot is still ONE tap, but
+  everything *after* the tap is automatic. (1) **Lie auto-read** — every surface is mapped,
+  so at each mark `_lieAt(pos)` does a point-in-polygon (`_pointInPoly`) against
+  `COURSE_GEOM` and records WHERE the ball ended up (`LIE_INFO`/`_LIE_ORDER`:
+  water>bunker>green>tee>waste>native>trees>fairway, else `rough`; null when the course has
+  no geometry). It colours the mark dot, shows a lie pill on the shot chip, and a live
+  "you're on …" hint (`window._playAutoLie=false` disables). (2) **Club auto-pick** — the
+  just-closed leg's distance auto-fills the nearest bag club (`suggestClub`) flagged `auto`
+  (a dashed "auto" badge), so a right guess is **zero taps**; tapping the chip opens
+  `playClubPicker` which now shows the leg distance + lie, a **1-tap "✓ play <club>" accept**
+  button and a dashed `sug` highlight on the suggested grid cell. Any manual pick clears the
+  auto flag. `window._playAutoClub=false` disables, falling back to the old empty `+ club`
+  chip. Cold start (empty bag ⇒ `suggestClub` null) just shows `+ club`, so the feature
+  reveals itself once the bag has carries. Per-leg state lives in parallel per-hole arrays
+  `shotLies`/`shotClubs`/`shotAuto` (index = leg index, so `[k]` is the leg ending at mark
+  `k`); openPlay **backfills** them to the `shots` length so pre-feature drafts can't desync.
+  Each marked shot leg can also still be **tagged manually** (`CLUBS` set); tagged/auto legs
+  feed a cross-round **per-club carry store** (`gf_club_stats`, `addClubShot`/
   `clubAvg` with 10%-trimmed mean, last 40 per club) when the round is saved, and the
-  History tab shows a **"Your clubs"** card of carry averages. Marked shots + clubs now
-  persist in the round draft and on the saved round (`legs:`), so shot distances survive a
-  close/reopen and a saved round. The rangefinder then **suggests a club** for the
+  History tab shows a **"Your clubs"** card of carry averages. Marked shots + clubs + lies now
+  persist in the round draft and on the saved round (`legs:` carries `{d,club,lie}`), so shot
+  distances + lies survive a close/reopen and a saved round. The rangefinder then **suggests a club** for the
   plays-like distance (`suggestClub`, `.pr-club`): the club whose carry average (≥3 tagged
   shots, within ~14 m) is nearest — so into a headwind the longer plays-like number bumps
   the suggestion up. Hidden until you've tagged enough shots. **My Bag** (the 🎒 button in
