@@ -144,6 +144,8 @@ body{padding-bottom:env(safe-area-inset-bottom,20px);}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
 .hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:18px;width:36px;height:36px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s,transform 0.1s;}
 .hdr-btn:hover{background:var(--sur2);border-color:var(--bdr);}
+/* My Bag + hole-in-one are day-only tools — hidden in the night sky-watching view */
+body.night #btn-bag, body.night #btn-hio{display:none;}
 .hdr-actions{display:flex;gap:8px;align-items:flex-end;}
 .hdr-icons{display:flex;gap:8px;}
 /* #btn-forecast is the primary day/night toggle — keep it prominent (on top when stacked) */
@@ -704,6 +706,12 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .bag-tracked.none{background:none;border:none;color:var(--tx3);cursor:default;}
 .bag-foot{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;margin-top:12px;}
 .bag-units{background:none;border:none;color:var(--gg);font-family:var(--mono);font-size:11px;text-decoration:underline;cursor:pointer;padding:0;}
+.bag-dod{display:flex;align-items:center;gap:10px;margin-top:14px;padding-top:13px;border-top:1px solid var(--bdr2);}
+.bag-dod-txt{flex:1;min-width:0;font-family:var(--sans);font-size:13px;color:var(--tx);}
+.bag-dod-txt b{display:block;font-weight:600;}
+.bag-dod-txt span{font-family:var(--mono);font-size:10px;color:var(--tx3);}
+.bag-dod-btn{flex:0 0 auto;min-width:54px;padding:7px 14px;border-radius:999px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx2);font-family:var(--sans);font-size:12px;font-weight:700;cursor:pointer;}
+.bag-dod-btn.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
 .bag-tabs{display:flex;gap:6px;margin-bottom:14px;background:var(--bg3);border:1px solid var(--bdr);border-radius:11px;padding:4px;}
 .bag-tab{flex:1;background:none;border:none;border-radius:8px;padding:8px 6px;color:var(--tx3);font-family:var(--mono);font-size:12px;font-weight:700;cursor:pointer;letter-spacing:0.02em;}
 .bag-tab.active{background:var(--sur);color:var(--gg);box-shadow:0 1px 3px rgba(0,0,0,0.25);}
@@ -1368,8 +1376,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div class="hdr-actions">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
       <div class="hdr-icons">
-        <button class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
-        <button class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
+        <button id="btn-bag" class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
+        <button id="btn-hio" class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
         <button class="hdr-btn" onclick="init()" aria-label="Refresh course availability"><span id="refresh-icon" aria-hidden="true" style="font-size:18px;">↻</span></button>
       </div>
     </div>
@@ -6840,20 +6848,28 @@ function saveWitb(a){ try{ localStorage.setItem('gf_witb',JSON.stringify(CLUBS.f
 function toggleWitb(c){ const w=loadWitb(), i=w.indexOf(c); if(i>=0) w.splice(i,1); else w.push(c); saveWitb(w); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 // Every carried club with a usable distance (witb ∩ (bag ∪ tracked)), in CLUBS order.
 function clubSet(){ const b=loadBag(), w=new Set(loadWitb()), out=[]; for(const c of CLUBS){ if(!w.has(c)) continue; const d=clubDist(c); if(d!=null) out.push({club:c,dist:d,manual:b[c]!=null}); } return out; }
+// "Driver off the deck": when ON (gf_dod), the driver is a valid suggestion for any shot;
+// when OFF (default) it's only suggested on tee shots — you can't reach a green with a club
+// that won't reach, but most players don't hit driver off the fairway either.
+function dodOn(){ return localStorage.getItem('gf_dod')==='1'; }
 // Suggest a club for a target distance from your bag (manual carries + tracked fallbacks).
 // Two modes — always returns a club when the bag has any usable carry (never null then):
-//   'reach' (default, the rangefinder before you swing): the LONGEST club that won't fly the
-//           target; if every club overshoots (a very short shot) the shortest club — i.e. the
-//           longest club that reaches mid-green, or the one that gets closest. Mirrors the
-//           tee-shot teeShotClub() "don't fly the green" logic.
+//   'reach' (default, the rangefinder before you swing): the SHORTEST club whose carry will
+//           REACH mid-green (carry ≥ distance) — the club capable of getting there on the fly,
+//           which you can swing a touch softer to avoid going long; if no club reaches (you're
+//           too far) the longest club (gets closest). Its full carry is still what we display.
 //   'nearest' (leg inference when you Mark): the club whose carry is closest to the measured
 //           distance — the honest guess of what you just hit (a 230 m leg ⇒ driver).
-function suggestClub(distM,mode){ if(distM==null) return null; const cs=clubSet(); if(!cs.length) return null;
+// fromTee=true keeps the driver in play even with DOD off (it IS a tee shot).
+function suggestClub(distM,mode,fromTee){ if(distM==null) return null;
+  let cs=clubSet();
+  if(!fromTee && !dodOn()) cs=cs.filter(x=>x.club!=='Dr');   // no driver off the deck unless enabled
+  if(!cs.length) return null;
   let pick;
   if(mode==='nearest'){ pick=cs.reduce((a,b)=>Math.abs(b.dist-distM)<Math.abs(a.dist-distM)?b:a); }
-  else { const fit=cs.filter(x=>x.dist<=distM+1);
-    pick = fit.length ? fit.reduce((a,b)=>b.dist>a.dist?b:a)   // longest that won't fly the target
-                      : cs.reduce((a,b)=>b.dist<a.dist?b:a); }  // all overshoot ⇒ shortest (closest)
+  else { const reach=cs.filter(x=>x.dist>=distM-1);
+    pick = reach.length ? reach.reduce((a,b)=>b.dist<a.dist?b:a)   // shortest club that still reaches mid-green
+                        : cs.reduce((a,b)=>b.dist>a.dist?b:a); }    // none reach ⇒ longest (gets closest)
   return {club:pick.club, avg:pick.dist, manual:pick.manual}; }
 
 // units helpers that work outside a Play session (the Bag panel opens from the main screen)
@@ -6899,10 +6915,14 @@ function renderBag(){
         <div class="bag-list">${rows}</div>
         <div class="bag-foot">${witb.length} club${witb.length===1?'':'s'} in your bag · distances in ${u} · <button class="bag-units" onclick="toggleBagUnits()">switch to ${u==='m'?'yd':'m'}</button></div>`;
     }
+    const dod=dodOn();
+    inner+=`<div class="bag-dod"><div class="bag-dod-txt"><b>Driver off the deck</b><span>${dod?'Driver can be suggested for any shot':'Driver only suggested on tee shots'}</span></div>
+      <button class="bag-dod-btn${dod?' on':''}" onclick="toggleDod()" role="switch" aria-checked="${dod}" aria-label="Driver off the deck">${dod?'On':'Off'}</button></div>`;
   }
   body.innerHTML=tabs+inner;
 }
 function toggleBagUnits(){ localStorage.setItem('gf_units', _bagUnit()==='yd'?'m':'yd'); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
+function toggleDod(){ localStorage.setItem('gf_dod', dodOn()?'0':'1'); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 
 // openPlay(name) opens the course. A course can carry `layouts:[{key,name,par,holesN,holes,noGps?}]`
 // for sites with more than one course (e.g. Nudgee's Kurrai + Bulka, or Virginia's 18 + Heritage):
@@ -7067,7 +7087,7 @@ function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix ye
   // auto-pick the club for the leg just closed: the club whose carry is nearest that distance
   // (the honest "what did I just hit"); always assigns one now (1-tap on the chip to change).
   const lg=playShotLegs(playS.course.holes[playS.hole-1]).legs, last=lg[lg.length-1];
-  const auto=(window._playAutoClub!==false&&last)?suggestClub(last.d,'nearest'):null;
+  const auto=(window._playAutoClub!==false&&last)?suggestClub(last.d,'nearest',!!last.tee):null;
   (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(auto?auto.club:null);
   (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(!!auto);
   (playS.shotMan[playS.hole]=playS.shotMan[playS.hole]||[]).push(false);   // a real GPS mark (not manually added)
@@ -7570,8 +7590,10 @@ function playRangeHtml(){
   const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
     ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
     : '';
-  // club suggestion off your tagged-shot averages, for the distance it actually plays
-  const sug=suggestClub(pl?pl.adj:dC);
+  // club suggestion off your tagged-shot averages, for the distance it actually plays.
+  // No marks yet on this hole ⇒ you're on the tee, so the driver stays in play even with DOD off.
+  const fromTee=(playS.shots[playS.hole]||[]).length===0;
+  const sug=suggestClub(pl?pl.adj:dC,null,fromTee);
   const sugRow=sug?`<div class="pr-club">play <b>${sug.club}</b><span class="pr-club-sub">your carry ${fmtDist(sug.avg)} ${u}${sug.manual?'':' · tracked'}</span></div>`:'';
   return `<div class="pr-grid">
       <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
@@ -8019,7 +8041,7 @@ function playClubPicker(legIdx){
   if(!el){ el=document.createElement('div'); el.id='play-clubpick'; el.className='play-confirm'; sheet.appendChild(el); }
   const cur=(playS.shotClubs[playS.hole]||[])[legIdx];
   const {legs}=playShotLegs(playS.course.holes[playS.hole-1]), leg=legs[legIdx];
-  const sug=leg?suggestClub(leg.d,'nearest'):null, u=playUnit();
+  const sug=leg?suggestClub(leg.d,'nearest',legIdx===0):null, u=playUnit();
   const lie=(playS.shotLies[playS.hole]||[])[legIdx], li=lie&&LIE_INFO[lie];
   const sub=`${leg?`<span class="pc-leg"><b>${fmtDist(leg.d)}</b> ${u}</span>`:''}${li?`<span class="pc-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:''}`;
   // 1-button accept of the suggested club (highlighted in the grid too); hidden if it's already set

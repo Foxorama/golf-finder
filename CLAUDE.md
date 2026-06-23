@@ -436,12 +436,17 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   miss) and `clubsDetailHtml()` (carry · use/rd · accuracy), then the scoped round list, then a
   **backup row** (`playExportData`/`playImportData` — gf_* keys to/from a JSON file, since
   localStorage is the only copy).
-- **Shot tracking completeness.** Auto-club now has **two modes** (`suggestClub(d,mode)`):
-  `'reach'` (rangefinder default — the **longest club that won't fly the target, else the
-  shortest/closest**; mirrors `teeShotClub`) and `'nearest'` (used when you Mark / accept a
-  club for a *completed* leg — the club whose carry is closest to the measured distance, the
-  honest "what did I just hit"). Both **always** return a club when the bag has any carry (the
-  old ≤14 m null gap is gone), so a marked shot is always tagged. **Penalties / lost balls**
+- **Shot tracking completeness.** Auto-club has **two modes** (`suggestClub(d,mode,fromTee)`):
+  `'reach'` (rangefinder default — the **shortest club whose carry will REACH mid-green**
+  (carry ≥ distance), i.e. the club capable of getting there on the fly that you swing softer to
+  avoid going long; if no club reaches, the **longest** one, to get closest) and `'nearest'`
+  (used when you Mark / accept a club for a *completed* leg — the club whose carry is closest to
+  the measured distance, the honest "what did I just hit"). The displayed `your carry` is always
+  the picked club's full carry. Both **always** return a club when the bag has any carry (the old
+  ≤14 m null gap is gone), so a marked shot is always tagged. **Driver off the deck (`gf_dod`,
+  My Bag toggle, `dodOn()`):** with it OFF (default) the driver is only suggested on **tee shots**
+  (`fromTee` — no marks yet on the hole / leg index 0); ON makes it a valid suggestion for any
+  shot. **Penalties / lost balls**
   (`playPenaltyPicker`→`playAddPenalty`, `PEN_INFO` water/ob/lost/drop) log per-hole in
   `playS.pens[n]`, add one penalty stroke to the score (seed ≥2, so a penalty never false-fires
   the ace tracker) and feed penalties/balls-lost stats; water/ob/lost = a lost ball. **Manual
@@ -458,7 +463,9 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   and pops `playAceToast`; changing the score away from 1 **removes** it (self-correcting).
   `playSaveRound` bumps `startedAt` so a new round gets fresh ace keys. The **manual** 🏆
   tracker (`recordHio`) is unchanged and its entries carry no `src`, so auto-sync never
-  touches them.
+  touches them. The **🏆 trophy (`#btn-hio`) and 🎒 My Bag (`#btn-bag`) header buttons are
+  day-only** — a CSS rule hides them under `body.night` (they're golf tools, irrelevant to the
+  night sky-watching view).
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Testing (regression guard)
