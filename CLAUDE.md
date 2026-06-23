@@ -363,12 +363,13 @@ Hosted on GitHub Pages at https://foxorama.github.io/golf-finder/ (deploys from
   the main-screen header → `showBag`/`renderBag` panel; `gf_bag = {club:metres}`) lets you
   curate which clubs you carry (WITB tab) and **set each club's carry distance by hand** (with a
   "use tracked" shortcut to copy the tagged-shot average). **`CLUBS` is the full bag taxonomy**
-  (Dr, MD, 2–7 woods, 3/4/7 hybrids, 1–9 irons, PW, 50°–60° wedges — keys longest→shortest;
+  (Dr, MD, 2–7 woods, 3/4/5 hybrids, 1–9 irons, PW, 50°–60° wedges — keys longest→shortest;
   **degree-wedge keys literally contain `°`**, fine in JS/HTML/localStorage). **No putter** —
-  putts are the per-hole `putts` counter, not a tagged club. A one-time `gf_club_schema`
-  migration (IIFE by `CLUBS`) remapped the old short list's retired keys (`Hyb`→`4H`, `GW`→`50°`,
-  `SW`→`56°`, `LW`→`60°`) across bag/stats/WITB/saved-round legs; matching keys (Dr, woods, irons,
-  PW) were left identical so existing data carried over. `clubDist(club)` resolves a
+  putts are the per-hole `putts` counter, not a tagged club. A versioned `gf_club_schema`
+  migration (IIFE by `CLUBS`) remaps retired keys across bag/stats/WITB/saved-round legs — schema
+  2: short list → full (`Hyb`→`4H`, `GW`→`50°`, `SW`→`56°`, `LW`→`60°`); schema 3: `7H`→`5H`
+  (the hybrid was mislabelled). Bump the version + extend the `map` whenever a key is renamed;
+  matching keys (Dr, woods, irons, PW) are left identical so existing data carries over. `clubDist(club)` resolves a
   manual bag value first, else the tracked average (≥3 shots); `clubSet()` is the union used
   by `suggestClub` and the History "Your clubs" card — so the on-course club suggestion runs
   off your real bag even before you've tagged any shots. The bag also drives a **tee-shot
