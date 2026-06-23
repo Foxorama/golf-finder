@@ -1110,18 +1110,33 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 .ld-balls circle{filter:drop-shadow(0 1px 0 rgba(0,0,0,0.25));}
 /* Super Saiyan: 1st hole-out = SSJ2 (gold spiky hair + blue lightning); the
    2nd hole-out morphs it into SSJ God Blue. The active form persists on misses. */
-.ld-saiyan-back,.ld-saiyan-front,.ld-hair2,.ld-hairb,.ld-aura-gold,.ld-aura-blue{display:none;}
-.ld-golfer.ssj2 .ld-saiyan-back,.ld-golfer.ssjb .ld-saiyan-back,.ld-golfer.ssj2 .ld-saiyan-front,.ld-golfer.ssjb .ld-saiyan-front{display:block;}
+.ld-saiyan-back,.ld-saiyan-front,.ld-hair2,.ld-hairb,.ld-hairs,.ld-aura-gold,.ld-aura-blue,.ld-aura-silver{display:none;}
+.ld-golfer.ssj2 .ld-saiyan-back,.ld-golfer.ssjb .ld-saiyan-back,.ld-golfer.ssjui .ld-saiyan-back,.ld-golfer.ssj2 .ld-saiyan-front,.ld-golfer.ssjb .ld-saiyan-front,.ld-golfer.ssjui .ld-saiyan-front{display:block;}
 .ld-golfer.ssj2 .ld-hair2,.ld-golfer.ssj2 .ld-aura-gold{display:block;}
 .ld-golfer.ssjb .ld-hairb,.ld-golfer.ssjb .ld-aura-blue{display:block;}
+.ld-golfer.ssjui .ld-hairs,.ld-golfer.ssjui .ld-aura-silver{display:block;}
 .ld-saiyan-back{transform-box:fill-box;transform-origin:50% 92%;}
-.ld-aura-gold,.ld-aura-blue{transform-box:fill-box;transform-origin:50% 60%;animation:ld-aura 1.15s ease-in-out infinite;}
+.ld-aura-gold,.ld-aura-blue,.ld-aura-silver{transform-box:fill-box;transform-origin:50% 60%;animation:ld-aura 1.15s ease-in-out infinite;}
 @keyframes ld-aura{0%,100%{opacity:0.4;transform:scale(0.92);}50%{opacity:0.82;transform:scale(1.1);}}
 .ld-hairf{transform-box:fill-box;transform-origin:50% 100%;animation:ld-hair 1.4s ease-in-out infinite;}
 @keyframes ld-hair{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.05);}}
 /* Crisp, fast-flickering bolts (CSS drop-shadow gives the glow, not a blur filter) */
 .ld-bolt{filter:drop-shadow(0 0 1.4px #3aa0ff);animation:ld-bolt 0.5s steps(1,end) infinite;animation-delay:var(--bd,0s);}
 @keyframes ld-bolt{0%{opacity:0;}8%{opacity:1;}18%{opacity:0.15;}28%{opacity:1;}42%{opacity:0;}100%{opacity:0;}}
+/* 3rd hole-out = Ultra Instinct (silver, above). 4th hole-out = a one-off LEGENDARY!
+   fireworks payoff (JS appends .ld-legend to #loader) that then resets the golfer to
+   default and restarts the streak. The JS also sets window._loaderHoldUntil so the
+   loader is held open and the celebration plays out in full rather than being cut off
+   the instant the app finishes loading — see the day-loader controller below. */
+.ld-legend{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;overflow:hidden;z-index:5;}
+.ld-legend-word{font-family:var(--sans);font-weight:800;font-size:clamp(34px,13vw,116px);letter-spacing:1px;line-height:1;text-align:center;
+  background:linear-gradient(180deg,#fff7c4 0%,#ffd23a 46%,#ff8a00 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 10px rgba(255,150,0,.65)) drop-shadow(0 0 26px rgba(255,210,80,.6));
+  transform:scale(0);opacity:0;animation:ld-legend-pop 3.6s cubic-bezier(.18,1.5,.3,1) forwards;}
+@keyframes ld-legend-pop{0%{transform:scale(0) rotate(-7deg);opacity:0;}11%{transform:scale(1.18) rotate(2deg);opacity:1;}19%{transform:scale(1) rotate(0);opacity:1;}82%{transform:scale(1) rotate(0);opacity:1;}100%{transform:scale(1.07);opacity:0;}}
+.ld-fw{position:absolute;width:0;height:0;}
+.ld-fw i{position:absolute;left:0;top:0;width:7px;height:7px;margin:-3.5px;border-radius:50%;background:var(--c,#fff);filter:drop-shadow(0 0 4px var(--c,#fff));opacity:0;animation:ld-fw-burst 1.2s ease-out forwards;animation-delay:var(--fd,0s);}
+@keyframes ld-fw-burst{0%{transform:rotate(var(--a)) translateX(0) scale(1);opacity:0;}8%{opacity:1;}70%{opacity:1;}100%{transform:rotate(var(--a)) translateX(var(--r,90px)) scale(.3);opacity:0;}}
 /* Night: the Night Y'orb flies in, bites the moon to a fingernail crescent,
    then flies off and the scene resets. One 6s master timeline (.ld-yorb flight,
    .ld-maw chomp, .ld-bite crescent reveal) + fast wing/tail/twinkle sub-loops. */
@@ -1184,6 +1199,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <radialGradient id="ldd-aura-blue" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bff0ff" stop-opacity="0.95"/><stop offset="45%" stop-color="#3aa0ff" stop-opacity="0.55"/><stop offset="100%" stop-color="#1e63e0" stop-opacity="0"/></radialGradient>
       <linearGradient id="ldd-hair-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff7cc"/><stop offset="45%" stop-color="#ffd83a"/><stop offset="100%" stop-color="#f0960a"/></linearGradient>
       <linearGradient id="ldd-hair-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6f7ff"/><stop offset="42%" stop-color="#5cc2ff"/><stop offset="100%" stop-color="#1f7fe0"/></linearGradient>
+      <radialGradient id="ldd-aura-silver" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.98"/><stop offset="45%" stop-color="#d6e6f2" stop-opacity="0.55"/><stop offset="100%" stop-color="#a9c0d6" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ldd-hair-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#dfeaf3"/><stop offset="100%" stop-color="#b4c4d6"/></linearGradient>
     </defs>
     <path class="ld-ground" d="M0,228 Q200,204 400,228 L400,280 L0,280 Z" fill="#2d5a1b"/>
     <g class="ld-balls"></g>
@@ -1192,6 +1209,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <g class="ld-saiyan-back">
         <ellipse class="ld-aura-gold" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-gold)" filter="url(#ldd-glow)"/>
         <ellipse class="ld-aura-blue" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-blue)" filter="url(#ldd-glow)"/>
+        <ellipse class="ld-aura-silver" cx="78" cy="193" rx="25" ry="39" fill="url(#ldd-aura-silver)" filter="url(#ldd-glow)"/>
         <g class="ld-hair2">
           <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#b9740a"/>
           <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-gold)"/>
@@ -1199,6 +1217,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <g class="ld-hairb">
           <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#1763c8"/>
           <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-blue)"/>
+        </g>
+        <g class="ld-hairs">
+          <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#8da2b8"/>
+          <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-silver)"/>
         </g>
       </g>
       <circle cx="78" cy="187" r="7" fill="#e8f5e0"/>
@@ -1355,16 +1377,55 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     ],{duration:300,easing:'ease-in',fill:'forwards'}).finished
       .then(function(){ ball.remove(); powerUp(); }).catch(function(){});
   }
+  var legendary=false;   /* true only while the 4th-hole-out LEGENDARY! payoff is playing */
   function powerUp(){
-    if(stage>=2) return;                              /* already SSJ God Blue (max) */
+    if(stopped()||legendary) return;                  /* loader gone, or mid-celebration — ignore extra hole-outs */
     stage++;
-    if(stage===1){ golfer.classList.add('ssj2'); flash('#ffe98a'); }       /* 1st: SSJ2 gold */
-    else { golfer.classList.remove('ssj2'); golfer.classList.add('ssjb'); flash('#bfe6ff'); } /* 2nd: SSJ Blue */
+    if(stage===1){ golfer.classList.add('ssj2'); flash('#ffe98a'); backPop(); }                          /* 1st: SSJ2 gold */
+    else if(stage===2){ golfer.classList.remove('ssj2'); golfer.classList.add('ssjb'); flash('#bfe6ff'); backPop(); }  /* 2nd: SSJ Blue */
+    else if(stage===3){ golfer.classList.remove('ssjb'); golfer.classList.add('ssjui'); flash('#eef6ff'); backPop(); } /* 3rd: Ultra Instinct silver */
+    else { legendary=true; legendaryShow(); }                                                            /* 4th: LEGENDARY! then reset the streak */
+  }
+  function backPop(){
     var back=svg.querySelector('.ld-saiyan-back');
     if(back) back.animate([{transform:'scale(0.4)',opacity:0},
                            {transform:'scale(1.22)',opacity:1,offset:0.6},
                            {transform:'scale(1)',opacity:1}],
                           {duration:540,easing:'cubic-bezier(.2,1.5,.4,1)'});
+  }
+  /* 4th hole-out of a single load: fireworks + a big LEGENDARY! splash. It HOLDS the
+     loader open (window._loaderHoldUntil, honoured by tryHideLoader) so the whole
+     ~3.6s celebration plays out instead of being cut the instant the app finishes
+     loading — "if it happens it's worth watching". When it ends the golfer resets to
+     default (no transform) and the hole-out streak starts again from scratch. */
+  function legendaryShow(){
+    var DUR=3600;
+    window._loaderHoldUntil=Math.max(window._loaderHoldUntil||0, Date.now()+DUR+250);
+    var ov=document.createElement('div'); ov.className='ld-legend';
+    var cols=['#ffd23a','#ff5a8a','#5af0ff','#7cff9e','#c98aff','#ffffff'], bursts=7, n=14;
+    for(var b=0;b<bursts;b++){
+      var fw=document.createElement('div'); fw.className='ld-fw';
+      fw.style.left=(12+Math.random()*76)+'%';
+      fw.style.top=(14+Math.random()*50)+'%';
+      var col=cols[b%cols.length], delay=(b*0.32+Math.random()*0.28).toFixed(2);
+      for(var p=0;p<n;p++){
+        var dot=document.createElement('i');
+        dot.style.setProperty('--a',(p*(360/n))+'deg');
+        dot.style.setProperty('--r',(72+Math.random()*55).toFixed(0)+'px');
+        dot.style.setProperty('--c',col);
+        dot.style.setProperty('--fd',delay+'s');
+        fw.appendChild(dot);
+      }
+      ov.appendChild(fw);
+    }
+    var word=document.createElement('div'); word.className='ld-legend-word'; word.textContent='LEGENDARY!';
+    ov.appendChild(word);
+    loader.appendChild(ov);
+    setTimeout(function(){
+      if(ov.parentNode) ov.remove();
+      golfer.classList.remove('ssj2','ssjb','ssjui');   /* back to default — the streak restarts from the next hole-out */
+      stage=0; legendary=false;
+    }, DUR+260);
   }
   function flash(color){
     var fl=document.createElementNS(NS,'circle');
