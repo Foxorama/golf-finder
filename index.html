@@ -811,15 +811,26 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-mark:active{transform:scale(0.98);}
 .ps-empty{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;padding:4px 0 2px;}
 .ps-chips{display:flex;flex-wrap:wrap;gap:5px;}
-.ps-chip{font-family:var(--mono);font-size:11px;color:var(--tx2);background:var(--sur);border:1px solid var(--bdr2);border-radius:7px;padding:3px 7px;cursor:pointer;}
-.ps-chip .ps-club{color:var(--tx3);border-left:1px solid var(--bdr2);margin-left:4px;padding-left:4px;}
+.ps-chip{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:11px;color:var(--tx2);background:var(--sur);border:1px solid var(--bdr2);border-radius:7px;padding:3px 7px;cursor:pointer;}
+.ps-chip b{color:var(--tx);font-weight:700;}
+.ps-chip .ps-club{color:var(--tx3);border-left:1px solid var(--bdr2);padding-left:5px;}
+.ps-chip .ps-club.none{color:var(--tx3);font-style:italic;}
+.ps-chip .ps-club.auto{color:var(--al);} .ps-chip .ps-club.auto .ps-autotag{font-size:8px;font-style:normal;letter-spacing:0.4px;text-transform:uppercase;opacity:0.7;margin-left:3px;border:1px dashed currentColor;border-radius:4px;padding:0 2px;}
 .ps-chip.tagged{border-color:var(--gl);} .ps-chip.tagged .ps-club{color:var(--gg);}
+.ps-lie{display:inline-flex;align-items:center;gap:2px;font-size:10px;line-height:1;color:var(--lc,var(--tx3));background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 5px;}
 .ps-live{font-family:var(--mono);font-size:12px;color:var(--tx2);text-align:center;margin-top:6px;}
-.ps-live b{color:var(--al);}
+.ps-live b{color:var(--al);} .ps-live .ps-lie{font-size:11px;}
 /* club picker grid (in the play-confirm overlay) */
 .cp-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:16px;}
 .cp-club{padding:10px 0;border-radius:9px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;}
 .cp-club.on{background:var(--green);border-color:var(--gl);color:var(--gg);}
+.cp-club.sug{border-color:var(--al);border-style:dashed;color:var(--al);}
+.cp-accept{display:block;width:100%;margin:0 0 12px;padding:11px;border-radius:10px;border:1px solid var(--al);background:rgba(245,184,68,0.14);color:var(--al);font-family:var(--mono);font-size:13px;font-weight:600;cursor:pointer;}
+.cp-accept b{font-weight:800;}
+.cp-accept:active{transform:scale(0.99);}
+.pc-leg-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px;}
+.pc-leg{font-family:var(--mono);font-size:12px;color:var(--tx2);} .pc-leg b{color:var(--tx);}
+.pc-lie{display:inline-flex;align-items:center;gap:3px;font-family:var(--mono);font-size:11px;color:var(--lc,var(--tx3));background:rgba(255,255,255,0.05);border-radius:5px;padding:2px 6px;}
 /* "Your clubs" averages card (History) */
 .play-clubs{background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:14px 16px;margin-bottom:12px;}
 .pcl-h{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--tx);margin-bottom:10px;}
@@ -6855,10 +6866,13 @@ function openPlay(courseName, layoutKey){
   playS={ slug:activeSlug, course:active, parentSlug:(L?slug:null), parentName:(L?course.name:null), layoutKey:(L?L.key:null),
           hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
-          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
+          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
           scores:(draft.scores||{}), putts:(draft.putts||{}), showClub:true,
           startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
+  // keep the per-leg arrays aligned with shots (drafts from before lie/auto tracking lack them)
+  Object.keys(playS.shots).forEach(k=>{ const n=playS.shots[k].length;
+    [['shotClubs',null],['shotLies',null],['shotAuto',false]].forEach(([a,fill])=>{ const arr=playS[a][k]=playS[a][k]||[]; while(arr.length<n) arr.push(fill); }); });
   if(!active.noGps){ playStartGps(); loadCourseGeom(activeSlug); }   // GPS courses: start the rangefinder + lazy-load the hole-map geometry
   playRender();
 }
@@ -6939,7 +6953,7 @@ function playClearScore(n){ delete playS.scores[n]; delete playS.putts[n]; playP
 function playBumpPutts(n,d){ const sc=playS.scores[n]; if(sc==null) return; const cap=Math.max(0,sc-1);
   let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
   playS.putts[n]=v; playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -6948,13 +6962,61 @@ function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0
     const pu=playS.putts[h.n]; if(pu!=null)putts+=pu; });
   return {gross,parPlayed,holesPlayed,vsPar:gross-parPlayed,putts,out,inn,net,points,ch,recvTotal}; }
 
+// ── lie detection (which mapped surface a GPS point sits in) ──────────────────
+// We map every surface of a hole (fairway/green/bunker/water/…), so when a shot is
+// marked we read WHERE the ball ended up straight off the geometry: point-in-polygon
+// at the GPS spot picks the surface it's in. Drives the per-shot lie chip, the coloured
+// mark dot and the live "you're on…" hint. No geometry for the course ⇒ null (unknown).
+const LIE_INFO={
+  green:  {lbl:'green',   ico:'🟢', col:'#54ab2c'},
+  bunker: {lbl:'bunker',  ico:'🏖', col:'#ecd9a6'},
+  water:  {lbl:'water',   ico:'💧', col:'#2a86c8'},
+  waste:  {lbl:'waste',   ico:'🏜', col:'#d8c89e'},
+  native: {lbl:'scrub',   ico:'🌾', col:'#9c9050'},
+  trees:  {lbl:'trees',   ico:'🌲', col:'#1d5018'},
+  fairway:{lbl:'fairway', ico:'⛳', col:'#3a8a2c'},
+  tee:    {lbl:'tee',     ico:'⛳', col:'#3b7a26'},
+  rough:  {lbl:'rough',   ico:'🌿', col:'#4a8a26'},
+};
+// Priority when a point falls inside overlapping polygons: hazards/most-specific win,
+// fairway is lowest (anything overlapping it takes precedence). In no surface ⇒ 'rough'.
+const _LIE_ORDER=['water','bunker','green','tee','waste','native','trees','fairway'];
+function _pointInPoly(pt,poly){ // pt/poly are [lat,lng]; ray-cast on lng(x)/lat(y)
+  let inside=false; const x=pt[1], y=pt[0];
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i][1], yi=poly[i][0], xj=poly[j][1], yj=poly[j][0];
+    if(((yi>y)!==(yj>y)) && (x < (xj-xi)*(y-yi)/((yj-yi)||1e-12)+xi)) inside=!inside; }
+  return inside;
+}
+// Lie at a GPS point from this course's baked geometry. Returns a LIE_INFO key, or null
+// when the course has no geometry (can't tell). On a mapped hole, a point inside no
+// surface is 'rough'. window._playAutoLie=false forces null (disables lie tracking).
+function _lieAt(pos){
+  if(window._playAutoLie===false||!pos||typeof playS==='undefined'||!playS) return null;
+  const geom=COURSE_GEOM[playS.slug]; if(!geom||!geom.features) return null;
+  let best=null,bestPr=99;
+  for(const f of geom.features){ if(!f.pts||f.pts.length<3) continue;
+    const pr=_LIE_ORDER.indexOf(f.t); if(pr<0||pr>=bestPr) continue;
+    if(_pointInPoly(pos,f.pts)){ best=f.t; bestPr=pr; } }
+  return best||'rough';
+}
+
 // ── shot-distance tracker (between dropped marks) ──
-// Each mark closes a leg; shotClubs[hole][i] is the (optional) club tagged to leg i.
+// Each mark closes a leg. Parallel per-hole arrays index by leg: shotClubs[hole][i] is
+// the club for leg i, shotLies[hole][i] is where that leg ENDED (the lie auto-read at the
+// mark), shotAuto[hole][i] flags a club we auto-suggested (vs one you confirmed).
 function playMarkShot(){ const pos=playPos(); if(!pos){ playToast('No GPS fix yet — wait for a location lock.'); return; }
   (playS.shots[playS.hole]=playS.shots[playS.hole]||[]).push(pos.slice());
-  (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(null);
+  (playS.shotLies[playS.hole]=playS.shotLies[playS.hole]||[]).push(_lieAt(pos));   // auto-track where it ended up
+  // auto-pick the club for the leg just closed: nearest bag club to that distance (1-tap to change)
+  const lg=playShotLegs(playS.course.holes[playS.hole-1]).legs, last=lg[lg.length-1];
+  const auto=(window._playAutoClub!==false&&last)?suggestClub(last.d):null;
+  (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[]).push(auto?auto.club:null);
+  (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[]).push(!!auto);
   playPersistDraft(); playRender(); }
-function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop(); const c=playS.shotClubs[playS.hole]; if(c)c.pop(); playPersistDraft(); playRender(); } }
+function playUndoShot(){ const a=playS.shots[playS.hole]; if(a&&a.length){ a.pop();
+  ['shotClubs','shotLies','shotAuto'].forEach(k=>{ const arr=playS[k]&&playS[k][playS.hole]; if(arr)arr.pop(); });
+  playPersistDraft(); playRender(); } }
 // Effective tee for a hole: a GPS "Set tee" override for this round, else the baked tee.
 function _effTee(h){ if(playS.teePos&&playS.teePos[h.n]) return playS.teePos[h.n]; const s=_selTeeKey(h.n); if(s&&h.tees&&h.tees[s]) return h.tees[s]; return h.tee; }
 function playShotLegs(h){ // legs from the (effective) tee through each mark, plus a live leg to current pos
@@ -7012,8 +7074,8 @@ function _commitRound(t){
   // fold this round's tagged shot legs into the cross-round club stats, and store
   // the legs (distance + club) on the round so shot distances persist with it
   const legsByHole={};
-  playS.course.holes.forEach(h=>{ const {legs}=playShotLegs(h), cl=playS.shotClubs[h.n]||[];
-    const tagged=legs.map((l,i)=>({d:Math.round(l.d),club:cl[i]||null})).filter(x=>x.d>=20);
+  playS.course.holes.forEach(h=>{ const {legs}=playShotLegs(h), cl=playS.shotClubs[h.n]||[], li=playS.shotLies[h.n]||[];
+    const tagged=legs.map((l,i)=>({d:Math.round(l.d),club:cl[i]||null,lie:li[i]||null})).filter(x=>x.d>=20);
     if(tagged.length){ legsByHole[h.n]=tagged; tagged.forEach(x=>{ if(x.club) addClubShot(x.club,x.d); }); } });
   const rounds=loadRounds();
   rounds.unshift({ id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
@@ -7024,7 +7086,7 @@ function _commitRound(t){
     legs:legsByHole });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.startedAt=Date.now();
+  playS.scores={}; playS.putts={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
@@ -7532,8 +7594,11 @@ function playHoleSvg(){
     const bw=38, bx=Math.min(W-bw-4,Math.max(4,L.x-bw/2)), by=L.y+11;
     s+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw}" height="15" rx="7.5" fill="rgba(20,14,4,0.86)" stroke="#ffcf6a" stroke-width="0.6"/><text x="${(bx+bw/2).toFixed(1)}" y="${(by+10.7).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#ffcf6a">${cm.club} ${fmtDist(cm.dist)}</text>`;
   }
-  // dropped shot marks
-  (playS.shots[playS.hole]||[]).forEach(mk=>{ const M=P(mk[0],mk[1]); s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="3" fill="#ffd24a" stroke="#16300f" stroke-width="0.8"/>`; });
+  // dropped shot marks — filled with the auto-detected lie colour (sand/water/green/rough/…)
+  const _lieArr=playS.shotLies[playS.hole]||[];
+  (playS.shots[playS.hole]||[]).forEach((mk,i)=>{ const M=P(mk[0],mk[1]);
+    const li=_lieArr[i]&&LIE_INFO[_lieArr[i]], col=li?li.col:'#ffd24a';
+    s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="3.4" fill="${col}" stroke="#16300f" stroke-width="1"/>`; });
   // you + dashed line to centre, with the live distance on it. The translucent ring is
   // scaled to the (filtered) GPS accuracy, so it visibly tightens as the fix settles.
   if(pos){ const Y=P(pos[0],pos[1]);
@@ -7593,12 +7658,18 @@ function playHoleSvg(){
 
 function playShotLiveHtml(){
   const h=playS.course.holes[playS.hole-1], {legs,last}=playShotLegs(h), pos=playPos(), u=playUnit();
-  const clubs=playS.shotClubs[playS.hole]||[];
+  const clubs=playS.shotClubs[playS.hole]||[], lies=playS.shotLies[playS.hole]||[], autos=playS.shotAuto[playS.hole]||[];
+  // live "you're on…" lie hint (only on a mapped hole with a fix) + distance from the last mark
   let live='';
-  if(pos&&last){ const d=_distM(last,pos); if(d>=2) live=`<div class="ps-live">live from last mark <b>${fmtDist(d)}</b> ${u}</div>`; }
-  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is measured from the tee. Tag the club to build your distances.</div>${live}`;
-  const rows=legs.map((l,i)=>{ const c=clubs[i];
-    return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="Tag club for ${l.tee?'tee shot':'shot '+i}, ${fmtDist(l.d)} ${u}">${l.tee?'tee':'shot '+i} → ${fmtDist(l.d)}${u} <span class="ps-club">${c||'+ club'}</span></button>`; }).join('');
+  if(pos){ const nowLie=_lieAt(pos), nl=nowLie&&LIE_INFO[nowLie];
+    const dTxt=(last)?(()=>{ const d=_distM(last,pos); return d>=2?` · <b>${fmtDist(d)}</b> ${u} from last mark`:''; })():'';
+    if(nl||dTxt) live=`<div class="ps-live">${nl?`you're on <span class="ps-lie" style="--lc:${nl.col}">${nl.ico} ${nl.lbl}</span>`:''}${dTxt}</div>`; }
+  if(!legs.length) return `<div class="ps-empty">Tap <b>Mark</b> at your ball to measure each shot. First leg is from the tee; the club is auto-picked from your bag and the lie auto-read from the map — tap a chip to change.</div>${live}`;
+  const rows=legs.map((l,i)=>{ const c=clubs[i], auto=autos[i], lie=lies[i], li=lie&&LIE_INFO[lie];
+    const name=l.tee?'tee':'shot '+i;
+    const clubPill=c?`<span class="ps-club${auto?' auto':''}">${c}${auto?'<i class="ps-autotag">auto</i>':''}</span>`:`<span class="ps-club none">+ club</span>`;
+    const liePill=li?`<span class="ps-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:'';
+    return `<button class="ps-chip${c?' tagged':''}" onclick="playClubPicker(${i})" aria-label="${name}, ${fmtDist(l.d)} ${u}${li?', ended in '+li.lbl:''}${c?', '+(auto?'auto-':'')+'club '+c:''} — tap to set club">${name} <b>${fmtDist(l.d)}</b>${u}${liePill}${clubPill}</button>`; }).join('');
   return `<div class="ps-chips">${rows}</div>${live}`;
 }
 // Tap a shot chip to tag (or clear) its club; tagged legs feed your club stats on save.
@@ -7607,13 +7678,21 @@ function playClubPicker(legIdx){
   let el=document.getElementById('play-clubpick');
   if(!el){ el=document.createElement('div'); el.id='play-clubpick'; el.className='play-confirm'; sheet.appendChild(el); }
   const cur=(playS.shotClubs[playS.hole]||[])[legIdx];
-  const btns=CLUBS.map(c=>`<button class="cp-club${c===cur?' on':''}" onclick="playSetLegClub(${legIdx},'${c}')">${c}</button>`).join('');
-  el.innerHTML=`<div class="pc-card"><div class="pc-msg">Club for this shot</div><div class="cp-grid">${btns}</div><div class="pc-row"><button class="pc-cancel" onclick="playCloseClubPicker()">Close</button>${cur?`<button class="pc-ok pc-danger" onclick="playSetLegClub(${legIdx},null)">Clear</button>`:''}</div></div>`;
+  const {legs}=playShotLegs(playS.course.holes[playS.hole-1]), leg=legs[legIdx];
+  const sug=leg?suggestClub(leg.d):null, u=playUnit();
+  const lie=(playS.shotLies[playS.hole]||[])[legIdx], li=lie&&LIE_INFO[lie];
+  const sub=`${leg?`<span class="pc-leg"><b>${fmtDist(leg.d)}</b> ${u}</span>`:''}${li?`<span class="pc-lie" style="--lc:${li.col}">${li.ico} ${li.lbl}</span>`:''}`;
+  // 1-button accept of the suggested club (highlighted in the grid too); hidden if it's already set
+  const accept=(sug&&sug.club!==cur)?`<button class="cp-accept" onclick="playSetLegClub(${legIdx},'${sug.club}')">✓ play <b>${sug.club}</b> · your carry ${fmtDist(sug.avg)} ${u}${sug.manual?'':' · tracked'}</button>`:'';
+  const btns=CLUBS.map(c=>`<button class="cp-club${c===cur?' on':''}${(c===(sug&&sug.club)&&c!==cur)?' sug':''}" onclick="playSetLegClub(${legIdx},'${c}')">${c}</button>`).join('');
+  el.innerHTML=`<div class="pc-card"><div class="pc-msg">Club for this shot${sub?`<div class="pc-leg-row">${sub}</div>`:''}</div>${accept}<div class="cp-grid">${btns}</div><div class="pc-row"><button class="pc-cancel" onclick="playCloseClubPicker()">Close</button>${cur?`<button class="pc-ok pc-danger" onclick="playSetLegClub(${legIdx},null)">Clear</button>`:''}</div></div>`;
   el.onclick=e=>{ if(e.target===el) playCloseClubPicker(); };
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 function playCloseClubPicker(){ const el=document.getElementById('play-clubpick'); if(el) el.classList.remove('show'); }
-function playSetLegClub(legIdx,club){ (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[])[legIdx]=club; playPersistDraft(); playCloseClubPicker(); playRender(); }
+function playSetLegClub(legIdx,club){ (playS.shotClubs[playS.hole]=playS.shotClubs[playS.hole]||[])[legIdx]=club;
+  (playS.shotAuto[playS.hole]=playS.shotAuto[playS.hole]||[])[legIdx]=false;   // user touched it ⇒ no longer an auto guess
+  playPersistDraft(); playCloseClubPicker(); playRender(); }
 
 function playTabHtml(){
   const h=playS.course.holes[playS.hole-1], tg=holeTargets(h), u=playUnit();
