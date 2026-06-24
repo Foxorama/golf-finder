@@ -8472,13 +8472,27 @@ function playHoleSvg(){
     s+=`<path d="M ${(rcx).toFixed(1)} ${(rcy-rr).toFixed(1)} A ${rr} ${rr} 0 1 1 ${(rcx-rr).toFixed(1)} ${(rcy+0.1).toFixed(1)}" fill="none" stroke="${rc}" stroke-width="1.1" stroke-linecap="round"/>`;
     s+=`<polygon points="${(rcx-0.4).toFixed(1)},${(rcy-rr-2).toFixed(1)} ${(rcx+2.4).toFixed(1)},${(rcy-rr+0.1).toFixed(1)} ${(rcx-0.7).toFixed(1)},${(rcy-rr+1.6).toFixed(1)}" fill="${rc}"/>`; }
   if(wv){
-    // teal/amber/red arrow points where the wind BLOWS TO (wv.d): up = downwind/helping toward the green
-    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx, aw=4.4+str*3, al=8+str*4;
-    const tailX=wcx-dx*(R-13), tailY=wcy-dy*(R-13), headX=wcx+dx*(R-6), headY=wcy+dy*(R-6);
-    // the needle (line + head) lives in one group that gently sways around the dial centre
-    s+=`<g${needleAttr}><line x1="${tailX.toFixed(1)}" y1="${tailY.toFixed(1)}" x2="${headX.toFixed(1)}" y2="${headY.toFixed(1)}" stroke="${wcol}" stroke-width="${(3+str*3).toFixed(1)}" stroke-linecap="round"/>`;
-    s+=`<polygon points="${headX.toFixed(1)},${headY.toFixed(1)} ${(headX-dx*al+pxn*aw).toFixed(1)},${(headY-dy*al+pyn*aw).toFixed(1)} ${(headX-dx*al-pxn*aw).toFixed(1)},${(headY-dy*al-pyn*aw).toFixed(1)}" fill="${wcol}"/></g>`;
-    s+=`<circle cx="${wcx}" cy="${wcy}" r="2.6" fill="#0e2230" stroke="${wcol}" stroke-width="1.1"${hubAttr}/>`;
+    // The needle points where the wind BLOWS TO (wv.d): up = downwind/helping toward the green.
+    const th=wv.d*Math.PI/180, dx=Math.sin(th), dy=-Math.cos(th), pxn=-dy, pyn=dx;
+    // ── A proper compass needle: a slim two-tone lance with a really sharp point. The pointing
+    //    half is a teal/amber/red blade tapering to a fine tip; the tail half is a silver
+    //    counterweight; a glossy facet runs down one side of the blade and a crisp near-black
+    //    edge defines it. Blade widens ~⅓ out from the hub then tapers, so the tip reads SHARP.
+    //    The whole thing lives in one group that gently sways about the dial centre (playNeedleInit). ──
+    const fwd=R-5, back=R-13, hw=2.6+str*1.8, hwb=hw*0.72, shoF=fwd*0.32, shoB=back*0.42;
+    const PT=(f,p)=>`${(wcx+dx*f+pxn*p).toFixed(1)},${(wcy+dy*f+pyn*p).toFixed(1)}`;   // f along the needle, p across it
+    const frontPoly=`${PT(fwd,0)} ${PT(shoF,hw)} ${PT(-2,0)} ${PT(shoF,-hw)}`;   // sharp coloured pointer (a kite: sharp at the tip AND at the hub)
+    const backPoly=`${PT(-back,0)} ${PT(-shoB,hwb)} ${PT(2,0)} ${PT(-shoB,-hwb)}`;  // silver counterweight tail
+    const glossPoly=`${PT(fwd,0)} ${PT(shoF,hw*0.34)} ${PT(-2,0)}`;                 // light-catching facet down one side
+    s+=`<g${needleAttr}>`;
+    s+=`<polygon points="${frontPoly}" fill="rgba(0,0,0,0.28)" transform="translate(0.6 1.2)"/>`;   // soft drop shadow under the pointer (lifts it off the dial)
+    s+=`<polygon points="${backPoly}" fill="#dfe7ee" stroke="#0a1410" stroke-width="0.5" stroke-linejoin="round"/>`;
+    s+=`<polygon points="${frontPoly}" fill="${wcol}" stroke="#0a1410" stroke-width="0.6" stroke-linejoin="round"/>`;
+    s+=`<polygon points="${glossPoly}" fill="rgba(255,255,255,0.45)"/>`;
+    s+=`</g>`;
+    // machined centre cap: dark seat ringed in the accent colour, bright pin in the middle
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="3.4" fill="#0e2230" stroke="${wcol}" stroke-width="1.2"${hubAttr}/>`;
+    s+=`<circle cx="${wcx}" cy="${wcy}" r="1.3" fill="#eaf2f8"/>`;
     const gustTxt=(wind.gust&&wind.gust>wv.spd)?`–${wind.gust}`:'';
     s+=`<text x="${wcx}" y="${(wcy+R+13).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="11" font-weight="bold" fill="${wcol}">${wv.spd}${gustTxt} km/h</text>`;
     s+=`<text x="${wcx}" y="${(wcy+R+24).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#cfe0ee">from ${compass16(wind.dir)}</text>`;
