@@ -8310,9 +8310,9 @@ function playHoleSvg(){
           defs+=`<radialGradient id="${gid}" gradientUnits="userSpaceOnUse" cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="${er.toFixed(1)}"><stop offset="0" stop-color="#08365f"/><stop offset="0.4" stop-color="#0b4a82"/><stop offset="0.72" stop-color="#1d6fb8"/><stop offset="1" stop-color="#3f96cf"/></radialGradient>`;
           s+=`<path d="${d}Z" fill="url(#${gid})"/>`;
           let rp=`<g clip-path="url(#${cid})">`;
-          // a soft top-left reflection sheen + a couple of faint ripple rings echoing the shore inward — calm, not directional streaks
-          rp+=`<ellipse cx="${(cx-er*0.16).toFixed(1)}" cy="${(cy-er*0.2).toFixed(1)}" rx="${(er*0.55).toFixed(1)}" ry="${(er*0.34).toFixed(1)}" fill="#cfe6f7" opacity="0.07"/>`;
-          for(const k of [0.78,0.5]){ let dd=''; for(let i=0;i<pj.length;i++){ const q=pj[i]; dd+=(i?'L':'M')+(cx+(q.x-cx)*k).toFixed(1)+' '+(cy+(q.y-cy)*k).toFixed(1); } rp+=`<path d="${dd}Z" fill="none" stroke="#bcd9ef" stroke-width="0.7" opacity="0.09"/>`; }
+          // faint ripple rings echoing the shore inward — calm, not directional streaks. They march in
+          // at a steady spacing and STOP just before the dark core, so the deepest centre stays clean.
+          for(const k of [0.82,0.6,0.38]){ let dd=''; for(let i=0;i<pj.length;i++){ const q=pj[i]; dd+=(i?'L':'M')+(cx+(q.x-cx)*k).toFixed(1)+' '+(cy+(q.y-cy)*k).toFixed(1); } rp+=`<path d="${dd}Z" fill="none" stroke="#bcd9ef" stroke-width="0.7" opacity="0.09"/>`; }
           s+=rp+'</g>';
           s+=`<path d="${d}Z" fill="url(#pmInset)"/>`;   // recessed bevel — water sits IN the turf
           s+=`<path d="${d}Z" fill="none" stroke="#0a3a66" stroke-width="0.7" opacity="0.55"/>`;   // faint crisp lip (the soft shoreline does the blending)
