@@ -862,16 +862,16 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 #play-map{touch-action:pan-y;-webkit-user-select:none;user-select:none;}
 #play-map svg{touch-action:pan-y;}
 .play-mapwrap.zoomed #play-map{cursor:grab;}
-/* idle "alive" compass — a real magnetic needle never sits dead still. The map SVG is
-   re-rendered every GPS tick, so each render restamps a negative animation-delay
-   (from window._pcT0) to keep the phase continuous across the redraw. */
-@keyframes pcNeedle{0%{transform:rotate(-1.7deg)}50%{transform:rotate(1.7deg)}100%{transform:rotate(-1.7deg)}}
+/* idle "alive" compass — a real magnetic needle never sits dead still. The needle sway is driven
+   in JS (_needleTick) via an SVG rotate() transform attribute about the dial centre, so it works
+   on every browser and survives the per-GPS-tick map redraw. The hub "breath" + ring pulse stay as
+   lightweight CSS animations; the map SVG re-renders each tick, so each render restamps a negative
+   animation-delay (from window._pcT0) to keep their phase continuous across the redraw. */
 @keyframes pcHub{0%,100%{transform:scale(1)}50%{transform:scale(1.16)}}
 @keyframes pcRing{0%,100%{opacity:.12}50%{opacity:.34}}
-#play-map .pc-needle{animation:pcNeedle 3.6s ease-in-out infinite;}
 #play-map .pc-hub{animation:pcHub 3.6s ease-in-out infinite;}
 #play-map .pc-ring{opacity:.12;animation:pcRing 3.6s ease-in-out infinite;}
-@media (prefers-reduced-motion: reduce){#play-map .pc-needle,#play-map .pc-hub,#play-map .pc-ring{animation:none;}}
+@media (prefers-reduced-motion: reduce){#play-map .pc-hub,#play-map .pc-ring{animation:none;}}
 /* "fit" (reset-zoom) tool — only shown while the map is zoomed in */
 #pmt-fit{display:none;}
 .play-mapwrap.zoomed #pmt-fit{display:flex;}
@@ -7159,7 +7159,7 @@ function closePlay(){
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }
   document.getElementById('play-panel').style.display='none';
   document.body.style.overflow='';
-  playS=null; _mapZoom=null; _swayStop();
+  playS=null; _mapZoom=null; _needleStop();
 }
 // ── GPS smoothing (constant-position Kalman) ───────────────────────────────────
 // watchPosition reports a single-fix accuracy (often ±10–15 m on a phone). Fusing
@@ -8076,7 +8076,7 @@ function playApplyMapZoom(){
   if(_mapZoom && playS && _mapZoom.hole===playS.hole){ const z=_mapZoom;
     svg.setAttribute('viewBox',`${z.x.toFixed(2)} ${z.y.toFixed(2)} ${z.w.toFixed(2)} ${z.h.toFixed(2)}`); }
   else _mapZoom=null;   // hole changed (or none) ⇒ fit
-  if(_swayXform){ svg.style.transformOrigin='50% 50%'; svg.style.transform=_swayXform; }   // re-apply the live sway onto the freshly-regenerated SVG (no 1-frame flash to upright)
+  if(_needleXform){ const nd=svg.querySelector('#pc-needle'); if(nd) nd.setAttribute('transform',_needleXform); }   // re-apply the live needle sway onto the freshly-regenerated SVG (no 1-frame flash to upright)
   _syncZoomUi();
 }
 function _mapWin(svg){ if(_mapZoom&&playS&&_mapZoom.hole===playS.hole) return {x:_mapZoom.x,y:_mapZoom.y,w:_mapZoom.w,h:_mapZoom.h}; const b=_mapBase(svg); return {x:0,y:0,w:b.W,h:b.H}; }
@@ -8132,50 +8132,42 @@ function playMapZoomInit(){
 }
 function _supportsTB(){ if(window._tbSup===undefined){ try{ window._tbSup=!!(window.CSS&&CSS.supports&&CSS.supports('transform-box','view-box')); }catch(e){ window._tbSup=false; } } return window._tbSup; }
 
-// ── Living map: a gentle, purely-COSMETIC sway so the hole map feels alive — like a light
-//    breeze nudging it — NOT a compass. It rotates the whole <svg> a degree or so back and
-//    forth via an INLINE-STYLE transform (set per-frame in JS, not a CSS/WAAPI animation),
-//    so getScreenCTM() reflects it and tap-to-measure / pinch-zoom stay pixel-exact — the
-//    sway changes nothing about the rangefinder or the wind reading. Held STILL while zoomed
-//    in (so precise measuring/panning isn't disturbed, and the pan scale-factor stays clean).
-//    Levers: window._playMapSway=false disables; window._playSwayAmp tunes the peak degrees
-//    (default 1.3); ?mapsway=off / ?mapsway=<deg> A/B it on a phone. Honours reduced-motion.
-let _swayRAF=null, _swayT0=0, _swayLast=0, _swayXform='';
-function _swayActive(){
-  return window._playMapSway!==false && playS && !playS.historyOnly && playS.tab==='play'
+// ── Living wind-compass needle: a small, purely-COSMETIC sway so the needle reads like a real
+//    magnetic needle settling, not a frozen icon. It rotates ONLY the needle group a few degrees
+//    back and forth about the dial centre via the SVG `transform` ATTRIBUTE (rotate(a cx cy) — no
+//    transform-box dependency, so it renders on every browser), set per frame in JS. It changes
+//    NOTHING about the wind reading, the map, the rangefinder or any behaviour — the needle still
+//    rests on the true wind bearing; this is just life around it. window._playCompassLive=false
+//    disables it; window._needleAmp tunes the peak degrees (default 3.2). Honours reduced-motion.
+let _needleRAF=null, _needleT0=0, _needleLast=0, _needleXform='';
+function _needleActive(){
+  return window._playCompassLive!==false && playS && !playS.historyOnly && playS.tab==='play'
     && !(playS.course&&playS.course.noGps)
     && !(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
 }
-function _swayStop(){
-  if(_swayRAF){ cancelAnimationFrame(_swayRAF); _swayRAF=null; }
-  if(_swayXform){ _swayXform=''; const svg=_mapSvgEl(); if(svg) svg.style.transform=''; }
+function _needleEl(){ const m=document.getElementById('play-map'); return m?m.querySelector('#pc-needle'):null; }
+function _needleStop(){
+  if(_needleRAF){ cancelAnimationFrame(_needleRAF); _needleRAF=null; }
+  if(_needleXform){ _needleXform=''; const nd=_needleEl(); if(nd) nd.removeAttribute('transform'); }
 }
-function playSwayInit(){
-  if(window._playSwayAmp===undefined){ try{ const v=new URLSearchParams(location.search).get('mapsway');
-    if(v==='off') window._playMapSway=false; else if(v!=null&&!isNaN(parseFloat(v))) window._playSwayAmp=parseFloat(v); }catch(e){} }
-  if(!_swayActive()){ _swayStop(); return; }
-  if(_swayRAF) return;                         // already running for this Play session
-  _swayRAF=requestAnimationFrame(_swayTick);
+function playNeedleInit(){
+  if(!_needleActive()){ _needleStop(); return; }
+  if(_needleRAF) return;                         // already running for this Play session
+  _needleRAF=requestAnimationFrame(_needleTick);
 }
-function _swayTick(ts){
-  if(!_swayActive()){ _swayStop(); return; }
-  _swayRAF=requestAnimationFrame(_swayTick);
-  if(ts-_swayLast<33) return;                  // ~30fps — a slow drift needs no more, and saves battery
-  _swayLast=ts; if(!_swayT0) _swayT0=ts;
-  const svg=_mapSvgEl(); if(!svg) return;
-  // hold dead-still while zoomed in: lets you study/measure a hole, and keeps _mapPan's scale exact
-  if(_mapZoom&&playS&&_mapZoom.hole===playS.hole){ if(_swayXform){ _swayXform=''; svg.style.transform=''; } return; }
-  const t=(ts-_swayT0)/1000;
-  const amp=(typeof window._playSwayAmp==='number')?window._playSwayAmp:1.3;   // peak degrees
-  // two slow, out-of-phase waves (weights sum to 1) ⇒ an organic, never-quite-repeating breeze
-  const ang=amp*(0.68*Math.sin(t*2*Math.PI/8.0) + 0.32*Math.sin(t*2*Math.PI/12.7+1.2));
-  // scale up just enough that the rotated rectangle still covers the frame (no dark corner gaps):
-  // for a w×h box rotated by θ, cover scale = cos θ + (h/w)·sin θ. (h/w from the base viewBox dims.)
-  const ar=((+svg.dataset.bh)||1)/((+svg.dataset.bw)||1);
-  const r=Math.abs(ang)*Math.PI/180, s=Math.cos(r)+ar*Math.sin(r)+0.004;
-  _swayXform=`scale(${s.toFixed(4)}) rotate(${ang.toFixed(3)}deg)`;
-  svg.style.transformOrigin='50% 50%';
-  svg.style.transform=_swayXform;
+function _needleTick(ts){
+  if(!_needleActive()){ _needleStop(); return; }
+  _needleRAF=requestAnimationFrame(_needleTick);
+  if(ts-_needleLast<33) return;                  // ~30fps — a slow sway needs no more, saves battery
+  _needleLast=ts; if(!_needleT0) _needleT0=ts;
+  const nd=_needleEl(); if(!nd) return;
+  const cx=(+nd.dataset.cx)||277, cy=(+nd.dataset.cy)||45;   // dial centre, stamped by the renderer
+  const t=(ts-_needleT0)/1000;
+  const amp=(typeof window._needleAmp==='number')?window._needleAmp:3.2;   // peak degrees
+  // two slow, out-of-phase waves (weights sum to 1) ⇒ an organic magnetic-needle settle
+  const ang=amp*(0.7*Math.sin(t*2*Math.PI/2.7) + 0.3*Math.sin(t*2*Math.PI/4.3+0.9));
+  _needleXform=`rotate(${ang.toFixed(2)} ${cx} ${cy})`;
+  nd.setAttribute('transform',_needleXform);
 }
 
 // Detailed, PLAY-LINE-UP map of the current hole: real OSM fairway / green / bunkers
@@ -8458,7 +8450,9 @@ function playHoleSvg(){
   const _ph=_cLive?((performance.now()-window._pcT0)/1000):0;
   const ringAttr=_cLive?` class="pc-ring" style="animation-delay:-${_ph.toFixed(2)}s"`:'';
   const hubAttr=_cTB?` class="pc-hub" style="transform-box:view-box;transform-origin:${wcx}px ${wcy}px;animation-delay:-${(_ph+0.4).toFixed(2)}s"`:'';
-  const needleAttr=_cTB?` class="pc-needle" style="transform-box:view-box;transform-origin:${wcx}px ${wcy}px;animation-delay:-${(_ph+0.2).toFixed(2)}s"`:'';
+  // the needle group is animated in JS (_needleTick) via an SVG rotate() transform attribute about
+  // the dial centre — stamped here as data-cx/cy. No transform-box/CSS-animation, so it works everywhere.
+  const needleAttr=_cLive?` id="pc-needle" data-cx="${wcx}" data-cy="${wcy}"`:'';
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
   window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+16}};
@@ -8827,7 +8821,7 @@ function playRender(){
   if(foot){ const showFoot=playS.tab==='play'&&!noGps; foot.style.display=showFoot?'':'none'; foot.innerHTML=showFoot?playFootHtml():''; }
   playRefreshDist();
   playDragonInit();
-  playSwayInit();   // gentle cosmetic "alive" sway on the hole map
+  playNeedleInit();   // gentle cosmetic sway on the wind-compass needle (alive, not a behaviour change)
   if(playS.tab==='play'&&!noGps){ playMapZoomInit(); playApplyMapZoom(); }   // bind pinch/zoom + re-apply any stored zoom
 }
 // Read-only "Rounds & Stats" panel straight from the home header — the easiest path to your
