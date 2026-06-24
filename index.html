@@ -8387,9 +8387,9 @@ function playHoleSvg(){
           s+=`<path d="${d}" fill="none" stroke="#1d6fb8" stroke-width="${own?4.5:2.6}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;  // mid depth
           s+=`<path d="${d}" fill="none" stroke="#0c4a80" stroke-width="${own?2:1}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;      // deep centre channel — runs the length of the creek
           if(own) s+=`<path d="${d}" fill="none" stroke="#dcf0fc" stroke-width="0.9" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.7"/>`;        // white current line — dashes read as water moving along the flow
-        } else if(layer==='path'){
-          s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?1.8:1.2}" stroke-linecap="round" stroke-linejoin="round" opacity="${own?0.8:op}"/>`;
-          if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+        } else if(layer==='path'){   // muted cart path — sits back so it doesn't fight the turf
+          s+=`<path d="${d}" fill="none" stroke="#6a6047" stroke-width="${own?1.8:1.2}" stroke-linecap="round" stroke-linejoin="round" opacity="${own?0.55:op}"/>`;
+          if(own) s+=`<path d="${d}" fill="none" stroke="#a89a78" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>`;
         } else if(layer==='ob'){  // out-of-bounds: white dashed boundary + stake dots at vertices
           s+=`<path d="${d}" fill="none" stroke="#f2f2f2" stroke-width="${own?1.6:1}" stroke-dasharray="2 5" stroke-linecap="round" opacity="${op}"/>`;
           if(own) for(const p of f.pts){ const q=P(p[0],p[1]); s+=`<circle cx="${q.x.toFixed(1)}" cy="${q.y.toFixed(1)}" r="1.4" fill="#fff" stroke="#c0392b" stroke-width="0.5"/>`; }
