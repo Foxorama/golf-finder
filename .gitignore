@@ -12,3 +12,4 @@ scripts/play/gailes_place.mjs
 scripts/play/*.traced.json
 scripts/play/*.traced_built.json
 _tooltest/
+scripts/play/_osm/*_built.json
