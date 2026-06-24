@@ -790,13 +790,14 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 /* Sticky centre-of-green distance, flanked by the Play/Card tabs. The hero read is plain: the big
    neutral-white CENTRE number = metres to mid-green, with the suggested CLUB right under it — that
    pairing (club → mid-green distance) is what the widget exists to show, so it stays uncoloured.
-   A thin SWING-POWER gauge bar underneath carries the only state colour — how full a swing your
-   suggested club needs: green ≥90% (full swing) · amber 50-90% (take something off) · red <50%
-   (awkward partial) · grey = even your longest club can't reach. */
+   ONE COLOUR AXIS, ONE MEANING: colour in this widget only ever encodes the reach/swing state, and
+   it appears on exactly two surfaces that say the same thing — the BORDER (the frame) and the thin
+   SWING-POWER gauge bar (how full a swing the suggested club needs): green ≥90% (full swing) ·
+   amber 50-90% (take something off) · red <50% (awkward partial) · grey = can't reach. Every other
+   element — distances, club, %, the plays-like wind read — is neutral, so a colour is never
+   ambiguous (the wind effect is shown by a ▲/▼ arrow, NOT by a second green/red). */
 /* the one consolidated rangefinder — the hero of the sticky tab row, BETWEEN Play and Card.
-   Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). Only the thin
-   gauge bar + a restrained border tint carry the reach/swing colour — the text never goes green,
-   so the club + mid-green distance always read cleanly instead of a wall of green. */
+   Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). */
 /* One CSS var (--gauge) carries the reach/swing state — it tints ONLY the thin gauge bar and a
    restrained border. The text (club + mid-green distance) is always neutral white so the data is
    the hero, not the colour. Default --gauge is neutral (no fix / no club yet). */
@@ -816,16 +817,17 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px 7px;font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.03em;}
 .prb-club{display:inline-flex;align-items:center;font-weight:700;color:var(--tx);font-size:11px;letter-spacing:0.04em;background:rgba(255,255,255,0.06);border:1px solid var(--bdr2);border-radius:6px;padding:1px 7px;}
 .prb-pct{font-size:9.5px;color:var(--tx3);letter-spacing:0.02em;}
-.prb-plays{text-transform:none;letter-spacing:0;}
-.prb-plays b{font-weight:700;}
-.prb-plays.hurt{color:#ff8a7a;} .prb-plays.hurt b{color:#ff6b5a;}
-.prb-plays.help{color:#7fd98a;} .prb-plays.help b{color:#5fd06a;}
-/* reach/swing state — the TEXT (club + mid-green distance) stays neutral white so it reads
-   instantly; only the thin gauge bar carries the state colour (full = commit to a full swing ·
-   med = take something off · low = awkward partial · unreach = can't reach), with a restrained
-   border tint. No green-everywhere wash — the data is the hero, the colour is just the gauge. */
+/* plays-like (wind-adjusted) read — NEUTRAL text + a ▲/▼ direction arrow (▲ plays longer into wind,
+   ▼ plays shorter downwind). Deliberately NOT colour-coded: the widget's one colour axis is the
+   reach/swing state (border + gauge), so a second green/red meaning here would be ambiguous. */
+.prb-plays{text-transform:none;letter-spacing:0;color:var(--tx3);}
+.prb-plays b{font-weight:700;color:var(--tx2);}
+/* THE one colour axis — reach/swing state, shown ONLY on the border (the frame) and the gauge bar
+   (both mean the same thing, so they reinforce): full = commit to a full swing · med = take something
+   off · low = awkward partial · unreach = can't reach. All text stays neutral so a colour in this
+   widget always means exactly one thing. */
 .play-rangebar.gauge-full,.play-rangebar.gauge-med,.play-rangebar.gauge-low,.play-rangebar.gauge-unreach{
-  border-color:color-mix(in srgb,var(--gauge) 34%,var(--bdr));}
+  border-color:color-mix(in srgb,var(--gauge) 62%,var(--bdr));}
 .play-rangebar.gauge-full{--gauge:#16e0a3;}
 .play-rangebar.gauge-med{--gauge:#ffc233;}
 .play-rangebar.gauge-low{--gauge:#ff4d4d;}
