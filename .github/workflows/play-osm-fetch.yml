@@ -9,27 +9,14 @@ name: Fetch Play OSM
 # can't happen locally happens here. A single-course query also dodges the
 # bulk-prebake throttling that makes course-maps.yml flaky on CI IPs.
 #
-# Manual-dispatch. Trigger on the working branch (the workflow reads inputs.branch
-# and pushes the result there).
+# Triggered by pushing the throwaway branch `ci/osm-fetch` (a push-triggered
+# workflow runs from its own branch, so it needs no presence on the protected
+# default branch — unlike workflow_dispatch). It checks out TARGET, fetches, and
+# commits the OSM JSON there. Edit the env below to fetch a different course.
 
 on:
-  workflow_dispatch:
-    inputs:
-      name:
-        description: 'Course name (Overpass name~ regex, case-insensitive)'
-        default: 'Kingston Heath'
-      slug:
-        description: 'Course slug (output filename)'
-        default: 'kingston-heath-golf-club'
-      lat:
-        description: 'Interior latitude (is_in fallback)'
-        default: '-37.9542'
-      lng:
-        description: 'Interior longitude (is_in fallback)'
-        default: '145.0686'
-      branch:
-        description: 'Branch to commit the OSM JSON to'
-        default: 'claude/melb-course-osm-data-4na7mg'
+  push:
+    branches: [ 'ci/osm-fetch' ]
 
 permissions:
   contents: write
@@ -41,27 +28,33 @@ concurrency:
 jobs:
   fetch:
     runs-on: ubuntu-latest
+    env:
+      NAME: 'Kingston Heath'
+      SLUG: 'kingston-heath-golf-club'
+      LAT: '-37.9542'
+      LNG: '145.0686'
+      TARGET: 'claude/melb-course-osm-data-4na7mg'
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ env.TARGET }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
 
       - name: Fetch OSM geometry
-        run: node scripts/play/fetch-osm.mjs "${{ inputs.name }}" "scripts/play/_osm/${{ inputs.slug }}.osm.json" "${{ inputs.lat }}" "${{ inputs.lng }}"
+        run: node scripts/play/fetch-osm.mjs "$NAME" "scripts/play/_osm/$SLUG.osm.json" "$LAT" "$LNG"
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: osm-${{ inputs.slug }}
+          name: osm-${{ env.SLUG }}
           path: scripts/play/_osm/*.json
           if-no-files-found: ignore
 
-      - name: Commit OSM JSON to branch
+      - name: Commit OSM JSON to target branch
         run: |
           if git diff --quiet -- scripts/play/_osm/; then
             echo "No new OSM data to commit"
@@ -70,5 +63,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add scripts/play/_osm/
-          git commit -m "CI: fetch OSM geometry for ${{ inputs.slug }}"
-          git push origin HEAD:${{ inputs.branch }}
+          git commit -m "CI: fetch OSM geometry for $SLUG"
+          git push origin HEAD:"$TARGET"
