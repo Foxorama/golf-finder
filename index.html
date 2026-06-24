@@ -791,21 +791,22 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
    SWING-POWER gauge: how full a swing your suggested club needs — green ≥90% (commit to a full
    swing) · amber 50-90% (take something off) · red <50% (big gap / awkward partial) · grey = even
    your longest club can't reach (true "black/unreachable", but a dark UI needs a visible muted grey). */
-/* the one consolidated sticky rangefinder band (sits under the tabs, above the scrolling body) */
-.play-rangebar{padding:9px 16px 10px;border-bottom:1px solid var(--bdr);background:var(--bg3);cursor:pointer;}
+/* the one consolidated rangefinder — compact, sits in the sticky tab row BETWEEN Play and Card.
+   Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). */
+.play-rangebar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:4px 7px;cursor:pointer;}
 .play-rangebar:empty{display:none;}
-.prb-wait{text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx3);padding:5px 0;}
-.prb-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
-.prb-fb{flex:1;text-align:center;display:flex;flex-direction:column;gap:2px;padding-bottom:4px;}
-.prb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.07em;color:var(--tx3);}
-.prb-fbn{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1;color:var(--tx2);}
-.prb-cen{flex:1.2;display:flex;align-items:baseline;justify-content:center;gap:3px;}
-.prb-cn{font-family:var(--mono);font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--gg);}
-.prb-u{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tx3);}
-.prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 10px;margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.04em;}
-.prb-club{font-weight:700;color:var(--tx);font-size:12px;letter-spacing:0;}
+.prb-wait{text-align:center;font-family:var(--mono);font-size:11px;color:var(--tx3);}
+.prb-grid{display:flex;align-items:flex-end;justify-content:center;gap:9px;}
+.prb-fb{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1;}
+.prb-lbl{font-family:var(--mono);font-size:8px;letter-spacing:0.05em;color:var(--tx3);}
+.prb-fbn{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;color:var(--tx2);}
+.prb-cen{display:flex;align-items:baseline;gap:2px;}
+.prb-cn{font-family:var(--mono);font-size:27px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--gg);}
+.prb-u{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx3);}
+.prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px 7px;font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.03em;}
+.prb-club{font-weight:700;color:var(--tx);font-size:11px;letter-spacing:0;}
 .prb-plays{text-transform:none;letter-spacing:0;}
-.prb-plays b{font-size:13px;font-weight:700;}
+.prb-plays b{font-weight:700;}
 .prb-plays.hurt{color:#ff8a7a;} .prb-plays.hurt b{color:#ff6b5a;}
 .prb-plays.help{color:#7fd98a;} .prb-plays.help b{color:#5fd06a;}
 .play-rangebar.gauge-full .prb-cn{color:#16e0a3;} .play-rangebar.gauge-med .prb-cn{color:#ffc233;}
@@ -6933,6 +6934,10 @@ function saveRounds(r){ try{ localStorage.setItem('gf_rounds',JSON.stringify(r))
 function playPos(){ return window.__playPos||(playS&&playS.pos)||null; }   // __playPos = test hook
 function playUnit(){ return playS.units==='yd'?'yd':'m'; }
 function fmtDist(m){ if(m==null) return '--'; return Math.round(playS.units==='yd'?m*1.09361:m); }
+// Display cap for the compact rangefinder slot: anything over 999 (m or yd) shows "999+", so a
+// no-fix junk distance or a far-flung reading can never blow out the width between the tabs.
+// (Real holes are well under this; teebox-specific distances are a later update.)
+function fmtCap(m){ const v=fmtDist(m); return (typeof v==='number'&&v>999)?'999+':v; }
 
 // ── Club tracking: per-club carry stats built from tagged shot legs (cross-round) ──
 // gf_club_stats = { 'Dr':[230,235,…], '7i':[150,…] } in metres, last 40 per club.
@@ -7830,7 +7835,7 @@ function playGpsHtml(){
 function playDistBarHtml(si){
   const u=playUnit();
   if(!si){
-    const msg=playS.gpsErr===1?'Location permission denied':'Waiting for GPS lock…';
+    const msg=playS.gpsErr===1?'GPS denied':'finding GPS…';
     return `<div class="prb-wait">📍 ${msg}</div>`;
   }
   const {dF,dC,dB,pl,sug,pct,reachable}=si;
@@ -7838,12 +7843,12 @@ function playDistBarHtml(si){
     ? `<span class="prb-club">${sug.club}</span><span class="prb-pct">${reachable?pct+'%':'past range'}</span>`
     : `<span class="prb-club">centre</span>`;
   const plays=(pl&&Math.abs(pl.deltaM)>=1.5)
-    ? `<span class="prb-plays ${pl.deltaM>0?'hurt':'help'}">${pl.deltaM>0?'▲':'▼'} plays <b>${fmtDist(pl.adj)}</b> ${u} ${pl.deltaM>0?'into wind +':'downwind −'}${fmtDist(Math.abs(pl.deltaM))}</span>`
+    ? `<span class="prb-plays ${pl.deltaM>0?'hurt':'help'}">plays <b>${fmtCap(pl.adj)}</b> ${u} ${pl.deltaM>0?'▲':'▼'}${fmtDist(Math.abs(pl.deltaM))}</span>`
     : '';
   return `<div class="prb-grid">
-      <div class="prb-fb"><span class="prb-lbl">FRONT</span><span class="prb-fbn">${fmtDist(dF)}</span></div>
-      <div class="prb-cen"><span class="prb-cn">${fmtDist(dC)}</span><span class="prb-u">${u}</span></div>
-      <div class="prb-fb"><span class="prb-lbl">BACK</span><span class="prb-fbn">${fmtDist(dB)}</span></div>
+      <div class="prb-fb"><span class="prb-lbl">FRONT</span><span class="prb-fbn">${fmtCap(dF)}</span></div>
+      <div class="prb-cen"><span class="prb-cn">${fmtCap(dC)}</span><span class="prb-u">${u}</span></div>
+      <div class="prb-fb"><span class="prb-lbl">BACK</span><span class="prb-fbn">${fmtCap(dB)}</span></div>
     </div>
     <div class="prb-sub">${club}${plays}</div>`;
 }
@@ -9030,9 +9035,9 @@ showTestBanner();
     </div>
     <div class="play-tabs" role="tablist" aria-label="Play and scorecard">
       <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')"><span class="pt-ico">⛳</span>Play</button>
+      <div class="play-rangebar" id="play-rangebar" onclick="playSetTab('play')" aria-label="Distance to the green"></div>
       <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')"><span class="pt-ico">📋</span>Card</button>
     </div>
-    <div class="play-rangebar" id="play-rangebar" onclick="playSetTab('play')" aria-label="Distance to the green"></div>
     <div class="play-body" id="play-body" role="tabpanel" tabindex="0" aria-labelledby="play-tab-play"></div>
     <div class="play-foot" id="play-foot" style="display:none;"></div>
   </div>
