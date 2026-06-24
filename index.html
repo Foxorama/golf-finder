@@ -8239,14 +8239,25 @@ function playHoleSvg(){
   // hole centreline (real OSM if baked), oriented tee->green
   let line=(geom&&geom.lines&&geom.lines[h.n]&&geom.lines[h.n].length>=2)?geom.lines[h.n].slice():[tee,cen];
   if(uv(line[0][0],line[0][1])[1] > uv(line[line.length-1][0],line[line.length-1][1])[1]) line.reverse();
-  // frame: tee, green targets, the centreline, AND this hole's own features (so edge trees/rough/OB/
-  // wide bunkers/water sit inside the frame instead of being culled), padded for fairway width
+  // FRAME CENTRING: the map is centred on the PLAY CORRIDOR (tee, green targets, the centreline) — NOT
+  // on this hole's owned features. A large water/forest used to drag the whole bbox (and with it the
+  // image centre) off the tee→green axis. Now the corridor fixes the centre, and features may only
+  // EXTEND the frame *symmetrically* about that centre (and only up to a cap), so the play line always
+  // runs down the middle and a lopsided hazard simply shows to one side instead of recentring everything.
   if(geom&&geom.features) _featOwner(geom);
-  const anchors=[tee,tg.front,tg.cen,tg.back].concat(line); if(tg.pin)anchors.push(tg.pin);
-  if(geom&&geom.features) for(const f of geom.features){ if(f._own===h.n&&f.pts) for(const p of f.pts) anchors.push(p); }
-  let uMin=Infinity,uMax=-Infinity,vMin=Infinity,vMax=-Infinity;
-  for(const p of anchors){ const [a,b]=uv(p[0],p[1]); if(a<uMin)uMin=a;if(a>uMax)uMax=a;if(b<vMin)vMin=b;if(b>vMax)vMax=b; }
-  const padU=Math.max(16,(uMax-uMin)*0.12), padV=12;   // tighter frame → the hole fills more of the map
+  const corr=[tee,tg.front,tg.cen,tg.back].concat(line); if(tg.pin)corr.push(tg.pin);
+  let cuMin=Infinity,cuMax=-Infinity,cvMin=Infinity,cvMax=-Infinity;
+  for(const p of corr){ const [a,b]=uv(p[0],p[1]); if(a<cuMin)cuMin=a;if(a>cuMax)cuMax=a;if(b<cvMin)cvMin=b;if(b>cvMax)cvMax=b; }
+  const cu=(cuMin+cuMax)/2, cv=(cvMin+cvMax)/2;        // corridor centre = the fixed centre of the map
+  let hu=(cuMax-cuMin)/2, hv=(cvMax-cvMin)/2;          // half-extents, grown (symmetrically) to admit features
+  // how far past the corridor a feature may push the frame (metres; uv units are metres). A giant
+  // hazard can't zoom the hole to a sliver or shove the play line off-centre — it just clips at the edge.
+  const reach=(typeof window!=='undefined'&&window._playMapFeatReach)||55;
+  const huCap=hu+reach, hvCap=hv+reach;
+  if(geom&&geom.features) for(const f of geom.features){ if(f._own===h.n&&f.pts) for(const p of f.pts){
+    const [a,b]=uv(p[0],p[1]); hu=Math.max(hu,Math.min(Math.abs(a-cu),huCap)); hv=Math.max(hv,Math.min(Math.abs(b-cv),hvCap)); } }
+  let uMin=cu-hu,uMax=cu+hu,vMin=cv-hv,vMax=cv+hv;
+  const padU=Math.max(16,hu*0.24), padV=12;   // tighter frame → the hole fills more of the map (pads both sides ⇒ centre held)
   uMin-=padU; uMax+=padU; vMin-=padV; vMax+=padV;
   const W=320,pad=10, gw=Math.max(1,uMax-uMin), gh=Math.max(1,vMax-vMin);
   const H=Math.round(Math.max(440,Math.min(620,W*gh/gw)));   // height adapts to the hole's shape so it fills the map (short par-3 ⇒ shorter map, long hole ⇒ taller)
