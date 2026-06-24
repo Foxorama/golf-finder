@@ -2406,17 +2406,29 @@ let hios = (()=>{ try{ return JSON.parse(localStorage.getItem('gf_hios')||'[]');
 let weatherCache = {};  // zone -> {temp, wind, code, label}
 
 // ── Weather helpers ───────────────────────────────────────────
-// Moon phase — calculated from synodic cycle, no API needed
-// Reference new moon: 2025-01-29 12:36 UTC, synodic month 29.530588853 days
+// Moon phase — calculated from synodic cycle, no API needed.
+// Reference new moon: 2025-01-29 12:36 UTC, synodic month 29.530588853 days.
+// ONE source of truth: moonAge() feeds moonPhase(), moonIllum() AND moonMark()
+// so the phase name, the illumination %, the emoji and the drawn glyph can never
+// drift apart. (They used to be computed from two different epochs — a constant
+// ~0.44-day offset — so e.g. a 71%-lit gibbous was mislabelled "First Quarter".)
+const MOON_SYNODIC=29.530588853;
+const MOON_NEW_REF=Date.UTC(2025,0,29,12,36)/86400000; // known new moon, days since Unix epoch
+function moonAge(date){ // 0..MOON_SYNODIC days since the most recent new moon
+  return ((date.getTime()/86400000-MOON_NEW_REF)%MOON_SYNODIC+MOON_SYNODIC)%MOON_SYNODIC;
+}
 function moonPhase(date){
-  const knownNew=Date.UTC(2025,0,29,12,36)/86400000; // days
-  const synodic=29.530588853;
-  const now=date.getTime()/86400000;
-  let age=((now-knownNew)%synodic+synodic)%synodic;
-  const emojis=['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
-  const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
-  const idx=Math.round((age/synodic)*8)%8;
-  return {icon:emojis[idx], name:names[idx], age};
+  const age=moonAge(date);
+  const f=(1-Math.cos(2*Math.PI*age/MOON_SYNODIC))/2;   // lit fraction 0..1 (same formula as moonMark/moonIllum)
+  const waxing=age<MOON_SYNODIC/2;
+  // Name DERIVED FROM the illumination, so it always agrees with the % shown.
+  let name,icon;
+  if(f<0.02){ name='New Moon'; icon='🌑'; }
+  else if(f>0.98){ name='Full Moon'; icon='🌕'; }
+  else if(Math.abs(f-0.5)<0.04){ name=waxing?'First Quarter':'Last Quarter'; icon=waxing?'🌓':'🌗'; }
+  else if(f<0.5){ name=waxing?'Waxing Crescent':'Waning Crescent'; icon=waxing?'🌒':'🌘'; }
+  else { name=waxing?'Waxing Gibbous':'Waning Gibbous'; icon=waxing?'🌔':'🌖'; }
+  return {icon, name, age, illum:f};
 }
 
 let forecastMode=false;
@@ -3399,11 +3411,11 @@ function moonAltAz(lat,lng,date){
   const e=moonEcl(date), eq=eclToEq(e.lon,e.lat);
   return altAz(eq.ra,eq.dec,lat,lng,date);
 }
-// Moon illumination fraction from synodic age
+// Moon illumination fraction — SAME age + synodic constant as moonPhase()/moonMark()
+// (was a separate epoch, which made the % disagree with the phase name).
 function moonIllum(date){
-  const age=((jdays(date)-(2451550.1-2451545))%29.530588)+ (0);
-  const a=((age%29.530588)+29.530588)%29.530588;
-  return (1-Math.cos(2*Math.PI*a/29.530588))/2;
+  const a=moonAge(date);
+  return (1-Math.cos(2*Math.PI*a/MOON_SYNODIC))/2;
 }
 // Next moonrise/set within 24h — 10-min sampling of altitude sign changes
 function moonEvents(lat,lng,from){
@@ -4594,16 +4606,26 @@ function _locSolar(active,W,H,ac,lit,thumb){
   const T=jdays(nowDate())/36525;
   const ECOL={mercury:'#b9b3a8',venus:'#f3ecd2',earth:'#6fa8ff',mars:'#e0795a',jupiter:'#e8d9b8',saturn:'#ded2a8'};
   let s=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(min*0.07)}" fill="#ffd27a"${lit?` style="filter:drop-shadow(0 0 ${_F1(min*0.06)}px #ffb347)"`:''}/>`;
+  const moonMode=(active==='moon');
   order.forEach((key,i)=>{
-    const rad=R0+i*step, ry=rad*0.9, isA=(key===active)||(active==='moon'&&key==='earth');
+    const rad=R0+i*step, ry=rad*0.9, isA=(key===active)||(moonMode&&key==='earth');
     s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(rad)}" ry="${_F1(ry)}" fill="none" stroke="${isA?ac:'rgba(150,180,235,0.32)'}" stroke-width="${isA?(lit?1.6:1.2):0.8}" opacity="${isA?(lit?0.9:0.6):0.5}"/>`;
     const h=planetHelio(PLANETS[key],T), ang=Math.atan2(h.y,h.x);
     const px=cx+Math.cos(ang)*rad, py=cy-Math.sin(ang)*ry;
     const pr=isA?min*(thumb?0.055:0.04):min*0.022;
-    s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr)}" fill="${ECOL[key]}"${isA&&lit?` style="filter:drop-shadow(0 0 ${_F1(pr*1.8)}px ${ac})"`:''}/>`;
+    // In moon mode the highlight (glow + reticle) belongs to the MOON, so Earth is
+    // drawn as a plain companion and the Moon beside it carries the "you-are-here".
+    const bodyGlow=isA&&lit&&!moonMode;
+    s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr)}" fill="${ECOL[key]}"${bodyGlow?` style="filter:drop-shadow(0 0 ${_F1(pr*1.8)}px ${ac})"`:''}/>`;
     if(isA){
-      s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr*2)}" fill="none" stroke="${ac}" stroke-width="1" opacity="${lit?0.8:0.5}" stroke-dasharray="${lit?'4 4':'2 3'}"/>`;
-      if(active==='moon') s+=`<circle cx="${_F1(px+pr*1.7)}" cy="${_F1(py-pr*0.7)}" r="${_F1(pr*0.5)}" fill="#dfe6ef"/>`;
+      if(moonMode){
+        const mr=Math.max(min*0.02,pr*0.5), mx=px+pr*1.9, my=py-pr*0.9;
+        s+=`<line x1="${_F1(px)}" y1="${_F1(py)}" x2="${_F1(mx)}" y2="${_F1(my)}" stroke="${ac}" stroke-width="0.8" opacity="${lit?0.55:0.35}" stroke-dasharray="3 3"/>`;
+        s+=`<circle cx="${_F1(mx)}" cy="${_F1(my)}" r="${_F1(mr)}" fill="#eef2fb"${lit?` style="filter:drop-shadow(0 0 ${_F1(mr*2)}px ${ac})"`:''}/>`;
+        s+=_locReticle(mx,my,mr*2.4,ac,lit);
+      }else{
+        s+=`<circle cx="${_F1(px)}" cy="${_F1(py)}" r="${_F1(pr*2)}" fill="none" stroke="${ac}" stroke-width="1" opacity="${lit?0.8:0.5}" stroke-dasharray="${lit?'4 4':'2 3'}"/>`;
+      }
     }
   });
   return s;
@@ -4622,6 +4644,28 @@ function _locMoonPhase(W,H,ac,lit,phase,rng){
     if(phase==='super') s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.86)}" fill="none" stroke="${ac}" stroke-width="${lit?1.1:0.8}" opacity="${lit?0.7:0.4}" stroke-dasharray="4 4"/>`;
   }
   return s;
+}
+// Live Moon phase — tonight's actual phase drawn with the SAME carved-terminator
+// geometry as the sky-map glyph (moonMark), so the card list matches the sky.
+// Lit disc + craters, then the night side as an offset shadow clipped to the disc;
+// the shadow slides off as the Moon fills (new → full) and flips sides waxing↔waning.
+function _locMoonLive(W,H,ac,lit,thumb){
+  const ph=moonAge(nowDate())/MOON_SYNODIC;                 // 0..1 (0/1 = new)
+  const f=(1-Math.cos(2*Math.PI*ph))/2;                     // lit fraction
+  const waxing=ph<0.5;
+  const cx=W/2, cy=H/2, R=Math.min(W,H)*(thumb?0.30:0.26);
+  const off=2*R*f, sx=cx+(waxing?1:-1)*off;                 // shadow centre (matches moonMark)
+  const id='ml'+(W*7+H), gid=id+'g', cid=id+'c', rng=_locRng('moonlive');
+  let s=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.5)}" fill="${ac}" opacity="${lit?0.18:0.08}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
+  s+=`<defs><clipPath id="${cid}"><circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}"/></clipPath>`
+    +`<radialGradient id="${gid}" cx="42%" cy="38%" r="70%"><stop offset="0%" stop-color="#fbfcff"/><stop offset="60%" stop-color="#e6ecfb"/><stop offset="100%" stop-color="#c2cbe0"/></radialGradient></defs>`;
+  s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="url(#${gid})"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px ${ac})"`:''}/>`;
+  s+=`<g clip-path="url(#${cid})" opacity="0.6">`;
+  for(let i=0;i<5;i++){ const a=rng()*6.283, rr=rng()*R*0.7; s+=`<circle cx="${_F1(cx+Math.cos(a)*rr)}" cy="${_F1(cy+Math.sin(a)*rr)}" r="${(R*0.07+rng()*R*0.06).toFixed(1)}" fill="#b9c2d6"/>`; }
+  s+=`</g>`;
+  s+=`<circle cx="${_F1(sx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="#0a1024" clip-path="url(#${cid})"/>`;
+  s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R)}" fill="none" stroke="rgba(222,231,255,0.5)" stroke-width="${thumb?0.9:1.1}"/>`;
+  return s+_locReticle(cx,cy,R*1.45,ac,lit);
 }
 function _locArc(W,H,ac,lit,rng){
   let s='';
@@ -4789,6 +4833,9 @@ function _locInner(slug,W,H,ac,opts){
   // richer field so they read as deep sky rather than a marked spot on a bare panel.
   const dense=(L.kind==='sky'||L.kind==='band'||L.kind==='clouds')?1.7:1.2;
   const bg=_locBackdrop(W,H,_locRng(slug+'bg'),dense);
+  // Moon: the card-list thumbnail shows TONIGHT'S phase (matches the sky); the
+  // larger modal map keeps the solar-system diagram (now highlighting the Moon).
+  if(L.kind==='solar' && slug==='moon' && thumb) return bg+_locMoonLive(W,H,ac,lit,true);
   if(L.kind==='solar')     return bg+_locSolar(L.planet,W,H,ac,lit,thumb);
   if(L.kind==='moonphase') return bg+_locMoonPhase(W,H,ac,lit,L.phase,rng);
   if(L.kind==='aurora')    return bg+_locAurora(W,H,ac,lit,rng);
@@ -5418,7 +5465,7 @@ function skyMark(type,col){
 // Moon glyph — a real phase, not an emoji: a pale disc with a dark terminator carved
 // by an offset shadow circle (clipped to the disc). age = days since new moon.
 function moonMark(age){
-  const ph=((age%29.530588)+29.530588)%29.530588/29.530588;     // 0..1 (0/1 = new)
+  const ph=((age%MOON_SYNODIC)+MOON_SYNODIC)%MOON_SYNODIC/MOON_SYNODIC; // 0..1 (0/1 = new)
   const f=(1-Math.cos(2*Math.PI*ph))/2;                          // lit fraction 0..1
   const R=5.2, off=(2*R)*f, waxing=ph<0.5;                       // shadow slides off as it fills
   const sx=(8+(waxing?1:-1)*off).toFixed(2);
