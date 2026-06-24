@@ -791,26 +791,35 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
    SWING-POWER gauge: how full a swing your suggested club needs — green ≥90% (commit to a full
    swing) · amber 50-90% (take something off) · red <50% (big gap / awkward partial) · grey = even
    your longest club can't reach (true "black/unreachable", but a dark UI needs a visible muted grey). */
-/* the one consolidated rangefinder — compact, sits in the sticky tab row BETWEEN Play and Card.
-   Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). */
-.play-rangebar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:4px 7px;cursor:pointer;}
+/* the one consolidated rangefinder — the hero of the sticky tab row, BETWEEN Play and Card.
+   Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). The WIDGET
+   itself (border + inner glow) carries the reach/swing state colour, so the green-number-always
+   read is gone: a distance you can't reach lights the whole widget grey, not happy green. */
+.play-rangebar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:12px;padding:6px 10px;cursor:pointer;transition:border-color .3s ease,box-shadow .3s ease;}
 .play-rangebar:empty{display:none;}
 .prb-wait{text-align:center;font-family:var(--mono);font-size:11px;color:var(--tx3);}
-.prb-grid{display:flex;align-items:flex-end;justify-content:center;gap:9px;}
+.prb-grid{display:flex;align-items:flex-end;justify-content:center;gap:11px;}
 .prb-fb{display:flex;flex-direction:column;align-items:center;gap:1px;line-height:1;}
-.prb-lbl{font-family:var(--mono);font-size:8px;letter-spacing:0.05em;color:var(--tx3);}
-.prb-fbn{font-family:var(--mono);font-size:13px;font-weight:600;line-height:1;color:var(--tx2);}
+.prb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.05em;color:var(--tx3);}
+.prb-fbn{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1;color:var(--tx2);}
 .prb-cen{display:flex;align-items:baseline;gap:2px;}
-.prb-cn{font-family:var(--mono);font-size:27px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--gg);}
-.prb-u{font-family:var(--mono);font-size:11px;font-weight:600;color:var(--tx3);}
+.prb-cn{font-family:var(--mono);font-size:34px;font-weight:800;letter-spacing:-1.5px;line-height:1;color:var(--tx);}
+.prb-u{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tx3);}
 .prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px 7px;font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.03em;}
 .prb-club{font-weight:700;color:var(--tx);font-size:11px;letter-spacing:0;}
 .prb-plays{text-transform:none;letter-spacing:0;}
 .prb-plays b{font-weight:700;}
 .prb-plays.hurt{color:#ff8a7a;} .prb-plays.hurt b{color:#ff6b5a;}
 .prb-plays.help{color:#7fd98a;} .prb-plays.help b{color:#5fd06a;}
-.play-rangebar.gauge-full .prb-cn{color:#16e0a3;} .play-rangebar.gauge-med .prb-cn{color:#ffc233;}
-.play-rangebar.gauge-low .prb-cn{color:#ff4d4d;} .play-rangebar.gauge-unreach .prb-cn{color:#8a93a3;}
+/* reach/swing state tints the whole widget (border + inner glow) AND the centre number */
+.play-rangebar.gauge-full{border-color:rgba(22,224,163,0.6);box-shadow:inset 0 0 24px -13px #16e0a3;}
+.play-rangebar.gauge-full .prb-cn{color:#16e0a3;}
+.play-rangebar.gauge-med{border-color:rgba(255,194,51,0.6);box-shadow:inset 0 0 24px -13px #ffc233;}
+.play-rangebar.gauge-med .prb-cn{color:#ffc233;}
+.play-rangebar.gauge-low{border-color:rgba(255,77,77,0.6);box-shadow:inset 0 0 24px -13px #ff4d4d;}
+.play-rangebar.gauge-low .prb-cn{color:#ff6b5a;}
+.play-rangebar.gauge-unreach{border-color:rgba(138,147,163,0.55);box-shadow:inset 0 0 24px -13px #8a93a3;}
+.play-rangebar.gauge-unreach .prb-cn{color:#aeb6c4;}
 /* "Last time here" — clubs hit on this hole in your most recent saved round (not sticky). */
 .play-lastclub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--tx3);background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:7px 11px;margin:2px 0 4px;}
 .play-lastclub b{color:var(--tx2);font-weight:700;letter-spacing:0.02em;}
