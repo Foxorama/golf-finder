@@ -50,6 +50,7 @@ for (let n = 1; n <= (cfg.course?.holesN || 18); n++) {
   for (const r of t.rough || []) if (r.length >= 3) feats.push({ t: 'rough', pts: simp(r) });
   for (const tr of t.trees || []) if (tr.length >= 3) feats.push({ t: 'trees', pts: simp(tr) });
   for (const bd of t.buildings || []) if (bd.length >= 3) feats.push({ t: 'building', pts: simp(bd) });
+  for (const rv of t.rivers || []) if (rv.length >= 2) feats.push({ t: 'river', pts: simp(rv) });   // river = traced centreline → deep channel that follows the curve
   for (const ck of t.creeks || []) if (ck.length >= 2) feats.push({ t: 'creek', pts: simp(ck) });
   for (const o of t.ob || []) if (o.length >= 2) feats.push({ t: 'ob', pts: simp(o) });
   for (const p of t.paths || []) if (p.length >= 2) feats.push({ t: 'path', pts: simp(p) });

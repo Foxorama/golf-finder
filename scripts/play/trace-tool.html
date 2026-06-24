@@ -77,7 +77,8 @@ const FT = [   // feature types: key, label, geoman shape, colour, JSON field, m
   {k:'centreline',l:'Centreline',  s:'Line',   c:'#ffd24a', field:'centreline', multi:false, auto:true},  // auto-built from green+tee; not hand-drawn
   {k:'fairway',   l:'Fairway',     s:'Polygon',c:'#3f7e2c', field:'fairway',    multi:false},
   {k:'bunker',    l:'Bunker',      s:'Polygon',c:'#e4d2a0', field:'bunkers',    multi:true},
-  {k:'water',     l:'Water',       s:'Polygon',c:'#1d5fa0', field:'water',      multi:true},
+  {k:'water',     l:'Water (lake/dam)',s:'Polygon',c:'#1d5fa0', field:'water',  multi:true},
+  {k:'river',     l:'River',       s:'Line',   c:'#1d6fb8', field:'rivers',     multi:true},
   {k:'creek',     l:'Creek',       s:'Line',   c:'#2a86c8', field:'creeks',     multi:true},
   {k:'rough',     l:'Rough',       s:'Polygon',c:'#6f8f48', field:'rough',      multi:true},
   {k:'trees',     l:'Trees',       s:'Polygon',c:'#245a24', field:'trees',      multi:true},
@@ -370,7 +371,7 @@ function summary(){
 }
 function redraw(){ layers.forEach(o=>{ const cur=o.hole===hole; o.layer.setStyle && o.layer.setStyle({opacity:cur?1:0.4, fillOpacity:cur?0.4:0.12}); if(o.layer.setOpacity) o.layer.setOpacity(cur?1:0.45); }); _restack(); }
 function _restack(){   // stack like the APP renders it: rough/fairway at the bottom, green/bunkers/etc on top — so you can draw rough OVER them and they still show on top (markers live in Leaflet's marker pane, always above)
-  const Z=['rough','native','trees','building','fairway','waste','green','teebox','water','bunker','creek','path','ob','ditch','bridge','centreline','dragon'];   // fairway above trees; hazards/markers on top (match playHoleSvg)
+  const Z=['rough','native','trees','building','fairway','waste','green','teebox','water','bunker','river','creek','path','ob','ditch','bridge','centreline','dragon'];   // fairway above trees; hazards/markers on top (match playHoleSvg)
   for(const key of Z) for(const o of layers){ if(o.key===key && o.layer.bringToFront) o.layer.bringToFront(); }
 }
 
