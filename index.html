@@ -8282,6 +8282,9 @@ function playHoleSvg(){
     defs+=`<linearGradient id="pmInset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#000" stop-opacity="0.42"/><stop offset="0.34" stop-color="#000" stop-opacity="0.05"/><stop offset="0.72" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity="0.2"/></linearGradient>`;
     defs+=`<radialGradient id="pmDome" cx="0.42" cy="0.32" r="0.8"><stop offset="0" stop-color="#fff" stop-opacity="0.22"/><stop offset="0.62" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#06200a" stop-opacity="0.28"/></radialGradient>`;
     defs+=`<radialGradient id="pmVig" cx="0.5" cy="0.5" r="0.72"><stop offset="0" stop-color="#000" stop-opacity="0"/><stop offset="0.55" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#02100a" stop-opacity="0.4"/></radialGradient>`;
+    // water depth: the concentric shallow→deep bands are softened by this blur so they read as a
+    // smooth depth gradient (deep core, shallow banks) rather than hard-edged rings.
+    defs+=`<filter id="pmWaterDepth" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="3.4"/></filter>`;
     for(const layer of ['rough','native','trees','building','fairway','waste','green','tee','water','bunker']){   // hazards (water/bunker) LAST so they're never hidden by the green collar or trees — important on a playability map
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const d=path(f.pts);
@@ -8296,12 +8299,26 @@ function playHoleSvg(){
           s+=`<path d="${d}Z" fill="none" stroke="#2c6b1d" stroke-width="3" opacity="0.28"/>`;
           s+=`<path d="${d}Z" fill="none" stroke="#5fb53a" stroke-width="0.8" opacity="0.4"/>`;
           s+=`<path d="${d}Z" fill="none" stroke="#1c4d12" stroke-width="0.8"/>`;
-        } else if(layer==='water'){                         // base + curved crest/trough ripples + ink
+        } else if(layer==='water'){                         // depth-shaded body: shallow banks → deep core + along-flow ripples + ink
           defs+=`<clipPath id="${cid}"><path d="${d}Z"/></clipPath>`;
-          s+=`<path d="${d}Z" fill="${fill.water}"/>`;
-          const w=Math.max(8,bb.x1-bb.x0); let rp=`<g clip-path="url(#${cid})">`;
-          for(let i=0,y=bb.y0+6;y<bb.y1;y+=11,i++){ const c=(i%2)?'#9ccef2':'#b3d9f6';
-            rp+=`<path d="M${bb.x0.toFixed(1)} ${y.toFixed(1)} q${(w*0.25).toFixed(1)} -4 ${(w*0.5).toFixed(1)} 0 t${(w*0.5).toFixed(1)} 0" fill="none" stroke="${c}" stroke-width="1.3" opacity="0.5" stroke-linecap="round"/>`; }
+          // concentric depth: scale the polygon inward toward its centroid for shallow→deep bands.
+          // A blobby pond/lake/dam deepens at its CENTRE; an elongated river keeps its aspect when
+          // scaled, so the deep band becomes a central SPINE with shallow banks — one model, both reads.
+          const pj=f.pts.map(p=>P(p[0],p[1]));
+          let cx=0,cy=0; for(const q of pj){ cx+=q.x; cy+=q.y; } cx/=pj.length; cy/=pj.length;
+          const ringAt=k=>{ let dd=''; for(let i=0;i<pj.length;i++){ const q=pj[i]; dd+=(i?'L':'M')+(cx+(q.x-cx)*k).toFixed(1)+' '+(cy+(q.y-cy)*k).toFixed(1); } return dd+'Z'; };
+          s+=`<path d="${d}Z" fill="#3f96cf"/>`;                                   // shallow water at the bank
+          s+=`<g clip-path="url(#${cid})" filter="url(#pmWaterDepth)"><path d="${ringAt(0.72)}" fill="${fill.water}"/><path d="${ringAt(0.42)}" fill="#0c4a80"/><path d="${ringAt(0.2)}" fill="#08365f"/></g>`;
+          // ripples run ALONG the body's long axis (the flow direction of a river/channel), wiggling
+          // across it, so the white crests read as moving water rather than flat horizontal rows.
+          const horiz=(bb.x1-bb.x0)>=(bb.y1-bb.y0); let rp=`<g clip-path="url(#${cid})">`;
+          if(horiz){ const w=Math.max(8,bb.x1-bb.x0);
+            for(let i=0,y=bb.y0+6;y<bb.y1;y+=10,i++){ const c=(i%2)?'#cbe7f8':'#eaf6fd';
+              rp+=`<path d="M${bb.x0.toFixed(1)} ${y.toFixed(1)} q${(w*0.25).toFixed(1)} -3.5 ${(w*0.5).toFixed(1)} 0 t${(w*0.5).toFixed(1)} 0" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.55" stroke-linecap="round"/>`; }
+          } else { const hh=Math.max(8,bb.y1-bb.y0);
+            for(let i=0,x=bb.x0+6;x<bb.x1;x+=10,i++){ const c=(i%2)?'#cbe7f8':'#eaf6fd';
+              rp+=`<path d="M${x.toFixed(1)} ${bb.y0.toFixed(1)} q-3.5 ${(hh*0.25).toFixed(1)} 0 ${(hh*0.5).toFixed(1)} t0 ${(hh*0.5).toFixed(1)}" fill="none" stroke="${c}" stroke-width="1.2" opacity="0.55" stroke-linecap="round"/>`; }
+          }
           s+=rp+'</g>';
           s+=`<path d="${d}Z" fill="url(#pmInset)"/>`;   // recessed bevel — water sits IN the turf
           s+=`<path d="${d}Z" fill="none" stroke="#0a3a66" stroke-width="1"/>`;
@@ -8363,10 +8380,11 @@ function playHoleSvg(){
       for(const f of geom.features){ if(f.t!==layer||!inFrame(f.pts)) continue;
         const own=f._own===h.n; if(!own){ const nb=featBox(f.pts); if(overlapsCore(nb)) continue; }
         const d=path(f.pts), op=own?1:0.22;
-        if(layer==='creek'){
-          s+=`<path d="${d}" fill="none" stroke="#0a3a66" stroke-width="${own?5:3}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
-          s+=`<path d="${d}" fill="none" stroke="#2a86c8" stroke-width="${own?3:1.8}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;
-          if(own) s+=`<path d="${d}" fill="none" stroke="#9ccef2" stroke-width="0.8" stroke-linecap="round" opacity="0.6"/>`;
+        if(layer==='creek'){   // deepest down the CENTRE: shallow banks (light, wide) → deep core channel (dark, narrow) + a white current line tracing the flow
+          s+=`<path d="${d}" fill="none" stroke="#3f96cf" stroke-width="${own?7:4}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;     // shallow bank
+          s+=`<path d="${d}" fill="none" stroke="#1d6fb8" stroke-width="${own?4.5:2.6}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;  // mid depth
+          s+=`<path d="${d}" fill="none" stroke="#0c4a80" stroke-width="${own?2:1}" stroke-linecap="round" stroke-linejoin="round" opacity="${op}"/>`;      // deep centre channel — runs the length of the creek
+          if(own) s+=`<path d="${d}" fill="none" stroke="#dcf0fc" stroke-width="0.9" stroke-dasharray="7 6" stroke-linecap="round" opacity="0.7"/>`;        // white current line — dashes read as water moving along the flow
         } else if(layer==='path'){
           s+=`<path d="${d}" fill="none" stroke="#7c714f" stroke-width="${own?1.8:1.2}" stroke-linecap="round" stroke-linejoin="round" opacity="${own?0.8:op}"/>`;
           if(own) s+=`<path d="${d}" fill="none" stroke="#cdbf9c" stroke-width="0.9" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
