@@ -795,7 +795,10 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
    Width is bounded (the tabs flank it) so distances are capped at 999+ (fmtCap). The WIDGET
    itself (border + inner glow) carries the reach/swing state colour, so the green-number-always
    read is gone: a distance you can't reach lights the whole widget grey, not happy green. */
-.play-rangebar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:12px;padding:6px 10px;cursor:pointer;transition:border-color .3s ease,box-shadow .3s ease;}
+/* Two CSS vars carry the whole reach/swing state — --gauge (accent) + --gtx (text) — so the
+   border, glow, background wash, centre number, gauge fill and club chip all recolour together
+   when the suggested club/range changes. Defaults are neutral (no fix / no club yet). */
+.play-rangebar{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:3px;background:var(--bg3);border:1.5px solid var(--bdr);border-radius:13px;padding:6px 10px 7px;cursor:pointer;transition:border-color .3s ease,box-shadow .3s ease,background .3s ease;--gauge:var(--bdr);--gtx:var(--tx);}
 .play-rangebar:empty{display:none;}
 .prb-wait{text-align:center;font-family:var(--mono);font-size:11px;color:var(--tx3);}
 .prb-grid{display:flex;align-items:flex-end;justify-content:center;gap:11px;}
@@ -803,23 +806,29 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .prb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.05em;color:var(--tx3);}
 .prb-fbn{font-family:var(--mono);font-size:15px;font-weight:600;line-height:1;color:var(--tx2);}
 .prb-cen{display:flex;align-items:baseline;gap:2px;}
-.prb-cn{font-family:var(--mono);font-size:34px;font-weight:800;letter-spacing:-1.5px;line-height:1;color:var(--tx);}
+.prb-cn{font-family:var(--mono);font-size:35px;font-weight:800;letter-spacing:-1.5px;line-height:0.92;color:var(--gtx);text-shadow:0 0 18px color-mix(in srgb,var(--gtx) 55%,transparent);transition:color .3s ease;}
 .prb-u{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tx3);}
+/* swing-power gauge — fills with the % of the suggested club's carry the shot needs; colour = state */
+.prb-gauge{height:5px;border-radius:3px;background:rgba(255,255,255,0.08);overflow:hidden;margin:2px 3px 0;}
+.prb-gfill{height:100%;border-radius:3px;background:linear-gradient(90deg,color-mix(in srgb,var(--gauge) 45%,transparent),var(--gauge));box-shadow:0 0 8px -1px var(--gauge);}
 .prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:1px 7px;font-family:var(--mono);font-size:10px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.03em;}
-.prb-club{font-weight:700;color:var(--tx);font-size:11px;letter-spacing:0;}
+.prb-club{display:inline-flex;align-items:center;font-weight:700;color:var(--gtx);font-size:10.5px;letter-spacing:0.04em;background:color-mix(in srgb,var(--gauge) 16%,transparent);border:1px solid color-mix(in srgb,var(--gauge) 42%,transparent);border-radius:6px;padding:1px 7px;}
+.prb-pct{font-size:9.5px;color:var(--tx3);letter-spacing:0.02em;}
 .prb-plays{text-transform:none;letter-spacing:0;}
 .prb-plays b{font-weight:700;}
 .prb-plays.hurt{color:#ff8a7a;} .prb-plays.hurt b{color:#ff6b5a;}
 .prb-plays.help{color:#7fd98a;} .prb-plays.help b{color:#5fd06a;}
-/* reach/swing state tints the whole widget (border + inner glow) AND the centre number */
-.play-rangebar.gauge-full{border-color:rgba(22,224,163,0.6);box-shadow:inset 0 0 24px -13px #16e0a3;}
-.play-rangebar.gauge-full .prb-cn{color:#16e0a3;}
-.play-rangebar.gauge-med{border-color:rgba(255,194,51,0.6);box-shadow:inset 0 0 24px -13px #ffc233;}
-.play-rangebar.gauge-med .prb-cn{color:#ffc233;}
-.play-rangebar.gauge-low{border-color:rgba(255,77,77,0.6);box-shadow:inset 0 0 24px -13px #ff4d4d;}
-.play-rangebar.gauge-low .prb-cn{color:#ff6b5a;}
-.play-rangebar.gauge-unreach{border-color:rgba(138,147,163,0.55);box-shadow:inset 0 0 24px -13px #8a93a3;}
-.play-rangebar.gauge-unreach .prb-cn{color:#aeb6c4;}
+/* reach/swing state — one var pair per state tints the whole widget (border + inner & outer glow +
+   background wash + number + gauge + chip). full = commit to a full swing · med = take something off ·
+   low = awkward partial · unreach = even your longest club can't get there. */
+.play-rangebar.gauge-full,.play-rangebar.gauge-med,.play-rangebar.gauge-low,.play-rangebar.gauge-unreach{
+  border-color:color-mix(in srgb,var(--gauge) 60%,transparent);
+  box-shadow:inset 0 0 26px -13px var(--gauge),0 0 14px -8px var(--gauge);
+  background:linear-gradient(180deg,color-mix(in srgb,var(--gauge) 11%,var(--bg3)),var(--bg3));}
+.play-rangebar.gauge-full{--gauge:#16e0a3;--gtx:#16e0a3;}
+.play-rangebar.gauge-med{--gauge:#ffc233;--gtx:#ffc233;}
+.play-rangebar.gauge-low{--gauge:#ff4d4d;--gtx:#ff6b5a;}
+.play-rangebar.gauge-unreach{--gauge:#8a93a3;--gtx:#aeb6c4;}
 /* "Last time here" — clubs hit on this hole in your most recent saved round (not sticky). */
 .play-lastclub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--tx3);background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:7px 11px;margin:2px 0 4px;}
 .play-lastclub b{color:var(--tx2);font-weight:700;letter-spacing:0.02em;}
@@ -7848,8 +7857,11 @@ function playDistBarHtml(si){
     return `<div class="prb-wait">📍 ${msg}</div>`;
   }
   const {dF,dC,dB,pl,sug,pct,reachable}=si;
+  // swing-power gauge: a real bar fills with the % of the suggested club's carry the shot needs
+  // (out of range ⇒ a full grey bar). No width transition — the bar is rebuilt every GPS tick.
+  const gauge=sug?`<div class="prb-gauge"><div class="prb-gfill" style="width:${reachable?Math.max(6,pct):100}%"></div></div>`:'';
   const club=sug
-    ? `<span class="prb-club">${sug.club}</span><span class="prb-pct">${reachable?pct+'%':'past range'}</span>`
+    ? `<span class="prb-club">${sug.club}</span><span class="prb-pct">${reachable?pct+'% swing':'past range'}</span>`
     : `<span class="prb-club">centre</span>`;
   const plays=(pl&&Math.abs(pl.deltaM)>=1.5)
     ? `<span class="prb-plays ${pl.deltaM>0?'hurt':'help'}">plays <b>${fmtCap(pl.adj)}</b> ${u} ${pl.deltaM>0?'▲':'▼'}${fmtDist(Math.abs(pl.deltaM))}</span>`
@@ -7859,6 +7871,7 @@ function playDistBarHtml(si){
       <div class="prb-cen"><span class="prb-cn">${fmtCap(dC)}</span><span class="prb-u">${u}</span></div>
       <div class="prb-fb"><span class="prb-lbl">BACK</span><span class="prb-fbn">${fmtCap(dB)}</span></div>
     </div>
+    ${gauge}
     <div class="prb-sub">${club}${plays}</div>`;
 }
 // Refresh the sticky rangefinder band: sets its colour class (the swing-power gauge tints the
