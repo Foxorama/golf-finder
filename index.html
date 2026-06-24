@@ -1489,7 +1489,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <span style="opacity:0.7;">· tap to cycle · </span><span onclick="event.stopPropagation();clearTime();hideTestBanner();" style="text-decoration:underline;">exit</span>
   </div>
 
-  <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="pill-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option></select><select class="pill-select" id="region-select" onchange="setNightRegion(this.value)" aria-label="Sky-watching region"><option value="">📍 My location</option><optgroup label="SE Queensland"><option value="brisbane">Brisbane / SEQ</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="ipswich">Ipswich</option><option value="toowoomba">Toowoomba</option></optgroup><optgroup label="Regional QLD"><option value="cairns">Cairns</option><option value="townsville">Townsville</option><option value="mackay">Mackay</option><option value="rockhampton">Rockhampton</option></optgroup><optgroup label="NSW / ACT"><option value="sydney">Sydney</option><option value="newcastle">Newcastle</option><option value="centralcoast">Central Coast</option><option value="wollongong">Wollongong</option><option value="canberra">Canberra</option></optgroup><optgroup label="Victoria"><option value="melbourne">Melbourne</option><option value="geelong">Geelong</option><option value="ballarat">Ballarat</option></optgroup><optgroup label="SA / WA"><option value="adelaide">Adelaide</option><option value="perth">Perth</option></optgroup><optgroup label="Tasmania"><option value="hobart">Hobart</option><option value="launceston">Launceston</option></optgroup><optgroup label="Northern Territory"><option value="darwin">Darwin</option><option value="alicesprings">Alice Springs</option></optgroup></select></div>
+  <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="pill-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option><option value="melbourne">Melbourne</option></select><select class="pill-select" id="region-select" onchange="setNightRegion(this.value)" aria-label="Sky-watching region"><option value="">📍 My location</option><optgroup label="SE Queensland"><option value="brisbane">Brisbane / SEQ</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="ipswich">Ipswich</option><option value="toowoomba">Toowoomba</option></optgroup><optgroup label="Regional QLD"><option value="cairns">Cairns</option><option value="townsville">Townsville</option><option value="mackay">Mackay</option><option value="rockhampton">Rockhampton</option></optgroup><optgroup label="NSW / ACT"><option value="sydney">Sydney</option><option value="newcastle">Newcastle</option><option value="centralcoast">Central Coast</option><option value="wollongong">Wollongong</option><option value="canberra">Canberra</option></optgroup><optgroup label="Victoria"><option value="melbourne">Melbourne</option><option value="geelong">Geelong</option><option value="ballarat">Ballarat</option></optgroup><optgroup label="SA / WA"><option value="adelaide">Adelaide</option><option value="perth">Perth</option></optgroup><optgroup label="Tasmania"><option value="hobart">Hobart</option><option value="launceston">Launceston</option></optgroup><optgroup label="Northern Territory"><option value="darwin">Darwin</option><option value="alicesprings">Alice Springs</option></optgroup></select></div>
   <div class="hero-zone">
   <!-- HERO: Daylight bar -->
   <div class="daybar">
@@ -1649,6 +1649,9 @@ const COURSES = [
   {name:"Sandy Gallop Golf Club",suburb:"Churchill, Ipswich",lat:-27.6314,lng:152.7483,drive:48,holes:[18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.sandygallop.com.au/",fee18:null,fee9:null,rating:3.9,note:'Historic 1922 course. Visitors welcome weekdays and Sundays. Site of Greg Norman\'s first pro win.',zone:'ipswich'},
   {name:"Woodford Golf Club",suburb:"Woodford",lat:-26.9486,lng:152.7884,drive:75,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"sunshine",url:"https://woodfordgolfclub.com.au/",fee18:48,fee9:32,rating:4.1,note:'Country 18-hole par 72 in Woodford township. Visitors welcome most days. Picturesque hinterland layout.',zone:'sunshine'},
   {name:"Southport Golf Club",suburb:"Southport",lat:-27.9963,lng:153.4042,drive:65,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"goldcoast",url:"https://southportgolfclub.com.au/",fee18:null,fee9:null,rating:4.4,note:'Private members club. Visitors limited to interstate/international club members with current handicap.',zone:'gc_south'},
+  // MELBOURNE — Sandbelt
+  {name:"Royal Melbourne Golf Club",suburb:"Black Rock",lat:-37.9695,lng:145.0308,drive:1000,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"melbourne",url:"https://www.royalmelbourne.com.au/",fee18:null,fee9:null,rating:4.8,note:'Australia\'s #1 ranked course. Alister MacKenzie Sandbelt masterpiece, host of the Presidents Cup. Private — members & guests.',zone:'melbourne'},
+  {name:"Kingston Heath Golf Club",suburb:"Cheltenham",lat:-37.9594,lng:145.0878,drive:1000,holes:[18],type:"private",par3:false,noBooking:false,golfnow:false,region:"melbourne",url:"https://kingstonheath.melbourne/",fee18:null,fee9:null,rating:4.7,note:'Australia\'s #2 ranked course, par 72 on the Sandbelt — famed bunkering and the world-class short 15th. Full GPS Play (OSM greens, fairways and 150+ bunkers).',zone:'melbourne'},
 ];
 
 // ── On-course play data (GPS rangefinder + scorecard) ─────────
@@ -2248,6 +2251,29 @@ const COURSE_PLAY = {
       {n:18, par:4, si:18, tee:[-27.603181,152.902098], tees:{blue:[-27.603124,152.901931],white:[-27.603181,152.902098],red:[-27.603208,152.902177]}, cen:[-27.6042948,152.905378], pin:null, gbb:[-27.604396,152.905256,-27.604206,152.905529]},
     ],
   },
+  'kingston-heath-golf-club': {
+    name:'Kingston Heath Golf Club', par:72, holesN:18, cr:73.1, slope:136, src:'OpenStreetMap (ODbL)',
+    holes:[
+      {n:1, par:4, si:4, tee:[-37.9553116,145.0863176], cen:[-37.9556836,145.0911036], pin:null, gbb:[-37.955784,145.0909481,-37.9555587,145.0912577]},
+      {n:2, par:4, si:8, tee:[-37.9567968,145.0910142], cen:[-37.9581563,145.0882651], pin:null, gbb:[-37.958329,145.0881374,-37.9580039,145.0883922]},
+      {n:3, par:4, si:16, tee:[-37.9574775,145.0880143], cen:[-37.9595712,145.0870122], pin:null, gbb:[-37.9596828,145.0868593,-37.9594806,145.0871728]},
+      {n:4, par:4, si:15, tee:[-37.9594122,145.0866489], cen:[-37.9565737,145.0880234], pin:null, gbb:[-37.9566989,145.0878589,-37.9564426,145.0882017]},
+      {n:5, par:3, si:11, tee:[-37.9566108,145.0886872], cen:[-37.9564427,145.0904418], pin:null, gbb:[-37.9565478,145.0903023,-37.9563511,145.0905819]},
+      {n:6, par:4, si:2, tee:[-37.956095,145.0907549], cen:[-37.9560395,145.0866886], pin:null, gbb:[-37.9561522,145.0864845,-37.9559178,145.0868897]},
+      {n:7, par:5, si:18, tee:[-37.9565587,145.0870848], cen:[-37.9604755,145.0858447], pin:null, gbb:[-37.9605894,145.0857429,-37.9603444,145.0859895]},
+      {n:8, par:4, si:7, tee:[-37.9600033,145.086427], cen:[-37.9632529,145.0848449], pin:null, gbb:[-37.9633529,145.0847181,-37.9631529,145.0849717]},
+      {n:9, par:4, si:14, tee:[-37.9628764,145.0858968], cen:[-37.960267,145.0868131], pin:null, gbb:[-37.9604197,145.086658,-37.9601226,145.0870104]},
+      {n:10, par:3, si:17, tee:[-37.9598664,145.0865935], cen:[-37.9601371,145.0879365], pin:null, gbb:[-37.960233,145.0877182,-37.9600581,145.0881495]},
+      {n:11, par:4, si:3, tee:[-37.9597213,145.0877266], cen:[-37.9576362,145.0908448], pin:null, gbb:[-37.9577305,145.0906983,-37.9575219,145.0909912]},
+      {n:12, par:5, si:9, tee:[-37.9574826,145.0913443], cen:[-37.9617042,145.0899147], pin:null, gbb:[-37.9618144,145.0897896,-37.9615918,145.0900409]},
+      {n:13, par:4, si:13, tee:[-37.9617631,145.089643], cen:[-37.9590414,145.0892133], pin:null, gbb:[-37.9591997,145.0890406,-37.9588778,145.0894111]},
+      {n:14, par:5, si:10, tee:[-37.9594013,145.0885864], cen:[-37.9639089,145.0884294], pin:null, gbb:[-37.9640213,145.0882642,-37.963777,145.0885827]},
+      {n:15, par:3, si:12, tee:[-37.9636805,145.0879341], cen:[-37.962512,145.0876847], pin:null, gbb:[-37.9626592,145.0875432,-37.9623713,145.0877896]},
+      {n:16, par:4, si:1, tee:[-37.9607123,145.0879375], cen:[-37.9633782,145.0849648], pin:null, gbb:[-37.9635961,145.0847082,-37.9631267,145.0852597]},
+      {n:17, par:4, si:5, tee:[-37.9634208,145.0842781], cen:[-37.959922,145.0850885], pin:null, gbb:[-37.9600372,145.0849124,-37.9597828,145.0852781]},
+      {n:18, par:4, si:6, tee:[-37.9591402,145.085152], cen:[-37.9563904,145.0861564], pin:null, gbb:[-37.9565442,145.0860015,-37.9562399,145.0863663]},
+    ],
+  },
 };
 
 // ── Constants ────────────────────────────────────────────────
@@ -2278,7 +2304,7 @@ const PREP   = 20;   // mins to get ready and leave house
 const BUFFER = 15;   // mins buffer before tee time
 const SUNRISE_DEFAULT = 5*60+30;
 const TWILIGHT_EST = 25; // mins of usable civil twilight if API estimate is used
-const REGION_LABELS = {brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim'};
+const REGION_LABELS = {brisbane:'Brisbane',goldcoast:'Gold Coast',sunshine:'Sunshine Coast',toowoomba:'Toowoomba / Scenic Rim',melbourne:'Melbourne'};
 
 // ── Weather zone coordinates ──────────────────────────────────
 const ZONE_COORDS = {
@@ -2289,6 +2315,7 @@ const ZONE_COORDS = {
   gc_south:       {lat:-28.0500, lng:153.4000},
   sunshine:       {lat:-26.6500, lng:153.0700},
   toowoomba:      {lat:-27.5598, lng:151.9507},
+  melbourne:      {lat:-37.8136, lng:144.9631},
 };
 
 // Find nearest zone to a GPS coordinate
@@ -3313,6 +3340,7 @@ function getFiltered(daylight){
       case 'goldcoast': return c.region==='goldcoast';
       case 'sunshine':  return c.region==='sunshine';
       case 'toowoomba': return c.region==='toowoomba';
+      case 'melbourne': return c.region==='melbourne';
       default:          return true;
     }
   });
@@ -6569,7 +6597,7 @@ function render(){
   // it disappears by itself once courses exist near the user as coverage grows.
   const nearestCourseKm=Math.min(...COURSES.filter(c=>c.lat!=null).map(c=>haversineKm(glat,glng,c.lat,c.lng)));
   if(nearestCourseKm>150 && !playable.length){
-    html+=`<div class="area-notice">🏌️ <b>No courses near you yet</b> &mdash; you're ~${Math.round(nearestCourseKm)} km from the closest one. Golf&nbsp;Finder currently covers <b>SE&nbsp;Queensland</b> and is expanding across Australia, so the courses below read as unplayable from here. The <b>Night sky view</b> (top-right) already works anywhere.</div>`;
+    html+=`<div class="area-notice">🏌️ <b>No courses near you yet</b> &mdash; you're ~${Math.round(nearestCourseKm)} km from the closest one. Golf&nbsp;Finder currently covers <b>SE&nbsp;Queensland</b> and <b>Melbourne</b> and is expanding across Australia, so the courses below read as unplayable from here. The <b>Night sky view</b> (top-right) already works anywhere.</div>`;
   }
   if(playable.length){
     html+=`<div class="section-head"><span class="sdot sdot-g"></span>${forecastMode?'Upcoming available courses':'Enough daylight today'} &mdash; ${playable.length} course${playable.length!==1?'s':''} &middot; check tee sheet</div>`;

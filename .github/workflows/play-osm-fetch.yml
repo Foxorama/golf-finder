@@ -1,0 +1,67 @@
+name: Fetch Play OSM
+
+# Sources a course's OpenStreetMap golf geometry from Overpass and commits the
+# raw `out geom` JSON back to the working branch, where build-play-course.mjs +
+# bake-play-course.mjs turn it into COURSE_PLAY/COURSE_GEOM.
+#
+# Exists because Overpass is unreachable from some sandboxed dev environments
+# (egress policy) — a GitHub Actions runner has open internet, so the fetch that
+# can't happen locally happens here. A single-course query also dodges the
+# bulk-prebake throttling that makes course-maps.yml flaky on CI IPs.
+#
+# Triggered by pushing the throwaway branch `ci/osm-fetch` (a push-triggered
+# workflow runs from its own branch, so it needs no presence on the protected
+# default branch — unlike workflow_dispatch). It checks out TARGET, fetches, and
+# commits the OSM JSON there. Edit the env below to fetch a different course.
+
+on:
+  push:
+    branches: [ 'ci/osm-fetch' ]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: play-osm-fetch
+  cancel-in-progress: false
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    env:
+      NAME: 'Kingston Heath'
+      SLUG: 'kingston-heath-golf-club'
+      LAT: '-37.9542'
+      LNG: '145.0686'
+      TARGET: 'claude/melb-course-osm-data-4na7mg'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TARGET }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Fetch OSM geometry
+        run: node scripts/play/fetch-osm.mjs "$NAME" "scripts/play/_osm/$SLUG.osm.json" "$LAT" "$LNG"
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: osm-${{ env.SLUG }}
+          path: scripts/play/_osm/*.json
+          if-no-files-found: ignore
+
+      - name: Commit OSM JSON to target branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/play/_osm/
+          if git diff --cached --quiet; then
+            echo "No new OSM data to commit"
+            exit 0
+          fi
+          git commit -m "CI: fetch OSM geometry for $SLUG"
+          git push origin HEAD:"$TARGET"
