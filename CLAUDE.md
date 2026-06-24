@@ -447,6 +447,18 @@ call it done. They map to the three hats the user keeps asking for:
   backwards for a *playability* map. Green draws above trees so it stays visible too. The
   `trace-tool.html` `_restack()` mirrors this order so the tracer previews real app stacking. If a
   feature ever hides another, the fix is this one layer-loop order — not per-feature opacity.
+  **Water vs river are two DIFFERENT features (don't auto-guess one from the other).** A `water`
+  polygon is always a **lake/pond/dam**: a radial **deep-centre → shallow-edge** depth gradient with a
+  calm surface (a faint top-left reflection sheen + two faint concentric ripple rings echoing the
+  shore inward — *no* directional streak lines) and a blurred `pmShore` damp-shoreline that blends the
+  bank into the turf. A **river** is a SEPARATE **line** feature (`t:'river'`, traced as its
+  **centreline**), drawn in the line loop (`river→creek→path→ob→ditch`) as a **mostly-deep** stacked-
+  stroke channel — only a thin shallow rim at the banks, a dark core filling the width, + a faint
+  dashed current line — so the deep part **follows the curve** of the traced line. (History: a single
+  `water` polygon with PCA elongation auto-picking river-vs-lake styling was tried and reverted — it
+  mis-styled real lakes and the cross-flow gradient couldn't follow a meander. Trace rivers as a river,
+  lakes as water.) The river feature lives in `trace-tool.html` (`FT`/`_restack`), `from-traced.mjs`
+  (`t.rivers`→`t:'river'`) and the renderer.
   **Each baked feature is assigned to its nearest
   hole centreline once (`_featOwner` → `f._own`)** so the **current hole renders full-
   strength and neighbours fade** (`opacity 0.3`) to context. **Tap-to-measure**
