@@ -758,7 +758,15 @@ it with the preview tool:
   since the loader is first-paint only and tilt needs phone sensors), plays-like wind params,
   and links out to the trace tool / space-manta loader / live site. Served by Pages at
   `…/golf-finder/test.html`. It's the single place to show features instead of pasting `?time=…&wx=…`
-  URLs around. (`noindex`; additive — touches no app code.)
+  URLs around. (`noindex`; additive — touches no app code.) **Layout is responsive in two
+  distinct modes** (the preview can't share a phone screen with the controls — it bleeds over
+  them): **desktop (≥860px)** is the live side-by-side rail + preview (toggles drive the app
+  live); **mobile (<860px)** is a **launcher** — the rail is the whole page, you *stage* options
+  (each chip just records into a `state` object, no live preview), then a sticky **Launch**
+  bar composes them into one URL (`buildURL()`) and slides the preview in as a full-screen
+  overlay. Close it with **swipe-left** or **drag-down** from the top bar (gesture catchers are
+  the bar + a thin left-edge strip — touches inside the app's `iframe` never bubble to the
+  parent, so the gesture must start on hub chrome, not over the app).
 - `?time=HH:MM` — override "now" (e.g. `?time=21:00` for night mode).
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
