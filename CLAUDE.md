@@ -753,17 +753,32 @@ it with the preview tool:
   real app same-origin in a phone/landscape/desktop frame and drives every hook from a
   control rail: a scene-time slider + presets + an **auto day→night cycle** (calls the app's
   live `setTime()`, so the day↔night *melt* actually plays — no reload), all `setWx()` weather
-  scenes, the night/UFO/Y'orb loader variants + immersive-sky toggle (reload-based, since the
-  loader is first-paint only and tilt needs phone sensors), plays-like wind params, and links
-  out to the trace tool / space-manta loader / live site. Served by Pages at
+  scenes, the **loader** (held open via `?loaderhold=1`: day-loop, a Force-hole-in-one toggle
+  that climbs the Super-Saiyan ladder, night Y'orb / UFO) + immersive-sky toggle (reload-based,
+  since the loader is first-paint only and tilt needs phone sensors), plays-like wind params,
+  and links out to the trace tool / space-manta loader / live site. Served by Pages at
   `…/golf-finder/test.html`. It's the single place to show features instead of pasting `?time=…&wx=…`
   URLs around. (`noindex`; additive — touches no app code.)
 - `?time=HH:MM` — override "now" (e.g. `?time=21:00` for night mode).
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
   `setWx()` restores live weather.
-- `?yorb=ufo|normal` — force a **night-loader** variant (must be in night mode, e.g.
-  `&time=21:00`). The night loader rolls once: **1-in-10 UFO** (`.ld-ufo`) — instead
+- **Loader test hooks (the splash is first-paint only, so it can't read `?time=`).**
+  Day-vs-night is normally chosen from the **real device clock**, so to demo a loader at
+  any hour use **`?loader=day|night`** (forces which scene shows). **`?loaderhold=1`** holds
+  the loader open ~1h (sets `window._loaderHoldUntil`, honoured in `tryHideLoader`) so every
+  permutation can actually be watched — it otherwise hides on first render, often sub-second.
+  The **day loader is a forever-loop**: a golfer swings, a fresh ball flies each swing —
+  random misses pile on the green, a **~1-in-5 hole-out** drops in the cup and powers the
+  golfer up one **Super-Saiyan rung**: **SSJ2 gold → SSJ Blue → Ultra Instinct (silver) →
+  Legendary (Broly green)**, the cap, persisting on later misses (`powerUp`'s `FORMS`/`FLASH`
+  arrays; each rung is a `ssj2`/`ssjb`/`ssjui`/`ssjl` class on `.ld-golfer` toggling a hair
+  group + aura ellipse — add a rung by extending all three). **`?ldhole=hole|miss`** (or the
+  live `window._ldForceHole` = `true`/`false`/`null`) forces the day shot outcome, so you can
+  climb the whole ladder deterministically. The **`test.html` hub** drives all of this (Day
+  loader loop, a Force-hole-in-one toggle, Night Y'orb / Night UFO).
+- `?yorb=ufo|normal` — force a **night-loader** variant (use **`?loader=night`** to get the
+  night loader at any hour). The night loader rolls once: **1-in-10 UFO** (`.ld-ufo`) — instead
   of the Y'orb, an **alien saucer** flies in and blasts the moon with a green laser
   (benches the Y'orb, cancels the bite, moon explodes to debris). It **holds the loader
   open** (`tryHideLoader` honours `window._loaderHoldUntil`; ~4.4s) so the blast (~3s

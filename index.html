@@ -1128,14 +1128,17 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
    day trajectory (the regression). That keyframe set is gone now. */
 .ld-club{transform-box:fill-box;transform-origin:0% 0%;transform:rotate(183deg);}
 .ld-balls circle{filter:drop-shadow(0 1px 0 rgba(0,0,0,0.25));}
-/* Super Saiyan: 1st hole-out = SSJ2 (gold spiky hair + blue lightning); the
-   2nd hole-out morphs it into SSJ God Blue. The active form persists on misses. */
-.ld-saiyan-back,.ld-saiyan-front,.ld-hair2,.ld-hairb,.ld-aura-gold,.ld-aura-blue{display:none;}
-.ld-golfer.ssj2 .ld-saiyan-back,.ld-golfer.ssjb .ld-saiyan-back,.ld-golfer.ssj2 .ld-saiyan-front,.ld-golfer.ssjb .ld-saiyan-front{display:block;}
+/* Super Saiyan ladder, one rung per hole-out: 1st = SSJ2 (gold) → 2nd = SSJ God
+   Blue → 3rd = Ultra Instinct (silver) → 4th = Legendary (Broly green, bulkier
+   hair + bigger aura), which is the cap. The active form persists on misses. */
+.ld-saiyan-back,.ld-saiyan-front,.ld-hair2,.ld-hairb,.ld-hairui,.ld-hairl,.ld-aura-gold,.ld-aura-blue,.ld-aura-silver,.ld-aura-green{display:none;}
+.ld-golfer.ssj2 .ld-saiyan-back,.ld-golfer.ssjb .ld-saiyan-back,.ld-golfer.ssjui .ld-saiyan-back,.ld-golfer.ssjl .ld-saiyan-back,.ld-golfer.ssj2 .ld-saiyan-front,.ld-golfer.ssjb .ld-saiyan-front,.ld-golfer.ssjui .ld-saiyan-front,.ld-golfer.ssjl .ld-saiyan-front{display:block;}
 .ld-golfer.ssj2 .ld-hair2,.ld-golfer.ssj2 .ld-aura-gold{display:block;}
 .ld-golfer.ssjb .ld-hairb,.ld-golfer.ssjb .ld-aura-blue{display:block;}
+.ld-golfer.ssjui .ld-hairui,.ld-golfer.ssjui .ld-aura-silver{display:block;}
+.ld-golfer.ssjl .ld-hairl,.ld-golfer.ssjl .ld-aura-green{display:block;}
 .ld-saiyan-back{transform-box:fill-box;transform-origin:50% 92%;}
-.ld-aura-gold,.ld-aura-blue{transform-box:fill-box;transform-origin:50% 60%;animation:ld-aura 1.15s ease-in-out infinite;}
+.ld-aura-gold,.ld-aura-blue,.ld-aura-silver,.ld-aura-green{transform-box:fill-box;transform-origin:50% 60%;animation:ld-aura 1.15s ease-in-out infinite;}
 @keyframes ld-aura{0%,100%{opacity:0.4;transform:scale(0.92);}50%{opacity:0.82;transform:scale(1.1);}}
 .ld-hairf{transform-box:fill-box;transform-origin:50% 100%;animation:ld-hair 1.4s ease-in-out infinite;}
 @keyframes ld-hair{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.05);}}
@@ -1204,6 +1207,10 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <radialGradient id="ldd-aura-blue" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#bff0ff" stop-opacity="0.95"/><stop offset="45%" stop-color="#3aa0ff" stop-opacity="0.55"/><stop offset="100%" stop-color="#1e63e0" stop-opacity="0"/></radialGradient>
       <linearGradient id="ldd-hair-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff7cc"/><stop offset="45%" stop-color="#ffd83a"/><stop offset="100%" stop-color="#f0960a"/></linearGradient>
       <linearGradient id="ldd-hair-blue" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#e6f7ff"/><stop offset="42%" stop-color="#5cc2ff"/><stop offset="100%" stop-color="#1f7fe0"/></linearGradient>
+      <radialGradient id="ldd-aura-silver" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0.98"/><stop offset="45%" stop-color="#cfe0ee" stop-opacity="0.5"/><stop offset="100%" stop-color="#9fb6d0" stop-opacity="0"/></radialGradient>
+      <radialGradient id="ldd-aura-green" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#e8ffd6" stop-opacity="0.98"/><stop offset="45%" stop-color="#7ce04a" stop-opacity="0.6"/><stop offset="100%" stop-color="#2f9e1e" stop-opacity="0"/></radialGradient>
+      <linearGradient id="ldd-hair-silver" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#ffffff"/><stop offset="45%" stop-color="#e3edf5"/><stop offset="100%" stop-color="#9fb4c8"/></linearGradient>
+      <linearGradient id="ldd-hair-green" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#dcffb0"/><stop offset="42%" stop-color="#62d23a"/><stop offset="100%" stop-color="#1f8a14"/></linearGradient>
     </defs>
     <path class="ld-ground" d="M0,228 Q200,204 400,228 L400,280 L0,280 Z" fill="#2d5a1b"/>
     <g class="ld-balls"></g>
@@ -1212,6 +1219,8 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
       <g class="ld-saiyan-back">
         <ellipse class="ld-aura-gold" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-gold)" filter="url(#ldd-glow)"/>
         <ellipse class="ld-aura-blue" cx="78" cy="193" rx="23" ry="36" fill="url(#ldd-aura-blue)" filter="url(#ldd-glow)"/>
+        <ellipse class="ld-aura-silver" cx="78" cy="193" rx="24" ry="37" fill="url(#ldd-aura-silver)" filter="url(#ldd-glow)"/>
+        <ellipse class="ld-aura-green" cx="78" cy="195" rx="30" ry="45" fill="url(#ldd-aura-green)" filter="url(#ldd-glow)"/>
         <g class="ld-hair2">
           <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#b9740a"/>
           <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-gold)"/>
@@ -1219,6 +1228,14 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <g class="ld-hairb">
           <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#1763c8"/>
           <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-blue)"/>
+        </g>
+        <g class="ld-hairui">
+          <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#8fa3b6"/>
+          <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-silver)"/>
+        </g>
+        <g class="ld-hairl" transform="translate(78,188) scale(1.2) translate(-78,-188)">
+          <path d="M68,188 L63,164 L71,176 L70,156 L77,173 L78,151 L85,173 L87,157 L86,176 L92,165 L90,188 Z" fill="#1c7a12"/>
+          <path class="ld-hairf" d="M70,186 L66,168 L72,177 L71,160 L77,175 L78,156 L84,175 L86,161 L85,177 L90,168 L88,186 Z" fill="url(#ldd-hair-green)"/>
         </g>
       </g>
       <circle cx="78" cy="187" r="7" fill="#e8f5e0"/>
@@ -1308,7 +1325,20 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     </g>
   </svg>
 </div>
-<script>(function(){try{var h=new Date().getHours();if(h>=18||h<6){var l=document.getElementById('loader');if(l)l.classList.add('loader-night');}}catch(e){}})();</script>
+<script>(function(){try{
+  var l=document.getElementById('loader'); if(!l) return;
+  var q=location.search;
+  /* QA / test-hub hooks: ?loader=day|night forces which loader shows (default = real
+     time of day, since the loader is first-paint and can't read ?time=); ?loaderhold=1
+     holds it open ~1h so every permutation can be watched (honoured in tryHideLoader);
+     ?ldhole=hole|miss forces the day loader's shot outcome (also live via _ldForceHole). */
+  var f=(q.match(/[?&]loader=(day|night)/)||[])[1];
+  var night = f ? (f==='night') : (function(){var h=new Date().getHours();return h>=18||h<6;})();
+  if(night) l.classList.add('loader-night');
+  if(/[?&]loaderhold=1/.test(q)) window._loaderHoldUntil=Date.now()+36e5;
+  var fh=(q.match(/[?&]ldhole=(hole|miss)/)||[])[1];
+  if(fh) window._ldForceHole=(fh==='hole');
+}catch(e){}})();</script>
 <script>(function(){
   var loader=document.getElementById('loader');
   if(!loader||loader.classList.contains('loader-night'))return;            /* day loader only */
@@ -1338,7 +1368,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
      makes contact frame-exact under any jank.) */
   function shot(){
     if(stopped())return;
-    var holeOut=Math.random()<0.18, t;
+    var holeOut=(window._ldForceHole!=null)?!!window._ldForceHole:Math.random()<0.18, t;  /* QA: _ldForceHole true/false forces hole-out/miss, null = random */
     if(holeOut){ t={x:HOLE.x,y:HOLE.y}; }
     else{ var mx,my,k=0; do{ mx=rnd(150,380); my=groundY(mx)+rnd(2,15); k++; }while(k<12 && Math.hypot(mx-HOLE.x,my-HOLE.y)<26); t={x:mx,y:my}; }
     var ball=newBall(),
@@ -1375,11 +1405,13 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     ],{duration:300,easing:'ease-in',fill:'forwards'}).finished
       .then(function(){ ball.remove(); powerUp(); }).catch(function(){});
   }
+  var FORMS=['ssj2','ssjb','ssjui','ssjl'];            /* gold → blue → ultra instinct → legendary */
+  var FLASH=['#ffe98a','#bfe6ff','#eaf6ff','#b6ff9e']; /* matching burst colour per rung */
   function powerUp(){
-    if(stage>=2) return;                              /* already SSJ God Blue (max) */
+    if(stage>=FORMS.length) return;                   /* already Legendary (max) */
+    if(stage>0) golfer.classList.remove(FORMS[stage-1]);
+    golfer.classList.add(FORMS[stage]); flash(FLASH[stage]);
     stage++;
-    if(stage===1){ golfer.classList.add('ssj2'); flash('#ffe98a'); }       /* 1st: SSJ2 gold */
-    else { golfer.classList.remove('ssj2'); golfer.classList.add('ssjb'); flash('#bfe6ff'); } /* 2nd: SSJ Blue */
     var back=svg.querySelector('.ld-saiyan-back');
     if(back) back.animate([{transform:'scale(0.4)',opacity:0},
                            {transform:'scale(1.22)',opacity:1,offset:0.6},
@@ -1420,7 +1452,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
   var scene=loader.querySelector('.ld-night-scene'); if(!scene)return;
   var force=(location.search.match(/[?&]yorb=(ufo|normal)/)||[])[1], r=Math.random();
   /* The UFO holds the loader open (see tryHideLoader) so its blast (~3s in) is seen. */
-  if(force==='ufo'||(!force&&r<0.10)){ scene.classList.add('ld-ufo'); window._loaderHoldUntil=Date.now()+4400; }
+  if(force==='ufo'||(!force&&r<0.10)){ scene.classList.add('ld-ufo'); window._loaderHoldUntil=Math.max(window._loaderHoldUntil||0,Date.now()+4400); }
 })();</script>
 <div class="app">
 

@@ -111,17 +111,30 @@
       <p class="note">Live <code>setWx()</code> — forces the hero scene's precip/lightning effects.</p>
     </div>
 
-    <!-- NIGHT / LOADER -->
+    <!-- NIGHT SKY -->
     <div class="grp">
-      <div class="lbl"><span class="dot"></span> Night &amp; loader</div>
+      <div class="lbl"><span class="dot"></span> Night sky</div>
       <div class="row">
         <button class="chip half" data-load="?time=21:00">&#127769; Night mode</button>
-        <button class="chip half" data-load="?time=21:00&amp;yorb=ufo">&#128760; UFO loader</button>
-        <button class="chip half" data-load="?time=21:00&amp;yorb=normal">Y'orb loader</button>
         <button class="chip half" id="b-compass">&#129517; Immersive sky</button>
       </div>
-      <p class="note">UFO/Y'orb loaders reload the page (the loader is first-paint only).
-        Immersive sky &amp; tilt-to-pan need a <b>real phone</b>'s sensors — desktop shows the static map.</p>
+      <p class="note">Immersive sky &amp; tilt-to-pan need a <b>real phone</b>'s sensors — desktop shows the static map.</p>
+    </div>
+
+    <!-- LOADER (first-paint splash) -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Loader (first-paint splash)</div>
+      <div class="row">
+        <button class="chip half" data-load="?loader=day&amp;loaderhold=1">&#127993; Day loader (loop)</button>
+        <button class="chip half" id="b-ldhole">&#9971; Force hole-in-one</button>
+        <button class="chip half" data-load="?loader=night&amp;yorb=normal&amp;loaderhold=1">&#127769; Night Y'orb</button>
+        <button class="chip half" data-load="?loader=night&amp;yorb=ufo&amp;loaderhold=1">&#128760; Night UFO</button>
+      </div>
+      <p class="note">The loader normally vanishes on first paint; these <b>hold it open</b> (~1h) so you
+        can actually watch it. The day loop swings forever — random misses pile on the green, ~1-in-5
+        holes out. <b>Force hole-in-one</b> makes every swing drop in, and each ace powers the golfer up a
+        rung: SSJ2&nbsp;gold &#8594; SSJ&nbsp;Blue &#8594; Ultra&nbsp;Instinct &#8594; Legendary (the cap).
+        Tap it again for random shots. Hit <b>Reload</b> to dismiss the loader.</p>
     </div>
 
     <!-- ON-COURSE / WIND -->
@@ -225,12 +238,25 @@
   app.addEventListener('load', reapplyAfterLoad);
 
   // ── reload with query params (for first-paint-only features) ──
+  const ldBtn = document.getElementById('b-ldhole');
+  function syncLdBtn(qs){
+    const on = /ldhole=hole/.test(qs);
+    ldBtn.classList.toggle('on', on);
+    ldBtn.innerHTML = on ? '&#9971; Holing out &#10003;' : '&#9971; Force hole-in-one';
+  }
   function loadWith(qs){
     stopCycle();
-    // Preserve current time in the URL so the loader/yorb variant lands in the right mode.
+    qs = qs.replace(/&amp;/g,'&');
     app.src = 'index.html' + (qs.indexOf('?')===0 ? qs : '?'+qs);
-    setBadge(qs.replace(/^\?/,'').replace(/&amp;/g,' · '));
+    setBadge(qs.replace(/^\?/,'').replace(/&/g,' · '));
+    syncLdBtn(qs);            // the force-ace toggle's lit state IS the loaded URL
   }
+  // Force-hole-in-one toggle: reload the held day loader with/without ?ldhole=hole.
+  // Reloading restarts the golfer at base, so the ladder climbs from gold on each fresh run.
+  ldBtn.addEventListener('click', ()=>{
+    const turnOn = !ldBtn.classList.contains('on');
+    loadWith('?loader=day&loaderhold=1' + (turnOn ? '&ldhole=hole' : ''));
+  });
 
   // ── time presets ─────────────────────────────
   const TIMES = [
@@ -315,7 +341,7 @@
 
   // ── toolbar ──────────────────────────────────
   document.getElementById('b-reload').onclick=()=>{ stopCycle(); app.src='index.html'; state.time=null; state.wx=null;
-    document.body.classList.remove('night-theme'); setBadge('live'); markTime();
+    document.body.classList.remove('night-theme'); setBadge('live'); markTime(); syncLdBtn('');
     [...wp.children].forEach(x=>x.classList.remove('on')); };
   document.getElementById('b-reset').onclick=()=>document.getElementById('b-reload').onclick();
   document.getElementById('b-open').onclick=()=>{
