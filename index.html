@@ -791,16 +791,25 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
    SWING-POWER gauge: how full a swing your suggested club needs — green ≥90% (commit to a full
    swing) · amber 50-90% (take something off) · red <50% (big gap / awkward partial) · grey = even
    your longest club can't reach (true "black/unreachable", but a dark UI needs a visible muted grey). */
-.play-dist{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:3px 6px;cursor:pointer;font-family:var(--mono);}
-.pd-num{display:block;font-size:27px;font-weight:800;line-height:1;letter-spacing:-1px;color:var(--gg);}
-.pd-u{font-size:12px;font-weight:600;color:var(--tx3);margin-left:2px;letter-spacing:0;}
-.pd-sub{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.04em;margin-top:1px;}
-.pd-club{font-weight:700;color:var(--tx);font-size:12px;letter-spacing:0;}
-.pd-wait{font-family:var(--mono);font-size:12px;color:var(--tx3);align-self:center;}
-.play-dist.gauge-full .pd-num{color:#16e0a3;} .play-dist.gauge-med .pd-num{color:#ffc233;}
-.play-dist.gauge-low .pd-num{color:#ff4d4d;} .play-dist.gauge-unreach .pd-num{color:#8a93a3;}
-.play-dist.gauge-full{border-color:rgba(22,224,163,0.45);} .play-dist.gauge-med{border-color:rgba(255,194,51,0.45);}
-.play-dist.gauge-low{border-color:rgba(255,77,77,0.45);}
+/* the one consolidated sticky rangefinder band (sits under the tabs, above the scrolling body) */
+.play-rangebar{padding:9px 16px 10px;border-bottom:1px solid var(--bdr);background:var(--bg3);cursor:pointer;}
+.play-rangebar:empty{display:none;}
+.prb-wait{text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx3);padding:5px 0;}
+.prb-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
+.prb-fb{flex:1;text-align:center;display:flex;flex-direction:column;gap:2px;padding-bottom:4px;}
+.prb-lbl{font-family:var(--mono);font-size:9px;letter-spacing:0.07em;color:var(--tx3);}
+.prb-fbn{font-family:var(--mono);font-size:18px;font-weight:600;line-height:1;color:var(--tx2);}
+.prb-cen{flex:1.2;display:flex;align-items:baseline;justify-content:center;gap:3px;}
+.prb-cn{font-family:var(--mono);font-size:34px;font-weight:800;letter-spacing:-1px;line-height:1;color:var(--gg);}
+.prb-u{font-family:var(--mono);font-size:13px;font-weight:600;color:var(--tx3);}
+.prb-sub{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:3px 10px;margin-top:7px;font-family:var(--mono);font-size:11px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.04em;}
+.prb-club{font-weight:700;color:var(--tx);font-size:12px;letter-spacing:0;}
+.prb-plays{text-transform:none;letter-spacing:0;}
+.prb-plays b{font-size:13px;font-weight:700;}
+.prb-plays.hurt{color:#ff8a7a;} .prb-plays.hurt b{color:#ff6b5a;}
+.prb-plays.help{color:#7fd98a;} .prb-plays.help b{color:#5fd06a;}
+.play-rangebar.gauge-full .prb-cn{color:#16e0a3;} .play-rangebar.gauge-med .prb-cn{color:#ffc233;}
+.play-rangebar.gauge-low .prb-cn{color:#ff4d4d;} .play-rangebar.gauge-unreach .prb-cn{color:#8a93a3;}
 /* "Last time here" — clubs hit on this hole in your most recent saved round (not sticky). */
 .play-lastclub{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--tx3);background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;padding:7px 11px;margin:2px 0 4px;}
 .play-lastclub b{color:var(--tx2);font-weight:700;letter-spacing:0.02em;}
@@ -822,23 +831,10 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .play-pip{flex:1 1 0;min-width:0;height:30px;border-radius:7px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx3);font-family:var(--mono);font-size:11px;cursor:pointer;}
 .play-pip.done{color:var(--gg);border-color:var(--bdr);}
 .play-pip.on{background:var(--gb);border-color:var(--gb);color:#06140a;font-weight:700;}
-/* rangefinder readout */
-.pr-grid{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:8px 14px;}
-.pr-side{text-align:center;flex:1;padding-bottom:3px;}
-.pr-lbl{font-family:var(--mono);font-size:8px;color:var(--tx3);letter-spacing:0.06em;}
-.pr-num{font-family:var(--mono);font-size:15px;font-weight:500;color:var(--tx2);}
-.pr-cen-num{color:var(--tx);font-weight:700;}
-.pr-plays{text-align:center;font-family:var(--mono);font-size:13px;color:var(--tx2);margin-top:9px;}
-.pr-plays-lbl{font-size:9px;text-transform:uppercase;letter-spacing:0.07em;color:var(--tx3);}
-.pr-plays b{font-size:18px;font-weight:700;}
-.pr-plays.hurt b{color:#ff6b5a;} .pr-plays.help b{color:#5fd06a;}
-.pr-plays-tag{display:block;font-size:10px;color:var(--tx3);margin-top:1px;letter-spacing:0.02em;}
+/* GPS-quality strip (bottom of the body) — only shown on a weak/denied fix */
 .play-gps{font-family:var(--mono);font-size:11px;text-align:center;margin:6px 0 2px;padding:6px 10px;border-radius:10px;}
 .play-gps.warn{color:#ffd27a;background:rgba(255,194,51,0.10);border:1px solid rgba(255,194,51,0.32);}
-.play-gps.bad{color:#ff9a9a;background:rgba(255,77,77,0.10);border:1px solid rgba(255,77,77,0.32);}
 .play-gps:empty{display:none;}
-.pr-nogps{text-align:center;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:22px 16px;font-size:14px;color:var(--tx2);}
-.pr-nogps-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:6px;}
 .play-mapwrap{position:relative;margin:10px 0 4px;border-radius:14px;overflow:hidden;}
 .play-yourtee{color:var(--gg);}
 /* the hole map owns the pinch gesture: touch-action:pan-y keeps one-finger page
@@ -7785,7 +7781,6 @@ function _playAutoAdvance(){
 function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
   if(_playAutoAdvance()) return;   // a hole switch already did a full re-render
-  const r=document.getElementById('play-range'); if(r) r.innerHTML=playRangeHtml();
   playRefreshDist();
   const m=document.getElementById('play-map'); if(m){ m.innerHTML=playHoleSvg(); playApplyMapZoom(); }
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
@@ -7816,54 +7811,51 @@ function _playShotInfo(){
   }
   return {pos,tg,dF,dC,dB,pl,playDist,sug,cls,pct,reachable};
 }
-function playRangeHtml(){
-  const si=_playShotInfo(), u=playUnit();
-  if(!si){
-    const msg=playS.gpsErr===1?'Location permission denied':'Waiting for GPS lock…';
-    return `<div class="pr-nogps">📍 ${msg}<div class="pr-nogps-sub">distances to the green appear once your phone has a fix</div></div>`;
-  }
-  const {dF,dC,dB,pl}=si;
-  const playsRow=(pl&&Math.abs(pl.deltaM)>=1.5)
-    ? `<div class="pr-plays ${pl.deltaM>0?'hurt':'help'}"><span class="pr-plays-lbl">plays</span> <b>${fmtDist(pl.adj)}</b> ${u}<span class="pr-plays-tag">${pl.deltaM>0?'▲ into wind +':'▼ downwind −'}${fmtDist(Math.abs(pl.deltaM))} ${u}</span></div>`
-    : '';
-  return `<div class="pr-grid">
-      <div class="pr-side"><div class="pr-lbl">FRONT</div><div class="pr-num">${fmtDist(dF)}</div></div>
-      <div class="pr-side"><div class="pr-lbl">CENTRE</div><div class="pr-num pr-cen-num">${fmtDist(dC)}</div></div>
-      <div class="pr-side"><div class="pr-lbl">BACK</div><div class="pr-num">${fmtDist(dB)}</div></div>
-    </div>${playsRow}`;
-}
 // GPS quality lives at the bottom of the body and stays SILENT on a good fix — it only
-// speaks up when the lock is weak (±≥ _gpsPoorM, default 15 m) or permission was denied,
-// so the rangefinder up top isn't cluttered with a "±5 m" line you don't need to read.
+// speaks up when the lock is WEAK (±≥ _gpsPoorM, default 15 m), so the rangefinder up top
+// isn't cluttered with a "±5 m" line you don't need to read. (No-fix / denied permission is
+// already spelt out by the rangefinder band itself, so it isn't repeated here.)
 function playGpsHtml(){
   if(!playS||playS.course.noGps) return '';
-  if(playS.gpsErr===1) return `<div class="play-gps bad">⚠ Location permission denied — distances unavailable</div>`;
-  const a=playS.acc; if(a==null) return '';   // no fix yet: the rangefinder already shows the waiting message
+  const a=playS.acc; if(a==null) return '';
   const poorM=(typeof window._gpsPoorM==='number')?window._gpsPoorM:15;
   if(a<poorM) return '';                       // good lock — say nothing
   const raw=(playS.rawAcc&&playS.rawAcc>Math.round(a)+2)?` · raw ±${playS.rawAcc} m`:'';
   return `<div class="play-gps warn">⚠ Weak GPS — accuracy ±${Math.round(a)} m${raw}; distances are approximate</div>`;
 }
-// The sticky centre-of-green gauge that sits between the Play/Card tabs.
+// The one consolidated rangefinder — a sticky band under the tabs. Centre of green is the
+// hero, flanked by front/back, with the plays-like (wind-adjusted) read + suggested club
+// folded in underneath. This is the ONLY distance readout (the old in-body grid is gone), so
+// it carries the no-fix message too.
 function playDistBarHtml(si){
   const u=playUnit();
-  if(!si) return `<span class="pd-wait">📍 GPS…</span>`;
-  const {dC,sug,pct,reachable}=si;
-  let sub=`<span class="pd-club">centre</span>`;
-  if(sug) sub=reachable
-    ? `<span class="pd-club">${sug.club}</span><span>${pct}%</span>`
-    : `<span class="pd-club">${sug.club}</span><span>past range</span>`;
-  return `<span class="pd-num">${fmtDist(dC)}<span class="pd-u">${u}</span></span><span class="pd-sub">${sub}</span>`;
+  if(!si){
+    const msg=playS.gpsErr===1?'Location permission denied':'Waiting for GPS lock…';
+    return `<div class="prb-wait">📍 ${msg}</div>`;
+  }
+  const {dF,dC,dB,pl,sug,pct,reachable}=si;
+  const club=sug
+    ? `<span class="prb-club">${sug.club}</span><span class="prb-pct">${reachable?pct+'%':'past range'}</span>`
+    : `<span class="prb-club">centre</span>`;
+  const plays=(pl&&Math.abs(pl.deltaM)>=1.5)
+    ? `<span class="prb-plays ${pl.deltaM>0?'hurt':'help'}">${pl.deltaM>0?'▲':'▼'} plays <b>${fmtDist(pl.adj)}</b> ${u} ${pl.deltaM>0?'into wind +':'downwind −'}${fmtDist(Math.abs(pl.deltaM))}</span>`
+    : '';
+  return `<div class="prb-grid">
+      <div class="prb-fb"><span class="prb-lbl">FRONT</span><span class="prb-fbn">${fmtDist(dF)}</span></div>
+      <div class="prb-cen"><span class="prb-cn">${fmtDist(dC)}</span><span class="prb-u">${u}</span></div>
+      <div class="prb-fb"><span class="prb-lbl">BACK</span><span class="prb-fbn">${fmtDist(dB)}</span></div>
+    </div>
+    <div class="prb-sub">${club}${plays}</div>`;
 }
-// Refresh the sticky gauge: sets its colour class (the swing-power gauge) and content. Hidden on
-// the History tab and on scorecard-only (no-GPS) courses, where there's no live distance to show.
+// Refresh the sticky rangefinder band: sets its colour class (the swing-power gauge tints the
+// centre number) and content. Hidden on the History tab and on scorecard-only (no-GPS) courses.
 function playRefreshDist(){
-  const el=document.getElementById('play-dist'); if(!el) return;
+  const el=document.getElementById('play-rangebar'); if(!el) return;
   const show=playS&&!playS.historyOnly&&!playS.picker&&!playS.course.noGps&&playS.tab!=='history';
-  if(!show){ el.style.display='none'; el.innerHTML=''; el.className='play-dist'; return; }
+  if(!show){ el.style.display='none'; el.innerHTML=''; el.className='play-rangebar'; return; }
   el.style.display='';
   const si=_playShotInfo();
-  el.className='play-dist'+(si&&si.sug?' gauge-'+si.cls:'');
+  el.className='play-rangebar'+(si&&si.sug?' gauge-'+si.cls:'');
   el.innerHTML=playDistBarHtml(si);
 }
 // "Last time here" — the clubs you hit on this hole in your most recent saved round on this course.
@@ -8467,7 +8459,6 @@ function playTabHtml(){
       <div class="play-holemeta"><div class="play-holeno">Hole ${h.n}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(lenDisp)} ${u}${teeSet?' · <span class="play-yourtee">your tee</span>':''}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button></div></div>
       <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
     </div>
-    <div id="play-range">${playRangeHtml()}</div>
     ${playLastClubHtml()}
     <div class="play-mapwrap">
       <div id="play-map" onclick="playMapTap(event)">${playHoleSvg()}</div>
@@ -9039,9 +9030,9 @@ showTestBanner();
     </div>
     <div class="play-tabs" role="tablist" aria-label="Play and scorecard">
       <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')"><span class="pt-ico">⛳</span>Play</button>
-      <button class="play-dist" id="play-dist" type="button" onclick="playSetTab('play')" aria-label="Distance to centre of green"></button>
       <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')"><span class="pt-ico">📋</span>Card</button>
     </div>
+    <div class="play-rangebar" id="play-rangebar" onclick="playSetTab('play')" aria-label="Distance to the green"></div>
     <div class="play-body" id="play-body" role="tabpanel" tabindex="0" aria-labelledby="play-tab-play"></div>
     <div class="play-foot" id="play-foot" style="display:none;"></div>
   </div>
