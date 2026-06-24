@@ -1,0 +1,9 @@
+{
+  "name": "Kingston Heath Golf Club",
+  "note": "OSM-clean build (build-play-course.mjs from OpenStreetMap). Scorecard facts (SI/CR/Slope) overlaid via apply-scorecard.mjs since OSM carries neither. Par per hole comes from OSM (sums to 72; KH's published par). The members' card sometimes lists par 73 with the 1st as a par 5 — that's a third-party error, OSM/championship is par 72 with the 1st a par 4. Par-3 positions (5,10,15) match the card, confirming numbering. Hole 8's green is NOT mapped as a polygon in OSM (only a practice green spare exists), so it uses a synthetic green at the centreline end (approximate front/back); every other hole has its real OSM green. Hole 16's OSM centreline is ~17 m short of its green — extended to reach it.",
+  "cr": 73.1,
+  "slope": 136,
+  "src": "OpenStreetMap (ODbL)",
+  "si": { "1": 4, "2": 8, "3": 16, "4": 15, "5": 11, "6": 2, "7": 18, "8": 7, "9": 14, "10": 17, "11": 3, "12": 9, "13": 13, "14": 10, "15": 12, "16": 1, "17": 5, "18": 6 },
+  "fixGreenReachM": 8
+}
