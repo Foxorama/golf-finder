@@ -2406,17 +2406,29 @@ let hios = (()=>{ try{ return JSON.parse(localStorage.getItem('gf_hios')||'[]');
 let weatherCache = {};  // zone -> {temp, wind, code, label}
 
 // ── Weather helpers ───────────────────────────────────────────
-// Moon phase — calculated from synodic cycle, no API needed
-// Reference new moon: 2025-01-29 12:36 UTC, synodic month 29.530588853 days
+// Moon phase — calculated from synodic cycle, no API needed.
+// Reference new moon: 2025-01-29 12:36 UTC, synodic month 29.530588853 days.
+// ONE source of truth: moonAge() feeds moonPhase(), moonIllum() AND moonMark()
+// so the phase name, the illumination %, the emoji and the drawn glyph can never
+// drift apart. (They used to be computed from two different epochs — a constant
+// ~0.44-day offset — so e.g. a 71%-lit gibbous was mislabelled "First Quarter".)
+const MOON_SYNODIC=29.530588853;
+const MOON_NEW_REF=Date.UTC(2025,0,29,12,36)/86400000; // known new moon, days since Unix epoch
+function moonAge(date){ // 0..MOON_SYNODIC days since the most recent new moon
+  return ((date.getTime()/86400000-MOON_NEW_REF)%MOON_SYNODIC+MOON_SYNODIC)%MOON_SYNODIC;
+}
 function moonPhase(date){
-  const knownNew=Date.UTC(2025,0,29,12,36)/86400000; // days
-  const synodic=29.530588853;
-  const now=date.getTime()/86400000;
-  let age=((now-knownNew)%synodic+synodic)%synodic;
-  const emojis=['🌑','🌒','🌓','🌔','🌕','🌖','🌗','🌘'];
-  const names=['New Moon','Waxing Crescent','First Quarter','Waxing Gibbous','Full Moon','Waning Gibbous','Last Quarter','Waning Crescent'];
-  const idx=Math.round((age/synodic)*8)%8;
-  return {icon:emojis[idx], name:names[idx], age};
+  const age=moonAge(date);
+  const f=(1-Math.cos(2*Math.PI*age/MOON_SYNODIC))/2;   // lit fraction 0..1 (same formula as moonMark/moonIllum)
+  const waxing=age<MOON_SYNODIC/2;
+  // Name DERIVED FROM the illumination, so it always agrees with the % shown.
+  let name,icon;
+  if(f<0.02){ name='New Moon'; icon='🌑'; }
+  else if(f>0.98){ name='Full Moon'; icon='🌕'; }
+  else if(Math.abs(f-0.5)<0.04){ name=waxing?'First Quarter':'Last Quarter'; icon=waxing?'🌓':'🌗'; }
+  else if(f<0.5){ name=waxing?'Waxing Crescent':'Waning Crescent'; icon=waxing?'🌒':'🌘'; }
+  else { name=waxing?'Waxing Gibbous':'Waning Gibbous'; icon=waxing?'🌔':'🌖'; }
+  return {icon, name, age, illum:f};
 }
 
 let forecastMode=false;
@@ -3399,11 +3411,11 @@ function moonAltAz(lat,lng,date){
   const e=moonEcl(date), eq=eclToEq(e.lon,e.lat);
   return altAz(eq.ra,eq.dec,lat,lng,date);
 }
-// Moon illumination fraction from synodic age
+// Moon illumination fraction — SAME age + synodic constant as moonPhase()/moonMark()
+// (was a separate epoch, which made the % disagree with the phase name).
 function moonIllum(date){
-  const age=((jdays(date)-(2451550.1-2451545))%29.530588)+ (0);
-  const a=((age%29.530588)+29.530588)%29.530588;
-  return (1-Math.cos(2*Math.PI*a/29.530588))/2;
+  const a=moonAge(date);
+  return (1-Math.cos(2*Math.PI*a/MOON_SYNODIC))/2;
 }
 // Next moonrise/set within 24h — 10-min sampling of altitude sign changes
 function moonEvents(lat,lng,from){
@@ -5418,7 +5430,7 @@ function skyMark(type,col){
 // Moon glyph — a real phase, not an emoji: a pale disc with a dark terminator carved
 // by an offset shadow circle (clipped to the disc). age = days since new moon.
 function moonMark(age){
-  const ph=((age%29.530588)+29.530588)%29.530588/29.530588;     // 0..1 (0/1 = new)
+  const ph=((age%MOON_SYNODIC)+MOON_SYNODIC)%MOON_SYNODIC/MOON_SYNODIC; // 0..1 (0/1 = new)
   const f=(1-Math.cos(2*Math.PI*ph))/2;                          // lit fraction 0..1
   const R=5.2, off=(2*R)*f, waxing=ph<0.5;                       // shadow slides off as it fills
   const sx=(8+(waxing?1:-1)*off).toFixed(2);
