@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f1a0f">
+<meta name="robots" content="noindex">
+<title>Golf Finder — Test &amp; Demo Hub</title>
+<link rel="icon" type="image/png" href="icon-192.png">
+<style>
+  :root{
+    --bg:#0c130c; --panel:#121d12; --panel2:#0f180f; --line:rgba(255,255,255,.10);
+    --ink:#e8f0e6; --mut:#9bb19a; --acc:#16c172; --acc2:#5fd3ff; --al:#f5a623;
+    --night:#6c7bd1; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    --sans:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);
+    display:grid;grid-template-columns:340px 1fr;grid-template-rows:100%;height:100vh;overflow:hidden;}
+  body.night-theme{--acc:var(--night);}
+  /* ── Control rail ───────────────────────────── */
+  .rail{background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border-right:1px solid var(--line);overflow-y:auto;padding:14px 14px 40px;}
+  .rail h1{font-size:15px;margin:2px 0 2px;letter-spacing:.02em;}
+  .rail .sub{font-size:11px;color:var(--mut);margin:0 0 14px;line-height:1.5;}
+  .rail .sub a{color:var(--acc2);text-decoration:none;}
+  .grp{border:1px solid var(--line);border-radius:12px;padding:11px 11px 13px;margin-bottom:12px;
+    background:rgba(255,255,255,.015);}
+  .grp > .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--mut);display:flex;align-items:center;gap:6px;margin-bottom:9px;}
+  .grp > .lbl .dot{width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 8px var(--acc);}
+  .row{display:flex;flex-wrap:wrap;gap:6px;}
+  button.chip{font-family:var(--sans);font-size:12px;color:var(--ink);cursor:pointer;
+    background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:9px;
+    padding:7px 10px;transition:.15s;line-height:1;white-space:nowrap;}
+  button.chip:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.25);}
+  button.chip.on{background:color-mix(in srgb,var(--acc) 26%,transparent);border-color:var(--acc);
+    color:#fff;box-shadow:0 0 0 1px var(--acc) inset;}
+  button.chip.wide{flex:1 1 100%;text-align:center;}
+  button.chip.half{flex:1 1 calc(50% - 3px);text-align:center;}
+  .slider-wrap{display:flex;align-items:center;gap:9px;margin:2px 0 9px;}
+  .slider-wrap input[type=range]{flex:1;accent-color:var(--acc);}
+  .clock{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--al);min-width:64px;text-align:right;}
+  .play-cycle{display:flex;align-items:center;gap:8px;}
+  .note{font-size:10.5px;color:var(--mut);line-height:1.5;margin:8px 0 0;}
+  .note code{font-family:var(--mono);background:rgba(255,255,255,.06);padding:1px 4px;border-radius:4px;color:var(--acc2);}
+  .toolbar{display:flex;gap:6px;margin-bottom:12px;}
+  .toolbar button{flex:1;}
+  /* ── Stage ──────────────────────────────────── */
+  .stage{position:relative;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(120% 120% at 50% 0%,#16241a 0%,#070c07 70%);overflow:hidden;padding:24px;}
+  body.night-theme .stage{background:radial-gradient(120% 120% at 50% 0%,#1a1d34 0%,#06060c 70%);}
+  .device{position:relative;background:#000;border-radius:34px;padding:11px;
+    box-shadow:0 30px 80px -20px rgba(0,0,0,.8),0 0 0 1px rgba(255,255,255,.08);
+    transition:width .35s cubic-bezier(.4,0,.2,1),height .35s cubic-bezier(.4,0,.2,1);}
+  .device.phone{width:392px;height:812px;}
+  .device.land{width:812px;height:412px;border-radius:30px;}
+  .device.wide{width:min(96%,1180px);height:min(92vh,820px);border-radius:14px;padding:8px;}
+  .device::after{content:"";position:absolute;top:0;left:50%;transform:translateX(-50%);
+    width:120px;height:22px;background:#000;border-radius:0 0 14px 14px;z-index:3;pointer-events:none;}
+  .device.wide::after,.device.land::after{display:none;}
+  .device iframe{width:100%;height:100%;border:0;border-radius:24px;background:#0f1a0f;display:block;}
+  .device.wide iframe{border-radius:8px;}
+  .badge{position:absolute;top:12px;left:14px;font-family:var(--mono);font-size:10px;letter-spacing:.1em;
+    color:var(--mut);background:rgba(0,0,0,.45);border:1px solid var(--line);padding:5px 9px;border-radius:20px;
+    text-transform:uppercase;z-index:5;display:flex;gap:8px;align-items:center;pointer-events:none;}
+  .badge b{color:var(--ink);font-weight:700;}
+  .badge .live{width:6px;height:6px;border-radius:50%;background:#888;}
+  .badge.cycling .live{background:var(--acc);box-shadow:0 0 8px var(--acc);animation:bp 1.2s infinite;}
+  @keyframes bp{0%,100%{opacity:1}50%{opacity:.35}}
+  @media (max-width:820px){
+    body{grid-template-columns:1fr;grid-template-rows:auto 1fr;overflow:auto;}
+    .rail{max-height:48vh;}
+    .device.phone{width:300px;height:622px;}
+  }
+</style>
+</head>
+<body>
+  <aside class="rail">
+    <h1>🏌️ Golf Finder · Test Hub</h1>
+    <p class="sub">One place to drive every demo state of
+      <a href="index.html" target="_blank">the app &#8599;</a>. The preview is the real app loaded
+      same-origin, so time/weather toggles run live (the day&#8596;night <em>melt</em> shows too).</p>
+
+    <div class="toolbar">
+      <button class="chip" id="b-reload" title="Reload the preview">&#8635; Reload</button>
+      <button class="chip" id="b-open" title="Open current state in a new tab">Open &#8599;</button>
+      <button class="chip" id="b-reset" title="Back to live time &amp; weather">Reset</button>
+    </div>
+
+    <!-- SCENE TIME -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Scene time</div>
+      <div class="slider-wrap">
+        <input type="range" id="timeSlider" min="0" max="1439" step="5" value="600">
+        <span class="clock" id="clockOut">10:00am</span>
+      </div>
+      <div class="row" id="timePresets"></div>
+      <div class="play-cycle" style="margin-top:9px;">
+        <button class="chip wide" id="b-cycle">&#9654;&nbsp; Auto-cycle day &#8594; night</button>
+      </div>
+      <p class="note">Drives the app's live <code>setTime()</code> — watch the
+        day&#8596;night melt. Auto-cycle steps dawn&#8594;midday&#8594;dusk&#8594;night on a loop.</p>
+    </div>
+
+    <!-- WEATHER -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Weather scene</div>
+      <div class="row" id="wxPresets"></div>
+      <p class="note">Live <code>setWx()</code> — forces the hero scene's precip/lightning effects.</p>
+    </div>
+
+    <!-- NIGHT / LOADER -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Night &amp; loader</div>
+      <div class="row">
+        <button class="chip half" data-load="?time=21:00">&#127769; Night mode</button>
+        <button class="chip half" data-load="?time=21:00&amp;yorb=ufo">&#128760; UFO loader</button>
+        <button class="chip half" data-load="?time=21:00&amp;yorb=normal">Y'orb loader</button>
+        <button class="chip half" id="b-compass">&#129517; Immersive sky</button>
+      </div>
+      <p class="note">UFO/Y'orb loaders reload the page (the loader is first-paint only).
+        Immersive sky &amp; tilt-to-pan need a <b>real phone</b>'s sensors — desktop shows the static map.</p>
+    </div>
+
+    <!-- ON-COURSE / WIND -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> On-course play &amp; wind</div>
+      <div class="row">
+        <button class="chip half" data-load="?playshead=0.7&amp;playstail=0.4">Plays-like (default)</button>
+        <button class="chip half" data-load="?playshead=1.2&amp;playstail=0.7">Plays-like (strong)</button>
+      </div>
+      <p class="note">The GPS rangefinder, hole maps &amp; auto shot-tracking need a phone on a course
+        (St&nbsp;Lucia / Kingston Heath have Play geometry). Tune via
+        <code>?playshead=</code>/<code>?playstail=</code>.</p>
+    </div>
+
+    <!-- DEVICE FRAME -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Device frame</div>
+      <div class="row" id="frameBtns">
+        <button class="chip" data-frame="phone">&#128241; Phone</button>
+        <button class="chip" data-frame="land">Landscape</button>
+        <button class="chip" data-frame="wide">&#128421; Desktop</button>
+      </div>
+      <p class="note">Landscape is the right frame for verifying the immersive night sky.</p>
+    </div>
+
+    <!-- DEV TOOLS -->
+    <div class="grp">
+      <div class="lbl"><span class="dot"></span> Dev tools &amp; docs</div>
+      <div class="row">
+        <a class="chip half" href="scripts/play/trace-tool.html" target="_blank">Course trace tool &#8599;</a>
+        <a class="chip half" href="https://foxorama.github.io/golf-finder/" target="_blank">Live site &#8599;</a>
+        <a class="chip half" href="assets/night-loader-space-manta.html" target="_blank">Space-manta loader &#8599;</a>
+        <a class="chip half" href="README.md" target="_blank">README &#8599;</a>
+      </div>
+      <p class="note">Test harness: <code>node tests/run.mjs</code> (syntax + play-stats suites).</p>
+    </div>
+  </aside>
+
+  <main class="stage">
+    <div class="badge" id="badge"><span class="live"></span> <b id="badgeState">live</b></div>
+    <div class="device phone" id="device">
+      <iframe id="app" src="index.html" title="Golf Finder app preview"
+        allow="fullscreen; geolocation; accelerometer; gyroscope; magnetometer"></iframe>
+    </div>
+  </main>
+
+<script>
+(function(){
+  "use strict";
+  const app = document.getElementById('app');
+  const device = document.getElementById('device');
+  const badge = document.getElementById('badge');
+  const badgeState = document.getElementById('badgeState');
+  const clockOut = document.getElementById('clockOut');
+  const slider = document.getElementById('timeSlider');
+
+  // Desired state we re-apply after any iframe (re)load.
+  const state = { time:null, wx:null };
+
+  // ── helpers ──────────────────────────────────
+  function win(){ try { return app.contentWindow; } catch(e){ return null; } }
+  function ready(){ const w = win(); return !!(w && typeof w.setTime === 'function' && typeof w.setWx === 'function'); }
+  // run fn once the app's globals exist (it boots behind a loader)
+  function whenReady(fn, tries){
+    tries = tries==null ? 80 : tries;
+    if(ready()){ try{ fn(win()); }catch(e){} return; }
+    if(tries<=0) return;
+    setTimeout(()=>whenReady(fn, tries-1), 80);
+  }
+  function fmt(mins){
+    const n=((mins%1440)+1440)%1440, h=Math.floor(n/60), m=n%60;
+    return (h%12||12)+':'+String(m).padStart(2,'0')+(h>=12?'pm':'am');
+  }
+  function hhmm(mins){ const h=Math.floor(mins/60), m=mins%60; return h+':'+String(m).padStart(2,'0'); }
+  function isNight(mins){ const h=mins/60; return h>=18 || h<6; }
+
+  function setBadge(txt){ badgeState.textContent = txt; }
+  function reflectNight(){ document.body.classList.toggle('night-theme', state.time!=null && isNight(state.time)); }
+
+  // ── live drivers (no reload) ─────────────────
+  function applyTime(mins, label){
+    state.time = mins;
+    slider.value = mins;
+    clockOut.textContent = fmt(mins);
+    reflectNight();
+    setBadge(label || fmt(mins));
+    whenReady(w => { try{ w.setTime(hhmm(mins)); }catch(e){} });
+  }
+  function applyWx(key, label){
+    state.wx = key;            // null => live weather
+    setBadge(label);
+    whenReady(w => { try{ w.setWx(key||undefined); }catch(e){} });
+  }
+  function reapplyAfterLoad(){
+    // Called on every iframe load — restore the live overrides the page lost on reload.
+    whenReady(w => {
+      try{ if(state.time!=null) w.setTime(hhmm(state.time)); }catch(e){}
+      try{ if(state.wx) w.setWx(state.wx); }catch(e){}
+    });
+  }
+  app.addEventListener('load', reapplyAfterLoad);
+
+  // ── reload with query params (for first-paint-only features) ──
+  function loadWith(qs){
+    stopCycle();
+    // Preserve current time in the URL so the loader/yorb variant lands in the right mode.
+    app.src = 'index.html' + (qs.indexOf('?')===0 ? qs : '?'+qs);
+    setBadge(qs.replace(/^\?/,'').replace(/&amp;/g,' · '));
+  }
+
+  // ── time presets ─────────────────────────────
+  const TIMES = [
+    ['Dawn','5:30',330],['Morning','8:00',480],['Midday','12:00',720],
+    ['Afternoon','16:00',960],['Dusk','17:40',1060],['Night','21:00',1260],['Late','23:30',1410]
+  ];
+  const tp = document.getElementById('timePresets');
+  TIMES.forEach(([name,,mins])=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=name;
+    b.onclick=()=>{ stopCycle(); applyTime(mins, name+' · '+fmt(mins)); markTime(); };
+    tp.appendChild(b);
+  });
+  function markTime(){
+    [...tp.children].forEach((b,i)=>b.classList.toggle('on', state.time===TIMES[i][2]));
+  }
+  slider.addEventListener('input', ()=>{ stopCycle(); applyTime(+slider.value); markTime(); });
+
+  // ── weather presets ──────────────────────────
+  const WX = [
+    ['Live',null],['Clear','clear'],['Partly','partly'],['Overcast','overcast'],['Fog','fog'],
+    ['Drizzle','drizzle'],['Showers','shower'],['Rain','rain'],['Snow','snow'],
+    ['Storm','storm'],['Hail','hail']
+  ];
+  const wp = document.getElementById('wxPresets');
+  WX.forEach(([name,key])=>{
+    const b=document.createElement('button'); b.className='chip'; b.textContent=name;
+    b.onclick=()=>{ applyWx(key, 'wx · '+name); [...wp.children].forEach(x=>x.classList.remove('on')); b.classList.add('on'); };
+    wp.appendChild(b);
+  });
+
+  // ── auto day→night cycle (live, shows the melt) ──
+  let cycleT=null, cycleI=0;
+  const CYCLE=[330,480,720,960,1060,1260,1410]; // dawn → late
+  const cycleBtn=document.getElementById('b-cycle');
+  function stepCycle(){
+    const mins=CYCLE[cycleI%CYCLE.length];
+    applyTime(mins, 'cycling · '+fmt(mins)); markTime();
+    cycleI++;
+  }
+  function startCycle(){
+    if(cycleT) return;
+    badge.classList.add('cycling'); cycleBtn.classList.add('on');
+    cycleBtn.innerHTML='&#9632;&nbsp; Stop cycle';
+    cycleI=0; stepCycle(); cycleT=setInterval(stepCycle, 2600);
+  }
+  function stopCycle(){
+    if(!cycleT) return;
+    clearInterval(cycleT); cycleT=null;
+    badge.classList.remove('cycling'); cycleBtn.classList.remove('on');
+    cycleBtn.innerHTML='&#9654;&nbsp; Auto-cycle day &#8594; night';
+  }
+  cycleBtn.onclick=()=>{ cycleT ? stopCycle() : startCycle(); };
+
+  // ── data-load buttons (night/loader/wind reloads) ──
+  document.querySelectorAll('[data-load]').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const qs=(b.getAttribute('data-load')||'').replace(/&amp;/g,'&');
+      // keep these in sync with the loaded URL
+      const t=qs.match(/time=(\d{1,2}):(\d{2})/);
+      if(t){ state.time=(+t[1])*60+(+t[2]); slider.value=state.time; clockOut.textContent=fmt(state.time); reflectNight(); }
+      loadWith(qs);
+    });
+  });
+
+  // immersive sky: night + landscape + toggle the app's compass view
+  document.getElementById('b-compass').addEventListener('click',()=>{
+    setFrame('land');
+    applyTime(1260,'immersive sky');
+    whenReady(w=>{ try{ if(!w._compassOn && typeof w.toggleCompass==='function') w.toggleCompass(); }catch(e){} });
+    setBadge('immersive sky (needs phone sensors)');
+  });
+
+  // ── device frame ─────────────────────────────
+  const frameBtns=document.getElementById('frameBtns');
+  function setFrame(f){
+    device.className='device '+f;
+    [...frameBtns.children].forEach(b=>b.classList.toggle('on', b.getAttribute('data-frame')===f));
+  }
+  frameBtns.querySelectorAll('[data-frame]').forEach(b=>{
+    b.addEventListener('click',()=>setFrame(b.getAttribute('data-frame')));
+  });
+
+  // ── toolbar ──────────────────────────────────
+  document.getElementById('b-reload').onclick=()=>{ stopCycle(); app.src='index.html'; state.time=null; state.wx=null;
+    document.body.classList.remove('night-theme'); setBadge('live'); markTime();
+    [...wp.children].forEach(x=>x.classList.remove('on')); };
+  document.getElementById('b-reset').onclick=()=>document.getElementById('b-reload').onclick();
+  document.getElementById('b-open').onclick=()=>{
+    let qs='';
+    if(state.time!=null) qs+=(qs?'&':'?')+'time='+hhmm(state.time);
+    if(state.wx) qs+=(qs?'&':'?')+'wx='+state.wx;
+    window.open('index.html'+qs,'_blank');
+  };
+
+  // ── defaults ─────────────────────────────────
+  setFrame('phone');
+})();
+</script>
+</body>
+</html>

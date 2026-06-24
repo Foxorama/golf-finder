@@ -749,6 +749,15 @@ it with the preview tool:
   never `git add .`.
 
 ## Time-travel / test hooks (already in the app)
+- **`test.html` (repo root) is the consolidated demo/test hub** — one page that loads the
+  real app same-origin in a phone/landscape/desktop frame and drives every hook from a
+  control rail: a scene-time slider + presets + an **auto day→night cycle** (calls the app's
+  live `setTime()`, so the day↔night *melt* actually plays — no reload), all `setWx()` weather
+  scenes, the night/UFO/Y'orb loader variants + immersive-sky toggle (reload-based, since the
+  loader is first-paint only and tilt needs phone sensors), plays-like wind params, and links
+  out to the trace tool / space-manta loader / live site. Served by Pages at
+  `…/golf-finder/test.html`. It's the single place to show features instead of pasting `?time=…&wx=…`
+  URLs around. (`noindex`; additive — touches no app code.)
 - `?time=HH:MM` — override "now" (e.g. `?time=21:00` for night mode).
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
