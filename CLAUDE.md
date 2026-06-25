@@ -586,14 +586,17 @@ call it done. They map to the three hats the user keeps asking for:
   portable Node: `"$LOCALAPPDATA\gf-node\node-v24.17.0-win-x64\node.exe" tests/run.mjs`
   (Bash path: `/c/Users/<you>/AppData/Local/gf-node/node-v24.17.0-win-x64/node.exe`).
   `tests/run.mjs` discovers every `*.test.mjs` and runs the functions on its exported
-  `tests` object. Two suites today: **`syntax.test.mjs`** parses *every* inline `<script>`
+  `tests` object. Three suites today: **`syntax.test.mjs`** parses *every* inline `<script>`
   in index.html with `new vm.Script` (catches stray-brace / bad-template-literal / TDZ edits
   that otherwise only show as a stuck loader — run this after any non-trivial index.html
-  edit), and **`play-stats.test.mjs`** evals the `PLAY-STATS-CORE` block in a `vm` and asserts
-  the stats math on synthetic rounds. `tests/core.mjs` does the slicing; `tests/assert.mjs`
-  is the tiny `ok/eq/close` lib. **CI:** `.github/workflows/tests.yml` runs `node tests/run.mjs`
-  on every push/PR. To cover new stats logic, add a `*.test.mjs` (and keep new pure logic
-  inside the CORE markers so it's reachable from Node).
+  edit), **`play-stats.test.mjs`** evals the `PLAY-STATS-CORE` block in a `vm` and asserts
+  the stats math on synthetic rounds, and **`test-hub.test.mjs`** is a **sync-guard for the
+  demo hub** — it asserts `test.html` still matches the app's test hooks (weather conditions,
+  URL params, console helpers, loader forms) so the test site can't silently drift when you
+  change the app (see the **`keep-test-hub-in-sync` skill**). `tests/core.mjs` does the slicing;
+  `tests/assert.mjs` is the tiny `ok/eq/close` lib. **CI:** `.github/workflows/tests.yml` runs
+  `node tests/run.mjs` on every push/PR. To cover new stats logic, add a `*.test.mjs` (and keep
+  new pure logic inside the CORE markers so it's reachable from Node).
 
 ## Change & versioning flow
 - `main` is **branch-protected** — never commit to it directly. Each change:
@@ -766,7 +769,14 @@ it with the preview tool:
   bar composes them into one URL (`buildURL()`) and slides the preview in as a full-screen
   overlay. Close it with **swipe-left** or **drag-down** from the top bar (gesture catchers are
   the bar + a thin left-edge strip — touches inside the app's `iframe` never bubble to the
-  parent, so the gesture must start on hub chrome, not over the app).
+  parent, so the gesture must start on hub chrome, not over the app). **The hub is driven by
+  the app's public test hooks only (never duplicated logic), and is kept from drifting by
+  `tests/test-hub.test.mjs`** — a sync-guard (run in CI) that fails when `index.html` and
+  `test.html` diverge (e.g. you add a `?wx` condition or a `?param` to the app but not a hub
+  control). **When you add/change a test hook, follow the `keep-test-hub-in-sync` skill:** add
+  the app hook → add the hub control (+ `buildURL()` / live driver) → extend the guard test →
+  update these docs. The hub deploys with the app from `main` (same Pages site), so there's no
+  separate publish step — keeping it in sync is the whole job.
 - `?time=HH:MM` — override "now" (e.g. `?time=21:00` for night mode).
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;
