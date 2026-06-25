@@ -1,8 +1,11 @@
 name: Tests
 
-# Regression guard for the Play stats engine. Runs the zero-dependency Node harness in
-# tests/ (pure stats-core math + a parse check of every inline <script> in index.html) on
-# every push and PR. No build step, no deps — just Node.
+# Regression guard. Runs the zero-dependency Node harness in tests/ on every push and PR:
+#  • play-stats — pure stats-core math
+#  • syntax     — parses every inline <script> in index.html
+#  • test-hub   — asserts the demo hub (test.html) still matches the app's test hooks, so the
+#                 test site stays in sync whenever the app changes (see keep-test-hub-in-sync skill)
+# No build step, no deps — just Node. New tests/*.test.mjs are picked up automatically.
 
 on:
   push:
@@ -18,5 +21,5 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Run Play stats tests
+      - name: Run test harness (play-stats + syntax + test-hub sync)
         run: node tests/run.mjs
