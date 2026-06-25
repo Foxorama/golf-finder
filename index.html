@@ -1142,6 +1142,12 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
 @keyframes ld-aura{0%,100%{opacity:0.4;transform:scale(0.92);}50%{opacity:0.82;transform:scale(1.1);}}
 .ld-hairf{transform-box:fill-box;transform-origin:50% 100%;animation:ld-hair 1.4s ease-in-out infinite;}
 @keyframes ld-hair{0%,100%{transform:scaleY(1);}50%{transform:scaleY(1.05);}}
+/* Hitting the Legendary rung (the cap) spells LEGENDARY across the sky in fireworks —
+   JS builds a .ld-legendary group (one .ld-leg-ltr per letter + radial burst dots) and
+   drives the reveal/burst on WAAPI. The letters keep a crisp drop-shadow glow (NOT the
+   ldd-glow blur filter, which would smear the text); the burst dots use ldd-glow so they
+   read as glowing sparks. */
+.ld-leg-ltr{font:900 28px/1 'Arial Black','Segoe UI Black','Segoe UI',system-ui,sans-serif;text-anchor:middle;paint-order:stroke;stroke:rgba(6,34,17,0.6);stroke-width:1px;filter:drop-shadow(0 0 4px #6dffb4) drop-shadow(0 0 9px #2bff93);transform-box:fill-box;transform-origin:center;}
 /* Crisp, fast-flickering bolts (CSS drop-shadow gives the glow, not a blur filter) */
 .ld-bolt{filter:drop-shadow(0 0 1.4px #3aa0ff);animation:ld-bolt 0.5s steps(1,end) infinite;animation-delay:var(--bd,0s);}
 @keyframes ld-bolt{0%{opacity:0;}8%{opacity:1;}18%{opacity:0.15;}28%{opacity:1;}42%{opacity:0;}100%{opacity:0;}}
@@ -1411,12 +1417,54 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     if(stage>=FORMS.length) return;                   /* already Legendary (max) */
     if(stage>0) golfer.classList.remove(FORMS[stage-1]);
     golfer.classList.add(FORMS[stage]); flash(FLASH[stage]);
+    if(FORMS[stage]==='ssjl') legendaryFireworks();   /* the cap rung: spell LEGENDARY in fireworks */
     stage++;
     var back=svg.querySelector('.ld-saiyan-back');
     if(back) back.animate([{transform:'scale(0.4)',opacity:0},
                            {transform:'scale(1.22)',opacity:1,offset:0.6},
                            {transform:'scale(1)',opacity:1}],
                           {duration:540,easing:'cubic-bezier(.2,1.5,.4,1)'});
+  }
+  /* Legendary fanfare: spell LEGENDARY across the top of the scene, each letter
+     detonating its own firework burst and lighting up in turn, then the whole word
+     holds and fades. Pure SVG/WAAPI (the loader is first-paint + offline — no raster);
+     every letter/spark rides its own DELAYED WAAPI timeline rather than a wall-clock
+     setTimeout, so the stagger can't drift while the main thread is busy loading. */
+  function legendaryFireworks(){
+    if(svg.querySelector('.ld-legendary')) return;      /* fire once per load */
+    var word='LEGENDARY', n=word.length, gap=40, x0=200-gap*(n-1)/2, y=70, step=150,
+        cols=['#caffba','#9dffc6','#eaffd0','#b6ff9e','#7dffb0','#d6ffae','#9effd6','#b6ff9e','#caffba'],
+        g=document.createElementNS(NS,'g');
+    g.setAttribute('class','ld-legendary'); svg.appendChild(g);
+    for(var i=0;i<n;i++){
+      var lx=x0+i*gap, dly=i*step, col=cols[i%cols.length];
+      burst(g,lx,y-8,col,dly);
+      var t=document.createElementNS(NS,'text');
+      t.setAttribute('x',lx); t.setAttribute('y',y); t.setAttribute('class','ld-leg-ltr');
+      t.setAttribute('fill',col); t.textContent=word.charAt(i); g.appendChild(t);
+      t.animate([{opacity:0,transform:'scale(0.2) translateY(10px)'},
+                 {opacity:1,transform:'scale(1.25) translateY(0)',offset:0.55},
+                 {opacity:1,transform:'scale(1) translateY(0)'}],
+                {duration:560,delay:dly,easing:'cubic-bezier(.2,1.6,.4,1)',fill:'both'});
+    }
+    var hold=n*step+1800;
+    g.animate([{opacity:1,offset:0},{opacity:1,offset:0.8},{opacity:0,offset:1}],
+              {duration:hold,easing:'ease-in',fill:'forwards'})
+     .finished.then(function(){g.remove();}).catch(function(){});
+  }
+  function burst(g,cx,cy,col,delay){
+    for(var p=0;p<14;p++){
+      var ang=Math.PI*2*p/14, dist=20+Math.random()*12,
+          dx=(Math.cos(ang)*dist).toFixed(1), dy=(Math.sin(ang)*dist).toFixed(1),
+          dot=document.createElementNS(NS,'circle');
+      dot.setAttribute('cx',cx); dot.setAttribute('cy',cy); dot.setAttribute('r',(1.6+Math.random()).toFixed(1));
+      dot.setAttribute('fill',col); dot.setAttribute('filter','url(#ldd-glow)'); g.appendChild(dot);
+      dot.animate([{transform:'translate(0px,0px)',opacity:1,offset:0},
+                   {transform:'translate('+dx+'px,'+dy+'px)',opacity:1,offset:0.7},
+                   {transform:'translate('+(dx*1.18).toFixed(1)+'px,'+(dy*1.18).toFixed(1)+'px)',opacity:0,offset:1}],
+                  {duration:720,delay:delay,easing:'ease-out',fill:'forwards'})
+         .finished.then(function(){dot.remove();}).catch(function(){});
+    }
   }
   function flash(color){
     var fl=document.createElementNS(NS,'circle');
