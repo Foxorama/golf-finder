@@ -80,7 +80,15 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap">
+<!-- Load web fonts NON-BLOCKING. A plain render-blocking stylesheet here stalls the
+     HTML parser: an inline script element waits for pending stylesheets, so the main app
+     script below never runs if fonts.googleapis.com is slow/blocked (privacy blockers,
+     firewalls, CDN hiccups) — the whole app freezes: loader keeps playing, no course/
+     weather data loads, and day night never switches. The media="print" swap loads the
+     sheet off the critical path, then applies it once ready; the CSS var stacks
+     (--sans/--mono) fall back to system sans/mono so text is fine if fonts never arrive. -->
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"></noscript>
 <style>
 :root{
   --green:#2d5a1b;--gl:#3d7a25;--gb:#5aab35;--gg:#7ed44f;
