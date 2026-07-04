@@ -6522,9 +6522,13 @@ function _agInjectCSS(){ if(document.getElementById('ag-css')) return; const s=d
   .ag-strip-h>span:first-child{overflow:hidden;text-overflow:ellipsis;}
   .ag-strip-h #ag-selt{color:var(--tx);flex:none;}
   .ag-strip{display:flex;gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;align-items:flex-end;height:74px;}
-  .ag-bar{flex:0 0 22px;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;-webkit-tap-highlight-color:transparent;}
-  .ag-bar i{display:block;width:14px;border-radius:3px 3px 0 0;background:var(--bc,#3a5);transition:height .2s;}
-  .ag-bar span{font-family:var(--mono);font-size:8px;color:var(--tx3);white-space:nowrap;}
+  .ag-bar{flex:0 0 27px;display:flex;flex-direction:column;align-items:center;gap:2px;height:100%;justify-content:flex-end;background:none;border:0;padding:0 1px;cursor:pointer;color:inherit;-webkit-tap-highlight-color:transparent;}
+  .ag-bar i{display:block;width:15px;border-radius:3px 3px 0 0;background:var(--bc,#3a5);transition:height .2s;}
+  .ag-bar .kp{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--tx2);line-height:1;}
+  .ag-bar .hr{font-family:var(--mono);font-size:8.5px;color:var(--tx3);line-height:1.1;white-space:nowrap;font-style:normal;}
+  .ag-bar .hr.now{color:#fff;font-weight:700;}
+  .ag-bar .day{font-family:var(--mono);font-size:8px;color:#8fb8e8;line-height:1.1;white-space:nowrap;font-style:normal;letter-spacing:.02em;}
+  .ag-bar.newday{border-left:1px solid rgba(120,150,220,.22);}
   .ag-bar.now i{outline:2px solid #fff;outline-offset:1px;}
   .ag-bar.sel{background:rgba(120,160,255,.14);border-radius:6px;}
   .ag-bar.sel span{color:var(--tx);}
@@ -6532,6 +6536,15 @@ function _agInjectCSS(){ if(document.getElementById('ag-css')) return; const s=d
   .ag-alertpanel h4{margin:0 0 8px;font-family:var(--sans);font-size:14px;padding-right:26px;}
   .ag-ap-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(30,40,68,.9);border:1px solid rgba(124,148,210,.3);color:var(--tx2);font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
   .ag-ap-done{margin-top:10px;width:100%;}
+  .ag-spot{position:absolute;left:12px;right:12px;bottom:12px;z-index:6;background:rgba(10,15,32,.97);border:1px solid rgba(124,148,210,.4);border-radius:16px;padding:13px 15px;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:skyCardUp .22s ease;}
+  .ag-spot-name{font-family:var(--sans);font-weight:800;font-size:16px;color:var(--tx);padding-right:26px;}
+  .ag-spot-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:3px;line-height:1.35;}
+  .ag-spot-btns{display:flex;gap:8px;margin-top:11px;}
+  .ag-spot-btns a,.ag-spot-btns button{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;text-decoration:none;padding:10px;border-radius:11px;font-family:var(--mono);font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent;}
+  .ag-spot-go{background:linear-gradient(180deg,#1b8f5a,#137047);border:1px solid rgba(120,230,170,.5);color:#eafff4;}
+  .ag-spot-go:active{transform:scale(.97);}
+  .ag-spot-share{background:rgba(30,40,68,.9);border:1px solid rgba(124,148,210,.4);color:var(--tx2);}
+  .ag-spot-share:active{transform:scale(.97);}
   .ag-alertpanel .row{display:flex;align-items:center;gap:10px;margin:10px 0;font-family:var(--mono);font-size:12px;}
   .ag-alertpanel input[type=range]{flex:1;}
   .ag-alertpanel .kpv{font-weight:700;min-width:2ch;text-align:right;}
@@ -6558,6 +6571,7 @@ function openAuroraGlobe(){
           <button id="ag-alertbtn" onclick="_agToggleAlertPanel()">🔔 Alerts</button>
         </div>
         <div class="ag-alertpanel" id="ag-alertpanel" hidden></div>
+        <div class="ag-spot" id="ag-spot" hidden></div>
       </div>
       <div class="ag-note" id="ag-note"></div>
       <div class="ag-strip-wrap"><div class="ag-strip-h"><span>3-day Kp outlook — tap to preview the lines</span><span id="ag-selt"></span></div><div class="ag-strip" id="ag-strip"></div></div>`;
@@ -6571,6 +6585,7 @@ function openAuroraGlobe(){
   _ag.base=document.createElement('canvas'); _ag.bctx=_ag.base.getContext('2d');
   w.classList.add('on'); w.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
+  _agHideSpot();
   _agWireDrag();
   window.addEventListener('resize',_agResize);
   _agResize();
@@ -6665,6 +6680,9 @@ function _agPaint(){ const a=_ag; if(!a) return; const ctx=a.ctx, R=a.R;
   for(const s of AURORA_SPOTS){ if(_agNeedKp(s)>selK) continue;
     const p=_agProject(s.lat,s.lon); if(!p.vis) continue; _agDot(ctx,p.x,p.y,R*0.016,'#7dffb0'); }
   if(window._gpsLat!=null){ const p=_agProject(window._gpsLat,window._gpsLng); if(p.vis) _agDot(ctx,p.x,p.y,R*0.022,'#ff5db0',true); }
+  // selection ring on the tapped spot
+  if(a.spot){ const p=_agProject(a.spot.lat,a.spot.lon); if(p.vis){ ctx.strokeStyle='rgba(255,255,255,.95)'; ctx.lineWidth=2.2*(a.dpr||1);
+    ctx.beginPath(); ctx.arc(p.x,p.y,R*0.05,0,7); ctx.stroke(); } }
 }
 // One rAF loop while the globe is open: re-render the base only when dirty, blit ~18fps for
 // the pulse. Cheap when idle (a blit + a few dots), and stops on close.
@@ -6700,10 +6718,14 @@ function _agRenderStrip(){ const el=document.getElementById('ag-strip'); if(!el)
   const now=Date.now(); let nowIdx=0, best=1e15; fc.forEach((b,i)=>{ const t=Date.parse(b.t.replace(' ','T')+'Z'); const d=Math.abs(t-now); if(d<best){best=d;nowIdx=i;} });
   // show a window from a little before now to the end of the forecast
   const start=Math.max(0,nowIdx-2);
-  let h='';
+  let h='', prevDay='';
   for(let i=start;i<fc.length;i++){ const b=fc[i], t=new Date(Date.parse(b.t.replace(' ','T')+'Z')); const col=_agKpCol(b.kp);
-    const lbl=t.toLocaleString(undefined,{weekday:'short',hour:'numeric'}); const sel=(i===_agSelIdxOr(nowIdx));
-    h+=`<div class="ag-bar${i===nowIdx?' now':''}${sel?' sel':''}" onclick="_agSelectBin(${i})"><i style="height:${Math.max(4,b.kp/9*100)}%;--bc:${col}"></i><span>${b.kp.toFixed(0)}</span><span>${lbl}</span></div>`; }
+    const isNow=(i===nowIdx), sel=(i===_agSelIdxOr(nowIdx));
+    const h12=(t.getHours()%12)||12, ap=t.getHours()<12?'am':'pm', hr=isNow?'now':(h12+ap);
+    const day=t.toLocaleDateString(undefined,{weekday:'short'}), dayLbl=(day!==prevDay)?day:''; prevDay=day;
+    h+=`<button class="ag-bar${isNow?' now':''}${sel?' sel':''}${dayLbl&&i>start?' newday':''}" onclick="_agSelectBin(${i})">`
+      +`<b class="kp">${b.kp.toFixed(0)}</b><i style="height:${Math.max(5,b.kp/9*100)}%;--bc:${col}"></i>`
+      +`<em class="hr${isNow?' now':''}">${hr}</em><em class="day">${dayLbl||'&nbsp;'}</em></button>`; }
   el.innerHTML=h; }
 function _agSelIdxOr(nowIdx){ return _ag&&_ag.selIdx>=0?_ag.selIdx:nowIdx; }
 function _agKpCol(kp){ return kp>=8?'#ff4d4d':kp>=7?'#ff8a3d':kp>=5?'#ffc233':kp>=4?'#8ad24d':'#3a7'; }
@@ -6713,14 +6735,45 @@ function _agSelectBin(i){ if(!_ag) return; const b=window._kpFc[i]; if(!b) retur
   _agRenderStrip(); _agSyncKp(); _agMarkDirty(); }
 function _agRecentre(){ if(!_ag) return; const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03; _ag.cLon=lng; _ag.cLat=Math.max(-90,Math.min(-15,lat-18)); _agMarkDirty(); }
 
-// Drag to spin the globe (change view centre). Pointer + touch.
-function _agWireDrag(){ const cv=_ag.canvas; if(cv._agWired) return; cv._agWired=true; let px=0,py=0,drag=false;
-  const down=e=>{ drag=true; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
+// Drag to spin the globe (change view centre); a near-stationary press is a TAP — hit-test
+// the visible dots and open the location card. Pointer + touch.
+function _agWireDrag(){ const cv=_ag.canvas; if(cv._agWired) return; cv._agWired=true; let px=0,py=0,drag=false,moved=0;
+  const down=e=>{ drag=true; moved=0; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
   const move=e=>{ if(!drag||!_ag) return; const t=e.touches?e.touches[0]:e; const dx=t.clientX-px, dy=t.clientY-py; px=t.clientX; py=t.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy); if(moved<3) return;
     const k=90/_ag.R*(_ag.dpr||1); _ag.cLon-=dx*k; _ag.cLat=Math.max(-90,Math.min(90,_ag.cLat+dy*k)); if(e.cancelable)e.preventDefault(); _agMarkDirty(); };
-  const up=()=>{ drag=false; };
+  const up=e=>{ if(drag && moved<8){ const t=(e.changedTouches&&e.changedTouches[0])||e; _agTapAt(t.clientX,t.clientY); } drag=false; };
   cv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
   cv.addEventListener('touchstart',down,{passive:true}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up); }
+// Hit-test a tap against the visible reachable spots (and your own dot); open the card, or
+// dismiss it if the tap missed.
+function _agTapAt(clientX,clientY){ const a=_ag; if(!a) return; const rect=a.canvas.getBoundingClientRect(); if(!rect.width) return;
+  const sx=(clientX-rect.left)*(a.canvas.width/rect.width), sy=(clientY-rect.top)*(a.canvas.height/rect.height);
+  const selK=isFinite(a.selKp)?Math.round(a.selKp+0.001):-1, hitR=Math.max(a.R*0.06, 20*(a.dpr||1)); let best=null, bestD=hitR*hitR;
+  for(const s of AURORA_SPOTS){ if(_agNeedKp(s)>selK) continue; const p=_agProject(s.lat,s.lon); if(!p.vis) continue; const d=(p.x-sx)**2+(p.y-sy)**2; if(d<bestD){ bestD=d; best=s; } }
+  if(window._gpsLat!=null){ const p=_agProject(window._gpsLat,window._gpsLng); if(p.vis){ const d=(p.x-sx)**2+(p.y-sy)**2; if(d<bestD){ bestD=d; best={n:'My location',lat:window._gpsLat,lon:window._gpsLng,me:true}; } } }
+  if(best) _agShowSpot(best); else _agHideSpot();
+}
+// Location card for a tapped dot — its name, when it's reachable + distance, and a
+// Directions link (opens Google Maps navigation to it) plus native Share.
+function _agShowSpot(s){ if(!_ag) return; _ag.spot=s; const el=document.getElementById('ag-spot'); if(!el) return;
+  const dist=(window._gpsLat!=null&&!s.me)?haversineKm(window._gpsLat,window._gpsLng,s.lat,s.lon):null;
+  const distTxt=dist!=null?` · ~${dist<10?dist.toFixed(1):Math.round(dist)} km away`:'';
+  const sub=s.me?'Your current location':`Aurora camera-visible from ~Kp ${_agNeedKp(s)}${distTxt}`;
+  const maps=`https://www.google.com/maps/dir/?api=1&destination=${s.lat},${s.lon}`;
+  el.innerHTML=`<button class="ag-ap-x" onclick="_agHideSpot()" aria-label="Close">✕</button>`
+    +`<div class="ag-spot-name">📍 ${s.n}</div><div class="ag-spot-sub">${sub}</div>`
+    +`<div class="ag-spot-btns"><a class="ag-spot-go" href="${maps}" target="_blank" rel="noopener">🧭 Directions</a>`
+    +`<button class="ag-spot-share" onclick="_agShareSpot(this)">↗ Share</button></div>`;
+  el.hidden=false;
+}
+function _agHideSpot(){ if(_ag) _ag.spot=null; const el=document.getElementById('ag-spot'); if(el) el.hidden=true; }
+function _agShareSpot(btn){ const s=_ag&&_ag.spot; if(!s) return;
+  const url=`https://www.google.com/maps/search/?api=1&query=${s.lat},${s.lon}`, data={title:s.n,text:`Aurora viewing spot: ${s.n}`,url};
+  if(navigator.share){ navigator.share(data).catch(()=>{}); }
+  else if(navigator.clipboard){ navigator.clipboard.writeText(url).then(()=>{ if(btn){ btn.textContent='Copied ✓'; setTimeout(()=>{ if(btn)btn.textContent='↗ Share'; },1600); } }).catch(()=>window.open(url,'_blank')); }
+  else window.open(url,'_blank');
+}
 
 // ── Aurora alerts (best-effort, no backend) ──────────────────────────────────
 (function(){ try{ const v=JSON.parse(localStorage.getItem('gf_aurora_alert')||'null'); window._agAlert=v||{kp:6,on:false}; }catch(e){ window._agAlert={kp:6,on:false}; } })();
