@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-06-23 · **Next ID:** `S-008`
+> **Last reviewed:** 2026-07-04 · **Next ID:** `S-009`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[sky]` (the three lenses; "pro golfer" → "true to the sky" here) ·
@@ -62,7 +62,9 @@ gap. Do opportunistically when regenerating art (pairs with S-001).
 The card system is built to take more: add `DEEPSKY` objects and `SKY_EVENTS`/`COMETS` entries via the
 documented "add an event type" / `astral-heroic-card-art` recipes (descriptor + `SKY_LORE` +
 `skyLocus` branch + `SKY_RARITY` + optional `CARD_PHOTO`). Keep everything **real and Australia-visible**
-and verify coordinates/visibility per the auditing recipe before committing.
+and verify coordinates/visibility per the auditing recipe before committing. Any new `DEEPSKY`
+object should also get a bespoke `_LOC_DEEP[slug]` thumbnail renderer (see S-008 in Done) so its
+card art is unique, not the per-type fallback.
 
 ### S-006 · Full coordinate-accuracy audit of all figures + deep-sky `[accuracy]` `[QA]`
 **Status:** open
@@ -87,7 +89,13 @@ it — a wrong limit misleads about what's actually visible (the "true to the sk
 
 ## Done ✓
 
-_(none yet — move items here with their shipping PR link, e.g. `S-0xx — done in #123`.)_
+### S-008 · Unique per-object deep-sky card art (no more shared category thumbnails) `[content]` `[UX]`
+**Status:** done in #345
+All 17 `DEEPSKY` cards now carry a bespoke `_LOC_DEEP[slug]` thumbnail renderer (Sombrero dust-lane
+brim, Cen A merger lane, M83 pinwheel, Helix eye, Jewel Box ruby…) instead of the shared per-type
+`_locMarker`; meteor/comet marks de-genericised and `BINOC_SVG` redrawn as a fun porro pair. The
+per-type marker remains as the fallback for future entries (rule recorded in the
+`astral-heroic-card-art` skill + CLAUDE.md, cross-linked from S-005).
 
 ---
 

@@ -4290,7 +4290,7 @@ function cardArt(o){
 // Inline binoculars glyph (currentColor so it inherits each context's text colour).
 // Unicode has no binoculars emoji — 🔭 is a telescope — so the "binoculars" depth
 // control and the per-card binocular badge draw this little two-barrel SVG instead.
-const BINOC_SVG='<svg class="ic-binoc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 7h4"/><path d="M8 11h8"/><path d="M5 21a3 3 0 0 1-3-3v-7a3 3 0 0 1 6 0v7a3 3 0 0 1-3 3z"/><path d="M19 21a3 3 0 0 0 3-3v-7a3 3 0 0 0-6 0v7a3 3 0 0 0 3 3z"/><path d="M8 9a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2"/><path d="M16 9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2"/></svg>';
+const BINOC_SVG='<svg class="ic-binoc" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6.4" cy="15.9" r="4"/><circle cx="17.6" cy="15.9" r="4"/><circle cx="6.4" cy="15.9" r="1.6" fill="currentColor" stroke="none" opacity="0.85"/><circle cx="17.6" cy="15.9" r="1.6" fill="currentColor" stroke="none" opacity="0.85"/><circle cx="8.7" cy="4.9" r="2.1"/><circle cx="15.3" cy="4.9" r="2.1"/><path d="M6.7 5.5 3.4 13"/><path d="M17.3 5.5 20.6 13"/><path d="M10.6 5.6 10.15 13.5"/><path d="M13.4 5.6 13.85 13.5"/><path d="M10.15 11h3.7"/><circle cx="12" cy="8.6" r="1.2"/><path d="M21.6 3.4 22.6 2.4M21.9 5.9h1.4"/></svg>';
 // One card template for every night object — the single place card styling lives.
 function buildCard(o){
   const ac=rarCol(o.rar), phase=(-(_hashStr(o.slug)%1100)/100).toFixed(2)+'s';
@@ -4731,6 +4731,226 @@ function _locMarker(kind,cx,cy,R,ac,lit,rng){
   }
   return s+reticle;
 }
+// Per-OBJECT bespoke markers: every headline deep-sky card is drawn to look like
+// THAT object (the Sombrero's dust-lane brim, Cen A's dark lane, the Helix eye,
+// the Jewel Box's ruby…), not just its category glyph — so no two cards share a
+// thumbnail. Same idiom as _locMarker (halo + art + dashed reticle); an unknown
+// slug falls back to the per-type marker so a future DEEPSKY entry never regresses.
+function _locDeepMarker(slug,kind,cx,cy,R,ac,lit,rng){
+  const f=_LOC_DEEP[slug];
+  return f?f(cx,cy,R,ac,lit,rng):_locMarker(kind,cx,cy,R,ac,lit,rng);
+}
+function _locHalo(cx,cy,R,ac,lit,k){ return `<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*(k||1.5))}" fill="${ac}" opacity="${lit?0.20:0.09}" style="filter:blur(${_F1(R*0.45)}px)"/>`; }
+function _locGlint(x,y,r,col,ac,lit){  // a bright star with a 4-point sparkle
+  let s=`<line x1="${_F1(x-r*2.2)}" y1="${_F1(y)}" x2="${_F1(x+r*2.2)}" y2="${_F1(y)}" stroke="${col}" stroke-width="0.7" opacity="0.65"/>`
+    +`<line x1="${_F1(x)}" y1="${_F1(y-r*2.2)}" x2="${_F1(x)}" y2="${_F1(y+r*2.2)}" stroke="${col}" stroke-width="0.7" opacity="0.65"/>`;
+  return s+`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${_F1(r)}" fill="${col}"${lit?` style="filter:drop-shadow(0 0 ${_F1(r*2)}px ${ac})"`:''}/>`;
+}
+const _LOC_DEEP={
+  // M83 — face-on grand-design pinwheel: a circular disc (no tilt) with arms
+  // sweeping a full turn, dotted with pink star-forming knots.
+  m83:(cx,cy,R,ac,lit,rng)=>{
+    const gid='dsq'+(_locUid++);
+    let s=_locHalo(cx,cy,R,ac,lit);
+    s+=`<defs><radialGradient id="${gid}"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.95:0.55}"/><stop offset="34%" stop-color="${ac}" stop-opacity="${lit?0.5:0.24}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.12)}" fill="url(#${gid})"/>`;
+    for(let a=0;a<3;a++){ const ph=a*2.094+0.4;
+      for(let i=1;i<=13;i++){ const t=i/13, th=ph+t*3.8, rr=R*(0.22+t*0.95), x=cx+Math.cos(th)*rr, y=cy+Math.sin(th)*rr;
+        s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.5+(1-t)*1.05).toFixed(2)}" fill="${i%4===0?'#ffc9de':'#eaf2ff'}" opacity="${(0.30+(1-t)*0.6).toFixed(2)}"/>`; } }
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.16)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.35)}px ${ac})"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Sombrero — edge-on: a glowing bulge over a wide thin brim, the dark dust lane
+  // curving along its front edge. The hat.
+  sombrero:(cx,cy,R,ac,lit,rng)=>{
+    const gid='dsq'+(_locUid++);
+    let s=_locHalo(cx,cy,R,ac,lit);
+    s+=`<defs><radialGradient id="${gid}" cx="50%" cy="42%" r="60%"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.9:0.5}"/><stop offset="55%" stop-color="${ac}" stop-opacity="${lit?0.5:0.24}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<g transform="rotate(-8 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy-R*0.12)}" rx="${_F1(R*0.72)}" ry="${_F1(R*0.6)}" fill="url(#${gid})"/>`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy+R*0.1)}" rx="${_F1(R*1.5)}" ry="${_F1(R*0.24)}" fill="url(#${gid})" opacity="0.95"/>`;
+    s+=`<path d="M ${_F1(cx-R*1.48)} ${_F1(cy+R*0.14)} Q ${_F1(cx)} ${_F1(cy+R*0.4)} ${_F1(cx+R*1.48)} ${_F1(cy+R*0.14)}" fill="none" stroke="#05070f" stroke-width="${_F1(R*0.17)}" opacity="0.9" stroke-linecap="round"/>`;
+    s+=`</g>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy-R*0.14)}" r="${_F1(R*0.14)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px ${ac})"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.75,ac,lit);
+  },
+  // Centaurus A — a round elliptical glow split clean across by the broad dark
+  // dust lane of the swallowed spiral, faint jets firing along the axis.
+  centaurusa:(cx,cy,R,ac,lit,rng)=>{
+    const gid='dsq'+(_locUid++);
+    let s=_locHalo(cx,cy,R,ac,lit);
+    s+=`<defs><radialGradient id="${gid}"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.85:0.48}"/><stop offset="45%" stop-color="${ac}" stop-opacity="${lit?0.55:0.26}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<g transform="rotate(-28 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<line x1="${_F1(cx)}" y1="${_F1(cy-R*1.65)}" x2="${_F1(cx)}" y2="${_F1(cy+R*1.65)}" stroke="${ac}" stroke-width="1" opacity="${lit?0.35:0.2}" stroke-dasharray="2 3"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.95)}" fill="url(#${gid})"/>`;
+    s+=`<rect x="${_F1(cx-R*1.1)}" y="${_F1(cy-R*0.19)}" width="${_F1(R*2.2)}" height="${_F1(R*0.38)}" rx="${_F1(R*0.19)}" fill="#05070f" opacity="0.88" style="filter:blur(${_F1(R*0.08)}px)"/>`;
+    s+=`</g>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Sculptor — a long thin dust-mottled silver sliver, nearly edge-on, with a
+  // warm starburst core.
+  sculptor:(cx,cy,R,ac,lit,rng)=>{
+    const gid='dsq'+(_locUid++);
+    let s=_locHalo(cx,cy,R,ac,lit,1.3);
+    s+=`<defs><radialGradient id="${gid}"><stop offset="0%" stop-color="#fff" stop-opacity="${lit?0.9:0.5}"/><stop offset="55%" stop-color="#dfe8ff" stop-opacity="${lit?0.4:0.2}"/><stop offset="100%" stop-color="${ac}" stop-opacity="0"/></radialGradient></defs>`;
+    s+=`<g transform="rotate(-38 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R*1.4)}" ry="${_F1(R*0.34)}" fill="url(#${gid})"/>`;
+    for(let i=0;i<5;i++){ const x=cx+(rng()-0.5)*R*2.0, y=cy+(rng()-0.5)*R*0.3;
+      s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${_F1(R*(0.07+rng()*0.06))}" fill="#0a0f1d" opacity="0.55"/>`; }
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.15)}" fill="#ffe9c9"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.3)}px ${ac})"`:''}/>`;
+    s+=`</g>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Omega Centauri — the grandest: a huge, slightly oblate swarm blazing toward
+  // a hazy centre (not a pinpoint core — it's ten million suns).
+  omegacen:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.7);
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.1)}" fill="${ac}" opacity="${lit?0.30:0.14}" style="filter:blur(${_F1(R*0.35)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.55)}" fill="#fff" opacity="${lit?0.30:0.15}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
+    const N=lit?60:38; let dots='';
+    for(let i=0;i<N;i++){ const a=rng()*6.283, rr=Math.pow(rng(),0.72)*R*1.08, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*0.92;
+      dots+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.4+rng()*0.7).toFixed(2)}" fill="#fff" opacity="${(0.45+rng()*0.55).toFixed(2)}"/>`; }
+    return s+dots+_locReticle(cx,cy,R*1.8,ac,lit);
+  },
+  // 47 Tucanae — a fiercely concentrated blaze of a core with a sparse skirt,
+  // the Small Magellanic Cloud hanging as a faint smudge beside it.
+  '47tuc':(cx,cy,R,ac,lit,rng)=>{
+    let s=`<g style="filter:blur(${_F1(R*0.3)}px)"><ellipse cx="${_F1(cx-R*1.9)}" cy="${_F1(cy+R*1.35)}" rx="${_F1(R*0.75)}" ry="${_F1(R*0.5)}" fill="#e7eeff" opacity="${lit?0.18:0.10}"/></g>`;
+    s+=_locHalo(cx,cy,R,ac,lit);
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.34)}" fill="#fff" opacity="${lit?0.9:0.6}" style="filter:blur(${_F1(R*0.14)}px)${lit?` drop-shadow(0 0 ${_F1(R*0.4)}px ${ac})`:''}"/>`;
+    const N=lit?46:30; let dots='';
+    for(let i=0;i<N;i++){ const a=rng()*6.283, rr=Math.pow(rng(),1.5)*R*0.95, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr;
+      dots+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.4+rng()*0.6).toFixed(2)}" fill="#fff" opacity="${(0.5+rng()*0.5).toFixed(2)}"/>`; }
+    return s+dots+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Eta Carinae — billowing bright lobes torn by the dark Keyhole rift, with the
+  // doomed amber supergiant burning just off-centre.
+  etacarina:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.6);
+    s+=`<g style="filter:blur(${_F1(R*0.26)}px)">`;
+    const lobes=[[-0.55,-0.25,0.75],[0.45,-0.35,0.62],[-0.2,0.45,0.7],[0.55,0.3,0.5],[0,-0.05,0.85]];
+    for(const L of lobes) s+=`<circle cx="${_F1(cx+L[0]*R)}" cy="${_F1(cy+L[1]*R)}" r="${_F1(L[2]*R)}" fill="${ac}" opacity="${lit?0.30:0.14}"/>`;
+    s+=`<circle cx="${_F1(cx-R*0.25)}" cy="${_F1(cy)}" r="${_F1(R*0.5)}" fill="#fff" opacity="${lit?0.20:0.10}"/>`;
+    s+=`</g>`;
+    s+=`<path d="M ${_F1(cx)} ${_F1(cy-R*0.75)} q ${_F1(R*0.3)} ${_F1(R*0.35)} ${_F1(R*0.05)} ${_F1(R*0.7)} q ${_F1(-R*0.28)} ${_F1(R*0.35)} ${_F1(R*0.12)} ${_F1(R*0.75)}" fill="none" stroke="#05070f" stroke-width="${_F1(R*0.22)}" opacity="0.75" style="filter:blur(${_F1(R*0.08)}px)" stroke-linecap="round"/>`;
+    for(let i=0;i<5;i++) s+=`<circle cx="${_F1(cx+(rng()-0.5)*R*1.4)}" cy="${_F1(cy+(rng()-0.5)*R*1.2)}" r="${(0.4+rng()*0.5).toFixed(2)}" fill="#fff" opacity="0.8"/>`;
+    s+=`<circle cx="${_F1(cx-R*0.18)}" cy="${_F1(cy-R*0.08)}" r="${_F1(lit?R*0.15:R*0.11)}" fill="#ffd9a0"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.4)}px #ffb347)"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Tarantula — a bright knot (R136) with curved, leggy filaments crawling out.
+  tarantula:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.4);
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.5)}" fill="${ac}" opacity="${lit?0.34:0.16}" style="filter:blur(${_F1(R*0.25)}px)"/>`;
+    for(let i=0;i<8;i++){ const a=(i/8)*6.283+0.3+(rng()-0.5)*0.3, r2=R*(0.95+rng()*0.55), bend=a+0.45;
+      const x1=cx+Math.cos(a)*R*0.3, y1=cy+Math.sin(a)*R*0.3;
+      const mx=cx+Math.cos(bend)*r2*0.55, my=cy+Math.sin(bend)*r2*0.55;
+      const x2=cx+Math.cos(a)*r2, y2=cy+Math.sin(a)*r2;
+      s+=`<path d="M ${_F1(x1)} ${_F1(y1)} Q ${_F1(mx)} ${_F1(my)} ${_F1(x2)} ${_F1(y2)}" fill="none" stroke="${ac}" stroke-width="${lit?1.3:0.9}" opacity="${(0.4+rng()*0.3).toFixed(2)}" stroke-linecap="round" style="filter:blur(0.5px)"/>`; }
+    let dots=''; for(let i=0;i<5;i++) dots+=`<circle cx="${_F1(cx+(rng()-0.5)*R*0.4)}" cy="${_F1(cy+(rng()-0.5)*R*0.4)}" r="${(0.5+rng()*0.5).toFixed(2)}" fill="#fff" opacity="0.9"/>`;
+    return s+dots+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Orion Nebula — the glowing fan with the dark Fish's Mouth notch and the four
+  // tight Trapezium stars at its heart.
+  orionneb:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.5);
+    s+=`<g style="filter:blur(${_F1(R*0.22)}px)">`;
+    s+=`<path d="M ${_F1(cx+R*0.85)} ${_F1(cy-R*0.35)} A ${_F1(R*0.95)} ${_F1(R*0.95)} 0 1 0 ${_F1(cx-R*0.95)} ${_F1(cy-R*0.15)}" fill="${ac}" opacity="${lit?0.32:0.15}"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.55)}" fill="#fff" opacity="${lit?0.26:0.13}"/>`;
+    s+=`</g>`;
+    s+=`<path d="M ${_F1(cx+R*0.12)} ${_F1(cy-R*0.85)} L ${_F1(cx-R*0.1)} ${_F1(cy-R*0.12)} L ${_F1(cx+R*0.35)} ${_F1(cy-R*0.28)} Z" fill="#05070f" opacity="0.8" style="filter:blur(${_F1(R*0.07)}px)"/>`;
+    const tp=[[-0.10,-0.02],[0.03,-0.11],[0.13,0.02],[0.02,0.11]];
+    for(const t of tp) s+=`<circle cx="${_F1(cx+t[0]*R)}" cy="${_F1(cy+t[1]*R)}" r="${lit?1.1:0.8}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 2px ${ac})"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Lagoon — two glowing hydrogen halves with the dark lagoon channel winding
+  // between them, a newborn cluster sprinkled on one side.
+  lagoon:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.5);
+    s+=`<g style="filter:blur(${_F1(R*0.26)}px)">`;
+    s+=`<ellipse cx="${_F1(cx-R*0.5)}" cy="${_F1(cy+R*0.05)}" rx="${_F1(R*0.62)}" ry="${_F1(R*0.55)}" fill="${ac}" opacity="${lit?0.32:0.15}"/>`;
+    s+=`<ellipse cx="${_F1(cx+R*0.55)}" cy="${_F1(cy-R*0.05)}" rx="${_F1(R*0.66)}" ry="${_F1(R*0.5)}" fill="${ac}" opacity="${lit?0.32:0.15}"/>`;
+    s+=`<circle cx="${_F1(cx+R*0.45)}" cy="${_F1(cy)}" r="${_F1(R*0.4)}" fill="#fff" opacity="${lit?0.2:0.1}"/>`;
+    s+=`</g>`;
+    s+=`<path d="M ${_F1(cx-R*0.1)} ${_F1(cy-R*0.8)} q ${_F1(R*0.28)} ${_F1(R*0.4)} ${_F1(-R*0.05)} ${_F1(R*0.8)} q ${_F1(-R*0.3)} ${_F1(R*0.4)} ${_F1(R*0.12)} ${_F1(R*0.8)}" fill="none" stroke="#05070f" stroke-width="${_F1(R*0.2)}" opacity="0.8" style="filter:blur(${_F1(R*0.08)}px)" stroke-linecap="round"/>`;
+    for(let i=0;i<6;i++) s+=`<circle cx="${_F1(cx+R*(0.25+rng()*0.6))}" cy="${_F1(cy+(rng()-0.5)*R*0.8)}" r="${(0.5+rng()*0.5).toFixed(2)}" fill="#fff" opacity="0.85"/>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Helix — the Eye of God: a soft luminous ring with faint inward lashes and
+  // the tiny white-dwarf pupil at the centre.
+  helix:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.4);
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.72)}" fill="none" stroke="${ac}" stroke-width="${_F1(R*0.42)}" opacity="${lit?0.5:0.24}" style="filter:blur(${_F1(R*0.14)}px)"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.6)}" fill="none" stroke="#eaf2ff" stroke-width="${_F1(R*0.1)}" opacity="${lit?0.5:0.28}" style="filter:blur(${_F1(R*0.06)}px)"/>`;
+    for(let i=0;i<10;i++){ const a=(i/10)*6.283+0.2;
+      s+=`<line x1="${_F1(cx+Math.cos(a)*R*0.52)}" y1="${_F1(cy+Math.sin(a)*R*0.52)}" x2="${_F1(cx+Math.cos(a)*R*0.34)}" y2="${_F1(cy+Math.sin(a)*R*0.34)}" stroke="#cfe2ff" stroke-width="0.7" opacity="0.35"/>`; }
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${lit?1.4:1}" fill="#dff4ff"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.6,ac,lit);
+  },
+  // Jewel Box — a tight casket of blue-white brilliants with the single famous
+  // ruby star glowing red among them.
+  jewelbox:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.2);
+    const gems=[[-0.55,0.42,1.2,'#cfe2ff'],[-0.18,-0.05,1.45,'#eaf2ff'],[0.16,-0.42,1.1,'#dfeaff'],[0.5,-0.75,0.95,'#cfe2ff'],[0.02,0.30,1.3,'#ff6157']];
+    for(let i=0;i<7;i++) s+=`<circle cx="${_F1(cx+(rng()-0.5)*R*1.6)}" cy="${_F1(cy+(rng()-0.5)*R*1.6)}" r="${(0.35+rng()*0.4).toFixed(2)}" fill="#fff" opacity="0.6"/>`;
+    for(const g of gems) s+=_locGlint(cx+g[0]*R,cy+g[1]*R,(lit?1:0.8)*g[2],g[3],g[3]==='#ff6157'?'#ff6157':ac,lit);
+    return s+_locReticle(cx,cy,R*1.6,ac,lit);
+  },
+  // Pleiades — the icy-blue Sisters, each wrapped in her own veil of reflection
+  // nebulosity, with faint silky striations through the brightest.
+  pleiades:(cx,cy,R,ac,lit,rng)=>{
+    const st=[[-0.72,0.30,1.05],[-0.32,0.12,1.25],[0.05,0.28,1.1],[0.30,-0.02,1.4],[0.62,0.10,1.0],[0.18,-0.45,1.15],[0.55,-0.55,0.9]];
+    let s=_locHalo(cx,cy,R,ac,lit,1.3);
+    s+=`<g style="filter:blur(${_F1(R*0.2)}px)">`;
+    for(const t of st) s+=`<circle cx="${_F1(cx+t[0]*R)}" cy="${_F1(cy+t[1]*R)}" r="${_F1(t[2]*R*0.34)}" fill="#9fc4ff" opacity="${lit?0.28:0.14}"/>`;
+    s+=`</g>`;
+    for(const t of st){ if(t[2]>1.2) s+=`<line x1="${_F1(cx+t[0]*R-R*0.22)}" y1="${_F1(cy+t[1]*R-R*0.3)}" x2="${_F1(cx+t[0]*R+R*0.1)}" y2="${_F1(cy+t[1]*R+R*0.3)}" stroke="#bcd7ff" stroke-width="0.7" opacity="0.35" style="filter:blur(0.6px)"/>`; }
+    for(const t of st) s+=_locGlint(cx+t[0]*R,cy+t[1]*R,(lit?1:0.75)*t[2],'#dceaff',ac,lit);
+    return s+_locReticle(cx,cy,R*1.6,ac,lit);
+  },
+  // Ptolemy Cluster (M7) — a big loose naked-eye sprawl: bright stars flung wide
+  // with no core, the brightest wearing sparkles.
+  m7:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.7);
+    const N=lit?16:12;
+    for(let i=0;i<N;i++){ const a=rng()*6.283, rr=Math.pow(rng(),0.8)*R*1.35, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr, br=0.7+rng()*1.3;
+      s+= br>1.55 ? _locGlint(x,y,br*(lit?1:0.8),'#fff',ac,lit)
+                  : `<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${br.toFixed(2)}" fill="#fff" opacity="${(0.6+rng()*0.4).toFixed(2)}"/>`; }
+    return s+_locReticle(cx,cy,R*1.8,ac,lit);
+  },
+  // Southern Pleiades — one dominant beacon (Theta Carinae) with long diffraction
+  // spikes, ringed by a modest scatter of blue companions.
+  ic2602:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.3);
+    for(let i=0;i<9;i++){ const a=rng()*6.283, rr=R*(0.35+rng()*0.75), x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr;
+      s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.5+rng()*0.8).toFixed(2)}" fill="#cfe2ff" opacity="${(0.55+rng()*0.45).toFixed(2)}"/>`; }
+    s+=`<line x1="${_F1(cx-R*0.6)}" y1="${_F1(cy)}" x2="${_F1(cx+R*0.6)}" y2="${_F1(cy)}" stroke="#eaf2ff" stroke-width="0.8" opacity="0.7"/>`;
+    s+=`<line x1="${_F1(cx)}" y1="${_F1(cy-R*0.6)}" x2="${_F1(cx)}" y2="${_F1(cy+R*0.6)}" stroke="#eaf2ff" stroke-width="0.8" opacity="0.7"/>`;
+    s+=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*0.2)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.35)}px ${ac})"`:''}/>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // Wishing Well — a tilted river of tiny silver-and-gold coins shimmering in an
+  // elongated band.
+  ngc3532:(cx,cy,R,ac,lit,rng)=>{
+    let s=_locHalo(cx,cy,R,ac,lit,1.4);
+    s+=`<g transform="rotate(-24 ${_F1(cx)} ${_F1(cy)})">`;
+    s+=`<ellipse cx="${_F1(cx)}" cy="${_F1(cy)}" rx="${_F1(R*1.45)}" ry="${_F1(R*0.55)}" fill="${ac}" opacity="${lit?0.14:0.07}" style="filter:blur(${_F1(R*0.3)}px)"/>`;
+    const N=lit?30:20;
+    for(let i=0;i<N;i++){ const x=cx+(rng()*2-1)*R*1.35, y=cy+(rng()*2-1)*R*0.5;
+      s+=`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${(0.45+rng()*0.75).toFixed(2)}" fill="${i%3===0?'#ffeecb':'#fff'}" opacity="${(0.5+rng()*0.5).toFixed(2)}"/>`; }
+    s+=`</g>`;
+    return s+_locReticle(cx,cy,R*1.7,ac,lit);
+  },
+  // The Coalsack — an irregular dark cloud (the Emu's head), not a neat disc,
+  // with a couple of foreground stars sitting on the blackness.
+  coalsack:(cx,cy,R,ac,lit,rng)=>{
+    const p=`M ${_F1(cx-R*0.95)} ${_F1(cy+R*0.15)} Q ${_F1(cx-R*0.8)} ${_F1(cy-R*0.75)} ${_F1(cx-R*0.1)} ${_F1(cy-R*0.8)} Q ${_F1(cx+R*0.65)} ${_F1(cy-R*0.9)} ${_F1(cx+R*0.9)} ${_F1(cy-R*0.15)} Q ${_F1(cx+R*1.05)} ${_F1(cy+R*0.5)} ${_F1(cx+R*0.3)} ${_F1(cy+R*0.8)} Q ${_F1(cx-R*0.4)} ${_F1(cy+R*1.05)} ${_F1(cx-R*0.95)} ${_F1(cy+R*0.15)} Z`;
+    let s=`<path d="${p}" fill="#04060e" opacity="0.94" style="filter:blur(${_F1(R*0.16)}px)"/>`;
+    s+=`<circle cx="${_F1(cx-R*0.3)}" cy="${_F1(cy+R*0.25)}" r="0.6" fill="#dde8ff" opacity="0.8"/>`;
+    s+=`<circle cx="${_F1(cx+R*0.4)}" cy="${_F1(cy-R*0.3)}" r="0.5" fill="#dde8ff" opacity="0.7"/>`;
+    s+=`<path d="${p}" fill="none" stroke="${ac}" stroke-width="${lit?1.2:0.9}" opacity="${lit?0.6:0.35}" stroke-dasharray="3 4"/>`;
+    return s;
+  }
+};
 function _locCloud(x,y,R,ac,lit){
   return `<g style="filter:blur(${_F1(R*0.3)}px)"><ellipse cx="${_F1(x)}" cy="${_F1(y)}" rx="${_F1(R)}" ry="${_F1(R*0.7)}" fill="#e7eeff" opacity="${lit?0.30:0.16}"/></g>`
     +`<circle cx="${_F1(x)}" cy="${_F1(y)}" r="${_F1(R*1.25)}" fill="none" stroke="${ac}" stroke-width="${lit?1.1:0.9}" opacity="${lit?0.6:0.35}" stroke-dasharray="${lit?'4 4':'2 3'}"/>`;
@@ -4743,11 +4963,18 @@ function _locBandSwath(W,H,ac,lit){
 function _locRadiant(){ try{ const ss=showerStatus(nowDate()); if(ss&&ss.sh) return {ra:ss.sh.ra,dec:ss.sh.dec}; }catch(e){} return {ra:338,dec:-1}; }
 function _locRadiantMark(cx,cy,R,ac,lit,rng){
   let s=`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${_F1(R*1.4)}" fill="${ac}" opacity="${lit?0.18:0.08}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
-  const N=lit?7:5;
-  for(let i=0;i<N;i++){ const a=(i/N)*6.283+rng()*0.4, len=R*(2.2+rng()*2.5);
-    const x0=cx+Math.cos(a)*R*0.5, y0=cy+Math.sin(a)*R*0.5, x1=cx+Math.cos(a)*len, y1=cy+Math.sin(a)*len;
-    s+=`<line x1="${_F1(x0)}" y1="${_F1(y0)}" x2="${_F1(x1)}" y2="${_F1(y1)}" stroke="#fff" stroke-width="${lit?1.3:0.9}" opacity="${lit?0.85:0.5}" stroke-linecap="round"${lit?` style="filter:drop-shadow(0 0 2px ${ac})"`:''}/>`;
-    s+=`<circle cx="${_F1(x1)}" cy="${_F1(y1)}" r="${lit?1.4:1}" fill="#fff"/>`; }
+  // Meteors, not spokes: each streak fades in from the radiant (faint tail half)
+  // and ends in a bright head; one long warm FIREBALL among them (this shower's
+  // calling card). All diverge from the radiant point.
+  const N=lit?7:5, fb=1;  // index of the fireball streak
+  for(let i=0;i<N;i++){ const a=(i/N)*6.283+rng()*0.4, isFb=i===fb, len=R*(isFb?4.2:2.2+rng()*2.0);
+    const col=isFb?'#ffd9a0':'#fff', sw=isFb?(lit?1.8:1.2):(lit?1.2:0.85);
+    const x0=cx+Math.cos(a)*R*0.5, y0=cy+Math.sin(a)*R*0.5;
+    const xm=cx+Math.cos(a)*(R*0.5+len)*0.55, ym=cy+Math.sin(a)*(R*0.5+len)*0.55;
+    const x1=cx+Math.cos(a)*len, y1=cy+Math.sin(a)*len;
+    s+=`<line x1="${_F1(x0)}" y1="${_F1(y0)}" x2="${_F1(xm)}" y2="${_F1(ym)}" stroke="${col}" stroke-width="${(sw*0.6).toFixed(2)}" opacity="${lit?0.4:0.25}" stroke-linecap="round"/>`;
+    s+=`<line x1="${_F1(xm)}" y1="${_F1(ym)}" x2="${_F1(x1)}" y2="${_F1(y1)}" stroke="${col}" stroke-width="${sw}" opacity="${lit?0.9:0.55}" stroke-linecap="round"${lit?` style="filter:drop-shadow(0 0 2px ${isFb?'#ffb347':ac})"`:''}/>`;
+    s+=`<circle cx="${_F1(x1)}" cy="${_F1(y1)}" r="${(isFb?(lit?2:1.4):(lit?1.4:1))}" fill="${col}"${isFb&&lit?` style="filter:drop-shadow(0 0 3px #ffb347)"`:''}/>`; }
   return s+`<circle cx="${_F1(cx)}" cy="${_F1(cy)}" r="${lit?2:1.5}" fill="${ac}"${lit?` style="filter:drop-shadow(0 0 3px ${ac})"`:''}/>`;
 }
 // Solar System schematic — Sun centred, six equally-spaced orbits, every body at
@@ -4908,7 +5135,7 @@ function _locOpposition(planet,W,H,ac,lit){
 // Comet: nucleus with a glowing coma and a fanned tail swept away from the Sun, plus
 // a dashed path arc showing its drift. Sits on the starry backdrop.
 function _locComet(W,H,ac,lit,rng){
-  const nx=W*0.64, ny=H*0.42, R=Math.min(W,H)*0.10, id='cm'+(_locUid++);
+  const nx=W*0.64, ny=H*0.42, R=Math.min(W,H)*0.12, id='cm'+(_locUid++);
   const tx=-0.62, ty=-0.45, tl=Math.hypot(W,H)*0.42;           // tail direction (up-left, away from sun)
   // dashed drift path
   let s=`<path d="M ${_F1(nx-W*0.5)} ${_F1(ny+H*0.22)} Q ${_F1(nx)} ${_F1(ny-H*0.04)} ${_F1(nx+W*0.32)} ${_F1(ny-H*0.18)}" fill="none" stroke="rgba(160,190,240,0.30)" stroke-width="0.8" stroke-dasharray="4 4"/>`;
@@ -4919,9 +5146,9 @@ function _locComet(W,H,ac,lit,rng){
   s+=`<path d="M ${_F1(nx)} ${_F1(ny)} L ${_F1(exx+Math.cos(wpar)*tw)} ${_F1(eyy+Math.sin(wpar)*tw)} L ${_F1(exx-Math.cos(wpar)*tw)} ${_F1(eyy-Math.sin(wpar)*tw)} Z" fill="url(#${id})" style="filter:blur(${_F1(R*0.4)}px)"/>`;
   // thin straight ion tail
   s+=`<line x1="${_F1(nx)}" y1="${_F1(ny)}" x2="${_F1(nx+tx*tl*0.8)}" y2="${_F1(ny+ty*tl*0.8)}" stroke="#bfe0ff" stroke-width="${lit?1:0.7}" opacity="${lit?0.55:0.3}"/>`;
-  // coma + nucleus
-  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*1.3)}" fill="#eaf2ff" opacity="${lit?0.28:0.14}" style="filter:blur(${_F1(R*0.5)}px)"/>`;
-  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*0.42)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.5)}px ${ac})"`:''}/>`;
+  // coma + nucleus (a comet's coma glows faintly green — diatomic carbon)
+  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*1.3)}" fill="#d9ffe9" opacity="${lit?0.34:0.16}" style="filter:blur(${_F1(R*0.45)}px)"/>`;
+  s+=`<circle cx="${_F1(nx)}" cy="${_F1(ny)}" r="${_F1(R*0.48)}" fill="#fff"${lit?` style="filter:drop-shadow(0 0 ${_F1(R*0.55)}px ${ac})"`:''}/>`;
   return s+_locReticle(nx,ny,R*1.7,ac,lit);
 }
 // Asteroid flyby: Earth's limb at the lower-left, an irregular rock skimming past on a
@@ -5011,7 +5238,7 @@ function _locInner(slug,W,H,ac,opts){
   const P=_locPatch(ra0,dec0,span,W,H,useCat,thumb?26:450);  // cap = brightest-N (perf)
   const R=min*(thumb?0.17:0.12);
   let s=bg+_locField(P.stars)+_locLines(P.lines,ac,lit);
-  if(L.kind==='sky')         s+=_locMarker(L.marker,W/2,H/2,R,ac,lit,rng);
+  if(L.kind==='sky')         s+=_locDeepMarker(slug,L.marker,W/2,H/2,R,ac,lit,rng);
   else if(L.kind==='band')   s=_locBandSwath(W,H,ac,lit)+s+_locMarker('nebula',W/2,H/2,R*1.1,ac,lit,rng);
   else if(L.kind==='clouds'){ const lmc=P.proj(MAGELLANIC[0].ra,MAGELLANIC[0].dec), smc=P.proj(MAGELLANIC[1].ra,MAGELLANIC[1].dec); s+=_locCloud(lmc.x,lmc.y,R*1.3,ac,lit)+_locCloud(smc.x,smc.y,R*0.9,ac,lit); }
   else if(L.kind==='radiant') s+=_locRadiantMark(W/2,H/2,R,ac,lit,rng);
