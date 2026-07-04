@@ -172,6 +172,7 @@ body.ptr-pull .app{transition:none;will-change:transform;}
 body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
 /* The aurora globe button is the mirror: night-only (it's a sky-watching tool) */
 #btn-aurora{display:none;} body.night #btn-aurora{display:flex;}
+#btn-orrery{display:none;} body.night #btn-orrery{display:flex;}
 .hdr-actions{display:flex;gap:8px;align-items:flex-end;}
 .hdr-icons{display:flex;gap:8px;}
 /* #btn-forecast is the primary day/night toggle — keep it prominent (on top when stacked) */
@@ -1574,6 +1575,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div class="hdr-actions">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
       <div class="hdr-icons">
+        <button id="btn-orrery" class="hdr-btn" onclick="openOrrery()" aria-label="Solar system comet tracker">☄️</button>
         <button id="btn-aurora" class="hdr-btn" onclick="openAuroraGlobe()" aria-label="Aurora forecast globe">🌌</button>
         <button id="btn-stats" class="hdr-btn" onclick="showStats()" aria-label="Your rounds and stats">📊</button>
         <button id="btn-bag" class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
@@ -3609,7 +3611,11 @@ const PLANETS={
   earth:{label:'Earth',a:[1.00000261,0.00000562],e:[0.01671123,-0.00004392],I:[-0.00001531,-0.01294668],L:[100.46457166,35999.37244981],w:[102.93768193,0.32327364],O:[0,0]},
   mars:{label:'Mars',dot:'#e0795a',a:[1.52371034,0.00001847],e:[0.09339410,0.00007882],I:[1.84969142,-0.00813131],L:[-4.55343205,19140.30268499],w:[-23.94362959,0.44441088],O:[49.55953891,-0.29257343],note:'Distinctly orange-red to the eye'},
   jupiter:{label:'Jupiter',dot:'#e8d9b8',a:[5.20288700,-0.00011607],e:[0.04838624,-0.00013253],I:[1.30439695,-0.00183714],L:[34.39644051,3034.74612775],w:[14.72847983,0.21252668],O:[100.47390909,0.20469106],note:'Second-brightest planet; moons visible in binoculars'},
-  saturn:{label:'Saturn',dot:'#ded2a8',a:[9.53667594,-0.00125060],e:[0.05386179,-0.00050991],I:[2.48599187,0.00193609],L:[49.95424423,1222.49362201],w:[92.59887831,-0.41897216],O:[113.66242448,-0.28867794],note:'Steady pale-gold point; rings need a small telescope'}
+  saturn:{label:'Saturn',dot:'#ded2a8',a:[9.53667594,-0.00125060],e:[0.05386179,-0.00050991],I:[2.48599187,0.00193609],L:[49.95424423,1222.49362201],w:[92.59887831,-0.41897216],O:[113.66242448,-0.28867794],note:'Steady pale-gold point; rings need a small telescope'},
+  // Uranus + Neptune (same JPL approx table) are for the solar-system tracker only —
+  // planetPositions / planetOppositions keep their explicit naked-eye key lists.
+  uranus:{label:'Uranus',dot:'#9fd8dd',a:[19.18916464,-0.00196176],e:[0.04725744,-0.00004397],I:[0.77263783,-0.00242939],L:[313.23810451,428.48202785],w:[170.95427630,0.40805281],O:[74.01692503,0.04240589],note:'Telescope target — visited once, by Voyager 2 in 1986'},
+  neptune:{label:'Neptune',dot:'#6f8fe8',a:[30.06992276,0.00026291],e:[0.00859048,0.00005105],I:[1.77004347,0.00035372],L:[-55.12002969,218.45945325],w:[44.96476227,-0.32241464],O:[131.78422574,-0.00508664],note:'The outermost planet — visited once, by Voyager 2 in 1989'}
 };
 function planetHelio(p,T){
   const a=p.a[0]+p.a[1]*T, e=p.e[0]+p.e[1]*T, I=(p.I[0]+p.I[1]*T)*RAD;
@@ -4561,6 +4567,9 @@ const SKY_EVENTS=[
      ['The path','The umbra crosses the Kimberley coast and tracks south-east through the Northern Territory, Queensland, the corner of South Australia and New South Wales — directly across Sydney in the early afternoon (totality just before 2 pm). Outside that line, the whole continent gets a large partial eclipse.'],
      ['Stay safe','Never look at the partial Sun without certified solar-eclipse glasses. Only during the brief total phase, inside the path, is it safe to look with the naked eye.']]},
   {slug:'evt-apophis-2029',name:'Asteroid Apophis Flyby',date:[2029,4,13],icon:'🪨',rar:'legendary',locus:'asteroid',photo:'asteroid',
+   // Pre-encounter JPL elements (epoch 2025-05-05; tp derived from M=90.28°, n=1.112°/day).
+   // The 2029 flyby bends the orbit, so the tracker's path is only valid UP TO the flyby.
+   orb:{q:0.7461,e:0.1911,i:3.341,om:203.9,w:126.7,tp:[2025,2,13]},
    blurb:'A 375-metre asteroid skims closer than our communications satellites — and briefly reaches naked-eye brightness, drifting across the sky like a slow-moving “star”. The front-row view is from Europe and Africa; from Australia it is a low, marginal catch.',
    rows:[
      ['What you’re seeing','Asteroid 99942 Apophis passes within about 32,000 km of Earth’s surface — nearer than geostationary satellites — glowing around magnitude 3–4, like a moderately bright star drifting visibly against the constellations over a few minutes.'],
@@ -4572,8 +4581,13 @@ const SKY_EVENTS=[
 // eye:'binoc' for fainter ones. Add a new one by appending its window here. Declared
 // before the lore builder below (which reads it) and cometStatus() further down.
 const COMETS=[
+  // `orb:` = heliocentric Keplerian elements (JPL SBDB): q perihelion AU, e eccentricity,
+  // i/om/w inclination/node/arg-perihelion (deg, J2000 ecliptic), tp perihelion date.
+  // It powers the ☄️ Solar System tracker (openOrrery) — a comet without orb: still gets
+  // its night card, it just doesn't plot in the tracker. Hyperbolic e>1 works (interstellar).
   {slug:'comet-tempel2',n:'Comet 10P/Tempel 2',icon:'☄️',rar:'epic',eye:'binoc',
    start:[2026,7,1],peak:[2026,8,3],end:[2026,9,20],mag:8,
+   orb:{q:1.421,e:0.5363,i:12.03,om:117.8,w:195.55,tp:[2026,8,2]},
    note:'A periodic comet near magnitude 8 — too faint for the naked eye but an easy binocular target, riding high in the evening sky for southern observers'}
 ];
 // Build story-sheet lore for the deep-sky + dated events from their own data.
@@ -6693,6 +6707,9 @@ function renderStoryBody(slug,lat,lng){
   if(np) s+=`<div class="sky-now">📍 ${np}</div>`;
   s+=`<div class="sky-modal-blurb">${L.blurb}</div>`;
   for(const r of L.rows) s+=`<div class="sky-sec"><div class="sky-sec-h">${r[0]}</div><div class="sky-sec-b">${r[1]}</div></div>`;
+  // Solar-system travellers (comets / flyby asteroids with orbital elements) link out to
+  // the ☄️ tracker. Inline-styled: the orrery CSS isn't injected until it first opens.
+  if(_orrTrackable(slug)) s+=`<button onclick="closeSkyStory();openOrrery('${slug}')" style="display:block;width:100%;margin-top:14px;padding:12px;border-radius:12px;background:linear-gradient(180deg,#232b52,#161c38);border:1px solid rgba(150,170,255,.42);color:#dfe6ff;font-family:var(--mono);font-size:12.5px;font-weight:600;-webkit-tap-highlight-color:transparent;">☄️ Track it through the Solar System</button>`;
   return s;
 }
 // ═══════════════════════════════════════════════════════════════════════════
@@ -7030,6 +7047,473 @@ function _agBanner(kp){ let b=document.getElementById('ag-banner'); if(b) b.remo
   b.innerHTML=`🌌 <span><b>Kp ${kp.toFixed(1)}</b> storm — aurora possible tonight. <u>Open map</u></span>`;
   b.onclick=()=>{ b.remove(); openAuroraGlobe(); }; document.body.appendChild(b);
   setTimeout(()=>{ if(b.parentNode) b.remove(); },12000); }
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SOLAR SYSTEM TRACKER (orrery) — the ☄️ night header button. A full-screen,
+// top-down Canvas-2D map of the Solar System: real planet positions (planetHelio),
+// every tracked traveller (COMETS / SKY_EVENTS entries carrying orb: elements)
+// propagated along its true orbit, a time-scrub strip that slides the whole system
+// through past/future dates, and a "Beyond" zoom tier with the five escaping
+// spacecraft on their real gravity-assist tour paths. Same architecture as the
+// aurora globe: one offscreen base canvas (starfield/orbits/paths, redrawn only on
+// pan/zoom) + a cheap per-frame overlay (bodies, glows, tails). No WebGL — stays
+// inside the single-file, no-build, offline shell.
+// ═══════════════════════════════════════════════════════════════════════════
+// ORRERY-CORE-START — pure heliocentric Kepler propagation for comets / asteroids /
+// escape-trajectory probes. No DOM / app globals beyond RAD/DEG (shimmed by the Node
+// test harness — see tests/core.mjs / orrery.test.mjs). Keep it self-contained.
+// Elements: q perihelion (AU); e; i/om/w (deg, J2000 ecliptic); tpd perihelion time
+// (days since J2000). Elliptic (e<1), hyperbolic (e>1) AND near-parabolic orbits all
+// work — a future interstellar visitor (e>1) plots with zero new code.
+const ORR_K=0.01720209895;                     // Gaussian gravitational constant, rad/day
+// True anomaly + Sun distance at dt days from perihelion.
+function orrAnom(e,q,dt){
+  if(e<0.9995){                                // elliptic — Kepler's equation via Newton
+    const a=q/(1-e), n=ORR_K/Math.pow(a,1.5);
+    let M=(n*dt)%(2*Math.PI); if(M>Math.PI)M-=2*Math.PI; else if(M<-Math.PI)M+=2*Math.PI;
+    let E=M+e*Math.sin(M);
+    for(let k=0;k<12;k++) E-=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E));
+    return {nu:Math.atan2(Math.sqrt(1-e*e)*Math.sin(E),Math.cos(E)-e), r:(q/(1-e))*(1-e*Math.cos(E))};
+  }
+  if(e>1.0005){                                // hyperbolic — e·sinh H − H = M via Newton
+    const a=q/(1-e), n=ORR_K/Math.pow(-a,1.5), M=n*dt;
+    let H=Math.asinh(M/Math.max(e,1.0005));
+    for(let k=0;k<30;k++) H-=(e*Math.sinh(H)-H-M)/(e*Math.cosh(H)-1);
+    return {nu:Math.atan2(Math.sqrt(e*e-1)*Math.sinh(H),e-Math.cosh(H)), r:a*(1-e*Math.cosh(H))};
+  }
+  // near-parabolic — Barker's equation, closed form (D = tan ν/2)
+  const A=1.5*ORR_K/Math.sqrt(2*q*q*q)*dt, B=Math.cbrt(A+Math.sqrt(A*A+1)), D=B-1/B;
+  return {nu:2*Math.atan(D), r:q*(1+D*D)};
+}
+// Heliocentric ecliptic position (AU) at d days since J2000.
+function orbPosAt(o,d){
+  const an=orrAnom(o.e,o.q,d-o.tpd), u=an.nu+o.w*RAD, r=an.r;
+  const cO=Math.cos(o.om*RAD),sO=Math.sin(o.om*RAD),ci=Math.cos(o.i*RAD),si=Math.sin(o.i*RAD);
+  const cu=Math.cos(u),su=Math.sin(u);
+  return {x:r*(cO*cu-sO*su*ci), y:r*(sO*cu+cO*su*ci), z:r*su*si, r, nu:an.nu};
+}
+// The orbit as GEOMETRY (time-independent, for the dotted path line) — sampled by true
+// anomaly so points stay dense where the curve bends (perihelion); equal-TIME sampling
+// starves exactly there. Open orbits (e≥1) and giant ellipses clamp where r hits rmax.
+function orbPathGeo(o,n,rmax){
+  const e=o.e,q=o.q,l=q*(1+e),rm=rmax||140, Q=e<1?l/(1-e):Infinity;
+  const numax=(e<1&&Q<=rm)?Math.PI:Math.acos(Math.max(-0.9995,Math.min(1,(l/rm-1)/e)));
+  const cO=Math.cos(o.om*RAD),sO=Math.sin(o.om*RAD),ci=Math.cos(o.i*RAD),si=Math.sin(o.i*RAD);
+  const out=[];
+  for(let k=0;k<=n;k++){
+    const nu=-numax+2*numax*k/n, r=l/(1+e*Math.cos(nu)), u=nu+o.w*RAD;
+    const cu=Math.cos(u),su=Math.sin(u);
+    out.push({x:r*(cO*cu-sO*su*ci), y:r*(sO*cu+cO*su*ci), z:r*su*si});
+  }
+  return out;
+}
+// Deep-space probe on a straight escape trajectory: fixed ecliptic direction (lon/lat,
+// deg), Sun distance d0 (AU) at t0d (days since J2000) growing at v AU/day. Linear is
+// accurate over the tracker's ±few-year scrub window (they're far past escape speed).
+function probePosAt(p,d){
+  const r=p.d0+p.v*(d-p.t0d), cb=Math.cos(p.lat*RAD);
+  return {x:r*cb*Math.cos(p.lon*RAD), y:r*cb*Math.sin(p.lon*RAD), z:r*Math.sin(p.lat*RAD), r};
+}
+// ORRERY-CORE-END
+
+// Date-array [y,m,d] → days since J2000 (noon local; half a day of slop is invisible here).
+function _orDayz(a){ return jdays(new Date(a[0],a[1]-1,a[2],12)); }
+// The five spacecraft leaving the Solar System. Distances/directions cross-checked against
+// NASA/JPL mission pages (2026). wps = the real gravity-assist tour: each waypoint is a
+// planet AT ITS FLYBY DATE (positioned via planetHelio), so the drawn path is the true
+// launch → flybys → today route, not an invented curve. New Horizons' Pluto stop is a fixed
+// point (Pluto isn't in PLANETS): its real 2015 heliocentric ecliptic position.
+const PROBES=[
+  {slug:'voyager1',n:'Voyager 1',lon:256,lat:35,d0:172.6,t0:[2026,3,1],v:3.57/365.25,launch:1977,
+   wps:[['earth',[1977,9,5]],['jupiter',[1979,3,5]],['saturn',[1980,11,12]]],
+   note:'The farthest human-made object — in interstellar space since 2012, carrying the Golden Record out among the stars.'},
+  {slug:'voyager2',n:'Voyager 2',lon:290,lat:-37,d0:144,t0:[2026,2,1],v:3.24/365.25,launch:1977,
+   wps:[['earth',[1977,8,20]],['jupiter',[1979,7,9]],['saturn',[1981,8,25]],['uranus',[1986,1,24]],['neptune',[1989,8,25]]],
+   note:'The only spacecraft ever to visit Uranus and Neptune — the Grand Tour. In interstellar space since 2018.'},
+  {slug:'newhorizons',n:'New Horizons',lon:293,lat:2,d0:63,t0:[2026,7,1],v:2.95/365.25,launch:2006,
+   wps:[['earth',[2006,1,19]],['jupiter',[2007,2,28]],[{r:32.9,lon:283,lat:1.8},[2015,7,14]]],
+   note:'Gave us the first close look at Pluto (2015) and is still exploring the Kuiper Belt.'},
+  {slug:'pioneer10',n:'Pioneer 10',lon:78,lat:3,d0:140.5,t0:[2026,7,1],v:2.52/365.25,launch:1972,
+   wps:[['earth',[1972,3,2]],['jupiter',[1973,12,3]]],
+   note:'First craft through the asteroid belt and past Jupiter. Silent since 2003, coasting toward Aldebaran.'},
+  {slug:'pioneer11',n:'Pioneer 11',lon:284,lat:14,d0:117,t0:[2026,7,1],v:2.28/365.25,launch:1973,
+   wps:[['earth',[1973,4,5]],['jupiter',[1974,12,2]],['saturn',[1979,9,1]]],
+   note:'First flyby of Saturn (1979). Silent since 1995, drifting toward the constellation Aquila.'}
+];
+// One-line "who's there now" for the planet detail cards (durable phrasing, no dates that
+// go stale fast). Only solid, headline missions.
+const _OR_MISSIONS={
+  mercury:'BepiColombo arrives in orbit late 2026.',
+  mars:'Home to a small fleet of rovers and orbiters.',
+  jupiter:'Europa Clipper and JUICE are en route (arriving ~2030–31).'
+};
+// Tracked travellers = every COMETS entry + every SKY_EVENTS entry carrying orb: elements.
+function orreryObjects(){
+  const out=[];
+  for(const c of COMETS) if(c.orb) out.push({slug:c.slug,kind:'comet',name:c.n,icon:c.icon||'☄️',rar:c.rar||'epic',
+    orb:{...c.orb,tpd:_orDayz(c.orb.tp)},start:c.start,peak:c.peak,end:c.end,mag:c.mag,eye:c.eye,
+    short:c.n.replace(/^Comet /,'')});
+  for(const e of SKY_EVENTS) if(e.orb) out.push({slug:e.slug,kind:'asteroid',name:e.name,icon:e.icon||'🪨',rar:e.rar||'epic',
+    orb:{...e.orb,tpd:_orDayz(e.orb.tp)},peak:e.date,flyby:true,
+    short:e.name.replace(/^Asteroid /,'').replace(/ Flyby$/,'')});
+  return out;
+}
+function _orrTrackable(slug){ return COMETS.some(c=>c.slug===slug&&c.orb)||SKY_EVENTS.some(e=>e.slug===slug&&e.orb); }
+
+let _or=null;                        // live orrery state while open (null when closed)
+function _orInjectCSS(){ if(document.getElementById('orr-css')) return; const s=document.createElement('style'); s.id='orr-css';
+  s.textContent=`
+  #orrery{position:fixed;inset:0;z-index:1600;background:radial-gradient(130% 110% at 50% 0%,#0a0f26,#03050e 72%);display:none;flex-direction:column;color:var(--tx);touch-action:none;overscroll-behavior:contain;}
+  #orrery.on{display:flex;}
+  .orr-top{display:flex;align-items:center;gap:10px;padding:14px 14px 6px;flex:none;}
+  .orr-title{font-family:var(--sans);font-weight:800;font-size:18px;letter-spacing:.01em;display:flex;align-items:center;gap:9px;}
+  .orr-date{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.05em;padding:2px 9px;border-radius:999px;background:rgba(140,160,255,.14);border:1px solid rgba(150,170,255,.4);color:#ccd6ff;white-space:nowrap;}
+  .orr-date.off{background:rgba(255,190,90,.14);border-color:rgba(255,200,110,.4);color:#ffe0b0;}
+  .orr-x{margin-left:auto;width:38px;height:38px;border-radius:50%;background:rgba(24,28,52,.85);border:1px solid rgba(150,150,210,.3);color:var(--tx2);font-size:16px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;flex:none;}
+  .orr-x:active{transform:scale(.92);}
+  .orr-stage{position:relative;flex:1 1 auto;min-height:0;}
+  #orr-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .orr-legend{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10.5px;background:rgba(5,8,20,.55);padding:7px 9px;border-radius:10px;border:1px solid rgba(150,160,220,.14);backdrop-filter:blur(3px);pointer-events:none;}
+  .orr-legend b{display:inline-block;width:15px;height:0;border-top-width:2px;border-top-style:solid;margin-right:7px;vertical-align:middle;}
+  .orr-tools{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;gap:7px;align-items:stretch;}
+  .orr-tools button{padding:7px 10px;border-radius:10px;background:rgba(24,28,52,.8);border:1px solid rgba(150,150,210,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;-webkit-tap-highlight-color:transparent;text-align:left;}
+  .orr-tools button:active{transform:scale(.94);}
+  .orr-tools button.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
+  .orr-note{flex:none;padding:5px 16px 3px;font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.35;text-align:center;}
+  .orr-timewrap{flex:none;padding:2px 12px 12px;}
+  .orr-chips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px 8px;}
+  .orr-chip{flex:none;padding:6px 11px;border-radius:999px;background:rgba(24,30,56,.85);border:1px solid rgba(150,160,220,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
+  .orr-chip.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
+  .orr-timerow{display:flex;align-items:center;gap:10px;}
+  .orr-timerow input[type=range]{flex:1;accent-color:#ffb85c;min-height:26px;}
+  #orr-tlabel{font-family:var(--mono);font-size:11px;color:var(--tx2);min-width:88px;text-align:right;white-space:nowrap;}
+  .orr-card{position:absolute;left:12px;right:12px;bottom:12px;z-index:6;background:rgba(10,13,30,.97);border:1px solid rgba(150,160,220,.4);border-radius:16px;padding:13px 15px;box-shadow:0 18px 50px rgba(0,0,0,.6);animation:skyCardUp .22s ease;}
+  .orr-card-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(30,36,66,.9);border:1px solid rgba(150,160,220,.3);color:var(--tx2);font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+  .orr-card-name{font-family:var(--sans);font-weight:800;font-size:16px;color:var(--tx);padding-right:30px;display:flex;align-items:center;gap:8px;}
+  .orr-card-tag{font-family:var(--mono);font-size:9.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border-radius:999px;border:1px solid;}
+  .orr-card-sub{font-family:var(--mono);font-size:11px;color:var(--tx3);margin-top:4px;line-height:1.45;}
+  .orr-card-sub b{color:var(--tx2);font-weight:600;}
+  .orr-card-btns{display:flex;gap:8px;margin-top:11px;}
+  .orr-card-btns button{flex:1;padding:10px;border-radius:11px;font-family:var(--mono);font-size:12px;font-weight:600;-webkit-tap-highlight-color:transparent;}
+  .orr-card-btns button:active{transform:scale(.97);}
+  .orr-btn-hot{background:linear-gradient(180deg,#8a5b16,#6b4310);border:1px solid rgba(255,205,120,.55);color:#fff3dc;}
+  .orr-btn-dim{background:rgba(30,36,66,.9);border:1px solid rgba(150,160,220,.4);color:var(--tx2);}
+  `; document.head.appendChild(s);
+}
+
+function openOrrery(focusSlug){
+  _orInjectCSS();
+  let w=document.getElementById('orrery');
+  if(!w){
+    w=document.createElement('div'); w.id='orrery';
+    w.innerHTML=`
+      <div class="orr-top"><div class="orr-title">☄️ Solar System <span class="orr-date" id="orr-date"></span></div>
+        <button class="orr-x" onclick="closeOrrery()" aria-label="Close">✕</button></div>
+      <div class="orr-stage">
+        <canvas id="orr-canvas"></canvas>
+        <div class="orr-legend" id="orr-legend"></div>
+        <div class="orr-tools">
+          <button id="orr-z-inner" onclick="_orZoomPreset('inner')">☿ Inner</button>
+          <button id="orr-z-planets" onclick="_orZoomPreset('planets')">🪐 Planets</button>
+          <button id="orr-z-beyond" onclick="_orZoomPreset('beyond')">🛰 Beyond</button>
+          <button onclick="_orRecentre()">◉ Sun</button>
+        </div>
+        <div class="orr-card" id="orr-card" hidden></div>
+      </div>
+      <div class="orr-note" id="orr-note"></div>
+      <div class="orr-timewrap">
+        <div class="orr-chips" id="orr-chips"></div>
+        <div class="orr-timerow"><input type="range" id="orr-time" min="-365" max="730" step="1" value="0"
+          oninput="_orSetT(+this.value)" aria-label="Scrub the date"><span id="orr-tlabel">today</span></div>
+      </div>`;
+    document.body.appendChild(w);
+  }
+  const today=jdays(nowDate());
+  _or={ canvas:document.getElementById('orr-canvas'), t:today, today, scale:0, panX:0, panY:0,
+        zoom:'planets', sel:null, raf:0, dirty:true, objs:orreryObjects(), orbitCache:null, hits:[] };
+  _or.ctx=_or.canvas.getContext('2d');
+  _or.base=document.createElement('canvas'); _or.bctx=_or.base.getContext('2d');
+  w.classList.add('on'); w.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  _orHideCard();
+  // time slider spans a year back to a few months past the farthest tracked peak
+  const maxRel=Math.max(730,...(_or.objs.map(o=>Math.ceil(_orDayz(o.peak)-today+120))));
+  const sl=document.getElementById('orr-time'); sl.min=-365; sl.max=maxRel; sl.value=0;
+  _orWireInput();
+  window.addEventListener('resize',_orResize);
+  _orResize();
+  _orZoomPreset('planets');
+  _orRenderChips(); _orRenderLegend(); _orSyncDate();
+  const note=document.getElementById('orr-note');
+  if(note) note.textContent='Positions computed from published JPL orbital elements for the shown date · sizes not to scale · Apophis path = pre-flyby orbit';
+  _or.raf=requestAnimationFrame(_orTick);
+  if(focusSlug){ const o=_or.objs.find(x=>x.slug===focusSlug); if(o){ _orSelect({kind:o.kind,obj:o}); _orFitObj(o); } }
+}
+function closeOrrery(){
+  const w=document.getElementById('orrery'); if(w){ w.classList.remove('on'); w.setAttribute('aria-hidden','true'); }
+  window.removeEventListener('resize',_orResize);
+  if(_or&&_or.raf) cancelAnimationFrame(_or.raf);
+  _or=null; document.body.style.overflow='';
+}
+function _orResize(){ const a=_or; if(!a) return; const cv=a.canvas, dpr=Math.min(2,window.devicePixelRatio||1);
+  const r=cv.getBoundingClientRect(); cv.width=Math.max(1,r.width*dpr|0); cv.height=Math.max(1,r.height*dpr|0);
+  a.base.width=cv.width; a.base.height=cv.height;
+  a.dpr=dpr; a.cx=cv.width/2; a.cy=cv.height/2; a.fitR=Math.min(cv.width,cv.height)*0.46;
+  if(a.scale>0) _orMarkDirty(); }
+function _orMarkDirty(){ if(_or) _or.dirty=true; }
+// world (AU, ecliptic x→♈, y 90° along ecliptic) → canvas px. Top-down from ecliptic
+// north: +x right, +y UP, so planets run their true counter-clockwise way round.
+function _orXY(p){ const a=_or; return {x:a.cx+a.panX+p.x*a.scale, y:a.cy+a.panY-p.y*a.scale}; }
+function _orZoomPreset(kind){ const a=_or; if(!a) return; const R={inner:1.9,planets:33,beyond:195}[kind]||33;
+  a.zoom=kind; a.scale=a.fitR/R; a.panX=0; a.panY=0;
+  for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.toggle('sel',k===kind); }
+  _orMarkDirty(); }
+function _orRecentre(){ if(!_or) return; _or.panX=0; _or.panY=0; _orMarkDirty(); }
+function _orFitObj(o){ const a=_or; if(!a) return; let m=0;
+  for(const p of orbPathGeo(o.orb,90,140)) m=Math.max(m,Math.abs(p.x),Math.abs(p.y));
+  a.scale=a.fitR/Math.min(200,Math.max(1.4,m*1.12)); a.panX=0; a.panY=0; a.zoom='';
+  for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
+  _orMarkDirty(); }
+function _orSetT(rel){ const a=_or; if(!a) return; a.t=a.today+rel; _orSyncDate();
+  if(a.sel) _orShowCard(a.sel);        // live numbers follow the scrubbed date
+}
+function _orFmtD(d){ const dt=new Date((d+2451545-2440587.5)*86400000);
+  return dt.toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}); }
+function _orSyncDate(){ const a=_or; if(!a) return; const el=document.getElementById('orr-date'), lb=document.getElementById('orr-tlabel');
+  const rel=Math.round(a.t-a.today), txt=rel===0?'today':_orFmtD(a.t);
+  if(el){ el.textContent=rel===0?('today · '+_orFmtD(a.t)):_orFmtD(a.t); el.classList.toggle('off',rel!==0); }
+  if(lb) lb.textContent=txt; }
+function _orRenderLegend(){ const el=document.getElementById('orr-legend'); if(!el) return;
+  el.innerHTML=`<div><b style="border-color:rgba(150,170,220,.75)"></b>Planet orbit</div>`
+    +`<div><b style="border-color:rgba(190,200,240,.8);border-top-style:dashed"></b>Traveller path</div>`
+    +`<div><b style="border-color:#c084fc;border-top-width:3px"></b>Best viewing</div>`
+    +`<div style="margin-top:2px;color:var(--tx3)">◆ peak night · pinch to zoom</div>`; }
+function _orRenderChips(){ const el=document.getElementById('orr-chips'); if(!el||!_or) return;
+  let h=`<button class="orr-chip sel" id="orr-chip-today" onclick="_orChipToday()">⏱ Today</button>`;
+  _or.objs.forEach((o,i)=>{ const pk=_orDayz(o.peak);
+    h+=`<button class="orr-chip" id="orr-chip-${i}" onclick="_orChipObj(${i})">${o.icon} ${o.short} · ${_orFmtD(pk).replace(/ (\d{4})$/,(m,y)=>' ’'+y.slice(-2))}</button>`; });
+  el.innerHTML=h; }
+function _orChipSel(id){ document.querySelectorAll('.orr-chip').forEach(c=>c.classList.toggle('sel',c.id===id)); }
+function _orChipToday(){ const a=_or; if(!a) return; const sl=document.getElementById('orr-time'); if(sl) sl.value=0; _orSetT(0); _orChipSel('orr-chip-today'); }
+function _orChipObj(i){ const a=_or; if(!a) return; const o=a.objs[i]; if(!o) return;
+  const rel=Math.round(_orDayz(o.peak)-a.today), sl=document.getElementById('orr-time');
+  if(sl){ sl.value=Math.max(+sl.min,Math.min(+sl.max,rel)); } _orSetT(rel);
+  _orSelect({kind:o.kind,obj:o}); _orFitObj(o); _orChipSel('orr-chip-'+i); }
+
+// planet orbit polylines, computed once per open (each sampled over its own period)
+function _orOrbits(){ const a=_or; if(a.orbitCache) return a.orbitCache; const out={};
+  for(const k in PLANETS){ const p=PLANETS[k], P=Math.pow(p.a[0],1.5)*365.25, pts=[];
+    for(let i=0;i<=96;i++) pts.push(planetHelio(p,(a.today+P*i/96)/36525));
+    out[k]=pts; }
+  return a.orbitCache=out; }
+function _orWpPos(wp){ // gravity-assist waypoint → xyz (planet at flyby date, or fixed point)
+  const t=_orDayz(wp[1]);
+  if(typeof wp[0]==='string') return planetHelio(PLANETS[wp[0]],t/36525);
+  const f=wp[0], cb=Math.cos(f.lat*RAD);
+  return {x:f.r*cb*Math.cos(f.lon*RAD), y:f.r*cb*Math.sin(f.lon*RAD), z:f.r*Math.sin(f.lat*RAD)}; }
+function _orAuHalfView(){ const a=_or; return Math.hypot(a.canvas.width,a.canvas.height)/2/a.scale; }
+
+// The static layer: starfield, AU rings, planet orbits, heliopause, traveller paths
+// (dim dotted full orbit + bright rarity-coloured best-viewing segment + ◆ peak),
+// probe tour paths. Time-independent, so scrubbing never redraws it — only pan/zoom does.
+function _orRenderBase(){ const a=_or; if(!a) return; const ctx=a.bctx, W=a.base.width, H=a.base.height, dpr=a.dpr;
+  ctx.clearRect(0,0,W,H);
+  // seeded starfield (screen-space — infinitely far, so it correctly doesn't pan)
+  let sd=987654321; const rnd=()=>((sd=sd*16807%2147483647)/2147483647);
+  for(let i=0;i<150;i++){ const x=rnd()*W,y=rnd()*H,r=0.3+rnd()*1.1*dpr;
+    ctx.fillStyle='rgba(200,215,255,'+(0.06+rnd()*0.3)+')'; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
+  // AU scale rings + labels (adaptive: whichever land at a readable radius)
+  ctx.font=(9.5*dpr)+'px '+'DM Mono,monospace'; ctx.textAlign='center';
+  for(const au of [0.5,1,2,5,10,20,30,50,100,150]){ const r=au*a.scale;
+    if(r<46*dpr||r>Math.max(W,H)) continue;
+    const c=_orXY({x:0,y:0});
+    ctx.strokeStyle='rgba(130,150,210,.08)'; ctx.lineWidth=dpr; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,7); ctx.stroke();
+    ctx.fillStyle='rgba(150,170,225,.4)'; ctx.fillText(au+' au',c.x,c.y-r+11*dpr); }
+  // heliopause — the Sun's bubble edge, where Voyager 1 crossed into interstellar space
+  if(120*a.scale<Math.max(W,H)*1.1&&120*a.scale>60*dpr){ const c=_orXY({x:0,y:0}), r=120*a.scale;
+    ctx.strokeStyle='rgba(120,220,255,.28)'; ctx.lineWidth=1.4*dpr; ctx.setLineDash([7*dpr,7*dpr]);
+    ctx.beginPath(); ctx.arc(c.x,c.y,r,0,7); ctx.stroke(); ctx.setLineDash([]);
+    ctx.fillStyle='rgba(130,220,255,.5)'; ctx.fillText('heliopause',c.x,c.y-r-6*dpr); }
+  // planet orbits
+  const orbs=_orOrbits();
+  for(const k in orbs){ ctx.strokeStyle='rgba(150,170,220,.22)'; ctx.lineWidth=dpr; ctx.beginPath();
+    orbs[k].forEach((p,i)=>{ const q=_orXY(p); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
+    ctx.stroke(); }
+  // traveller paths
+  for(const o of a.objs){ const ac=rarCol(o.rar);
+    ctx.strokeStyle='rgba(190,200,240,.34)'; ctx.lineWidth=1.2*dpr; ctx.setLineDash([2.5*dpr,5*dpr]);
+    ctx.beginPath();
+    orbPathGeo(o.orb,240,150).forEach((p,i)=>{ const q=_orXY(p); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
+    ctx.stroke(); ctx.setLineDash([]);
+    // best-viewing window: same path, re-coloured in the card's rarity colour
+    const w0=o.start?_orDayz(o.start):_orDayz(o.peak)-10, w1=o.end?_orDayz(o.end):_orDayz(o.peak)+10;
+    ctx.strokeStyle=ac; ctx.lineWidth=2.6*dpr; ctx.shadowColor=ac; ctx.shadowBlur=7*dpr;
+    ctx.setLineDash([5*dpr,4*dpr]); ctx.beginPath();
+    for(let k=0;k<=64;k++){ const q=_orXY(orbPosAt(o.orb,w0+(w1-w0)*k/64)); if(k===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
+    ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur=0;
+    // ◆ peak-night marker (for a flyby: plus Earth's same-date ring — the close pass itself)
+    const pk=_orDayz(o.peak), pq=_orXY(orbPosAt(o.orb,pk));
+    ctx.fillStyle=ac; ctx.save(); ctx.translate(pq.x,pq.y); ctx.rotate(Math.PI/4);
+    ctx.fillRect(-3*dpr,-3*dpr,6*dpr,6*dpr); ctx.restore();
+    if(o.flyby){ const eq=_orXY(planetHelio(PLANETS.earth,pk/36525));
+      ctx.strokeStyle='rgba(111,168,255,.8)'; ctx.lineWidth=1.2*dpr; ctx.beginPath(); ctx.arc(eq.x,eq.y,5*dpr,0,7); ctx.stroke(); }
+  }
+  // probe grand-tour paths — only once zoomed out far enough to mean anything
+  if(_orAuHalfView()>40){
+    for(const p of PROBES){ const pts=p.wps.map(_orWpPos); pts.push(probePosAt({...p,t0d:_orDayz(p.t0)},a.today));
+      ctx.strokeStyle='rgba(140,225,255,.35)'; ctx.lineWidth=1.2*dpr; ctx.beginPath();
+      pts.forEach((pt,i)=>{ const q=_orXY(pt); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
+      ctx.stroke();
+      // dashed continuation out ahead
+      const q1=_orXY(pts[pts.length-1]), q2=_orXY(probePosAt({...p,t0d:_orDayz(p.t0)},a.today+18*365.25));
+      ctx.strokeStyle='rgba(140,225,255,.18)'; ctx.setLineDash([3*dpr,6*dpr]);
+      ctx.beginPath(); ctx.moveTo(q1.x,q1.y); ctx.lineTo(q2.x,q2.y); ctx.stroke(); ctx.setLineDash([]);
+    }
+  }
+}
+// Per-frame overlay: Sun, planets, travellers (+tails), probes, selection. All positions
+// at the scrubbed date a.t — this is the cheap layer, so time-scrubbing animates live.
+function _orPaint(){ const a=_or; if(!a) return; const ctx=a.ctx, dpr=a.dpr, T=a.t/36525;
+  ctx.clearRect(0,0,a.canvas.width,a.canvas.height);
+  if(a.base) ctx.drawImage(a.base,0,0);
+  a.hits=[];
+  ctx.font=(10*dpr)+'px DM Mono,monospace'; ctx.textAlign='left';
+  // Sun
+  const sq=_orXY({x:0,y:0}), sr=Math.max(4*dpr,Math.min(a.scale*0.05,15*dpr));
+  const sg=ctx.createRadialGradient(sq.x,sq.y,0,sq.x,sq.y,sr*4);
+  sg.addColorStop(0,'rgba(255,235,170,.95)'); sg.addColorStop(0.25,'rgba(255,190,90,.5)'); sg.addColorStop(1,'rgba(255,170,60,0)');
+  ctx.globalCompositeOperation='lighter'; ctx.fillStyle=sg; ctx.beginPath(); ctx.arc(sq.x,sq.y,sr*4,0,7); ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='#fff2cf'; ctx.beginPath(); ctx.arc(sq.x,sq.y,sr,0,7); ctx.fill();
+  a.hits.push({x:sq.x,y:sq.y,kind:'sun'});
+  // planets
+  const PSZ={mercury:2.2,venus:3.2,earth:3.4,mars:2.8,jupiter:5.2,saturn:4.6,uranus:3.8,neptune:3.8};
+  for(const k in PLANETS){ const p=PLANETS[k], h=planetHelio(p,T), q=_orXY(h);
+    const rr=(PSZ[k]||3)*dpr, col=k==='earth'?'#6fa8ff':(p.dot||'#cfd6ea');
+    ctx.fillStyle=col; ctx.beginPath(); ctx.arc(q.x,q.y,rr,0,7); ctx.fill();
+    if(k==='saturn'){ ctx.strokeStyle='rgba(222,210,168,.7)'; ctx.lineWidth=dpr;
+      ctx.beginPath(); ctx.ellipse(q.x,q.y,rr*2,rr*0.7,-0.45,0,7); ctx.stroke(); }
+    const orbPx=p.a[0]*a.scale;
+    // label once its orbit has room; Earth (the viewer's anchor) labels much sooner
+    if((orbPx>22*dpr||(k==='earth'&&orbPx>8*dpr))&&orbPx<Math.max(a.canvas.width,a.canvas.height)*1.3){
+      ctx.fillStyle='rgba(205,215,245,.72)'; ctx.fillText(p.label||k,q.x+rr+4*dpr,q.y-rr-2*dpr); }
+    a.hits.push({x:q.x,y:q.y,kind:'planet',key:k});
+  }
+  // travellers — the stars of the show
+  const nowIn=(o)=>{ const s=o.start?_orDayz(o.start):_orDayz(o.peak)-10, e=o.end?_orDayz(o.end):_orDayz(o.peak)+10; return a.t>=s&&a.t<=e; };
+  const pulse=1+0.22*Math.sin(Date.now()/320);
+  for(const o of a.objs){ const ac=rarCol(o.rar), pos=orbPosAt(o.orb,a.t), q=_orXY(pos), hot=nowIn(o);
+    // tails: ion (straight anti-sunward, bluish) + dust (wider, rarity-tinted, swept back)
+    if(pos.r<3.2){ const tl=Math.min(1.7,0.9/Math.max(0.32,pos.r*pos.r))*a.scale;
+      const dx=q.x-sq.x, dy=q.y-sq.y, m=Math.hypot(dx,dy)||1e-9, ux=dx/m, uy=dy/m; // anti-sunward
+
+      ctx.globalCompositeOperation='lighter';
+      const ionG=ctx.createLinearGradient(q.x,q.y,q.x+ux*tl,q.y+uy*tl);
+      ionG.addColorStop(0,'rgba(160,220,255,.75)'); ionG.addColorStop(1,'rgba(160,220,255,0)');
+      ctx.strokeStyle=ionG; ctx.lineWidth=2*dpr; ctx.lineCap='round';
+      ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+ux*tl,q.y+uy*tl); ctx.stroke();
+      const dAng=0.30, dl=tl*0.72, vx=ux*Math.cos(dAng)-uy*Math.sin(dAng), vy=ux*Math.sin(dAng)+uy*Math.cos(dAng);
+      const dustG=ctx.createLinearGradient(q.x,q.y,q.x+vx*dl,q.y+vy*dl);
+      dustG.addColorStop(0,_orRgba(ac,0.6)); dustG.addColorStop(1,_orRgba(ac,0));
+      ctx.strokeStyle=dustG; ctx.lineWidth=4.5*dpr;
+      ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+vx*dl,q.y+vy*dl); ctx.stroke();
+      ctx.globalCompositeOperation='source-over'; ctx.lineCap='butt';
+    }
+    // glowing head
+    const hr=(hot?5:3.6)*dpr*(hot?pulse:1);
+    const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,hr*3);
+    g.addColorStop(0,'#fff'); g.addColorStop(0.35,ac); g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.globalCompositeOperation='lighter'; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(q.x,q.y,hr*3,0,7); ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(q.x,q.y,hr*0.5,0,7); ctx.fill();
+    ctx.fillStyle=_orRgba(ac,0.95); ctx.fillText(o.short,q.x+hr*2+3*dpr,q.y-hr-2*dpr);
+    a.hits.push({x:q.x,y:q.y,kind:o.kind,obj:o});
+  }
+  // probes
+  if(_orAuHalfView()>40){ for(const p of PROBES){ const pos=probePosAt({...p,t0d:_orDayz(p.t0)},a.t), q=_orXY(pos);
+    ctx.fillStyle='#aef0ff'; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(Math.PI/4); ctx.fillRect(-2.6*dpr,-2.6*dpr,5.2*dpr,5.2*dpr); ctx.restore();
+    ctx.fillStyle='rgba(170,235,255,.8)'; ctx.fillText(p.n,q.x+6*dpr,q.y-5*dpr);
+    a.hits.push({x:q.x,y:q.y,kind:'probe',obj:p});
+  } }
+  // selection ring
+  if(a.sel){ const q=_orSelPos(a.sel); if(q){ ctx.strokeStyle='rgba(255,255,255,.95)'; ctx.lineWidth=2*dpr;
+    ctx.beginPath(); ctx.arc(q.x,q.y,13*dpr,0,7); ctx.stroke(); } }
+}
+function _orRgba(hex,al){ const n=parseInt(hex.slice(1),16); return 'rgba('+((n>>16)&255)+','+((n>>8)&255)+','+(n&255)+','+al+')'; }
+function _orSelPos(sel){ const a=_or; if(!a) return null; const T=a.t/36525;
+  if(sel.kind==='sun') return _orXY({x:0,y:0});
+  if(sel.kind==='planet') return _orXY(planetHelio(PLANETS[sel.key],T));
+  if(sel.kind==='probe') return _orXY(probePosAt({...sel.obj,t0d:_orDayz(sel.obj.t0)},a.t));
+  return _orXY(orbPosAt(sel.obj.orb,a.t)); }
+function _orTick(ts){ const a=_or; if(!a) return;
+  if(a.dirty){ _orRenderBase(); a.dirty=false; }
+  if(!a._last||ts-a._last>52){ a._last=ts; _orPaint(); }
+  a.raf=requestAnimationFrame(_orTick); }
+
+// drag = pan · pinch/wheel = zoom · near-stationary press = tap (hit-test the bodies)
+function _orWireInput(){ const cv=_or.canvas; if(cv._orWired) return; cv._orWired=true;
+  let px=0,py=0,drag=false,moved=0,pinch0=0,scale0=0;
+  const zoomAt=(f,mx,my)=>{ const a=_or; if(!a) return; const r=cv.getBoundingClientRect();
+    const sx=(mx-r.left)*(cv.width/r.width), sy=(my-r.top)*(cv.height/r.height);
+    const ns=Math.max(a.fitR/500,Math.min(a.fitR/0.35,a.scale*f)); f=ns/a.scale;
+    a.panX=sx-a.cx-f*(sx-a.cx-a.panX); a.panY=sy-a.cy-f*(sy-a.cy-a.panY); a.scale=ns;
+    a.zoom=''; for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
+    _orMarkDirty(); };
+  const down=e=>{ if(e.touches&&e.touches.length===2){ drag=false; pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); scale0=_or.scale; return; }
+    drag=true; moved=0; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
+  const move=e=>{ const a=_or; if(!a) return;
+    if(e.touches&&e.touches.length===2){ const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+      if(pinch0>0){ const mx=(e.touches[0].clientX+e.touches[1].clientX)/2, my=(e.touches[0].clientY+e.touches[1].clientY)/2;
+        zoomAt((scale0*d/pinch0)/a.scale,mx,my); }
+      if(e.cancelable)e.preventDefault(); return; }
+    if(!drag) return; const t=e.touches?e.touches[0]:e; const dx=t.clientX-px, dy=t.clientY-py; px=t.clientX; py=t.clientY;
+    moved+=Math.abs(dx)+Math.abs(dy); if(moved<3) return;
+    a.panX+=dx*a.dpr; a.panY+=dy*a.dpr; if(e.cancelable)e.preventDefault(); _orMarkDirty(); };
+  const up=e=>{ if(drag&&moved<8){ const t=(e.changedTouches&&e.changedTouches[0])||e; _orTapAt(t.clientX,t.clientY); } drag=false; pinch0=0; };
+  cv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up);
+  cv.addEventListener('wheel',e=>{ zoomAt(e.deltaY<0?1.18:1/1.18,e.clientX,e.clientY); e.preventDefault(); },{passive:false});
+}
+function _orTapAt(clientX,clientY){ const a=_or; if(!a) return; const r=a.canvas.getBoundingClientRect(); if(!r.width) return;
+  const sx=(clientX-r.left)*(a.canvas.width/r.width), sy=(clientY-r.top)*(a.canvas.height/r.height);
+  const hitR=Math.max(22*a.dpr,26); let best=null,bestD=hitR*hitR;
+  for(const h of a.hits){ const d=(h.x-sx)**2+(h.y-sy)**2; if(d<bestD){ bestD=d; best=h; } }
+  if(best) _orSelect(best); else { a.sel=null; _orHideCard(); }
+}
+function _orSelect(h){ if(!_or) return; _or.sel=h; _orShowCard(h); }
+function _orHideCard(){ if(_or) _or.sel=null; const el=document.getElementById('orr-card'); if(el) el.hidden=true; }
+// Detail card — live numbers computed AT THE SCRUBBED DATE (so "show at peak" is honest).
+function _orShowCard(h){ const a=_or; if(!a) return; const el=document.getElementById('orr-card'); if(!el) return;
+  const T=a.t/36525, E=planetHelio(PLANETS.earth,T), rel=Math.round(a.t-a.today);
+  const AUKM=1.496e8, dTo=(p)=>Math.hypot(p.x-E.x,p.y-E.y,p.z-E.z);
+  const when=rel===0?'now':('on '+_orFmtD(a.t));
+  let name='',tag='',ac='#9fb4e8',sub='',btns='';
+  if(h.kind==='sun'){ name='☀️ The Sun'; tag='STAR';
+    sub=`Every orbit here bends around it. Light takes ~8.3 minutes to reach Earth.`; }
+  else if(h.kind==='planet'){ const p=PLANETS[h.key], hp=planetHelio(p,T);
+    name=`${p.label}`; tag='PLANET'; ac=p.dot||ac;
+    sub=`<b>${when}</b> · ${hp?Math.hypot(hp.x,hp.y,hp.z).toFixed(2):'–'} au from the Sun · ${dTo(hp).toFixed(2)} au from Earth (${Math.round(dTo(hp)*8.317)} light-min).`
+      +(p.note?`<br>${p.note}.`:'')+( _OR_MISSIONS[h.key]?`<br>🛰 ${_OR_MISSIONS[h.key]}`:'' ); }
+  else if(h.kind==='probe'){ const p=h.obj, pos=probePosAt({...p,t0d:_orDayz(p.t0)},a.t);
+    const kms=(p.v*AUKM/86400).toFixed(1), lh=(pos.r*8.317/60).toFixed(1);
+    name=`🛰 ${p.n}`; tag='DEEP-SPACE PROBE'; ac='#7fe0ff';
+    sub=`<b>${when}</b> · ~${Math.round(pos.r)} au from the Sun — a radio signal takes ~${lh} hours.`
+      +`<br>Launched ${p.launch}, travelling ~${kms} km/s. ${p.note}`; }
+  else { const o=h.obj, pos=orbPosAt(o.orb,a.t), ec=rarCol(o.rar);
+    ac=ec; name=`${o.icon} ${o.name}`; tag=(o.kind==='asteroid'?'ASTEROID':'COMET')+' · '+(o.rar||'').toUpperCase();
+    const win=o.start?`Trackable ${_orFmtA(o.start)} → peak <b>${_orFmtA(o.peak)}</b>${o.mag?` (mag ${o.mag}${o.eye==='binoc'?', binoculars':''})`:''} → fades ${_orFmtA(o.end)}.`
+                     :`Earth flyby <b>${_orFmtA(o.peak)}</b> — skims closer than our communication satellites.`;
+    sub=`<b>${when}</b> · ${pos.r.toFixed(2)} au from the Sun · ${dTo(pos).toFixed(2)} au from Earth (${Math.round(dTo(pos)*8.317)} light-min).`
+      +`<br>${win} The bright ${o.rar||''} stretch of its path is the best-viewing window.`;
+    btns=`<div class="orr-card-btns"><button class="orr-btn-hot" onclick="_orJumpPeak('${o.slug}')">⏱ Show at peak</button>`
+        +`<button class="orr-btn-dim" onclick="closeOrrery();openSkyStory('${o.slug}')">Full story ↗</button></div>`; }
+  el.innerHTML=`<button class="orr-card-x" onclick="_orHideCard()" aria-label="Close">✕</button>`
+    +`<div class="orr-card-name">${name} <span class="orr-card-tag" style="color:${ac};border-color:${ac}">${tag}</span></div>`
+    +`<div class="orr-card-sub">${sub}</div>`+btns;
+  el.hidden=false;
+}
+function _orFmtA(arr){ return new Date(arr[0],arr[1]-1,arr[2]).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'}); }
+function _orJumpPeak(slug){ const a=_or; if(!a) return; const i=a.objs.findIndex(o=>o.slug===slug); if(i>=0) _orChipObj(i); }
 
 function openSkyStory(slug){
   if(slug==='aurora'){ openAuroraGlobe(); return; }   // the aurora card opens the interactive globe, not a story card

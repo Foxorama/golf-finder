@@ -374,6 +374,36 @@ call it done. They map to the three hats the user keeps asking for:
   ctx so both the base and overlay layers reuse them. There's also a **night-only 🌌 header
   button** (`#btn-aurora`, mirror of the day-only bag/hio) that opens the globe from the main
   night page. Guard the Kp everywhere (`isFinite`) — see the NOAA-format gotcha below.
+- **Solar System tracker (`openOrrery`).** The **☄️ night-only header button** (sibling of the 🌌
+  aurora one, same CSS-gating pattern) opens a full-screen, top-down **Canvas-2D orrery** of the
+  Solar System — real planet positions (`planetHelio`; **Uranus + Neptune were added to `PLANETS`
+  for this view only** — `planetPositions`/`planetOppositions` keep their explicit key lists), the
+  Sun, and every **tracked traveller**: a `COMETS` or `SKY_EVENTS` entry carrying **`orb:`
+  Keplerian elements** (`{q,e,i,om,w,tp:[y,m,d]}`, JPL SBDB values — `orreryObjects()` collects
+  them, `_orrTrackable()` gates the story-card "Track it through the Solar System" CTA; an entry
+  *without* `orb:` still gets its night card, it just doesn't plot). The maths is the pure
+  **`ORRERY-CORE`** block (`orrAnom`/`orbPosAt`/`orbPathGeo`/`probePosAt`, unit-tested in
+  `tests/orrery.test.mjs`) — elliptic, **hyperbolic (e>1)** and near-parabolic all work, so a
+  future interstellar visitor plots with zero new code. Each traveller draws its full orbit as a
+  dim dotted line with the **apparition window re-coloured in the card's rarity colour** (the
+  "best viewing" segment) + a ◆ peak marker; a flyby object (Apophis) also draws **Earth's ring at
+  the flyby date** (verified: the pre-encounter elements put Apophis ~1.7 lunar distances off
+  Earth's dot on 2029-04-13 — that small gap is real mean-element slop, don't "fix" it; the
+  Keplerian path is only valid UP TO the flyby, which bends the orbit). A bottom **time-scrub
+  strip** (slider + per-object peak chips) slides the whole system through dates: the architecture
+  is the aurora globe's base+overlay split, and **the base (starfield, AU rings, orbits, paths,
+  heliopause) is deliberately time-INDEPENDENT** — scrubbing only redraws the cheap overlay
+  (bodies, comet ion+dust tails, probe markers), so keep time-dependent drawing out of
+  `_orRenderBase`. Zoom: pinch/wheel/drag + presets (Inner 1.9 au / Planets 33 au / **Beyond**
+  195 au — the far tier where the five **escaping spacecraft** appear: `PROBES` carries
+  Voyager 1/2, Pioneers 10/11 and New Horizons with distance/direction/speed cross-checked against
+  NASA 2026 figures, their paths drawn through the REAL planet positions at each gravity-assist
+  flyby date via `_orWpPos`, plus the dashed 120-au heliopause ring). Tap a body → bottom detail
+  card with live Sun/Earth distances + light-time computed **at the scrubbed date**, window dates,
+  and "Full story ↗" back to the night card (`closeOrrery()` first — the sky modal z-index 1000
+  sits under the orrery's 1600). Preview gotchas: the headless preview tab suspends rAF — drive
+  `_orRenderBase()` + `_orPaint()` manually from `preview_eval`; screenshots wedge over the night
+  scene (as ever), so verify geometry numerically (`_or.hits`, `_orXY`, canvas `getImageData`).
 - **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
   same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
   course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent

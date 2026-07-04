@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-07-04 · **Next ID:** `S-009`
+> **Last reviewed:** 2026-07-05 · **Next ID:** `S-010`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[sky]` (the three lenses; "pro golfer" → "true to the sky" here) ·
@@ -61,7 +61,9 @@ gap. Do opportunistically when regenerating art (pairs with S-001).
 **Status:** open
 The card system is built to take more: add `DEEPSKY` objects and `SKY_EVENTS`/`COMETS` entries via the
 documented "add an event type" / `astral-heroic-card-art` recipes (descriptor + `SKY_LORE` +
-`skyLocus` branch + `SKY_RARITY` + optional `CARD_PHOTO`). Keep everything **real and Australia-visible**
+`skyLocus` branch + `SKY_RARITY` + optional `CARD_PHOTO`). New comets / flyby asteroids should
+also carry `orb:` Keplerian elements (JPL SBDB) so they plot in the ☄️ Solar System tracker
+(S-009 in Done). Keep everything **real and Australia-visible**
 and verify coordinates/visibility per the auditing recipe before committing. Any new `DEEPSKY`
 object should also get a bespoke `_LOC_DEEP[slug]` thumbnail renderer (see S-008 in Done) so its
 card art is unique, not the per-type fallback.
@@ -88,6 +90,16 @@ it — a wrong limit misleads about what's actually visible (the "true to the sk
 ---
 
 ## Done ✓
+
+### S-009 · ☄️ Solar System tracker (orrery) `[UX]` `[sky]` `[data]`
+**Status:** done in #347
+Full-screen top-down Canvas-2D orrery (☄️ night-only header button, `openOrrery`): real planet
+positions, every `COMETS`/`SKY_EVENTS` entry with `orb:` elements on its true orbit (dotted path,
+apparition window re-coloured in rarity, ◆ peak marker), a time-scrub strip, Inner/Planets/Beyond
+zoom with the five escaping probes on real gravity-assist paths + the heliopause, tap-for-details
+cards, and a story-card CTA. Pure `ORRERY-CORE` handles elliptic/hyperbolic/parabolic — a future
+interstellar visitor plots by adding elements alone. Pinch/drag feel still wants an on-device pass
+(`[needs-phone]`, fold into S-002's next phone session).
 
 ### S-008 · Unique per-object deep-sky card art (no more shared category thumbnails) `[content]` `[UX]`
 **Status:** done in #345
