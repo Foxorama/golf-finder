@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-06-23 · **Next ID:** `G-010`
+> **Last reviewed:** 2026-07-04 · **Next ID:** `G-011`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -27,7 +27,9 @@ PRs #296–#298 shipped auto-score, the persistent scoring console, hole-map pin
 single on-course pass to confirm: pinch-zoom vs page-scroll on a real touchscreen, the compass
 animation reads alive (not busy), auto-advance fires at the right tee distance, and the auto-score
 matches reality hole by hole. Each is behind a `window._*` escape-hatch — note any that want
-re-tuning rather than disabling.
+re-tuning rather than disabling. **Add G-010's auto-tee to this pass** (`window._playAutoTee`,
+`_playTeeAutoNear`): confirm the tee it captures as you stand on the box is where you actually
+teed off, and that the displayed hole length doesn't visibly flicker as you walk up.
 
 ### G-002 · Add more Play courses `[golf]` `[data]`
 **Status:** open
@@ -96,7 +98,15 @@ existing list. Low urgency.
 
 ## Done ✓
 
-_(none yet — move items here with their shipping PR link, e.g. `G-0xx — done in #123`.)_
+### G-010 · Auto-capture the tee so a drive is one Mark `[golf]` `[UX]` `[needs-phone]`
+**Status:** done — this PR (branch `claude/tee-mark-shot-drives-dobpvu`)
+The drive was the odd shot out: every other shot's *start* is the previous ball's Mark (one tap),
+but the drive's start is the tee, so recording a drive from where you actually stood needed
+**Set tee + Mark** — two taps, only for the drive. `_playAutoTee` now captures the tee for you as
+you stand on the box (each GPS tick, the fix closest to the course's baked tee within
+`_playTeeAutoNear`=18 m, flagged `teeAuto`), so a drive is a single `Mark` like everything else.
+Manual `Set tee` still overrides (`teeManual` locks auto out); feel needs an on-course check (rolled
+into G-001). `window._playAutoTee=false` disables.
 
 ---
 

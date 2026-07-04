@@ -902,6 +902,9 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .pmt-btn .pmt-lbl{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.03em;color:var(--tx3);}
 .pmt-btn.on{border-color:var(--gl);background:rgba(31,74,38,0.72);}
 .pmt-btn.on .pmt-lbl{color:var(--gg);}
+/* auto-captured tee: a dashed accent so it reads as "captured for you" vs a solid manual pin */
+.pmt-btn.on.auto{border-style:dashed;background:rgba(31,74,38,0.5);}
+.pmt-btn.on.auto .pmt-lbl{color:var(--gl);}
 /* (the in-flow Mark bar is gone — Mark/undo now live in the .play-foot scoring console) */
 .ps-empty{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;padding:4px 0 2px;}
 .ps-chips{display:flex;flex-wrap:wrap;gap:5px;}
@@ -7308,7 +7311,7 @@ function openPlay(courseName, layoutKey){
   playS={ slug:activeSlug, course:active, parentSlug:(L?slug:null), parentName:(L?course.name:null), layoutKey:(L?L.key:null),
           hole:1, units:(localStorage.getItem('gf_units')||'m'),
           watchId:null, pos:null, acc:null, gpsErr:null,
-          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), shotMan:(draft.shotMan||{}), pens:(draft.pens||{}), teePos:(draft.teePos||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
+          shots:(draft.shots||{}), shotClubs:(draft.shotClubs||{}), shotLies:(draft.shotLies||{}), shotAuto:(draft.shotAuto||{}), shotMan:(draft.shotMan||{}), pens:(draft.pens||{}), teePos:(draft.teePos||{}), teeAuto:(draft.teeAuto||{}), teeManual:(draft.teeManual||{}), teeSelByHole:(draft.teeSelByHole||(draft.teeSel?{1:draft.teeSel}:{})),
           scores:(draft.scores||{}), putts:(draft.putts||{}), scoreAuto:(draft.scoreAuto||{}), picked:(draft.picked||{}), showClub:true,
           startedAt:(draft.startedAt||Date.now()), tab:(active.noGps?'card':'play') };
   Object.keys(playS.putts).forEach(k=>_clampPutts(+k));   // heal any legacy draft with impossible putts
@@ -7404,7 +7407,7 @@ function playBumpPutts(n,d){ const auto=playS.scoreAuto[n];
     let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
     playS.putts[n]=v; }
   playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,scoreAuto:playS.scoreAuto,picked:playS.picked,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,scoreAuto:playS.scoreAuto,picked:playS.picked,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeAuto:playS.teeAuto,teeManual:playS.teeManual,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -7574,11 +7577,37 @@ function playShotLegs(h){ // legs from the (effective) tee through each mark, pl
   return {legs, last:chain[chain.length-1]}; }
 // Set this hole's tee to your current GPS (so the tee-shot Mark + length measure from the
 // tee you're actually on); tap again to clear back to the baked tee. Usable any time.
+// Either way the user has taken over this hole's tee, so teeManual[n] locks _playAutoTee out
+// (a manual pin stays put; a reset actually sticks instead of being re-captured next tick).
 function playSetTeeHere(){
-  if(!playS) return;
-  if(playS.teePos[playS.hole]){ delete playS.teePos[playS.hole]; playPersistDraft(); playRender(); playToast('Tee reset to the course default.'); return; }
+  if(!playS) return; const n=playS.hole;
+  (playS.teeManual=playS.teeManual||{})[n]=true;
+  if(playS.teeAuto) delete playS.teeAuto[n];
+  if(playS.teePos[n]){ delete playS.teePos[n]; playPersistDraft(); playRender(); playToast('Tee reset to the course default.'); return; }
   const pos=playPos(); if(!pos){ playToast('No GPS fix yet — stand on the tee and try again.'); return; }
-  playS.teePos[playS.hole]=pos.slice(); playPersistDraft(); playRender(); playToast(`Tee set here for hole ${playS.hole}.`);
+  playS.teePos[n]=pos.slice(); playPersistDraft(); playRender(); playToast(`Tee set here for hole ${n}.`);
+}
+// Auto-capture the tee from GPS so a DRIVE needs only a single "Mark" (its start — the tee
+// you're standing on — is captured for you), instead of the odd two-step "Set tee" + "Mark"
+// that every other shot doesn't need (their start is the previous ball's Mark). Runs each GPS
+// tick while you're on a hole you haven't marked yet and haven't taken manual control of; it
+// keeps the fix CLOSEST to the course's own tee (so walking off toward your ball can't drag
+// the captured tee down the fairway) and only within ~TEE_NEAR of that tee. A manual Set tee
+// wins; the first Mark locks it. window._playAutoTee=false disables. GPS "feel" is on-course-only.
+function _playAutoTee(){
+  if(window._playAutoTee===false||!playS||playS.course.noGps) return;
+  const n=playS.hole, h=playS.course.holes[n-1]; if(!h) return;
+  if((playS.shots[n]||[]).length) return;                              // already marked ⇒ tee locked
+  if(playS.teeManual&&playS.teeManual[n]) return;                      // user chose this hole's tee
+  const pos=playPos(); if(!pos) return;
+  const s=_selTeeKey(n), baseTee=(s&&h.tees&&h.tees[s])||h.tee;        // reference = selected/baked tee
+  const near=(typeof window._playTeeAutoNear==='number')?window._playTeeAutoNear:18;   // tighter than auto-advance's 25 m so a far fix can't read the hole short
+  const d=_distM(pos,baseTee); if(d>near) return;                      // only while you're on/at the tee
+  const best=playS._teeAutoBest&&playS._teeAutoBest[n];
+  if(best==null||d<best){                                             // keep the fix nearest the real tee
+    (playS._teeAutoBest=playS._teeAutoBest||{})[n]=d;
+    playS.teePos[n]=pos.slice(); (playS.teeAuto=playS.teeAuto||{})[n]=true; playPersistDraft();
+  }
 }
 function playToggleClubMarker(){ if(playS){ playS.showClub=!playS.showClub; playRender(); } }
 // Point at arc-length distM along a polyline from its start.
@@ -7607,8 +7636,10 @@ function teeShotClub(lenM){ const cs=clubSet(); if(!cs.length) return null;
   return {club:pick.club, dist:Math.min(pick.dist,lenM-2)}; }
 // Right-side overlay tools on the hole map (persist across the GPS-tick map re-render).
 function playMapToolsHtml(){
-  const teeSet=!!(playS.teePos&&playS.teePos[playS.hole]);
-  return `<button class="pmt-btn${teeSet?' on':''}" onclick="event.stopPropagation();playSetTeeHere()" aria-label="${teeSet?'Reset tee to course default':'Set tee from your location'}" title="${teeSet?'Tee set here — tap to reset':'Set the tee from your GPS'}">📍<span class="pmt-lbl">${teeSet?'tee ✓':'set tee'}</span></button>
+  const n=playS.hole, teeSet=!!(playS.teePos&&playS.teePos[n]), teeAuto=teeSet&&!!(playS.teeAuto&&playS.teeAuto[n]);
+  const lbl=teeSet?(teeAuto?'tee ~auto':'tee ✓'):'set tee';
+  const ttl=teeAuto?'Tee auto-captured from your GPS — tap to reset to the course tee':teeSet?'Tee set here — tap to reset':'Set the tee from your GPS';
+  return `<button class="pmt-btn${teeSet?' on':''}${teeAuto?' auto':''}" onclick="event.stopPropagation();playSetTeeHere()" aria-label="${teeSet?'Reset tee to course default':'Set tee from your location'}" title="${ttl}">📍<span class="pmt-lbl">${lbl}</span></button>
     <button class="pmt-btn${playS.showClub?' on':''}" onclick="event.stopPropagation();playToggleClubMarker()" aria-label="Toggle tee-shot club marker" title="Show/hide the tee-shot club marker">🏌<span class="pmt-lbl">club</span></button>
     <button class="pmt-btn" id="pmt-fit" onclick="event.stopPropagation();playZoomReset()" aria-label="Reset map zoom to fit the hole" title="Zoom out to fit the hole">⊟<span class="pmt-lbl">fit</span></button>${playTeeSelHtml()}`;
 }
@@ -7832,7 +7863,7 @@ function _commitRound(t){
     legs:legsByHole, holeStats:_buildHoleStats() });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
-  playS.scores={}; playS.putts={}; playS.scoreAuto={}; playS.picked={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.startedAt=Date.now();
+  playS.scores={}; playS.putts={}; playS.scoreAuto={}; playS.picked={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.teePos={}; playS.teeAuto={}; playS.teeManual={}; playS._teeAutoBest={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
@@ -8004,6 +8035,7 @@ function _playAutoAdvance(){
 function playLiveUpdate(){
   if(!playS||playS.tab!=='play')return;
   if(_playAutoAdvance()) return;   // a hole switch already did a full re-render
+  _playAutoTee();                  // capture the tee as you stand on it ⇒ a drive is one Mark
   playRefreshDist();
   const m=document.getElementById('play-map'); if(m){ m.innerHTML=playHoleSvg(); playApplyMapZoom(); }
   const me=document.getElementById('play-measure'); if(me) me.innerHTML=playMeasureStripHtml();
