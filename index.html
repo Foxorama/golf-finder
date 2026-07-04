@@ -432,7 +432,9 @@ body.sky-full-on{overflow:hidden;}
 .acard-name{font-size:14px;font-weight:700;color:var(--tx);}
 .acard-pos{font-family:var(--mono);font-size:11px;color:var(--ac,#a8c0e8);margin-left:auto;text-align:right;}
 .acard-note{font-family:var(--mono);font-size:11px;color:var(--tx2);line-height:1.6;}
-.acard.alert{border-color:rgba(80,255,170,0.45);background:rgba(80,255,170,0.05);}
+/* Alert cards (X-class flare, aurora storm) amplify their own rarity accent —
+   both are legendary, so a hard-coded green here fought the amber label. */
+.acard.alert{border-color:color-mix(in srgb,var(--ac) 45%,transparent);background:color-mix(in srgb,var(--ac) 6%,transparent);}
 /* Tappable cards open a full-screen story sheet — a chevron after the name +
    a faint hover/press affordance signal there's more behind the card. */
 .acard.tappable{cursor:pointer;transition:border-color .15s,transform .08s,background .15s;}
