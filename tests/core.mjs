@@ -43,6 +43,22 @@ export function loadAuroraCore(){
   return sandbox.__exports;
 }
 
+// Loads the pure ORRERY-CORE region (heliocentric Kepler propagation for the solar-system
+// tracker) and evals it in a Node vm, shimming RAD/DEG like the aurora core.
+const ORRERY_EXPORTS = ['ORR_K','orrAnom','orbPosAt','orbPathGeo','probePosAt'];
+export function loadOrreryCore(){
+  const html = readIndex();
+  const s = html.indexOf('ORRERY-CORE-START');
+  const e = html.indexOf('ORRERY-CORE-END');
+  if(s<0||e<0) throw new Error('ORRERY-CORE markers not found in index.html');
+  const code = html.slice(html.indexOf('\n',s)+1, html.lastIndexOf('\n',e));
+  const preamble = 'const RAD=Math.PI/180, DEG=180/Math.PI;\n';
+  const sandbox = {};
+  vm.createContext(sandbox);
+  vm.runInContext(preamble + code + `\nthis.__exports={${ORRERY_EXPORTS.join(',')}};`, sandbox, {filename:'orrery-core'});
+  return sandbox.__exports;
+}
+
 // Extract every inline (non-src) <script> body from index.html — used by the syntax test.
 export function inlineScripts(){
   const html = readIndex();
