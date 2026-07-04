@@ -376,8 +376,9 @@ call it done. They map to the three hats the user keeps asking for:
   night page. Guard the Kp everywhere (`isFinite`) — see the NOAA-format gotcha below.
 - **Solar System tracker (`openOrrery`).** The **☄️ night-only header button** (sibling of the 🌌
   aurora one, same CSS-gating pattern) opens a full-screen, top-down **Canvas-2D orrery** of the
-  Solar System — real planet positions (`planetHelio`; **Uranus + Neptune were added to `PLANETS`
-  for this view only** — `planetPositions`/`planetOppositions` keep their explicit key lists), the
+  Solar System — real planet positions (`planetHelio`; **Uranus, Neptune + Pluto were added to
+  `PLANETS` for this view only** — `planetPositions`/`planetOppositions` keep their explicit key
+  lists), the
   Sun, and every **tracked traveller**: a `COMETS` or `SKY_EVENTS` entry carrying **`orb:`
   Keplerian elements** (`{q,e,i,om,w,tp:[y,m,d]}`, JPL SBDB values — `orreryObjects()` collects
   them, `_orrTrackable()` gates the story-card "Track it through the Solar System" CTA; an entry
@@ -394,11 +395,21 @@ call it done. They map to the three hats the user keeps asking for:
   is the aurora globe's base+overlay split, and **the base (starfield, AU rings, orbits, paths,
   heliopause) is deliberately time-INDEPENDENT** — scrubbing only redraws the cheap overlay
   (bodies, comet ion+dust tails, probe markers), so keep time-dependent drawing out of
-  `_orRenderBase`. Zoom: pinch/wheel/drag + presets (Inner 1.9 au / Planets 33 au / **Beyond**
-  195 au — the far tier where the five **escaping spacecraft** appear: `PROBES` carries
+  `_orRenderBase`. Zoom: pinch/wheel/drag + labelled presets (Inner 1.9 au / Planets 33 au /
+  **Probes · Pluto** 195 au — where the five **escaping spacecraft** appear: `PROBES` carries
   Voyager 1/2, Pioneers 10/11 and New Horizons with distance/direction/speed cross-checked against
   NASA 2026 figures, their paths drawn through the REAL planet positions at each gravity-assist
-  flyby date via `_orWpPos`, plus the dashed 120-au heliopause ring). Tap a body → bottom detail
+  flyby date via `_orWpPos`, plus the 120-au heliopause ring / **Oort Cloud** 2450 au — a seeded
+  speckle band at the ~2,000-au inner edge). **Post-phone-feedback polish (second PR):** tapping a
+  traveller/probe = **focus mode** (`_or.focus` — every other trail dims to 0.12, cleared by
+  tapping empty space / closing the card); probe paths are deliberately faint context lines that
+  **fade with zoom** (`_orProbeVis` ramps in past the planets and out again at Oort scale — no
+  binary pop) with labels pushed outward along each craft's own direction so they don't collide;
+  comet **tails stay anti-sunward** (true physics — a tail never shows travel direction) with the
+  dust tail swept to the **trailing** side of motion, and **▸ arrowheads on the path** carry the
+  direction of travel; a traveller LABEL anchors to the base head radius, not the pulsing one
+  (the "Tempel 2 sways" bug); the heliopause **dash count is constant** (dash length ∝ radius) so
+  the pattern breathes with zoom instead of crawling, and it alpha-fades at both ends. Tap a body → bottom detail
   card with live Sun/Earth distances + light-time computed **at the scrubbed date**, window dates,
   and "Full story ↗" back to the night card (`closeOrrery()` first — the sky modal z-index 1000
   sits under the orrery's 1600). Preview gotchas: the headless preview tab suspends rAF — drive
