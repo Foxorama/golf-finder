@@ -78,18 +78,30 @@
   }
 }
 </script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<!-- Load web fonts NON-BLOCKING. A plain render-blocking stylesheet here stalls the
-     HTML parser: an inline script element waits for pending stylesheets, so the main app
-     script below never runs if fonts.googleapis.com is slow/blocked (privacy blockers,
-     firewalls, CDN hiccups) — the whole app freezes: loader keeps playing, no course/
-     weather data loads, and day night never switches. The media="print" swap loads the
-     sheet off the critical path, then applies it once ready; the CSS var stacks
-     (--sans/--mono) fall back to system sans/mono so text is fine if fonts never arrive. -->
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" media="print" onload="this.media='all'">
-<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap"></noscript>
+<!-- Fonts are SELF-HOSTED (./fonts/*.woff2), NOT loaded from fonts.googleapis.com.
+     History: an external Google Fonts <link rel="stylesheet"> here was render-blocking —
+     per the HTML spec an inline script waits for pending stylesheets, so the main app
+     script never ran when fonts.googleapis.com was slow/blocked (blockers, firewalls, CDN
+     hiccups). The whole app froze: loader looping, no course/weather data, day never
+     flipped to night. PR #337 made the external sheet non-blocking (media="print" swap),
+     but the only way to remove the failure class entirely is to drop the external
+     dependency: the @font-face rules below (in our own inline <style>, so they can't
+     block the parser) point at same-origin woff2 files precached by the service worker —
+     so fonts also work offline and can never stall startup. The --sans/--mono var stacks
+     still fall back to system fonts if a face ever fails. To refresh the fonts, re-run the
+     Google Fonts woff2 download into ./fonts/ (latin + latin-ext subsets; Syne is a
+     variable font, one file spans weights 400–800). -->
 <style>
+/* Self-hosted fonts — see the note above. DM Mono is static (one file per weight); Syne
+   is a variable font (a single file per subset covers the 400–800 weight range). */
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/dmmono-400-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:400;font-display:swap;src:url('./fonts/dmmono-400-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:500;font-display:swap;src:url('./fonts/dmmono-500-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'DM Mono';font-style:normal;font-weight:500;font-display:swap;src:url('./fonts/dmmono-500-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+@font-face{font-family:'Syne';font-style:normal;font-weight:400 800;font-display:swap;src:url('./fonts/syne-var-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}
+@font-face{font-family:'Syne';font-style:normal;font-weight:400 800;font-display:swap;src:url('./fonts/syne-var-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF;}
+/* Greek subset kept for the night sky's Bayer designations (α, β, γ…). Syne ships greek; DM Mono does not, so mono Greek falls back to system mono exactly as it did with Google Fonts. */
+@font-face{font-family:'Syne';font-style:normal;font-weight:400 800;font-display:swap;src:url('./fonts/syne-var-greek.woff2') format('woff2');unicode-range:U+0370-0377,U+037A-037F,U+0384-038A,U+038C,U+038E-03A1,U+03A3-03FF;}
 :root{
   --green:#2d5a1b;--gl:#3d7a25;--gb:#5aab35;--gg:#7ed44f;
   --amber:#c47f17;--al:#f5a623;--red:#c0392b;--rl:#e74c3c;

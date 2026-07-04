@@ -10,8 +10,17 @@
  *
  * Bump CACHE when index.html changes so clients pick up the new version.
  */
-const CACHE = 'golf-finder-v27';
-const SHELL = ['./', './index.html', './course-maps.json'];
+const CACHE = 'golf-finder-v28';
+const SHELL = [
+  './', './index.html', './course-maps.json',
+  // Self-hosted fonts (see index.html head note). Precaching them same-origin is what
+  // removes the old fonts.googleapis.com startup-freeze class entirely and makes text
+  // render correctly offline. Syne is variable (one file spans weights 400–800).
+  './fonts/dmmono-400-latin.woff2', './fonts/dmmono-400-latin-ext.woff2',
+  './fonts/dmmono-500-latin.woff2', './fonts/dmmono-500-latin-ext.woff2',
+  './fonts/syne-var-latin.woff2', './fonts/syne-var-latin-ext.woff2',
+  './fonts/syne-var-greek.woff2',   // night-sky Bayer designations (α, β, γ…)
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(
@@ -85,7 +94,8 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cross-origin static assets (fonts): network-first, cache only real successes
+  // Any other cross-origin static asset: network-first, cache only real successes.
+  // (Fonts used to be here; they're self-hosted same-origin now, handled above.)
   e.respondWith(
     fetch(req)
       .then((res) => {
