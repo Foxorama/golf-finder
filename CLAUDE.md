@@ -355,6 +355,17 @@ call it done. They map to the three hats the user keeps asking for:
   local `Notification` when Kp crosses the 1–9 threshold, once per storm. Genuine closed-app push needs a
   server a static GitHub Pages site can't run — the alert panel says so; iOS effectively only fires while
   open. Everything is behind the aurora card, so a pure day/other-night user is unaffected.
+  **Perf architecture (PR #342):** the static globe (Earth + 25k-point OVATION oval + contour
+  lines) is drawn **once per view-change to an offscreen `a.base` canvas** (`_agRenderBase`,
+  triggered by `_agMarkDirty` on spin/resize/bin-select/data-load); each animation frame only
+  **blits the base + redraws the cheap dots** (`_agPaint`), driven by one throttled rAF
+  (`_agTick`). Do **not** repaint the whole globe per frame — the original pulsing-dot rAF did
+  exactly that (25k gradient fills every frame) and chugged hard. OVATION points are **flat
+  additive discs at low alpha** (not per-point radial gradients — 25k of those is the chug, and
+  they blow the 100%-prob storm core out to solid white); `_agContourTo`/`_agDot` take a target
+  ctx so both the base and overlay layers reuse them. There's also a **night-only 🌌 header
+  button** (`#btn-aurora`, mirror of the day-only bag/hio) that opens the globe from the main
+  night page. Guard the Kp everywhere (`isFinite`) — see the NOAA-format gotcha below.
 - **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
   same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
   course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent
@@ -889,3 +900,12 @@ it with the preview tool:
   rubber-banded straight back to the tee over the remaining timeline. Fix: append
   `{offset:1, transform:'<landing>'}` so it holds. (The old short-duration arc
   didn't hit this because its keyframes already spanned offset 0→1.)
+- **NOAA SWPC feeds can change shape under you — parse defensively.** The
+  `products/noaa-planetary-k-index.json` and `…-forecast.json` endpoints switched from
+  **arrays-of-arrays** (with a header row) to **arrays-of-OBJECTS** (`{time_tag, Kp, …}` /
+  `{time_tag, kp, observed}`). The old index-based parse (`last[1]`) silently returned `NaN`,
+  which blanked the aurora card's Kp *and* the aurora-globe visibility lines (NaN Kp ⇒ NaN
+  contour positions ⇒ nothing drawn) and jammed the forecast strip on "loading…" (PR #342).
+  `fetchSpaceWx` now handles **both** shapes (`Array.isArray(row) ? row[1] : row.Kp/row.kp`).
+  When wiring any NOAA feed, key off named fields with an array fallback, and treat a NaN as
+  "no data", never a value. (The OVATION `coordinates` feed is still `[lon,lat,prob]` arrays.)
