@@ -62,7 +62,9 @@ gap. Do opportunistically when regenerating art (pairs with S-001).
 The card system is built to take more: add `DEEPSKY` objects and `SKY_EVENTS`/`COMETS` entries via the
 documented "add an event type" / `astral-heroic-card-art` recipes (descriptor + `SKY_LORE` +
 `skyLocus` branch + `SKY_RARITY` + optional `CARD_PHOTO`). Keep everything **real and Australia-visible**
-and verify coordinates/visibility per the auditing recipe before committing.
+and verify coordinates/visibility per the auditing recipe before committing. Any new `DEEPSKY`
+object should also get a bespoke `_LOC_DEEP[slug]` thumbnail renderer (see S-008 in Done) so its
+card art is unique, not the per-type fallback.
 
 ### S-006 · Full coordinate-accuracy audit of all figures + deep-sky `[accuracy]` `[QA]`
 **Status:** open

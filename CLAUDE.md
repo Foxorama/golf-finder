@@ -160,11 +160,19 @@ call it done. They map to the three hats the user keeps asking for:
   thumbnail, drawn by `cardArt`) / `locatorStageSVG()` (the 300×200 modal map) wrap it. Each
   map is **unique to its card** — deep-sky maps plot the object's real J2000 coords against the
   embedded `SKY_SEED` field (+ the naked-eye `STAR_CATALOG` when loaded) and auto-draw any seed
-  constellation lines that fall in frame, with a per-type highlight (`_locMarker`): galaxy =
-  glowing tilted spiral, globular = dense fuzzy ball, open = brighter scattered stars, nebula =
-  soft cloud, dark = void; `band`/`clouds` = Milky Way swath / Magellanic blobs; planets + Moon
+  constellation lines that fall in frame, with a highlight at the object's position. **Every
+  `DEEPSKY` card's highlight is a bespoke per-OBJECT renderer (`_LOC_DEEP[slug]`, dispatched by
+  `_locDeepMarker`)** drawn to look like THAT object — the Sombrero's bulge-over-brim dust lane,
+  Cen A's dark merger lane + jets, M83's face-on pinwheel, the Helix "Eye of God" ring, the Jewel
+  Box's blue gems + one ruby star, 47 Tuc's blazing core beside an SMC smudge, Eta Carinae's
+  Keyhole rift + amber star, the Coalsack's irregular Emu-head blob… — so no two cards share a
+  thumbnail; a slug missing from `_LOC_DEEP` falls back to the old per-TYPE `_locMarker` (galaxy
+  = tilted spiral, globular = fuzzy ball, open = scatter, nebula = cloud, dark = void), so a new
+  `DEEPSKY` entry never breaks — but give any headline object its own `_LOC_DEEP` entry.
+  `band`/`clouds` = Milky Way swath / Magellanic blobs; planets + Moon
   = a **Solar-System schematic** (`_locSolar`, six orbits, the body at its real current
-  heliocentric angle, Earth+Moon for the Moon); meteors = radiant + diverging streaks, ISS =
+  heliocentric angle, Earth+Moon for the Moon); meteors = radiant + fading meteor streaks with
+  one warm fireball, ISS =
   horizon arc, conjunction = pair on the ecliptic, aurora = southern curtains, full/new moon =
   phase disc; **solar flare = Sun with prominence loops (`_locFlare`), opposition =
   Sun–Earth–planet line (`_locOpposition`), supermoon = big disc + dashed average-size ring,

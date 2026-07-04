@@ -92,10 +92,23 @@ the heroic frame.
   `locatorHeroicSVG` (lit 64-px card thumbnail) / `locatorStageSVG` (300×200 modal map) wrap it.
   Deep-sky maps plot the real J2000 coords against the embedded `SKY_SEED` field (+ naked-eye
   `STAR_CATALOG` when loaded), auto-draw any seed constellation lines in frame, and add a
-  per-type highlight (`_locMarker`): galaxy = tilted spiral, globular = fuzzy ball, open =
-  brighter scattered stars, nebula = soft cloud, dark = void; `band`/`clouds` = Milky-Way swath /
+  highlight at the object's position. **Every `DEEPSKY` card's highlight is a bespoke
+  per-OBJECT renderer (`_LOC_DEEP[slug]` via `_locDeepMarker`)** drawn to evoke THAT object —
+  Sombrero = bulge over a thin brim with the dark dust lane, Cen A = round glow split by the
+  broad merger lane + jet dashes, M83 = face-on pinwheel with pink star-knots, Sculptor = thin
+  mottled sliver, Omega Cen = grand oblate swarm, 47 Tuc = blazing concentrated core + SMC
+  smudge, Eta Carinae = billowing lobes + Keyhole rift + amber star, Tarantula = leggy
+  filaments, Orion = fan + Trapezium + Fish's-Mouth notch, Lagoon = two glowing halves split by
+  the dark channel, Helix = the Eye ring + white-dwarf pupil, Jewel Box = blue gems + the one
+  ruby, Pleiades = misty blue Sisters, M7 = wide sparkling sprawl, IC 2602 = one spiked beacon +
+  companions, NGC 3532 = a tilted river of silver/gold coins, Coalsack = irregular Emu-head
+  blob. A slug not in `_LOC_DEEP` falls back to the per-TYPE `_locMarker` (galaxy = tilted
+  spiral, globular = fuzzy ball, open = scatter, nebula = cloud, dark = void) so new entries
+  never break — **but give any headline object its own `_LOC_DEEP` renderer** (same idiom:
+  halo + art + dashed reticle; `_locHalo`/`_locGlint` helpers). `band`/`clouds` = Milky-Way swath /
   Magellanic blobs; planets+Moon = a **Solar-System schematic** (`_locSolar` — six orbits, the
-  body at its real heliocentric angle); meteors = radiant streaks, ISS = horizon arc, conjunction
+  body at its real heliocentric angle); meteors = radiant + fading streaks with one warm
+  fireball, ISS = horizon arc, conjunction
   = pair on the ecliptic, aurora = curtains, full/new moon = phase disc, supermoon = big disc +
   dashed average-size ring; **solar flare = Sun + prominence loops (`_locFlare`), opposition =
   Sun–Earth–planet line (`_locOpposition`), comet = nucleus + swept tail + drift path
@@ -121,7 +134,8 @@ In `index.html`, in dependency order:
 - `glyphOutlineSVG` / `glyphHeroicSVG` — emoji-glyph phases (deep sky, events, moon).
 - `planetOutlineSVG` / `planetHeroicSVG` — disc (+Saturn ring) phases.
 - `_heroicSparks(sz,ac,seed)` — the shared rarity sparks.
-- `skyLocus(slug)` / `_locInner` / `_locMarker` / `_locSolar` / `locatorOutlineSVG` /
+- `skyLocus(slug)` / `_locInner` / `_locDeepMarker` + `_LOC_DEEP` (bespoke per-object deep-sky
+  art) / `_locMarker` (per-type fallback) / `_locSolar` / `locatorOutlineSVG` /
   `locatorHeroicSVG` / `locatorStageSVG` — the locator star-map family (non-constellation
   cards). `_locPatch` projects a sky patch from `SKY_SEED` (+`STAR_CATALOG`); `_locBackdrop`
   lays a faint deep-space starfield behind **every** map (so even sparse/non-patch ones read
@@ -153,7 +167,9 @@ In `index.html`, in dependency order:
 3. Give it a rarity from §1 and add the slug to `skyRarity()`'s map if it is not a
    figure / DEEPSKY / SKY_EVENTS entry, so the modal crest is tinted correctly.
 4. That's it — `buildCard`/`cardArt` dress it automatically. A new DEEPSKY entry gets a
-   locator map for free from its `type` + `ra`/`dec`; a new planet/Moon is already covered.
+   locator map for free from its `type` + `ra`/`dec` (per-type fallback marker); **also add a
+   bespoke `_LOC_DEEP[slug]` renderer** so its thumbnail is unique to the object, like every
+   existing deep-sky card. A new planet/Moon is already covered.
    A **new *event* kind** with no fixed sky position needs a `skyLocus(slug)` branch returning a
    `kind` plus a small `_loc*` renderer (follow `_locArc`/`_locPair`), or it just falls back to
    the emblem crest. Optionally add a `CARD_PHOTO[slug]` Flux photo so the map cross-fades to it.
