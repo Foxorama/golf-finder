@@ -170,6 +170,8 @@ body.ptr-pull .app{transition:none;will-change:transform;}
 .hdr-btn:hover{background:var(--sur2);border-color:var(--bdr);}
 /* My Bag + hole-in-one are day-only tools — hidden in the night sky-watching view */
 body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
+/* The aurora globe button is the mirror: night-only (it's a sky-watching tool) */
+#btn-aurora{display:none;} body.night #btn-aurora{display:flex;}
 .hdr-actions{display:flex;gap:8px;align-items:flex-end;}
 .hdr-icons{display:flex;gap:8px;}
 /* #btn-forecast is the primary day/night toggle — keep it prominent (on top when stacked) */
@@ -1570,6 +1572,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <div class="hdr-actions">
       <button id="btn-forecast" class="hdr-btn" onclick="toggleForecast()" aria-label="Toggle forecast mode" style="font-size:12px;font-weight:600;width:auto;padding:0 15px;white-space:nowrap;">⛳ Fore'cast</button>
       <div class="hdr-icons">
+        <button id="btn-aurora" class="hdr-btn" onclick="openAuroraGlobe()" aria-label="Aurora forecast globe">🌌</button>
         <button id="btn-stats" class="hdr-btn" onclick="showStats()" aria-label="Your rounds and stats">📊</button>
         <button id="btn-bag" class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
         <button id="btn-hio" class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
@@ -6526,7 +6529,9 @@ function _agInjectCSS(){ if(document.getElementById('ag-css')) return; const s=d
   .ag-bar.sel{background:rgba(120,160,255,.14);border-radius:6px;}
   .ag-bar.sel span{color:var(--tx);}
   .ag-alertpanel{position:absolute;left:12px;right:12px;top:52px;background:rgba(10,15,32,.97);border:1px solid rgba(124,148,210,.3);border-radius:14px;padding:14px 16px;z-index:5;box-shadow:0 18px 50px rgba(0,0,0,.6);}
-  .ag-alertpanel h4{margin:0 0 8px;font-family:var(--sans);font-size:14px;}
+  .ag-alertpanel h4{margin:0 0 8px;font-family:var(--sans);font-size:14px;padding-right:26px;}
+  .ag-ap-x{position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:rgba(30,40,68,.9);border:1px solid rgba(124,148,210,.3);color:var(--tx2);font-size:13px;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;}
+  .ag-ap-done{margin-top:10px;width:100%;}
   .ag-alertpanel .row{display:flex;align-items:center;gap:10px;margin:10px 0;font-family:var(--mono);font-size:12px;}
   .ag-alertpanel input[type=range]{flex:1;}
   .ag-alertpanel .kpv{font-weight:700;min-width:2ch;text-align:right;}
@@ -6559,20 +6564,24 @@ function openAuroraGlobe(){
     document.body.appendChild(w);
   }
   const lat=window._gpsLat??-27.4698, lng=window._gpsLng??153.0251;
+  const kp0=(window._kp&&isFinite(window._kp.kp))?window._kp.kp:NaN;
   _ag={ canvas:document.getElementById('ag-canvas'), cLon:lng, cLat:Math.max(-90,Math.min(-15,lat-18)),
-        R:0,cx:0,cy:0, selKp:(window._kp?window._kp.kp:0), selIdx:-1, selLabel:'live', raf:0 };
+        R:0,cx:0,cy:0, selKp:kp0, selIdx:-1, selLabel:'live', raf:0, dirty:true };
   _ag.ctx=_ag.canvas.getContext('2d');
+  _ag.base=document.createElement('canvas'); _ag.bctx=_ag.base.getContext('2d');
   w.classList.add('on'); w.setAttribute('aria-hidden','false');
   document.body.style.overflow='hidden';
   _agWireDrag();
   window.addEventListener('resize',_agResize);
   _agResize();
   _agRenderStrip(); _agRenderLegend(); _agSyncKp();
-  // Lazy-load the land base + the OVATION oval; repaint as each arrives.
-  _agLoadLand().then(()=>_agPaint());
-  fetchOvation().then(()=>{ _agSyncKp(); _agRenderStrip(); _agPaint(); });
-  if(!window._kpFc) fetchSpaceWx().then(()=>{ _agSyncKp(); _agRenderStrip(); });
-  _agPaint();
+  _ag.raf=requestAnimationFrame(_agTick);
+  // Lazy-load the land base + the OVATION oval; re-render the base as each arrives.
+  _agLoadLand().then(()=>_agMarkDirty());
+  fetchOvation().then(()=>{ _agSyncKp(); _agRenderStrip(); _agMarkDirty(); });
+  // Kp / forecast: refetch if missing OR stale (NaN from the old parser), then refresh UI.
+  if(!window._kpFc||!window._kpFc.length||!(window._kp&&isFinite(window._kp.kp)))
+    fetchSpaceWx().then(()=>{ if(!_ag)return; if(_ag.selIdx<0&&window._kp&&isFinite(window._kp.kp)) _ag.selKp=window._kp.kp; _agSyncKp(); _agRenderStrip(); _agMarkDirty(); });
 }
 function closeAuroraGlobe(){
   const w=document.getElementById('aurora-globe'); if(w){ w.classList.remove('on'); w.setAttribute('aria-hidden','true'); }
@@ -6588,7 +6597,8 @@ function _agLoadLand(){
 }
 function _agResize(){ const a=_ag; if(!a) return; const cv=a.canvas, dpr=Math.min(2,window.devicePixelRatio||1);
   const r=cv.getBoundingClientRect(); cv.width=Math.max(1,r.width*dpr|0); cv.height=Math.max(1,r.height*dpr|0);
-  a.dpr=dpr; a.cx=cv.width/2; a.cy=cv.height/2; a.R=Math.min(cv.width,cv.height)*0.44; _agPaint(); }
+  a.base.width=cv.width; a.base.height=cv.height;
+  a.dpr=dpr; a.cx=cv.width/2; a.cy=cv.height/2; a.R=Math.min(cv.width,cv.height)*0.44; _agMarkDirty(); }
 
 // Orthographic projection about the current view centre.
 function _agProject(lat,lon){ const a=_ag, la=lat*RAD, lo=lon*RAD, la0=a.cLat*RAD, lo0=a.cLon*RAD, dl=lo-lo0;
@@ -6598,8 +6608,13 @@ function _agProject(lat,lon){ const a=_ag, la=lat*RAD, lo=lon*RAD, la0=a.cLat*RA
 // Back-hemisphere points get clamped to the limb along their azimuth (for filled land).
 function _agRim(p){ const a=_ag, m=Math.hypot(p.xp,p.yp)||1e-9; return {x:a.cx+a.R*p.xp/m, y:a.cy-a.R*p.yp/m}; }
 
-function _agPaint(){ const a=_ag; if(!a) return; const ctx=a.ctx, W=a.canvas.width, H=a.canvas.height, cx=a.cx, cy=a.cy, R=a.R;
-  ctx.clearRect(0,0,W,H);
+// The expensive, static part of the globe (Earth, oval, contour lines) is drawn ONCE per
+// view change to an offscreen canvas (a.base); each animation frame only blits that and
+// redraws the cheap dots. This is the whole perf fix: the pulsing "you" dot used to force a
+// full 25k-point re-render every frame. Re-render the base by setting a.dirty (_agMarkDirty).
+function _agMarkDirty(){ if(_ag) _ag.dirty=true; }
+function _agRenderBase(){ const a=_ag; if(!a) return; const ctx=a.bctx, cx=a.cx, cy=a.cy, R=a.R;
+  ctx.clearRect(0,0,a.base.width,a.base.height);
   ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
   // ocean
   const og=ctx.createRadialGradient(cx-R*0.3,cy-R*0.3,R*0.1,cx,cy,R); og.addColorStop(0,'#0e1830'); og.addColorStop(1,'#060a16');
@@ -6617,40 +6632,53 @@ function _agPaint(){ const a=_ag; if(!a) return; const ctx=a.ctx, W=a.canvas.wid
   ctx.strokeStyle='rgba(120,150,210,.10)'; ctx.lineWidth=a.dpr*0.5;
   for(let lt=-60;lt<=60;lt+=30){ ctx.beginPath(); let st=false; for(let lo=-180;lo<=180;lo+=6){ const p=_agProject(lt,lo); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); }
   for(let lo=-180;lo<180;lo+=30){ ctx.beginPath(); let st=false; for(let lt=-90;lt<=90;lt+=6){ const p=_agProject(lt,lo); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); }
-  // OVATION oval (the live "flare") — additive glow
+  // OVATION oval (the live "flare"). Flat additive discs (not per-point radial gradients —
+  // 25k gradients is what chugged) with LOW alpha so the dense storm core glows in colour
+  // instead of blowing out to solid white. prob<3 skipped (faint noise, not worth the fill).
   const ov=window._ovation;
-  if(ov&&ov.pts){ ctx.globalCompositeOperation='lighter'; const rad=Math.max(2,R*0.028);
-    for(const c of ov.pts){ const p=_agProject(c[1],c[0]); if(!p.vis) continue; const col=_agHeat(c[2]); const al=Math.min(0.9,0.12+c[2]/130);
-      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,rad); gr.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${al})`); gr.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
-      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,rad,0,7); ctx.fill(); }
+  if(ov&&ov.pts){ ctx.globalCompositeOperation='lighter'; const rad=Math.max(1.6,R*0.02);
+    for(const c of ov.pts){ if(c[2]<3) continue; const p=_agProject(c[1],c[0]); if(!p.vis) continue;
+      const col=_agHeat(c[2]), al=Math.min(0.32,0.05+c[2]/300);
+      ctx.fillStyle='rgba('+col[0]+','+col[1]+','+col[2]+','+al+')';
+      ctx.beginPath(); ctx.arc(p.x,p.y,rad,0,7); ctx.fill(); }
     ctx.globalCompositeOperation='source-over'; }
-  // visibility contour lines for the selected Kp
-  const ml=auroraMagLats(a.selKp);
-  _agContour(ml.oval,'rgba(90,230,150,.85)',a.dpr*1.6,[]);
-  _agContour(ml.eye,'rgba(255,210,90,.9)',a.dpr*1.8,[]);
-  _agContour(ml.cam,'rgba(120,205,255,.9)',a.dpr*1.7,[a.dpr*6,a.dpr*5]);
+  // visibility contour lines for the selected Kp (guarded — a NaN Kp must not blank them)
+  if(isFinite(a.selKp)){ const ml=auroraMagLats(a.selKp);
+    _agContourTo(ctx,ml.oval,'rgba(90,230,150,.9)',a.dpr*1.7,[]);
+    _agContourTo(ctx,ml.eye,'rgba(255,210,90,.95)',a.dpr*2,[]);
+    _agContourTo(ctx,ml.cam,'rgba(120,205,255,.95)',a.dpr*1.8,[a.dpr*6,a.dpr*5]); }
   ctx.restore();
   // atmosphere rim
   ctx.globalCompositeOperation='lighter';
   const rg=ctx.createRadialGradient(cx,cy,R*0.92,cx,cy,R*1.08); rg.addColorStop(0,'rgba(80,180,255,0)'); rg.addColorStop(0.55,'rgba(90,190,255,.35)'); rg.addColorStop(1,'rgba(90,190,255,0)');
   ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(cx,cy,R*1.08,0,7); ctx.fill();
   ctx.globalCompositeOperation='source-over';
-  // Hotspot dots: a spot lights only when it's actually REACHABLE at the Kp currently
-  // shown (need ≤ selected Kp) — so unreachable spots never clutter the map, but a
-  // genuinely-visible prime spot is never hidden. The alert setting drives notifications,
-  // not this gate. Then my dot on top.
-  const selK=Math.round(a.selKp+0.001);
-  for(const s of AURORA_SPOTS){ if(_agNeedKp(s)>selK) continue;
-    const p=_agProject(s.lat,s.lon); if(!p.vis) continue; _agDot(p.x,p.y,R*0.016,'#7dffb0'); }
-  if(window._gpsLat!=null){ const p=_agProject(window._gpsLat,window._gpsLng); if(p.vis) _agDot(p.x,p.y,R*0.022,'#ff5db0',true); }
 }
-function _agContour(L,col,lw,dash){ const a=_ag, ctx=a.ctx, pts=auroraContour(L,160); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash);
+// Per-frame: blit the cached base, then draw the cheap dots on top.
+function _agPaint(){ const a=_ag; if(!a) return; const ctx=a.ctx, R=a.R;
+  ctx.clearRect(0,0,a.canvas.width,a.canvas.height);
+  if(a.base) ctx.drawImage(a.base,0,0);
+  // Hotspot dots: a spot lights only when actually REACHABLE at the Kp currently shown
+  // (need ≤ selected Kp) — unreachable spots never clutter, a visible prime spot is never
+  // hidden. The alert setting drives notifications, not this gate. Then my dot on top.
+  const selK=isFinite(a.selKp)?Math.round(a.selKp+0.001):-1;
+  for(const s of AURORA_SPOTS){ if(_agNeedKp(s)>selK) continue;
+    const p=_agProject(s.lat,s.lon); if(!p.vis) continue; _agDot(ctx,p.x,p.y,R*0.016,'#7dffb0'); }
+  if(window._gpsLat!=null){ const p=_agProject(window._gpsLat,window._gpsLng); if(p.vis) _agDot(ctx,p.x,p.y,R*0.022,'#ff5db0',true); }
+}
+// One rAF loop while the globe is open: re-render the base only when dirty, blit ~18fps for
+// the pulse. Cheap when idle (a blit + a few dots), and stops on close.
+function _agTick(ts){ const a=_ag; if(!a){ return; }
+  if(a.dirty){ _agRenderBase(); a.dirty=false; }
+  if(!a._last || ts-a._last>52){ a._last=ts; _agPaint(); }
+  a.raf=requestAnimationFrame(_agTick);
+}
+function _agContourTo(ctx,L,col,lw,dash){ const pts=auroraContour(L,160); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash);
   ctx.beginPath(); let st=false; for(const q of pts){ const p=_agProject(q[0],q[1]); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); ctx.setLineDash([]); }
-function _agDot(x,y,r,col,pulse){ const a=_ag, ctx=a.ctx, t=pulse?(1+0.25*Math.sin(Date.now()/400)):1;
+function _agDot(ctx,x,y,r,col,pulse){ const t=pulse?(1+0.25*Math.sin(Date.now()/400)):1;
   const g=ctx.createRadialGradient(x,y,0,x,y,r*3.2*t); g.addColorStop(0,col); g.addColorStop(0.3,col); g.addColorStop(1,'rgba(0,0,0,0)');
   ctx.globalCompositeOperation='lighter'; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*3.2*t,0,7); ctx.fill(); ctx.globalCompositeOperation='source-over';
-  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,r*0.55,0,7); ctx.fill();
-  if(pulse){ a.raf=requestAnimationFrame(()=>_agPaint()); } }
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,r*0.55,0,7); ctx.fill(); }
 
 function _agRenderLegend(){ const el=document.getElementById('ag-legend'); if(!el) return;
   el.innerHTML=`<div><b style="border-color:rgba(90,230,150,.9)"></b>Overhead</div>`
@@ -6661,7 +6689,8 @@ function _agSyncKp(){ const el=document.getElementById('ag-kp'); if(!el) return;
   el.textContent=kp==null?'Kp –':('Kp '+kp.toFixed(1)); el.classList.toggle('storm',kp!=null&&kp>=5);
   const note=document.getElementById('ag-note');
   if(note){ const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03, need=auroraNeedKp(lat,lng);
-    const live=window._kp?`Live Kp ${window._kp.kp.toFixed(1)}. `:''; const you=`Your spot needs ~Kp ${need} for a naked-eye chance.`;
+    const haveKp=window._kp&&isFinite(window._kp.kp);
+    const live=haveKp?`Live Kp ${window._kp.kp.toFixed(1)}. `:''; const you=`Your spot needs ~Kp ${need} for a naked-eye chance.`;
     const src=window._ovation?` Oval = live 30-min OVATION forecast; lines = ${a_selLabel()}.`:' Loading oval…';
     note.innerHTML=live+you+`<span style="opacity:.7">${src}</span>`; } }
 function a_selLabel(){ return _ag&&_ag.selIdx>=0?`predicted Kp ${_ag.selKp.toFixed(0)}`:'live Kp'; }
@@ -6681,14 +6710,14 @@ function _agKpCol(kp){ return kp>=8?'#ff4d4d':kp>=7?'#ff8a3d':kp>=5?'#ffc233':kp
 function _agSelectBin(i){ if(!_ag) return; const b=window._kpFc[i]; if(!b) return; _ag.selIdx=i; _ag.selKp=b.kp;
   const t=new Date(Date.parse(b.t.replace(' ','T')+'Z')); _ag.selLabel=t.toLocaleString(undefined,{weekday:'short',hour:'numeric'});
   const st=document.getElementById('ag-selt'); if(st) st.textContent='showing '+_ag.selLabel+' · Kp '+b.kp.toFixed(0);
-  _agRenderStrip(); _agSyncKp(); _agPaint(); }
-function _agRecentre(){ if(!_ag) return; const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03; _ag.cLon=lng; _ag.cLat=Math.max(-90,Math.min(-15,lat-18)); _agPaint(); }
+  _agRenderStrip(); _agSyncKp(); _agMarkDirty(); }
+function _agRecentre(){ if(!_ag) return; const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03; _ag.cLon=lng; _ag.cLat=Math.max(-90,Math.min(-15,lat-18)); _agMarkDirty(); }
 
 // Drag to spin the globe (change view centre). Pointer + touch.
 function _agWireDrag(){ const cv=_ag.canvas; if(cv._agWired) return; cv._agWired=true; let px=0,py=0,drag=false;
   const down=e=>{ drag=true; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
   const move=e=>{ if(!drag||!_ag) return; const t=e.touches?e.touches[0]:e; const dx=t.clientX-px, dy=t.clientY-py; px=t.clientX; py=t.clientY;
-    const k=90/_ag.R*(_ag.dpr||1); _ag.cLon-=dx*k; _ag.cLat=Math.max(-90,Math.min(90,_ag.cLat+dy*k)); if(e.cancelable)e.preventDefault(); _agPaint(); };
+    const k=90/_ag.R*(_ag.dpr||1); _ag.cLon-=dx*k; _ag.cLat=Math.max(-90,Math.min(90,_ag.cLat+dy*k)); if(e.cancelable)e.preventDefault(); _agMarkDirty(); };
   const up=()=>{ drag=false; };
   cv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
   cv.addEventListener('touchstart',down,{passive:true}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up); }
@@ -6696,14 +6725,16 @@ function _agWireDrag(){ const cv=_ag.canvas; if(cv._agWired) return; cv._agWired
 // ── Aurora alerts (best-effort, no backend) ──────────────────────────────────
 (function(){ try{ const v=JSON.parse(localStorage.getItem('gf_aurora_alert')||'null'); window._agAlert=v||{kp:6,on:false}; }catch(e){ window._agAlert={kp:6,on:false}; } })();
 function _agSaveAlert(){ try{ localStorage.setItem('gf_aurora_alert',JSON.stringify(window._agAlert)); }catch(e){} }
+function _agCloseAlertPanel(){ const p=document.getElementById('ag-alertpanel'); if(p) p.hidden=true; }
 function _agToggleAlertPanel(){ const p=document.getElementById('ag-alertpanel'); if(!p) return; if(!p.hidden){ p.hidden=true; return; }
   const al=window._agAlert; const canNotify='Notification' in window;
-  p.innerHTML=`<h4>🔔 Aurora alerts</h4>
+  p.innerHTML=`<button class="ag-ap-x" onclick="_agCloseAlertPanel()" aria-label="Close">✕</button><h4>🔔 Aurora alerts</h4>
     <div class="row">Alert me at Kp ≥ <input type="range" min="1" max="9" step="1" value="${al.kp}" oninput="_agAlertKp(this.value)"><span class="kpv" id="ag-kpv">${al.kp}</span></div>
     <div class="row"><label><input type="checkbox" ${al.on?'checked':''} onchange="_agAlertOn(this.checked)"> Enable notifications</label></div>
-    <div class="muted">${canNotify?'Best-effort: you’ll be alerted while the app is open or recently backgrounded. Reliable background alerts need a server, which a static app can’t do — so keep the tab alive during the storm window.':'This browser can’t show notifications.'}</div>`;
+    <div class="muted">${canNotify?'Best-effort: you’ll be alerted while the app is open or recently backgrounded. Reliable background alerts need a server, which a static app can’t do — so keep the tab alive during the storm window.':'This browser can’t show notifications.'}</div>
+    <button class="ag-ap-done" onclick="_agCloseAlertPanel()">Done</button>`;
   p.hidden=false; }
-function _agAlertKp(v){ window._agAlert.kp=+v; document.getElementById('ag-kpv').textContent=v; _agSaveAlert(); if(_ag)_agPaint(); }
+function _agAlertKp(v){ window._agAlert.kp=+v; document.getElementById('ag-kpv').textContent=v; _agSaveAlert(); }
 function _agAlertOn(on){ window._agAlert.on=on; _agSaveAlert(); if(on&&'Notification'in window&&Notification.permission==='default') Notification.requestPermission(); }
 // Checked from the space-weather refresh cycle: fire once per storm when Kp crosses the threshold.
 function auroraAlertCheck(){ const al=window._agAlert; if(!al||!al.on||!window._kp) return; const kp=window._kp.kp;
@@ -6773,14 +6804,21 @@ async function fetchSpaceWx(){
     const r=await tfetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
     const d=await r.json();
     const last=d[d.length-1];
-    window._kp={kp:parseFloat(last[1]),time:last[0]};
+    // NOAA now serves objects ({time_tag,Kp,…}); older feeds were [time,kp,…] with a header row.
+    // Handle both so a format flip either way can't NaN out the Kp (which blanks the aurora lines).
+    const kpv=Array.isArray(last)?parseFloat(last[1]):parseFloat(last.Kp??last.kp);
+    window._kp=(kpv===kpv)?{kp:kpv,time:(Array.isArray(last)?last[0]:last.time_tag)}:null;
   }catch(e){ window._kp=null; }
   try{
-    // 3-day planetary-K forecast in 3-hour bins (keyless). Rows: [time_tag, kp, observed|estimated|predicted, noaa_scale].
-    // Past rows are "observed"/"estimated", future rows "predicted" — one continuous strip for the globe's time scrubber.
+    // 3-day planetary-K forecast in 3-hour bins (keyless). Objects now ({time_tag,kp,observed}),
+    // observed = observed|estimated|predicted; past bins are observed/estimated, future predicted —
+    // one continuous strip for the globe's time scrubber. (Legacy array rows handled defensively.)
     const r=await tfetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json');
     const d=await r.json();
-    window._kpFc=d.slice(1).map(row=>({t:row[0], kp:parseFloat(row[1]), obs:row[2]!=='predicted'})).filter(x=>x.kp===x.kp);
+    window._kpFc=d.map(row=> Array.isArray(row)
+        ? {t:row[0], kp:parseFloat(row[1]), obs:row[2]!=='predicted'}
+        : {t:row.time_tag, kp:parseFloat(row.kp??row.Kp), obs:(row.observed||'')!=='predicted'})
+      .filter(x=>x.kp===x.kp && !/time_tag/i.test(x.t||''));
   }catch(e){ window._kpFc=null; }
   try{
     // GOES long-band (0.1–0.8 nm) X-ray flux → peak over the last 6 h = current flare level
