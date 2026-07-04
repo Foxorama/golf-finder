@@ -3101,7 +3101,7 @@ async function fetchWeatherZone(zone, coords){
   const {lat,lng} = coords || ZONE_COORDS[zone];
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lng}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
-    const r = await fetch(url);
+    const r = await tfetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);   // never cache a 429/5xx as success
     const result = parseWx(await r.json());
     if(result.ok) weatherCache[zone] = result;
@@ -3170,7 +3170,7 @@ async function fetchAllWeather(){
   const lngs = slots.map(s=>s.lng).join(',');
   const url = `https://api.open-meteo.com/v1/forecast?latitude=${lats}&longitude=${lngs}&current=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,weather_code&hourly=temperature_2m,wind_speed_10m,wind_gusts_10m,wind_direction_10m,precipitation_probability,weather_code,cloud_cover&timezone=auto&forecast_days=2`;
   try {
-    const r = await fetch(url);
+    const r = await tfetch(url);
     if(!r.ok) throw new Error('HTTP '+r.status);
     const data = await r.json();
     // A multi-location response is an array; a single location is one object
@@ -3361,10 +3361,30 @@ function getLocation(){
   });
 }
 
+// fetch() with a HARD TIMEOUT. A plain fetch has no timeout, so on a slow/stalled mobile
+// connection it can stay pending indefinitely — which used to hang init() and strand the
+// whole app on a data-less shell (loader hidden by its 15s safety-net, every stat "--",
+// no course list). Routing external calls through this degrades a bad network to the
+// fallback in a few seconds instead of hanging. AbortController (not AbortSignal.timeout)
+// for broad Safari/iOS support.
+function tfetch(url, opts={}, ms=6000){
+  const ac=new AbortController();
+  const t=setTimeout(()=>ac.abort(), ms);
+  return fetch(url, {...opts, signal:ac.signal}).finally(()=>clearTimeout(t));
+}
+// Month-based SEQ sunrise/sunset estimates (QLD has no DST). Used when the sunrise API is
+// unavailable OR too slow, so a failed/slow call still shows realistic seasonal times.
+function seqSunFallback(){
+  const mo=new Date().getMonth();
+  const SR=[305,330,350,365,385,395,395,375,345,315,295,290];            // Brisbane sunrise by month (mins)
+  const SS=[1125,1110,1080,1045,1020,1020,1030,1045,1055,1070,1095,1115]; // sunset by month (mins)
+  const estSunrise=SR[mo], estSunset=SS[mo];
+  return{sunset:estSunset,sunrise:estSunrise,lastLight:estSunset+TWILIGHT_EST,firstLight:estSunrise-TWILIGHT_EST,live:false};
+}
 async function fetchSunset(lat,lng){
   const la=lat||-27.4698, lo=lng||153.0251;
   try{
-    const r=await fetch(`https://api.sunrisesunset.io/json?lat=${la}&lng=${lo}&timezone=auto&date=today`);
+    const r=await tfetch(`https://api.sunrisesunset.io/json?lat=${la}&lng=${lo}&timezone=auto&date=today`);
     const d=await r.json();
     if(d.status==='OK'){
       const parse=str=>{
@@ -3383,13 +3403,7 @@ async function fetchSunset(lat,lng){
       return{sunset,sunrise,lastLight,firstLight,live:true};
     }
   }catch(e){}
-  // Fallback: month-based SEQ sunrise/sunset estimates (QLD has no DST), so a
-  // failed API call still shows realistic seasonal times, not one fixed default.
-  const mo=new Date().getMonth();
-  const SR=[305,330,350,365,385,395,395,375,345,315,295,290];            // Brisbane sunrise by month (mins)
-  const SS=[1125,1110,1080,1045,1020,1020,1030,1045,1055,1070,1095,1115]; // sunset by month (mins)
-  const estSunrise=SR[mo], estSunset=SS[mo];
-  return{sunset:estSunset,sunrise:estSunrise,lastLight:estSunset+TWILIGHT_EST,firstLight:estSunrise-TWILIGHT_EST,live:false};
+  return seqSunFallback();   // API unavailable/slow — realistic seasonal times, not one fixed default
 }
 
 // ── Filter ───────────────────────────────────────────────────
@@ -6451,21 +6465,21 @@ window.addEventListener('keydown',e=>{ if(e.key==='Escape'){ const pp=document.g
 // ── Space weather: live Kp + GOES X-ray flares (NOAA SWPC) + ISS — all keyless/optional ──
 async function fetchSpaceWx(){
   try{
-    const r=await fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
+    const r=await tfetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json');
     const d=await r.json();
     const last=d[d.length-1];
     window._kp={kp:parseFloat(last[1]),time:last[0]};
   }catch(e){ window._kp=null; }
   try{
     // GOES long-band (0.1–0.8 nm) X-ray flux → peak over the last 6 h = current flare level
-    const r=await fetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json');
+    const r=await tfetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json');
     const d=await r.json();
     let best=null;
     for(const s of d){ if(s.energy==='0.1-0.8nm' && s.flux>0 && (!best||s.flux>best.flux)) best=s; }
     window._xray = best?{flux:best.flux,time:best.time_tag}:null;
   }catch(e){ window._xray=null; }
   try{
-    const r=await fetch('https://api.wheretheiss.at/v1/satellites/25544');
+    const r=await tfetch('https://api.wheretheiss.at/v1/satellites/25544');
     const d=await r.json();
     window._iss={lat:d.latitude,lng:d.longitude,alt:d.altitude};
   }catch(e){ window._iss=null; }
@@ -7035,27 +7049,28 @@ async function init(){
     if(originEl) originEl.textContent='drives est. from Toowong + typical traffic';
   }
 
-  // Load sun times + weather before the first render, so the loader hides
-  // straight into the correct day/night mode (no day-then-night flash). Wrapped
-  // so a failed optional fetch can't skip the render and strand the loader.
-  let result;
-  try{
-    result = (await Promise.all([
-      fetchSunset(lat, lng),
-      fetchAllWeather(),
-      fetchSpaceWx(),  // live Kp + ISS — optional, fails silently
-      loadCourseMaps() // OSM course-map coverage manifest — optional, fails silently
-    ]))[0];
-  }catch(e){
-    result = await fetchSunset(lat, lng).catch(()=>({}));  // still get sun times + render
+  // The FIRST render needs only the sun times (they pick day vs night). Bound them with a
+  // short timeout and render immediately with month-based SEQ fallbacks if the network is
+  // slow — otherwise a slow mobile connection holds the whole app on a data-less shell:
+  // the loader hides via its 15s safety-net with every stat "--" and no course list (the
+  // intermittent "no course data" bug). Weather / space-weather / course-maps are fetched
+  // in the BACKGROUND and re-render in place as they land, so they never gate the paint.
+  const applySun=(res)=>{
+    sunsetMins    = res.sunset ?? 1020;
+    sunriseMins   = res.sunrise ?? SUNRISE_DEFAULT;
+    lastLightMins = res.lastLight ?? (sunsetMins + TWILIGHT_EST);
+    firstLightMins= res.firstLight ?? (sunriseMins - TWILIGHT_EST);
+  };
+  const sunP = fetchSunset(lat, lng).catch(()=>null);
+  let result = await Promise.race([sunP, new Promise(r=>setTimeout(()=>r(null), 5000))]);
+  if(!result){                         // sun fetch too slow — paint on the fallback now, upgrade when it lands
+    result = seqSunFallback();
+    sunP.then(real=>{ if(real){ applySun(real); render(); } });
   }
-  sunsetMins    = result.sunset ?? 1020;
-  sunriseMins   = result.sunrise ?? SUNRISE_DEFAULT;
-  lastLightMins = result.lastLight ?? (sunsetMins + TWILIGHT_EST);
-  firstLightMins= result.firstLight ?? (sunriseMins - TWILIGHT_EST);
-  // Remember the genuine position (incl. _gpsFar, now set by fetchAllWeather) so
-  // the night region picker can snap back to "My location"; a manual refresh
-  // re-detects GPS and so also clears any active region override.
+  applySun(result);
+  // Remember the genuine position so the night region picker can snap back to "My
+  // location"; a manual refresh re-detects GPS and so also clears any region override.
+  // (_gpsFar is refreshed by fetchAllWeather below and folded into _realGps when it lands.)
   _realGps={lat:window._gpsLat,lng:window._gpsLng,zone:window._gpsZone,gpsFar:!!window._gpsFar,ok:!!loc,
             label:loc?`GPS ${lat.toFixed(3)}, ${lng.toFixed(3)}`:'location unavailable — using Toowong'};
   window._locOverride=null;
@@ -7063,7 +7078,11 @@ async function init(){
   document.getElementById('updated-ts').textContent='updated '+new Date().toLocaleTimeString('en-AU',{hour:'2-digit',minute:'2-digit'});
   document.querySelectorAll('.stat-value').forEach(el=>el.classList.remove('pulse'));
   if(icon) icon.className='';
-  render();
+  render();                            // courses paint NOW, with whatever weather is already cached
+  // Background data — each re-renders when it arrives; none can stall the first paint.
+  fetchAllWeather().then(()=>{ if(_realGps) _realGps.gpsFar=!!window._gpsFar; render(); }).catch(()=>{});
+  fetchSpaceWx().catch(()=>{});   // live Kp + flares + ISS — optional
+  loadCourseMaps().catch(()=>{}); // OSM course-map coverage manifest — optional
   clearInterval(window._iv);
   window._iv=setInterval(()=>{
     // keep live Kp / ISS fresh on an open tab (keyless, cheap)
@@ -9140,7 +9159,7 @@ function slugify(s){ return s.toLowerCase().replace(/&/g,'and').replace(/[^a-z0-
 
 async function loadCourseMaps(){
   if(_courseMapsLoaded) return;
-  try{ const r=await fetch('course-maps.json'); if(r.ok) Object.assign(COURSE_MAPS, await r.json()); }
+  try{ const r=await tfetch('course-maps.json'); if(r.ok) Object.assign(COURSE_MAPS, await r.json()); }
   catch(e){ /* manifest optional — runtime fallback still works */ }
   _courseMapsLoaded=true;
 }
