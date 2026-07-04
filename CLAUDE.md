@@ -436,7 +436,22 @@ call it done. They map to the three hats the user keeps asking for:
   rating), so instead of a hollow tee picker, a **"Set tee" map tool** (`playSetTeeHere`,
   `playS.teePos[hole]`, persisted in the draft) sets this hole's tee to your **current GPS**
   — so the tee-shot Mark and the displayed hole length measure from the tee you're actually
-  on (`_effTee`); tap again to reset. The Set-tee + club-marker toggles live in a **right-side
+  on (`_effTee`); tap again to reset. **The tee is normally AUTO-captured, so a drive is a single
+  `Mark` like every other shot — no separate Set-tee tap** (`_playAutoTee`, run from
+  `playLiveUpdate`). The friction it removes: every shot's *start* is free (the previous ball's
+  Mark) **except the drive**, whose start is the tee — the odd shot that used to need Set-tee +
+  Mark. So while you're on a hole you haven't marked or manually tee'd, each GPS tick captures the
+  fix **closest to the course's own tee** within `_playTeeAutoNear` (18 m; tighter than
+  auto-advance's 25 m so a far fix can't read the hole short) into `teePos[hole]` with a
+  `teeAuto[hole]` flag — "closest to base tee" so walking off toward your ball can't drag the
+  captured tee down the fairway, and the first `Mark` locks it. A **manual** `Set tee`/reset sets
+  `teeManual[hole]` which locks `_playAutoTee` out (so a manual pin stays put and a reset isn't
+  re-captured next tick). The map button reads `set tee` → `tee ~auto` (dashed `.auto`) →
+  `tee ✓` (solid, manual). `window._playAutoTee=false` disables (a sibling of `_playAutoLie`/
+  `_playAutoClub`/`_playAutoHole`); on-course *feel* is GPS-dependent — verify on a real round.
+  For a course WITH a different tee box than the baked one, still use manual Set tee. (`teeAuto`/
+  `teeManual` persist in the draft + reset on save; `teePos` is now reset on save too.)
+  The Set-tee + club-marker toggles live in a **right-side
   overlay** (`.play-map-tools` / `playMapToolsHtml`) that sits in the map's side dead-space; it
   is a **sibling of `#play-map`, not a child**, so the per-GPS-tick `innerHTML` re-render of the
   map doesn't wipe it (and its buttons `stopPropagation` so they don't drop a measure reticle).
