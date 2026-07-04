@@ -3615,7 +3615,8 @@ const PLANETS={
   // Uranus + Neptune (same JPL approx table) are for the solar-system tracker only —
   // planetPositions / planetOppositions keep their explicit naked-eye key lists.
   uranus:{label:'Uranus',dot:'#9fd8dd',a:[19.18916464,-0.00196176],e:[0.04725744,-0.00004397],I:[0.77263783,-0.00242939],L:[313.23810451,428.48202785],w:[170.95427630,0.40805281],O:[74.01692503,0.04240589],note:'Telescope target — visited once, by Voyager 2 in 1986'},
-  neptune:{label:'Neptune',dot:'#6f8fe8',a:[30.06992276,0.00026291],e:[0.00859048,0.00005105],I:[1.77004347,0.00035372],L:[-55.12002969,218.45945325],w:[44.96476227,-0.32241464],O:[131.78422574,-0.00508664],note:'The outermost planet — visited once, by Voyager 2 in 1989'}
+  neptune:{label:'Neptune',dot:'#6f8fe8',a:[30.06992276,0.00026291],e:[0.00859048,0.00005105],I:[1.77004347,0.00035372],L:[-55.12002969,218.45945325],w:[44.96476227,-0.32241464],O:[131.78422574,-0.00508664],note:'The outermost planet — visited once, by Voyager 2 in 1989'},
+  pluto:{label:'Pluto',dot:'#d8c2a8',a:[39.48211675,-0.00031596],e:[0.24882730,0.00005170],I:[17.14001206,0.00004818],L:[238.92903833,145.20780515],w:[224.06891629,-0.04062942],O:[110.30393684,-0.01183482],note:'Dwarf planet — its tilted, egg-shaped orbit even dips inside Neptune’s. New Horizons flew past in 2015'}
 };
 function planetHelio(p,T){
   const a=p.a[0]+p.a[1]*T, e=p.e[0]+p.e[1]*T, I=(p.I[0]+p.I[1]*T)*RAD;
@@ -7176,6 +7177,7 @@ function _orInjectCSS(){ if(document.getElementById('orr-css')) return; const s=
   .orr-legend{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10.5px;background:rgba(5,8,20,.55);padding:7px 9px;border-radius:10px;border:1px solid rgba(150,160,220,.14);backdrop-filter:blur(3px);pointer-events:none;}
   .orr-legend b{display:inline-block;width:15px;height:0;border-top-width:2px;border-top-style:solid;margin-right:7px;vertical-align:middle;}
   .orr-tools{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;gap:7px;align-items:stretch;}
+  .orr-tools-h{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);text-align:right;padding-right:2px;}
   .orr-tools button{padding:7px 10px;border-radius:10px;background:rgba(24,28,52,.8);border:1px solid rgba(150,150,210,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;-webkit-tap-highlight-color:transparent;text-align:left;}
   .orr-tools button:active{transform:scale(.94);}
   .orr-tools button.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
@@ -7213,10 +7215,12 @@ function openOrrery(focusSlug){
         <canvas id="orr-canvas"></canvas>
         <div class="orr-legend" id="orr-legend"></div>
         <div class="orr-tools">
-          <button id="orr-z-inner" onclick="_orZoomPreset('inner')">☿ Inner</button>
-          <button id="orr-z-planets" onclick="_orZoomPreset('planets')">🪐 Planets</button>
-          <button id="orr-z-beyond" onclick="_orZoomPreset('beyond')">🛰 Beyond</button>
-          <button onclick="_orRecentre()">◉ Sun</button>
+          <div class="orr-tools-h">Zoom</div>
+          <button id="orr-z-inner" onclick="_orZoomPreset('inner')">Inner planets</button>
+          <button id="orr-z-planets" onclick="_orZoomPreset('planets')">All planets</button>
+          <button id="orr-z-beyond" onclick="_orZoomPreset('beyond')">Probes · Pluto</button>
+          <button id="orr-z-oort" onclick="_orZoomPreset('oort')">Oort Cloud</button>
+          <button onclick="_orRecentre()" aria-label="Re-centre on the Sun">◎ Centre Sun</button>
         </div>
         <div class="orr-card" id="orr-card" hidden></div>
       </div>
@@ -7230,7 +7234,7 @@ function openOrrery(focusSlug){
   }
   const today=jdays(nowDate());
   _or={ canvas:document.getElementById('orr-canvas'), t:today, today, scale:0, panX:0, panY:0,
-        zoom:'planets', sel:null, raf:0, dirty:true, objs:orreryObjects(), orbitCache:null, hits:[] };
+        zoom:'planets', sel:null, focus:null, raf:0, dirty:true, objs:orreryObjects(), orbitCache:null, hits:[] };
   _or.ctx=_or.canvas.getContext('2d');
   _or.base=document.createElement('canvas'); _or.bctx=_or.base.getContext('2d');
   w.classList.add('on'); w.setAttribute('aria-hidden','false');
@@ -7245,7 +7249,7 @@ function openOrrery(focusSlug){
   _orZoomPreset('planets');
   _orRenderChips(); _orRenderLegend(); _orSyncDate();
   const note=document.getElementById('orr-note');
-  if(note) note.textContent='Positions computed from published JPL orbital elements for the shown date · sizes not to scale · Apophis path = pre-flyby orbit';
+  if(note) note.textContent='Tap a comet or probe to spotlight it — tap empty space to clear · positions from published JPL elements for the shown date · sizes not to scale · Apophis path = pre-flyby orbit';
   _or.raf=requestAnimationFrame(_orTick);
   if(focusSlug){ const o=_or.objs.find(x=>x.slug===focusSlug); if(o){ _orSelect({kind:o.kind,obj:o}); _orFitObj(o); } }
 }
@@ -7264,15 +7268,16 @@ function _orMarkDirty(){ if(_or) _or.dirty=true; }
 // world (AU, ecliptic x→♈, y 90° along ecliptic) → canvas px. Top-down from ecliptic
 // north: +x right, +y UP, so planets run their true counter-clockwise way round.
 function _orXY(p){ const a=_or; return {x:a.cx+a.panX+p.x*a.scale, y:a.cy+a.panY-p.y*a.scale}; }
-function _orZoomPreset(kind){ const a=_or; if(!a) return; const R={inner:1.9,planets:33,beyond:195}[kind]||33;
+const _OR_ZOOMS=['inner','planets','beyond','oort'];
+function _orZoomPreset(kind){ const a=_or; if(!a) return; const R={inner:1.9,planets:33,beyond:195,oort:2450}[kind]||33;
   a.zoom=kind; a.scale=a.fitR/R; a.panX=0; a.panY=0;
-  for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.toggle('sel',k===kind); }
+  for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.toggle('sel',k===kind); }
   _orMarkDirty(); }
 function _orRecentre(){ if(!_or) return; _or.panX=0; _or.panY=0; _orMarkDirty(); }
 function _orFitObj(o){ const a=_or; if(!a) return; let m=0;
   for(const p of orbPathGeo(o.orb,90,140)) m=Math.max(m,Math.abs(p.x),Math.abs(p.y));
   a.scale=a.fitR/Math.min(200,Math.max(1.4,m*1.12)); a.panX=0; a.panY=0; a.zoom='';
-  for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
+  for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
   _orMarkDirty(); }
 function _orSetT(rel){ const a=_or; if(!a) return; a.t=a.today+rel; _orSyncDate();
   if(a.sel) _orShowCard(a.sel);        // live numbers follow the scrubbed date
@@ -7285,9 +7290,9 @@ function _orSyncDate(){ const a=_or; if(!a) return; const el=document.getElement
   if(lb) lb.textContent=txt; }
 function _orRenderLegend(){ const el=document.getElementById('orr-legend'); if(!el) return;
   el.innerHTML=`<div><b style="border-color:rgba(150,170,220,.75)"></b>Planet orbit</div>`
-    +`<div><b style="border-color:rgba(190,200,240,.8);border-top-style:dashed"></b>Traveller path</div>`
-    +`<div><b style="border-color:#c084fc;border-top-width:3px"></b>Best viewing</div>`
-    +`<div style="margin-top:2px;color:var(--tx3)">◆ peak night · pinch to zoom</div>`; }
+    +`<div><b style="border-color:rgba(190,200,240,.8);border-top-style:dashed"></b>Traveller path ▸ = heading</div>`
+    +`<div><b style="border-color:#c084fc;border-top-width:3px"></b>Best viewing · ◆ peak</div>`
+    +`<div style="margin-top:2px;color:var(--tx3)">tap a comet to spotlight it</div>`; }
 function _orRenderChips(){ const el=document.getElementById('orr-chips'); if(!el||!_or) return;
   let h=`<button class="orr-chip sel" id="orr-chip-today" onclick="_orChipToday()">⏱ Today</button>`;
   _or.objs.forEach((o,i)=>{ const pk=_orDayz(o.peak);
@@ -7312,6 +7317,19 @@ function _orWpPos(wp){ // gravity-assist waypoint → xyz (planet at flyby date,
   const f=wp[0], cb=Math.cos(f.lat*RAD);
   return {x:f.r*cb*Math.cos(f.lon*RAD), y:f.r*cb*Math.sin(f.lon*RAD), z:f.r*Math.sin(f.lat*RAD)}; }
 function _orAuHalfView(){ const a=_or; return Math.hypot(a.canvas.width,a.canvas.height)/2/a.scale; }
+// Probes fade IN as you zoom out past the planets and OUT again at Oort scale (where they'd
+// pile into a dot on the Sun) — smooth ramps, not the old binary pop.
+function _orProbeVis(){ const hv=_orAuHalfView();
+  return Math.max(0,Math.min(1,(hv-30)/25))*Math.max(0,Math.min(1,(900-hv)/300)); }
+// Focus mode: tapping a traveller/probe isolates it — everything else's trail dims way down.
+function _orFocusAl(slug){ const a=_or; return !a.focus?1:(a.focus===slug?1:0.12); }
+// Small solid arrowhead at (x,y) pointing along (dx,dy) — the travel-direction marker.
+function _orArrow(ctx,x,y,dx,dy,sz,col){ const m=Math.hypot(dx,dy)||1e-9, ux=dx/m, uy=dy/m;
+  ctx.fillStyle=col; ctx.beginPath();
+  ctx.moveTo(x+ux*sz,y+uy*sz);
+  ctx.lineTo(x-ux*sz*0.7-uy*sz*0.6, y-uy*sz*0.7+ux*sz*0.6);
+  ctx.lineTo(x-ux*sz*0.7+uy*sz*0.6, y-uy*sz*0.7-ux*sz*0.6);
+  ctx.closePath(); ctx.fill(); }
 
 // The static layer: starfield, AU rings, planet orbits, heliopause, traveller paths
 // (dim dotted full orbit + bright rarity-coloured best-viewing segment + ◆ peak),
@@ -7324,49 +7342,75 @@ function _orRenderBase(){ const a=_or; if(!a) return; const ctx=a.bctx, W=a.base
     ctx.fillStyle='rgba(200,215,255,'+(0.06+rnd()*0.3)+')'; ctx.beginPath(); ctx.arc(x,y,r,0,7); ctx.fill(); }
   // AU scale rings + labels (adaptive: whichever land at a readable radius)
   ctx.font=(9.5*dpr)+'px '+'DM Mono,monospace'; ctx.textAlign='center';
-  for(const au of [0.5,1,2,5,10,20,30,50,100,150]){ const r=au*a.scale;
+  for(const au of [0.5,1,2,5,10,20,30,50,100,150,300,500,1000]){ const r=au*a.scale;
     if(r<46*dpr||r>Math.max(W,H)) continue;
     const c=_orXY({x:0,y:0});
     ctx.strokeStyle='rgba(130,150,210,.08)'; ctx.lineWidth=dpr; ctx.beginPath(); ctx.arc(c.x,c.y,r,0,7); ctx.stroke();
     ctx.fillStyle='rgba(150,170,225,.4)'; ctx.fillText(au+' au',c.x,c.y-r+11*dpr); }
-  // heliopause — the Sun's bubble edge, where Voyager 1 crossed into interstellar space
-  if(120*a.scale<Math.max(W,H)*1.1&&120*a.scale>60*dpr){ const c=_orXY({x:0,y:0}), r=120*a.scale;
-    ctx.strokeStyle='rgba(120,220,255,.28)'; ctx.lineWidth=1.4*dpr; ctx.setLineDash([7*dpr,7*dpr]);
-    ctx.beginPath(); ctx.arc(c.x,c.y,r,0,7); ctx.stroke(); ctx.setLineDash([]);
-    ctx.fillStyle='rgba(130,220,255,.5)'; ctx.fillText('heliopause',c.x,c.y-r-6*dpr); }
+  // heliopause — the Sun's bubble edge, where Voyager 1 crossed into interstellar space.
+  // Dash count is CONSTANT (length ∝ radius) so the pattern breathes with the zoom instead
+  // of crawling round the ring, and visibility FADES at both ends instead of popping.
+  { const r=120*a.scale, maxWH=Math.max(W,H);
+    const hAl=Math.max(0,Math.min(1,(maxWH*1.35-r)/(maxWH*0.35)))*Math.max(0,Math.min(1,(r-34*dpr)/(46*dpr)));
+    if(hAl>0.02){ const c=_orXY({x:0,y:0}), seg=2*Math.PI*r/110;
+      ctx.strokeStyle='rgba(120,220,255,'+(0.28*hAl)+')'; ctx.lineWidth=1.4*dpr; ctx.setLineDash([seg*0.55,seg*0.45]);
+      ctx.beginPath(); ctx.arc(c.x,c.y,r,0,7); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle='rgba(130,220,255,'+(0.5*hAl)+')'; ctx.fillText('heliopause',c.x,c.y-r-6*dpr); } }
+  // Oort Cloud — the true outer boundary. Only its INNER EDGE (~2,000 au) fits even the
+  // widest zoom; drawn as a seeded speckle band so it reads as a swarm of icy bodies.
+  { const oPx=2000*a.scale, maxWH=Math.max(W,H);
+    const oAl=Math.max(0,Math.min(1,(maxWH*2.4-oPx)/(maxWH*0.9)))*Math.max(0,Math.min(1,(oPx-80*dpr)/(120*dpr)));
+    if(oAl>0.02){ const c=_orXY({x:0,y:0}); let s3=424242; const rn=()=>((s3=s3*16807%2147483647)/2147483647);
+      for(let i=0;i<650;i++){ const ang=rn()*2*Math.PI, rr=(2000+2600*Math.pow(rn(),1.6))*a.scale;
+        const x=c.x+Math.cos(ang)*rr, y=c.y-Math.sin(ang)*rr;
+        if(x<-8||y<-8||x>W+8||y>H+8) continue;
+        ctx.fillStyle='rgba(190,215,255,'+((0.06+rn()*0.22)*oAl)+')';
+        ctx.beginPath(); ctx.arc(x,y,(0.4+rn()*1.1)*dpr,0,7); ctx.fill(); }
+      ctx.fillStyle='rgba(190,215,255,'+(0.55*oAl)+')';
+      ctx.fillText('Oort Cloud · inner edge ~2,000 au — where long-period comets come from',c.x,c.y-oPx-8*dpr); } }
   // planet orbits
   const orbs=_orOrbits();
   for(const k in orbs){ ctx.strokeStyle='rgba(150,170,220,.22)'; ctx.lineWidth=dpr; ctx.beginPath();
     orbs[k].forEach((p,i)=>{ const q=_orXY(p); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
     ctx.stroke(); }
-  // traveller paths
-  for(const o of a.objs){ const ac=rarCol(o.rar);
+  // traveller paths (focus mode dims everyone but the focused object's trail)
+  for(const o of a.objs){ const ac=rarCol(o.rar), fAl=_orFocusAl(o.slug);
+    ctx.globalAlpha=fAl;
     ctx.strokeStyle='rgba(190,200,240,.34)'; ctx.lineWidth=1.2*dpr; ctx.setLineDash([2.5*dpr,5*dpr]);
     ctx.beginPath();
-    orbPathGeo(o.orb,240,150).forEach((p,i)=>{ const q=_orXY(p); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
+    const geo=orbPathGeo(o.orb,240,150);
+    geo.forEach((p,i)=>{ const q=_orXY(p); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
     ctx.stroke(); ctx.setLineDash([]);
+    // ▸ travel-direction arrowheads on the dim path (samples run in the direction of motion)
+    for(const f of [0.18,0.60]){ const i=Math.round(geo.length*f), p0=_orXY(geo[i]), p1=_orXY(geo[i+1]);
+      _orArrow(ctx,p0.x,p0.y,p1.x-p0.x,p1.y-p0.y,4.5*dpr,'rgba(190,200,240,.5)'); }
     // best-viewing window: same path, re-coloured in the card's rarity colour
     const w0=o.start?_orDayz(o.start):_orDayz(o.peak)-10, w1=o.end?_orDayz(o.end):_orDayz(o.peak)+10;
     ctx.strokeStyle=ac; ctx.lineWidth=2.6*dpr; ctx.shadowColor=ac; ctx.shadowBlur=7*dpr;
     ctx.setLineDash([5*dpr,4*dpr]); ctx.beginPath();
-    for(let k=0;k<=64;k++){ const q=_orXY(orbPosAt(o.orb,w0+(w1-w0)*k/64)); if(k===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
+    const wq=[]; for(let k=0;k<=64;k++){ const q=_orXY(orbPosAt(o.orb,w0+(w1-w0)*k/64)); wq.push(q); if(k===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
     ctx.stroke(); ctx.setLineDash([]); ctx.shadowBlur=0;
+    // ▸ direction along the bright window too (time-sampled, so always true to motion)
+    for(const k of [16,44]) _orArrow(ctx,wq[k].x,wq[k].y,wq[k+1].x-wq[k].x,wq[k+1].y-wq[k].y,5.5*dpr,ac);
     // ◆ peak-night marker (for a flyby: plus Earth's same-date ring — the close pass itself)
     const pk=_orDayz(o.peak), pq=_orXY(orbPosAt(o.orb,pk));
     ctx.fillStyle=ac; ctx.save(); ctx.translate(pq.x,pq.y); ctx.rotate(Math.PI/4);
     ctx.fillRect(-3*dpr,-3*dpr,6*dpr,6*dpr); ctx.restore();
     if(o.flyby){ const eq=_orXY(planetHelio(PLANETS.earth,pk/36525));
       ctx.strokeStyle='rgba(111,168,255,.8)'; ctx.lineWidth=1.2*dpr; ctx.beginPath(); ctx.arc(eq.x,eq.y,5*dpr,0,7); ctx.stroke(); }
+    ctx.globalAlpha=1;
   }
-  // probe grand-tour paths — only once zoomed out far enough to mean anything
-  if(_orAuHalfView()>40){
-    for(const p of PROBES){ const pts=p.wps.map(_orWpPos); pts.push(probePosAt({...p,t0d:_orDayz(p.t0)},a.today));
-      ctx.strokeStyle='rgba(140,225,255,.35)'; ctx.lineWidth=1.2*dpr; ctx.beginPath();
+  // probe grand-tour paths — deliberately FAINT context lines (they used to shout over the
+  // comets), fading in/out with zoom, dimmed to whispers when something else is focused.
+  { const pv=_orProbeVis();
+    if(pv>0.02) for(const p of PROBES){ const al=pv*(!a.focus?1:(a.focus===p.slug?1.4:0.18));
+      const pts=p.wps.map(_orWpPos); pts.push(probePosAt({...p,t0d:_orDayz(p.t0)},a.today));
+      ctx.strokeStyle='rgba(140,225,255,'+Math.min(0.5,0.20*al)+')'; ctx.lineWidth=dpr; ctx.beginPath();
       pts.forEach((pt,i)=>{ const q=_orXY(pt); if(i===0)ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); });
       ctx.stroke();
       // dashed continuation out ahead
       const q1=_orXY(pts[pts.length-1]), q2=_orXY(probePosAt({...p,t0d:_orDayz(p.t0)},a.today+18*365.25));
-      ctx.strokeStyle='rgba(140,225,255,.18)'; ctx.setLineDash([3*dpr,6*dpr]);
+      ctx.strokeStyle='rgba(140,225,255,'+Math.min(0.3,0.10*al)+')'; ctx.setLineDash([3*dpr,6*dpr]);
       ctx.beginPath(); ctx.moveTo(q1.x,q1.y); ctx.lineTo(q2.x,q2.y); ctx.stroke(); ctx.setLineDash([]);
     }
   }
@@ -7387,7 +7431,7 @@ function _orPaint(){ const a=_or; if(!a) return; const ctx=a.ctx, dpr=a.dpr, T=a
   ctx.fillStyle='#fff2cf'; ctx.beginPath(); ctx.arc(sq.x,sq.y,sr,0,7); ctx.fill();
   a.hits.push({x:sq.x,y:sq.y,kind:'sun'});
   // planets
-  const PSZ={mercury:2.2,venus:3.2,earth:3.4,mars:2.8,jupiter:5.2,saturn:4.6,uranus:3.8,neptune:3.8};
+  const PSZ={mercury:2.2,venus:3.2,earth:3.4,mars:2.8,jupiter:5.2,saturn:4.6,uranus:3.8,neptune:3.8,pluto:2.4};
   for(const k in PLANETS){ const p=PLANETS[k], h=planetHelio(p,T), q=_orXY(h);
     const rr=(PSZ[k]||3)*dpr, col=k==='earth'?'#6fa8ff':(p.dot||'#cfd6ea');
     ctx.fillStyle=col; ctx.beginPath(); ctx.arc(q.x,q.y,rr,0,7); ctx.fill();
@@ -7403,38 +7447,53 @@ function _orPaint(){ const a=_or; if(!a) return; const ctx=a.ctx, dpr=a.dpr, T=a
   const nowIn=(o)=>{ const s=o.start?_orDayz(o.start):_orDayz(o.peak)-10, e=o.end?_orDayz(o.end):_orDayz(o.peak)+10; return a.t>=s&&a.t<=e; };
   const pulse=1+0.22*Math.sin(Date.now()/320);
   for(const o of a.objs){ const ac=rarCol(o.rar), pos=orbPosAt(o.orb,a.t), q=_orXY(pos), hot=nowIn(o);
-    // tails: ion (straight anti-sunward, bluish) + dust (wider, rarity-tinted, swept back)
+    // focused object stays full-strength; the rest dim (but stay findable/tappable)
+    ctx.globalAlpha=!a.focus?1:(a.focus===o.slug?1:0.35);
+    // tails: ion (straight anti-sunward, bluish) + dust (wider, rarity-tinted). The dust
+    // tail sweeps to the TRAILING side of the motion — real comet physics, and it visually
+    // separates the tail from the orbit line ahead of the comet.
     if(pos.r<3.2){ const tl=Math.min(1.7,0.9/Math.max(0.32,pos.r*pos.r))*a.scale;
       const dx=q.x-sq.x, dy=q.y-sq.y, m=Math.hypot(dx,dy)||1e-9, ux=dx/m, uy=dy/m; // anti-sunward
-
+      const q2=_orXY(orbPosAt(o.orb,a.t+2)), wx=q2.x-q.x, wy=q2.y-q.y;             // screen velocity
+      const rot=(s)=>[ux*Math.cos(s)-uy*Math.sin(s), ux*Math.sin(s)+uy*Math.cos(s)];
+      const rp=rot(0.34), rn=rot(-0.34);
+      const dv=(rp[0]*wx+rp[1]*wy)<(rn[0]*wx+rn[1]*wy)?rp:rn;                       // pick the trailing side
       ctx.globalCompositeOperation='lighter';
       const ionG=ctx.createLinearGradient(q.x,q.y,q.x+ux*tl,q.y+uy*tl);
       ionG.addColorStop(0,'rgba(160,220,255,.75)'); ionG.addColorStop(1,'rgba(160,220,255,0)');
       ctx.strokeStyle=ionG; ctx.lineWidth=2*dpr; ctx.lineCap='round';
       ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+ux*tl,q.y+uy*tl); ctx.stroke();
-      const dAng=0.30, dl=tl*0.72, vx=ux*Math.cos(dAng)-uy*Math.sin(dAng), vy=ux*Math.sin(dAng)+uy*Math.cos(dAng);
-      const dustG=ctx.createLinearGradient(q.x,q.y,q.x+vx*dl,q.y+vy*dl);
+      const dl=tl*0.72;
+      const dustG=ctx.createLinearGradient(q.x,q.y,q.x+dv[0]*dl,q.y+dv[1]*dl);
       dustG.addColorStop(0,_orRgba(ac,0.6)); dustG.addColorStop(1,_orRgba(ac,0));
       ctx.strokeStyle=dustG; ctx.lineWidth=4.5*dpr;
-      ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+vx*dl,q.y+vy*dl); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(q.x,q.y); ctx.lineTo(q.x+dv[0]*dl,q.y+dv[1]*dl); ctx.stroke();
       ctx.globalCompositeOperation='source-over'; ctx.lineCap='butt';
     }
-    // glowing head
-    const hr=(hot?5:3.6)*dpr*(hot?pulse:1);
+    // glowing head — the LABEL anchors to the base radius (hrB), not the pulsing one,
+    // so an in-window comet's name doesn't sway with the glow (the Tempel 2 wobble).
+    const hrB=(hot?5:3.6)*dpr, hr=hrB*(hot?pulse:1);
     const g=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,hr*3);
     g.addColorStop(0,'#fff'); g.addColorStop(0.35,ac); g.addColorStop(1,'rgba(0,0,0,0)');
     ctx.globalCompositeOperation='lighter'; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(q.x,q.y,hr*3,0,7); ctx.fill();
     ctx.globalCompositeOperation='source-over';
     ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(q.x,q.y,hr*0.5,0,7); ctx.fill();
-    ctx.fillStyle=_orRgba(ac,0.95); ctx.fillText(o.short,q.x+hr*2+3*dpr,q.y-hr-2*dpr);
+    ctx.fillStyle=_orRgba(ac,0.95); ctx.fillText(o.short,q.x+hrB*2+3*dpr,q.y-hrB-2*dpr);
+    ctx.globalAlpha=1;
     a.hits.push({x:q.x,y:q.y,kind:o.kind,obj:o});
   }
-  // probes
-  if(_orAuHalfView()>40){ for(const p of PROBES){ const pos=probePosAt({...p,t0d:_orDayz(p.t0)},a.t), q=_orXY(pos);
-    ctx.fillStyle='#aef0ff'; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(Math.PI/4); ctx.fillRect(-2.6*dpr,-2.6*dpr,5.2*dpr,5.2*dpr); ctx.restore();
-    ctx.fillStyle='rgba(170,235,255,.8)'; ctx.fillText(p.n,q.x+6*dpr,q.y-5*dpr);
-    a.hits.push({x:q.x,y:q.y,kind:'probe',obj:p});
-  } }
+  // probes — faded by zoom (see _orProbeVis), labels pushed OUTWARD along each craft's own
+  // direction so neighbouring names (Voyager 2 / Pioneer 11) don't pile on each other.
+  { const pv=_orProbeVis();
+    if(pv>0.02) for(const p of PROBES){ const pos=probePosAt({...p,t0d:_orDayz(p.t0)},a.t), q=_orXY(pos);
+      const dxp=q.x-sq.x, dyp=q.y-sq.y, mp=Math.hypot(dxp,dyp)||1e-9, uxp=dxp/mp, uyp=dyp/mp;
+      ctx.globalAlpha=pv*(!a.focus?1:(a.focus===p.slug?1:0.3));
+      ctx.fillStyle='#aef0ff'; ctx.save(); ctx.translate(q.x,q.y); ctx.rotate(Math.PI/4); ctx.fillRect(-2.6*dpr,-2.6*dpr,5.2*dpr,5.2*dpr); ctx.restore();
+      ctx.textAlign=uxp>=0?'left':'right'; ctx.fillStyle='rgba(170,235,255,.8)';
+      ctx.fillText(p.n,q.x+uxp*10*dpr+(uxp>=0?4:-4)*dpr,q.y+uyp*10*dpr+3*dpr);
+      ctx.textAlign='left'; ctx.globalAlpha=1;
+      a.hits.push({x:q.x,y:q.y,kind:'probe',obj:p});
+    } }
   // selection ring
   if(a.sel){ const q=_orSelPos(a.sel); if(q){ ctx.strokeStyle='rgba(255,255,255,.95)'; ctx.lineWidth=2*dpr;
     ctx.beginPath(); ctx.arc(q.x,q.y,13*dpr,0,7); ctx.stroke(); } }
@@ -7455,9 +7514,9 @@ function _orWireInput(){ const cv=_or.canvas; if(cv._orWired) return; cv._orWire
   let px=0,py=0,drag=false,moved=0,pinch0=0,scale0=0;
   const zoomAt=(f,mx,my)=>{ const a=_or; if(!a) return; const r=cv.getBoundingClientRect();
     const sx=(mx-r.left)*(cv.width/r.width), sy=(my-r.top)*(cv.height/r.height);
-    const ns=Math.max(a.fitR/500,Math.min(a.fitR/0.35,a.scale*f)); f=ns/a.scale;
+    const ns=Math.max(a.fitR/2600,Math.min(a.fitR/0.35,a.scale*f)); f=ns/a.scale;
     a.panX=sx-a.cx-f*(sx-a.cx-a.panX); a.panY=sy-a.cy-f*(sy-a.cy-a.panY); a.scale=ns;
-    a.zoom=''; for(const k of ['inner','planets','beyond']){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
+    a.zoom=''; for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
     _orMarkDirty(); };
   const down=e=>{ if(e.touches&&e.touches.length===2){ drag=false; pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); scale0=_or.scale; return; }
     drag=true; moved=0; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
@@ -7480,8 +7539,12 @@ function _orTapAt(clientX,clientY){ const a=_or; if(!a) return; const r=a.canvas
   for(const h of a.hits){ const d=(h.x-sx)**2+(h.y-sy)**2; if(d<bestD){ bestD=d; best=h; } }
   if(best) _orSelect(best); else { a.sel=null; _orHideCard(); }
 }
-function _orSelect(h){ if(!_or) return; _or.sel=h; _orShowCard(h); }
-function _orHideCard(){ if(_or) _or.sel=null; const el=document.getElementById('orr-card'); if(el) el.hidden=true; }
+function _orSelect(h){ if(!_or) return; _or.sel=h;
+  // focus mode: picking a traveller/probe isolates its trail (paths live in the base layer)
+  _or.focus=(h.kind==='comet'||h.kind==='asteroid'||h.kind==='probe')?h.obj.slug:null;
+  _orMarkDirty(); _orShowCard(h); }
+function _orHideCard(){ if(_or){ _or.sel=null; if(_or.focus){ _or.focus=null; _orMarkDirty(); } }
+  const el=document.getElementById('orr-card'); if(el) el.hidden=true; }
 // Detail card — live numbers computed AT THE SCRUBBED DATE (so "show at peak" is honest).
 function _orShowCard(h){ const a=_or; if(!a) return; const el=document.getElementById('orr-card'); if(!el) return;
   const T=a.t/36525, E=planetHelio(PLANETS.earth,T), rel=Math.round(a.t-a.today);
