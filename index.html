@@ -5496,13 +5496,57 @@ function upcomingConjunction(lat,lng,from){
   return best;
 }
 
-// Aurora australis: rough Kp needed for naked-eye chance at a geographic latitude (AU)
-function auroraNeedKp(lat){
-  if(lat<=-42.5)return 5; if(lat<=-37.5)return 6; if(lat<=-32.5)return 7; if(lat<=-28.5)return 8; return 9;
+// AURORA-CORE-START — pure aurora-visibility geometry (centred-dipole model). No DOM /
+// app globals beyond RAD/DEG and a window.{_dipF} memo cache, both shimmed by the Node
+// test harness (see tests/core.mjs / aurora.test.mjs). Keep it self-contained.
+// ── Aurora visibility geometry (centred-dipole geomagnetic model) ──────────────
+// The auroral oval hugs the geomagnetic pole, which is OFFSET from the geographic
+// pole — that offset is exactly why the visibility lines on aurora maps draw wavy,
+// not as circles of latitude. South geomagnetic pole ≈ 80.65°S,107.32°E (IGRF-2020);
+// we carry its antipode, the NORTH geomagnetic pole, as the dipole axis.
+const GEOMAG_POLE={lat:80.65,lon:-72.68};
+function _v3(lat,lon){const a=lat*RAD,o=lon*RAD,c=Math.cos(a);return [c*Math.cos(o),c*Math.sin(o),Math.sin(a)];}
+function _dot3(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+// Orthonormal dipole frame (memoised): P = pole axis; X,Y span the magnetic equator.
+function _dipoleFrame(){
+  if(window._dipF) return window._dipF;
+  const P=_v3(GEOMAG_POLE.lat,GEOMAG_POLE.lon), d=_dot3([0,0,1],P);
+  let X=[-d*P[0],-d*P[1],1-d*P[2]]; const xl=Math.hypot(X[0],X[1],X[2]); X=[X[0]/xl,X[1]/xl,X[2]/xl];
+  const Y=[P[1]*X[2]-P[2]*X[1], P[2]*X[0]-P[0]*X[2], P[0]*X[1]-P[1]*X[0]];
+  return window._dipF={P,X,Y};
 }
-function auroraStatus(lat){
+// Geomagnetic latitude of a geographic point (deg): +90 north geomag pole, −90 south.
+function geomagLat(lat,lon){ return Math.asin(_dot3(_v3(lat,lon),_dipoleFrame().P))*DEG; }
+// Equatorward edge of visible aurora as |geomagnetic latitude|, per Kp. Oval edge
+// (roughly overhead) ≈ 66.5 − 2.05·Kp; the naked eye catches it low on the poleward
+// horizon a few ° further out, a long-exposure camera a little further again.
+function auroraMagLats(kp){ const oval=66.5-2.05*kp; return {oval, eye:oval-6, cam:oval-10}; }
+// A point is within a line when it sits POLEWARD of it — |geomag lat| ≥ the line
+// value (southern hemisphere: geomagLat ≤ −L).
+function auroraReaches(lat,lon,kp,which){ return geomagLat(lat,lon) <= -(auroraMagLats(kp)[which||'cam']); }
+// Constant-geomag-latitude contour around the SOUTH pole as [lat,lon] points — the
+// wavy visibility line the globe draws. L = |magnetic latitude| of the line.
+function auroraContour(L,steps){
+  const {P,X,Y}=_dipoleFrame(), n=steps||120, out=[], cL=Math.cos(L*RAD), sL=Math.sin(L*RAD);
+  for(let i=0;i<=n;i++){ const t=i/n*2*Math.PI, ct=Math.cos(t), st=Math.sin(t);
+    const v=[cL*(ct*X[0]+st*Y[0])-sL*P[0], cL*(ct*X[1]+st*Y[1])-sL*P[1], cL*(ct*X[2]+st*Y[2])-sL*P[2]];
+    out.push([Math.asin(v[2])*DEG, Math.atan2(v[1],v[0])*DEG]);
+  }
+  return out;
+}
+// Most-northern geographic latitude a visibility line reaches along a meridian (deg,
+// negative in the south) — "the aurora is camera-visible as far north as X°S".
+function auroraLimitLat(kp,lng,which){ const L=auroraMagLats(kp)[which||'cam']; let lo=-78,hi=0;
+  for(let i=0;i<42;i++){ const m=(lo+hi)/2; if(geomagLat(m,lng)<=-L) lo=m; else hi=m; } return (lo+hi)/2; }
+// Rough Kp needed for a naked-eye chance at a location (inverts the eye line).
+function auroraNeedKp(lat,lng){
+  const mlat=geomagLat(lat, lng==null?150:lng);   // negative in the south
+  return Math.max(0,Math.min(9,Math.round((60.5-Math.abs(mlat))/2.05)));
+}
+// AURORA-CORE-END
+function auroraStatus(lat,lng){
   const k=window._kp; if(!k)return null;
-  const need=auroraNeedKp(lat);
+  const need=auroraNeedKp(lat,lng);
   const level = k.kp>=need?'alert' : k.kp>=need-1?'watch' : k.kp>=5?'storm-south' : null;
   return {kp:k.kp, need, level};
 }
@@ -6055,18 +6099,23 @@ function now_mins_for_astro(d){ return d.getHours()*60+d.getMinutes(); }
 // ── Tonight's sky cards ──
 function astroCards(lat,lng){
   const date=nowDate(); const cards=[];
-  // Aurora australis (live NOAA Kp)
-  const au=auroraStatus(lat);
-  if(au&&au.level){
-    const txt=au.level==='alert'
-      ?`Geomagnetic storm at Kp ${au.kp.toFixed(1)} — aurora australis may reach your latitude tonight. Find a dark southern horizon and look low.`
-      :au.level==='watch'
-      ?`Storm under way at Kp ${au.kp.toFixed(1)}. Aurora needs ~Kp ${au.need} to reach you — a notch stronger and it could. Worth checking the southern horizon.`
-      :`Kp ${au.kp.toFixed(1)} — aurora likely at Tasmania-grade latitudes tonight; needs ~Kp ${au.need} to reach yours.`;
-    const live=au.level==='alert'||au.level==='watch';
-    cards.push({slug:'aurora',cat:'events',rar:'legendary',vis:live?'now':'later',cls:au.level==='alert'?'alert':'',
+  // Aurora australis — always present as the entry point to the interactive globe;
+  // "Visible now" only surfaces it during a storm. Copy adapts to the live Kp, and the
+  // glance shows how far north the aurora reaches tonight (camera line along your meridian).
+  const au=auroraStatus(lat,lng);
+  if(au){
+    const level=au.level, camLat=auroraLimitLat(au.kp,lng,'cam');
+    const reach=`Camera-visible as far north as ~${Math.abs(camLat).toFixed(0)}°S tonight.`;
+    const txt=level==='alert'
+      ?`Geomagnetic storm at Kp ${au.kp.toFixed(1)} — aurora australis may reach your latitude tonight. Find a dark southern horizon and look low. ${reach}`
+      :level==='watch'
+      ?`Storm under way at Kp ${au.kp.toFixed(1)}. Aurora needs ~Kp ${au.need} to reach you — a notch stronger and it could. ${reach}`
+      :level==='storm-south'
+      ?`Kp ${au.kp.toFixed(1)} — aurora likely at Tasmania-grade latitudes tonight; needs ~Kp ${au.need} to reach yours. ${reach}`
+      :`Kp ${au.kp.toFixed(1)} — geomagnetically quiet; aurora unlikely from your latitude (needs ~Kp ${au.need}). ${reach}`;
+    cards.push({slug:'aurora',cat:'events',rar:'legendary',vis:level==='alert'||level==='watch'?'now':'later',cls:level==='alert'?'alert':'',
       name:'Aurora Australis',icon:'🌌',glyph:'🌌',pos:`Kp ${au.kp.toFixed(1)} live`,sortAlt:50,
-      note:`${txt} <span style="opacity:0.65">Rough estimate — NOAA SWPC data.</span>`});
+      note:`${txt} <span style="opacity:0.65">Tap for the live aurora globe & forecast — NOAA SWPC data.</span>`});
   }
   // Solar storm — live GOES X-ray flare activity (M-class and above)
   const fl=flareStatus();
@@ -6414,7 +6463,263 @@ function renderStoryBody(slug,lat,lng){
   for(const r of L.rows) s+=`<div class="sky-sec"><div class="sky-sec-h">${r[0]}</div><div class="sky-sec-b">${r[1]}</div></div>`;
   return s;
 }
+// ═══════════════════════════════════════════════════════════════════════════
+// AURORA GLOBE — an interactive orthographic globe of the live auroral oval.
+// All data is keyless NOAA SWPC: the OVATION probability grid (the oval "flare",
+// window._ovation, lazy-fetched), live + 3-day Kp (window._kp / window._kpFc). The
+// three visibility lines (overhead / naked-eye / camera) and the hotspot dots are
+// derived from Kp through the centred-dipole model above. Drawn on ONE Canvas 2D —
+// no WebGL/three.js — so it stays inside the single-file, no-build, offline shell.
+// Opened by tapping the aurora night card (openSkyStory intercept).
+// ═══════════════════════════════════════════════════════════════════════════
+// Curated southern-aurora vantage points. A dot only lights when the location is
+// actually reachable at the selected/live Kp (and at/above your alert floor), so the
+// map never clutters with spots you can't reach. `need` is filled lazily.
+const AURORA_SPOTS=[
+  {n:'Hobart, TAS',lat:-42.88,lon:147.33},{n:'Cockle Creek, TAS',lat:-43.58,lon:146.90},
+  {n:'Cradle Mtn, TAS',lat:-41.68,lon:145.95},{n:'Bruny Island, TAS',lat:-43.40,lon:147.25},
+  {n:'Phillip Island, VIC',lat:-38.49,lon:145.23},{n:'Cape Schanck, VIC',lat:-38.49,lon:144.88},
+  {n:'Aireys Inlet, VIC',lat:-38.46,lon:144.10},{n:'Cape Jervis, SA',lat:-35.60,lon:138.10},
+  {n:'Kangaroo Is., SA',lat:-35.83,lon:137.21},{n:'Albany, WA',lat:-35.02,lon:117.88},
+  {n:'Esperance, WA',lat:-33.86,lon:121.89},{n:'Bermagui, NSW',lat:-36.42,lon:150.07},
+  {n:'Dunedin, NZ',lat:-45.87,lon:170.50},{n:'Invercargill, NZ',lat:-46.41,lon:168.35},
+  {n:'Lake Tekapo, NZ',lat:-44.00,lon:170.48},{n:'Stewart Island, NZ',lat:-46.90,lon:168.13},
+  {n:'Ushuaia, AR',lat:-54.80,lon:-68.30},{n:'Punta Arenas, CL',lat:-53.16,lon:-70.92}
+];
+// Smallest whole Kp (1–9) at which a spot becomes camera-visible.
+function _agNeedKp(s){ if(s.need!=null) return s.need; for(let k=1;k<=9;k++){ if(auroraReaches(s.lat,s.lon,k,'cam')){ s.need=k; return k; } } return s.need=99; }
+// Aurora heat ramp (matches the SWPC image): low=blue → cyan → green → yellow → orange → red.
+const _AG_RAMP=[[8,40,120],[24,120,210],[40,220,180],[150,235,70],[250,180,40],[255,70,50]];
+function _agHeat(p){ const t=Math.max(0,Math.min(1,p/90)), f=t*(_AG_RAMP.length-1), i=Math.floor(f), g=f-i, a=_AG_RAMP[i], b=_AG_RAMP[Math.min(i+1,_AG_RAMP.length-1)]; return [a[0]+(b[0]-a[0])*g|0, a[1]+(b[1]-a[1])*g|0, a[2]+(b[2]-a[2])*g|0]; }
+// Subsolar point (for the day/night terminator shading) — rough is fine here.
+function _agSubsolar(){ const d=nowDate(), doy=(Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())-Date.UTC(d.getUTCFullYear(),0,0))/864e5;
+  const dec=-23.44*Math.cos(RAD*360/365*(doy+10)); const utch=d.getUTCHours()+d.getUTCMinutes()/60; return {lat:dec, lon:180-utch*15}; }
+
+let _ag=null;                        // live globe state while open (null when closed)
+function _agInjectCSS(){ if(document.getElementById('ag-css')) return; const s=document.createElement('style'); s.id='ag-css';
+  s.textContent=`
+  #aurora-globe{position:fixed;inset:0;z-index:1600;background:radial-gradient(120% 100% at 50% 0%,#0a1024,#05070f 70%);display:none;flex-direction:column;color:var(--tx);touch-action:none;overscroll-behavior:contain;}
+  #aurora-globe.on{display:flex;}
+  .ag-top{display:flex;align-items:center;gap:10px;padding:14px 14px 6px;flex:none;}
+  .ag-title{font-family:var(--sans);font-weight:800;font-size:18px;letter-spacing:.01em;display:flex;align-items:center;gap:9px;}
+  .ag-kp{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.06em;padding:2px 8px;border-radius:999px;background:rgba(90,140,255,.16);border:1px solid rgba(120,160,255,.35);color:#bcd0ff;}
+  .ag-kp.storm{background:rgba(255,120,60,.18);border-color:rgba(255,150,80,.5);color:#ffd0a8;}
+  .ag-x{margin-left:auto;width:38px;height:38px;border-radius:50%;background:rgba(20,28,52,.85);border:1px solid rgba(124,148,210,.3);color:var(--tx2);font-size:16px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  .ag-x:active{transform:scale(.92);}
+  .ag-stage{position:relative;flex:1 1 auto;min-height:0;}
+  #ag-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
+  .ag-legend{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10.5px;background:rgba(6,10,22,.5);padding:7px 9px;border-radius:10px;border:1px solid rgba(120,150,220,.14);backdrop-filter:blur(3px);pointer-events:none;}
+  .ag-legend b{display:inline-block;width:15px;height:0;border-top-width:2px;border-top-style:solid;margin-right:7px;vertical-align:middle;}
+  .ag-tools{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;gap:8px;}
+  .ag-tools button{width:auto;padding:7px 10px;border-radius:10px;background:rgba(20,28,52,.8);border:1px solid rgba(124,148,210,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;-webkit-tap-highlight-color:transparent;}
+  .ag-tools button:active{transform:scale(.94);}
+  .ag-note{flex:none;padding:6px 16px 4px;font-family:var(--mono);font-size:10.5px;color:var(--tx3);line-height:1.35;text-align:center;}
+  .ag-strip-wrap{flex:none;padding:4px 10px 14px;}
+  .ag-strip-h{font-family:var(--mono);font-size:10px;color:var(--tx3);margin:0 4px 4px;display:flex;justify-content:space-between;gap:8px;white-space:nowrap;}
+  .ag-strip-h>span:first-child{overflow:hidden;text-overflow:ellipsis;}
+  .ag-strip-h #ag-selt{color:var(--tx);flex:none;}
+  .ag-strip{display:flex;gap:3px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px;align-items:flex-end;height:74px;}
+  .ag-bar{flex:0 0 22px;display:flex;flex-direction:column;align-items:center;gap:3px;height:100%;justify-content:flex-end;-webkit-tap-highlight-color:transparent;}
+  .ag-bar i{display:block;width:14px;border-radius:3px 3px 0 0;background:var(--bc,#3a5);transition:height .2s;}
+  .ag-bar span{font-family:var(--mono);font-size:8px;color:var(--tx3);white-space:nowrap;}
+  .ag-bar.now i{outline:2px solid #fff;outline-offset:1px;}
+  .ag-bar.sel{background:rgba(120,160,255,.14);border-radius:6px;}
+  .ag-bar.sel span{color:var(--tx);}
+  .ag-alertpanel{position:absolute;left:12px;right:12px;top:52px;background:rgba(10,15,32,.97);border:1px solid rgba(124,148,210,.3);border-radius:14px;padding:14px 16px;z-index:5;box-shadow:0 18px 50px rgba(0,0,0,.6);}
+  .ag-alertpanel h4{margin:0 0 8px;font-family:var(--sans);font-size:14px;}
+  .ag-alertpanel .row{display:flex;align-items:center;gap:10px;margin:10px 0;font-family:var(--mono);font-size:12px;}
+  .ag-alertpanel input[type=range]{flex:1;}
+  .ag-alertpanel .kpv{font-weight:700;min-width:2ch;text-align:right;}
+  .ag-alertpanel button{padding:8px 12px;border-radius:10px;border:1px solid rgba(124,148,210,.35);background:rgba(90,140,255,.16);color:#cfe0ff;font-family:var(--mono);font-size:12px;}
+  .ag-alertpanel .muted{color:var(--tx3);font-size:10.5px;line-height:1.4;}
+  .ag-banner{position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:1700;background:linear-gradient(180deg,#12203f,#0c1730);border:1px solid rgba(140,180,255,.4);color:#dfe9ff;padding:11px 16px;border-radius:14px;font-family:var(--sans);font-size:13px;font-weight:600;box-shadow:0 14px 40px rgba(0,0,0,.55);max-width:90vw;display:flex;gap:10px;align-items:center;animation:skyCardUp .3s ease;}
+  .ag-banner b{color:#8ce0ff;}
+  `; document.head.appendChild(s);
+}
+
+function openAuroraGlobe(){
+  _agInjectCSS();
+  let w=document.getElementById('aurora-globe');
+  if(!w){
+    w=document.createElement('div'); w.id='aurora-globe';
+    w.innerHTML=`
+      <div class="ag-top"><div class="ag-title">🌌 Aurora Australis <span class="ag-kp" id="ag-kp">Kp –</span></div>
+        <button class="ag-x" onclick="closeAuroraGlobe()" aria-label="Close">✕</button></div>
+      <div class="ag-stage">
+        <canvas id="ag-canvas"></canvas>
+        <div class="ag-legend" id="ag-legend"></div>
+        <div class="ag-tools">
+          <button id="ag-recenter" onclick="_agRecentre()">◎ Me</button>
+          <button id="ag-alertbtn" onclick="_agToggleAlertPanel()">🔔 Alerts</button>
+        </div>
+        <div class="ag-alertpanel" id="ag-alertpanel" hidden></div>
+      </div>
+      <div class="ag-note" id="ag-note"></div>
+      <div class="ag-strip-wrap"><div class="ag-strip-h"><span>3-day Kp outlook — tap to preview the lines</span><span id="ag-selt"></span></div><div class="ag-strip" id="ag-strip"></div></div>`;
+    document.body.appendChild(w);
+  }
+  const lat=window._gpsLat??-27.4698, lng=window._gpsLng??153.0251;
+  _ag={ canvas:document.getElementById('ag-canvas'), cLon:lng, cLat:Math.max(-90,Math.min(-15,lat-18)),
+        R:0,cx:0,cy:0, selKp:(window._kp?window._kp.kp:0), selIdx:-1, selLabel:'live', raf:0 };
+  _ag.ctx=_ag.canvas.getContext('2d');
+  w.classList.add('on'); w.setAttribute('aria-hidden','false');
+  document.body.style.overflow='hidden';
+  _agWireDrag();
+  window.addEventListener('resize',_agResize);
+  _agResize();
+  _agRenderStrip(); _agRenderLegend(); _agSyncKp();
+  // Lazy-load the land base + the OVATION oval; repaint as each arrives.
+  _agLoadLand().then(()=>_agPaint());
+  fetchOvation().then(()=>{ _agSyncKp(); _agRenderStrip(); _agPaint(); });
+  if(!window._kpFc) fetchSpaceWx().then(()=>{ _agSyncKp(); _agRenderStrip(); });
+  _agPaint();
+}
+function closeAuroraGlobe(){
+  const w=document.getElementById('aurora-globe'); if(w){ w.classList.remove('on'); w.setAttribute('aria-hidden','true'); }
+  window.removeEventListener('resize',_agResize);
+  if(_ag&&_ag.raf) cancelAnimationFrame(_ag.raf);
+  _ag=null; document.body.style.overflow='';
+}
+let _agLandData=null, _agLandPromise=null;
+function _agLoadLand(){
+  if(_agLandData) return Promise.resolve(_agLandData);
+  if(_agLandPromise) return _agLandPromise;
+  return _agLandPromise=fetch('world-land.json').then(r=>r.json()).then(d=>{ _agLandData=d; return d; }).catch(()=>{ _agLandData=[]; return []; });
+}
+function _agResize(){ const a=_ag; if(!a) return; const cv=a.canvas, dpr=Math.min(2,window.devicePixelRatio||1);
+  const r=cv.getBoundingClientRect(); cv.width=Math.max(1,r.width*dpr|0); cv.height=Math.max(1,r.height*dpr|0);
+  a.dpr=dpr; a.cx=cv.width/2; a.cy=cv.height/2; a.R=Math.min(cv.width,cv.height)*0.44; _agPaint(); }
+
+// Orthographic projection about the current view centre.
+function _agProject(lat,lon){ const a=_ag, la=lat*RAD, lo=lon*RAD, la0=a.cLat*RAD, lo0=a.cLon*RAD, dl=lo-lo0;
+  const cosc=Math.sin(la0)*Math.sin(la)+Math.cos(la0)*Math.cos(la)*Math.cos(dl);
+  const xp=Math.cos(la)*Math.sin(dl), yp=Math.cos(la0)*Math.sin(la)-Math.sin(la0)*Math.cos(la)*Math.cos(dl);
+  return {x:a.cx+a.R*xp, y:a.cy-a.R*yp, xp, yp, vis:cosc>=0}; }
+// Back-hemisphere points get clamped to the limb along their azimuth (for filled land).
+function _agRim(p){ const a=_ag, m=Math.hypot(p.xp,p.yp)||1e-9; return {x:a.cx+a.R*p.xp/m, y:a.cy-a.R*p.yp/m}; }
+
+function _agPaint(){ const a=_ag; if(!a) return; const ctx=a.ctx, W=a.canvas.width, H=a.canvas.height, cx=a.cx, cy=a.cy, R=a.R;
+  ctx.clearRect(0,0,W,H);
+  ctx.save(); ctx.beginPath(); ctx.arc(cx,cy,R,0,7); ctx.clip();
+  // ocean
+  const og=ctx.createRadialGradient(cx-R*0.3,cy-R*0.3,R*0.1,cx,cy,R); og.addColorStop(0,'#0e1830'); og.addColorStop(1,'#060a16');
+  ctx.fillStyle=og; ctx.fillRect(cx-R,cy-R,R*2,R*2);
+  // land
+  if(_agLandData) for(const ring of _agLandData){ let any=false; ctx.beginPath();
+    for(let i=0;i<ring.length;i++){ const p=_agProject(ring[i][1],ring[i][0]); const q=p.vis?p:_agRim(p); if(p.vis) any=true;
+      if(i===0) ctx.moveTo(q.x,q.y); else ctx.lineTo(q.x,q.y); }
+    if(any){ ctx.closePath(); ctx.fillStyle='#1b263f'; ctx.fill(); ctx.strokeStyle='rgba(90,120,170,.25)'; ctx.lineWidth=a.dpr*0.6; ctx.stroke(); } }
+  // day-side lightening (terminator)
+  const ss=_agSubsolar(), sp=_agProject(ss.lat,ss.lon);
+  if(sp.vis){ const dg=ctx.createRadialGradient(sp.x,sp.y,R*0.1,sp.x,sp.y,R*1.5); dg.addColorStop(0,'rgba(120,150,210,.20)'); dg.addColorStop(1,'rgba(120,150,210,0)');
+    ctx.globalCompositeOperation='lighter'; ctx.fillStyle=dg; ctx.fillRect(cx-R,cy-R,R*2,R*2); ctx.globalCompositeOperation='source-over'; }
+  // graticule
+  ctx.strokeStyle='rgba(120,150,210,.10)'; ctx.lineWidth=a.dpr*0.5;
+  for(let lt=-60;lt<=60;lt+=30){ ctx.beginPath(); let st=false; for(let lo=-180;lo<=180;lo+=6){ const p=_agProject(lt,lo); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); }
+  for(let lo=-180;lo<180;lo+=30){ ctx.beginPath(); let st=false; for(let lt=-90;lt<=90;lt+=6){ const p=_agProject(lt,lo); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); }
+  // OVATION oval (the live "flare") — additive glow
+  const ov=window._ovation;
+  if(ov&&ov.pts){ ctx.globalCompositeOperation='lighter'; const rad=Math.max(2,R*0.028);
+    for(const c of ov.pts){ const p=_agProject(c[1],c[0]); if(!p.vis) continue; const col=_agHeat(c[2]); const al=Math.min(0.9,0.12+c[2]/130);
+      const gr=ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,rad); gr.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},${al})`); gr.addColorStop(1,`rgba(${col[0]},${col[1]},${col[2]},0)`);
+      ctx.fillStyle=gr; ctx.beginPath(); ctx.arc(p.x,p.y,rad,0,7); ctx.fill(); }
+    ctx.globalCompositeOperation='source-over'; }
+  // visibility contour lines for the selected Kp
+  const ml=auroraMagLats(a.selKp);
+  _agContour(ml.oval,'rgba(90,230,150,.85)',a.dpr*1.6,[]);
+  _agContour(ml.eye,'rgba(255,210,90,.9)',a.dpr*1.8,[]);
+  _agContour(ml.cam,'rgba(120,205,255,.9)',a.dpr*1.7,[a.dpr*6,a.dpr*5]);
+  ctx.restore();
+  // atmosphere rim
+  ctx.globalCompositeOperation='lighter';
+  const rg=ctx.createRadialGradient(cx,cy,R*0.92,cx,cy,R*1.08); rg.addColorStop(0,'rgba(80,180,255,0)'); rg.addColorStop(0.55,'rgba(90,190,255,.35)'); rg.addColorStop(1,'rgba(90,190,255,0)');
+  ctx.fillStyle=rg; ctx.beginPath(); ctx.arc(cx,cy,R*1.08,0,7); ctx.fill();
+  ctx.globalCompositeOperation='source-over';
+  // Hotspot dots: a spot lights only when it's actually REACHABLE at the Kp currently
+  // shown (need ≤ selected Kp) — so unreachable spots never clutter the map, but a
+  // genuinely-visible prime spot is never hidden. The alert setting drives notifications,
+  // not this gate. Then my dot on top.
+  const selK=Math.round(a.selKp+0.001);
+  for(const s of AURORA_SPOTS){ if(_agNeedKp(s)>selK) continue;
+    const p=_agProject(s.lat,s.lon); if(!p.vis) continue; _agDot(p.x,p.y,R*0.016,'#7dffb0'); }
+  if(window._gpsLat!=null){ const p=_agProject(window._gpsLat,window._gpsLng); if(p.vis) _agDot(p.x,p.y,R*0.022,'#ff5db0',true); }
+}
+function _agContour(L,col,lw,dash){ const a=_ag, ctx=a.ctx, pts=auroraContour(L,160); ctx.strokeStyle=col; ctx.lineWidth=lw; ctx.setLineDash(dash);
+  ctx.beginPath(); let st=false; for(const q of pts){ const p=_agProject(q[0],q[1]); if(p.vis){ if(!st){ctx.moveTo(p.x,p.y);st=true;} else ctx.lineTo(p.x,p.y);} else st=false; } ctx.stroke(); ctx.setLineDash([]); }
+function _agDot(x,y,r,col,pulse){ const a=_ag, ctx=a.ctx, t=pulse?(1+0.25*Math.sin(Date.now()/400)):1;
+  const g=ctx.createRadialGradient(x,y,0,x,y,r*3.2*t); g.addColorStop(0,col); g.addColorStop(0.3,col); g.addColorStop(1,'rgba(0,0,0,0)');
+  ctx.globalCompositeOperation='lighter'; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*3.2*t,0,7); ctx.fill(); ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(x,y,r*0.55,0,7); ctx.fill();
+  if(pulse){ a.raf=requestAnimationFrame(()=>_agPaint()); } }
+
+function _agRenderLegend(){ const el=document.getElementById('ag-legend'); if(!el) return;
+  el.innerHTML=`<div><b style="border-color:rgba(90,230,150,.9)"></b>Overhead</div>`
+    +`<div><b style="border-color:rgba(255,210,90,.95)"></b>Naked eye</div>`
+    +`<div><b style="border-color:rgba(120,205,255,.95);border-top-style:dashed"></b>Camera</div>`
+    +`<div style="margin-top:2px;color:var(--tx3)">🟢 spot · 🔴 you</div>`; }
+function _agSyncKp(){ const el=document.getElementById('ag-kp'); if(!el) return; const kp=window._kp?window._kp.kp:null;
+  el.textContent=kp==null?'Kp –':('Kp '+kp.toFixed(1)); el.classList.toggle('storm',kp!=null&&kp>=5);
+  const note=document.getElementById('ag-note');
+  if(note){ const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03, need=auroraNeedKp(lat,lng);
+    const live=window._kp?`Live Kp ${window._kp.kp.toFixed(1)}. `:''; const you=`Your spot needs ~Kp ${need} for a naked-eye chance.`;
+    const src=window._ovation?` Oval = live 30-min OVATION forecast; lines = ${a_selLabel()}.`:' Loading oval…';
+    note.innerHTML=live+you+`<span style="opacity:.7">${src}</span>`; } }
+function a_selLabel(){ return _ag&&_ag.selIdx>=0?`predicted Kp ${_ag.selKp.toFixed(0)}`:'live Kp'; }
+
+function _agRenderStrip(){ const el=document.getElementById('ag-strip'); if(!el) return; const fc=window._kpFc;
+  if(!fc||!fc.length){ el.innerHTML='<span style="font-family:var(--mono);font-size:10px;color:var(--tx3);padding:6px">Kp outlook loading…</span>'; return; }
+  const now=Date.now(); let nowIdx=0, best=1e15; fc.forEach((b,i)=>{ const t=Date.parse(b.t.replace(' ','T')+'Z'); const d=Math.abs(t-now); if(d<best){best=d;nowIdx=i;} });
+  // show a window from a little before now to the end of the forecast
+  const start=Math.max(0,nowIdx-2);
+  let h='';
+  for(let i=start;i<fc.length;i++){ const b=fc[i], t=new Date(Date.parse(b.t.replace(' ','T')+'Z')); const col=_agKpCol(b.kp);
+    const lbl=t.toLocaleString(undefined,{weekday:'short',hour:'numeric'}); const sel=(i===_agSelIdxOr(nowIdx));
+    h+=`<div class="ag-bar${i===nowIdx?' now':''}${sel?' sel':''}" onclick="_agSelectBin(${i})"><i style="height:${Math.max(4,b.kp/9*100)}%;--bc:${col}"></i><span>${b.kp.toFixed(0)}</span><span>${lbl}</span></div>`; }
+  el.innerHTML=h; }
+function _agSelIdxOr(nowIdx){ return _ag&&_ag.selIdx>=0?_ag.selIdx:nowIdx; }
+function _agKpCol(kp){ return kp>=8?'#ff4d4d':kp>=7?'#ff8a3d':kp>=5?'#ffc233':kp>=4?'#8ad24d':'#3a7'; }
+function _agSelectBin(i){ if(!_ag) return; const b=window._kpFc[i]; if(!b) return; _ag.selIdx=i; _ag.selKp=b.kp;
+  const t=new Date(Date.parse(b.t.replace(' ','T')+'Z')); _ag.selLabel=t.toLocaleString(undefined,{weekday:'short',hour:'numeric'});
+  const st=document.getElementById('ag-selt'); if(st) st.textContent='showing '+_ag.selLabel+' · Kp '+b.kp.toFixed(0);
+  _agRenderStrip(); _agSyncKp(); _agPaint(); }
+function _agRecentre(){ if(!_ag) return; const lat=window._gpsLat??-27.47, lng=window._gpsLng??153.03; _ag.cLon=lng; _ag.cLat=Math.max(-90,Math.min(-15,lat-18)); _agPaint(); }
+
+// Drag to spin the globe (change view centre). Pointer + touch.
+function _agWireDrag(){ const cv=_ag.canvas; if(cv._agWired) return; cv._agWired=true; let px=0,py=0,drag=false;
+  const down=e=>{ drag=true; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
+  const move=e=>{ if(!drag||!_ag) return; const t=e.touches?e.touches[0]:e; const dx=t.clientX-px, dy=t.clientY-py; px=t.clientX; py=t.clientY;
+    const k=90/_ag.R*(_ag.dpr||1); _ag.cLon-=dx*k; _ag.cLat=Math.max(-90,Math.min(90,_ag.cLat+dy*k)); if(e.cancelable)e.preventDefault(); _agPaint(); };
+  const up=()=>{ drag=false; };
+  cv.addEventListener('mousedown',down); window.addEventListener('mousemove',move); window.addEventListener('mouseup',up);
+  cv.addEventListener('touchstart',down,{passive:true}); cv.addEventListener('touchmove',move,{passive:false}); cv.addEventListener('touchend',up); }
+
+// ── Aurora alerts (best-effort, no backend) ──────────────────────────────────
+(function(){ try{ const v=JSON.parse(localStorage.getItem('gf_aurora_alert')||'null'); window._agAlert=v||{kp:6,on:false}; }catch(e){ window._agAlert={kp:6,on:false}; } })();
+function _agSaveAlert(){ try{ localStorage.setItem('gf_aurora_alert',JSON.stringify(window._agAlert)); }catch(e){} }
+function _agToggleAlertPanel(){ const p=document.getElementById('ag-alertpanel'); if(!p) return; if(!p.hidden){ p.hidden=true; return; }
+  const al=window._agAlert; const canNotify='Notification' in window;
+  p.innerHTML=`<h4>🔔 Aurora alerts</h4>
+    <div class="row">Alert me at Kp ≥ <input type="range" min="1" max="9" step="1" value="${al.kp}" oninput="_agAlertKp(this.value)"><span class="kpv" id="ag-kpv">${al.kp}</span></div>
+    <div class="row"><label><input type="checkbox" ${al.on?'checked':''} onchange="_agAlertOn(this.checked)"> Enable notifications</label></div>
+    <div class="muted">${canNotify?'Best-effort: you’ll be alerted while the app is open or recently backgrounded. Reliable background alerts need a server, which a static app can’t do — so keep the tab alive during the storm window.':'This browser can’t show notifications.'}</div>`;
+  p.hidden=false; }
+function _agAlertKp(v){ window._agAlert.kp=+v; document.getElementById('ag-kpv').textContent=v; _agSaveAlert(); if(_ag)_agPaint(); }
+function _agAlertOn(on){ window._agAlert.on=on; _agSaveAlert(); if(on&&'Notification'in window&&Notification.permission==='default') Notification.requestPermission(); }
+// Checked from the space-weather refresh cycle: fire once per storm when Kp crosses the threshold.
+function auroraAlertCheck(){ const al=window._agAlert; if(!al||!al.on||!window._kp) return; const kp=window._kp.kp;
+  if(kp>=al.kp){ if(window._agAlerted&&(Date.now()-window._agAlerted)<3*3600*1000) return; window._agAlerted=Date.now();
+    const msg=`Kp ${kp.toFixed(1)} geomagnetic storm — aurora australis may be visible. Tap to open the aurora map.`;
+    try{ if('Notification'in window&&Notification.permission==='granted') new Notification('🌌 Aurora alert',{body:msg}); }catch(e){}
+    _agBanner(kp);
+  } else if(kp<al.kp-1){ window._agAlerted=0; } }
+function _agBanner(kp){ let b=document.getElementById('ag-banner'); if(b) b.remove();
+  b=document.createElement('div'); b.id='ag-banner'; b.className='ag-banner';
+  b.innerHTML=`🌌 <span><b>Kp ${kp.toFixed(1)}</b> storm — aurora possible tonight. <u>Open map</u></span>`;
+  b.onclick=()=>{ b.remove(); openAuroraGlobe(); }; document.body.appendChild(b);
+  setTimeout(()=>{ if(b.parentNode) b.remove(); },12000); }
+
 function openSkyStory(slug){
+  if(slug==='aurora'){ openAuroraGlobe(); return; }   // the aurora card opens the interactive globe, not a story card
   if(!SKY_LORE[slug]) return;
   const m=document.getElementById('sky-modal'), b=document.getElementById('sky-modal-body');
   if(!m||!b) return;
@@ -6471,6 +6776,13 @@ async function fetchSpaceWx(){
     window._kp={kp:parseFloat(last[1]),time:last[0]};
   }catch(e){ window._kp=null; }
   try{
+    // 3-day planetary-K forecast in 3-hour bins (keyless). Rows: [time_tag, kp, observed|estimated|predicted, noaa_scale].
+    // Past rows are "observed"/"estimated", future rows "predicted" — one continuous strip for the globe's time scrubber.
+    const r=await tfetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json');
+    const d=await r.json();
+    window._kpFc=d.slice(1).map(row=>({t:row[0], kp:parseFloat(row[1]), obs:row[2]!=='predicted'})).filter(x=>x.kp===x.kp);
+  }catch(e){ window._kpFc=null; }
+  try{
     // GOES long-band (0.1–0.8 nm) X-ray flux → peak over the last 6 h = current flare level
     const r=await tfetch('https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json');
     const d=await r.json();
@@ -6483,6 +6795,28 @@ async function fetchSpaceWx(){
     const d=await r.json();
     window._iss={lat:d.latitude,lng:d.longitude,alt:d.altitude};
   }catch(e){ window._iss=null; }
+  try{ auroraAlertCheck(); }catch(e){}
+}
+
+// OVATION aurora model — NOAA's keyless 1°×1° global grid of aurora probability (%),
+// a nowcast + ~30 min forecast. It's the exact data behind SWPC's aurora-forecast image.
+// ~1–2 MB, so it is fetched LAZILY (only while the aurora globe is open) and never precached;
+// default users who never open the globe don't download it. Points are thinned to prob≥1 and
+// longitude normalised to [-180,180) so the orthographic projection can use them directly.
+async function fetchOvation(force){
+  const fresh = window._ovation && (Date.now()-window._ovation.at) < 4*60*1000;
+  if(fresh && !force) return window._ovation;
+  if(window._ovationBusy) return window._ovation||null;
+  window._ovationBusy=true;
+  try{
+    const r=await tfetch('https://services.swpc.noaa.gov/json/ovation_aurora_latest.json');
+    const d=await r.json();
+    const pts=[];
+    for(const c of d.coordinates){ if(c[2]>=1){ let lon=c[0]; if(lon>180)lon-=360; pts.push([lon,c[1],c[2]]); } }
+    window._ovation={pts, obs:d['Observation Time'], fc:d['Forecast Time'], at:Date.now()};
+  }catch(e){ /* keep any prior copy */ }
+  window._ovationBusy=false;
+  return window._ovation||null;
 }
 
 function cardinal8(deg){ const d=['N','NE','E','SE','S','SW','W','NW']; return d[Math.round(((deg%360)+360)%360/45)%8]; }

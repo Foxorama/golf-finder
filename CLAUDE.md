@@ -323,6 +323,38 @@ call it done. They map to the three hats the user keeps asking for:
   `photo:` field). **Ordering gotcha:** the `SKY_LORE` builder IIFE reads `COMETS`, so `COMETS`
   **must be declared above that IIFE** (a later `const` trips the temporal-dead-zone and silently
   halts the whole script — symptom: no app globals, loader never hides).
+- **Aurora globe (`openAuroraGlobe`).** Tapping the **aurora night card** opens a full-screen
+  interactive **Canvas-2D orthographic globe** of the live auroral oval — *not* a story modal and
+  *not* the star-map dome (the star map is a local alt/az projection; the oval is global geographic,
+  so it gets its own globe rather than morphing the dome, which would compromise both). Deliberately
+  **no WebGL/three.js** — it stays inside the single-file, no-build, offline shell. **Data is all
+  keyless NOAA SWPC:** the **OVATION** probability grid (the glowing oval "flare", `window._ovation`,
+  ~1–2 MB so **lazy-fetched only while the globe is open** via `fetchOvation()` and never precached —
+  default users don't download it; its host is in `sw.js` `LIVE_HOSTS` so it's never cached) + live
+  Kp (`window._kp`) + the **3-day/3-hour Kp forecast** (`window._kpFc`, small, fetched in the regular
+  `fetchSpaceWx` cycle). The dark-Earth base is a **60 KB `world-land.json`** asset (Natural Earth
+  110m land, simplified to 0.1°; same-origin so `sw.js` runtime-caches it network-first, **not** in the
+  precache `SHELL` — no `CACHE` bump). Land polygons clamp back-hemisphere vertices to the limb
+  (`_agRim`); OVATION points draw as additive glow via the `_AG_RAMP` blue→green→yellow→red heat ramp.
+  **The three visibility lines + hotspot gating come from the pure `AURORA-CORE` block** (centred-dipole
+  geomagnetic model, unit-tested in `tests/aurora.test.mjs`): `geomagLat()` gives a point's magnetic
+  latitude off the offset south geomagnetic pole (why the lines draw *wavy*), `auroraMagLats(kp)` gives
+  the |mag-lat| of the **overhead / naked-eye / camera** lines (`66.5−2.05·kp`, then −6 / −10),
+  `auroraContour(L)` walks a constant-mag-lat loop for drawing, `auroraReaches()`/`auroraNeedKp()`/
+  `auroraLimitLat()` do reachability + "how far north tonight". **Hotspot dots (`AURORA_SPOTS`) light
+  only when reachable at the currently-shown Kp** (`need ≤ selKp`) — the honest read of the user's ask
+  (a stronger oval covers everything a weaker one does, so there's **no lower floor** hiding a genuinely
+  visible prime spot; the alert setting drives notifications *only*, it does **not** gate the dots — an
+  earlier band-`[alert,sel]` gate blanked Hobart during a Kp-6 storm, which was wrong). **My GPS dot is
+  always drawn** (pink, pulsing) and the view opens centred on it. The **Kp forecast strip** is
+  interactive: tapping a 3-hour bin re-draws the lines + dots for that **predicted** Kp (real NOAA
+  forecast) while the OVATION oval stays the live nowcast — the note says so. **Time axis is real-data-
+  only** (spin the globe + scrub the Kp strip); there is deliberately **no modelled ±12h oval sweep** (no
+  free API archives/forecasts the spatial oval — a user decision). **Alerts are best-effort, no backend**
+  (`gf_aurora_alert = {kp,on}`, `auroraAlertCheck()` fired from `fetchSpaceWx`): an in-app banner + a
+  local `Notification` when Kp crosses the 1–9 threshold, once per storm. Genuine closed-app push needs a
+  server a static GitHub Pages site can't run — the alert panel says so; iOS effectively only fires while
+  open. Everything is behind the aurora card, so a pure day/other-night user is unaffected.
 - **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
   same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
   course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent

@@ -25,6 +25,24 @@ export function loadStatsCore(){
   return sandbox.__exports;
 }
 
+// Loads the pure AURORA-CORE region (centred-dipole visibility geometry) and evals it in
+// a Node vm, shimming the two things it needs from the app: the RAD/DEG constants and a
+// bare `window` object for the _dipF memo cache.
+const AURORA_EXPORTS = ['GEOMAG_POLE','geomagLat','auroraMagLats','auroraReaches',
+                        'auroraContour','auroraLimitLat','auroraNeedKp'];
+export function loadAuroraCore(){
+  const html = readIndex();
+  const s = html.indexOf('AURORA-CORE-START');
+  const e = html.indexOf('AURORA-CORE-END');
+  if(s<0||e<0) throw new Error('AURORA-CORE markers not found in index.html');
+  const code = html.slice(html.indexOf('\n',s)+1, html.lastIndexOf('\n',e));
+  const preamble = 'const RAD=Math.PI/180, DEG=180/Math.PI; var window={};\n';
+  const sandbox = {};
+  vm.createContext(sandbox);
+  vm.runInContext(preamble + code + `\nthis.__exports={${AURORA_EXPORTS.join(',')}};`, sandbox, {filename:'aurora-core'});
+  return sandbox.__exports;
+}
+
 // Extract every inline (non-src) <script> body from index.html — used by the syntax test.
 export function inlineScripts(){
   const html = readIndex();
