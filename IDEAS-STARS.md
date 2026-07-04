@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-06-23 · **Next ID:** `S-008`
+> **Last reviewed:** 2026-07-04 · **Next ID:** `S-009`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[sky]` (the three lenses; "pro golfer" → "true to the sky" here) ·
@@ -89,7 +89,13 @@ it — a wrong limit misleads about what's actually visible (the "true to the sk
 
 ## Done ✓
 
-_(none yet — move items here with their shipping PR link, e.g. `S-0xx — done in #123`.)_
+### S-008 · Unique per-object deep-sky card art (no more shared category thumbnails) `[content]` `[UX]`
+**Status:** done in #345
+All 17 `DEEPSKY` cards now carry a bespoke `_LOC_DEEP[slug]` thumbnail renderer (Sombrero dust-lane
+brim, Cen A merger lane, M83 pinwheel, Helix eye, Jewel Box ruby…) instead of the shared per-type
+`_locMarker`; meteor/comet marks de-genericised and `BINOC_SVG` redrawn as a fun porro pair. The
+per-type marker remains as the fallback for future entries (rule recorded in the
+`astral-heroic-card-art` skill + CLAUDE.md, cross-linked from S-005).
 
 ---
 
