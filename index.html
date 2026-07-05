@@ -7176,14 +7176,20 @@ function _orInjectCSS(){ if(document.getElementById('orr-css')) return; const s=
   #orr-canvas{position:absolute;inset:0;width:100%;height:100%;display:block;}
   .orr-legend{position:absolute;left:12px;top:10px;display:flex;flex-direction:column;gap:5px;font-family:var(--mono);font-size:10.5px;background:rgba(5,8,20,.55);padding:7px 9px;border-radius:10px;border:1px solid rgba(150,160,220,.14);backdrop-filter:blur(3px);pointer-events:none;}
   .orr-legend b{display:inline-block;width:15px;height:0;border-top-width:2px;border-top-style:solid;margin-right:7px;vertical-align:middle;}
-  .orr-tools{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;gap:7px;align-items:stretch;}
-  .orr-tools-h{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--tx3);text-align:right;padding-right:2px;}
-  .orr-tools button{padding:7px 10px;border-radius:10px;background:rgba(24,28,52,.8);border:1px solid rgba(150,150,210,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;-webkit-tap-highlight-color:transparent;text-align:left;}
-  .orr-tools button:active{transform:scale(.94);}
-  .orr-tools button.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
+  .orr-tools{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;gap:7px;align-items:flex-end;}
+  .orr-tools-t{padding:8px 12px;border-radius:12px;background:rgba(24,28,52,.88);border:1px solid rgba(150,150,210,.35);color:var(--tx2);font-family:var(--mono);font-size:11px;font-weight:600;-webkit-tap-highlight-color:transparent;display:flex;align-items:center;gap:6px;white-space:nowrap;}
+  .orr-tools-t:active{transform:scale(.95);}
+  .orr-tools-t .orr-caret{font-size:9px;color:var(--tx3);transition:transform .16s ease;}
+  .orr-tools-t[aria-expanded="true"] .orr-caret{transform:rotate(180deg);}
+  .orr-tools-menu{display:flex;flex-direction:column;gap:6px;align-items:stretch;background:rgba(8,11,26,.92);border:1px solid rgba(150,160,220,.25);border-radius:13px;padding:7px;backdrop-filter:blur(4px);animation:orrMenuIn .16s ease;min-width:168px;}
+  .orr-tools-menu[hidden]{display:none;}
+  @keyframes orrMenuIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  .orr-tools-menu button{padding:8px 11px;border-radius:10px;background:rgba(24,28,52,.8);border:1px solid rgba(150,150,210,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;-webkit-tap-highlight-color:transparent;text-align:left;}
+  .orr-tools-menu button:active{transform:scale(.96);}
+  .orr-tools-menu button.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
   .orr-note{flex:none;padding:5px 16px 3px;font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.35;text-align:center;}
   .orr-timewrap{flex:none;padding:2px 12px 12px;}
-  .orr-chips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 2px 8px;}
+  .orr-chips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:4px 14px 8px;scroll-behavior:smooth;-webkit-mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);mask-image:linear-gradient(90deg,transparent,#000 16px,#000 calc(100% - 16px),transparent);}
   .orr-chip{flex:none;padding:6px 11px;border-radius:999px;background:rgba(24,30,56,.85);border:1px solid rgba(150,160,220,.3);color:var(--tx2);font-family:var(--mono);font-size:11px;white-space:nowrap;-webkit-tap-highlight-color:transparent;}
   .orr-chip.sel{background:rgba(255,190,90,.16);border-color:rgba(255,200,110,.5);color:#ffe2b8;}
   .orr-timerow{display:flex;align-items:center;gap:10px;}
@@ -7215,12 +7221,14 @@ function openOrrery(focusSlug){
         <canvas id="orr-canvas"></canvas>
         <div class="orr-legend" id="orr-legend"></div>
         <div class="orr-tools">
-          <div class="orr-tools-h">Zoom</div>
-          <button id="orr-z-inner" onclick="_orZoomPreset('inner')">Inner planets</button>
-          <button id="orr-z-planets" onclick="_orZoomPreset('planets')">All planets</button>
-          <button id="orr-z-beyond" onclick="_orZoomPreset('beyond')">Probes · Pluto</button>
-          <button id="orr-z-oort" onclick="_orZoomPreset('oort')">Oort Cloud</button>
-          <button onclick="_orRecentre()" aria-label="Re-centre on the Sun">◎ Centre Sun</button>
+          <button class="orr-tools-t" id="orr-tools-t" onclick="_orToolsToggle()" aria-haspopup="true" aria-expanded="false">🔭 <span id="orr-zoom-lbl">All planets</span><span class="orr-caret">▾</span></button>
+          <div class="orr-tools-menu" id="orr-tools-menu" hidden>
+            <button id="orr-z-inner" onclick="_orZoomPreset('inner')">Inner planets</button>
+            <button id="orr-z-planets" onclick="_orZoomPreset('planets')">All planets</button>
+            <button id="orr-z-beyond" onclick="_orZoomPreset('beyond')">Deep-space probes</button>
+            <button id="orr-z-oort" onclick="_orZoomPreset('oort')">Oort Cloud</button>
+            <button onclick="_orRecentre();_orToolsToggle(false)" aria-label="Re-centre on the Sun">◎ Centre Sun</button>
+          </div>
         </div>
         <div class="orr-card" id="orr-card" hidden></div>
       </div>
@@ -7269,15 +7277,25 @@ function _orMarkDirty(){ if(_or) _or.dirty=true; }
 // north: +x right, +y UP, so planets run their true counter-clockwise way round.
 function _orXY(p){ const a=_or; return {x:a.cx+a.panX+p.x*a.scale, y:a.cy+a.panY-p.y*a.scale}; }
 const _OR_ZOOMS=['inner','planets','beyond','oort'];
-function _orZoomPreset(kind){ const a=_or; if(!a) return; const R={inner:1.9,planets:33,beyond:195,oort:2450}[kind]||33;
+const _OR_ZOOM_LBL={inner:'Inner planets',planets:'All planets',beyond:'Deep-space probes',oort:'Oort Cloud'};
+// "All planets" = 52 au so Pluto's whole tilted orbit (aphelion ~49 au) fits — Pluto rides
+// with the planets (whether it's one or not), it doesn't share a preset with the probes.
+function _orZoomPreset(kind){ const a=_or; if(!a) return; const R={inner:1.9,planets:52,beyond:195,oort:2450}[kind]||52;
   a.zoom=kind; a.scale=a.fitR/R; a.panX=0; a.panY=0;
   for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.toggle('sel',k===kind); }
+  _orZoomLbl(_OR_ZOOM_LBL[kind]||'Zoom'); _orToolsToggle(false);
   _orMarkDirty(); }
+// The zoom presets live in a compact collapsible menu (the 🔭 button) so five buttons
+// don't sit over the stage; the collapsed button always names the current view.
+function _orToolsToggle(force){ const m=document.getElementById('orr-tools-menu'), t=document.getElementById('orr-tools-t'); if(!m||!t) return;
+  const open=force!==undefined?force:m.hidden; m.hidden=!open; t.setAttribute('aria-expanded',String(open)); }
+function _orZoomLbl(txt){ const el=document.getElementById('orr-zoom-lbl'); if(el) el.textContent=txt; }
 function _orRecentre(){ if(!_or) return; _or.panX=0; _or.panY=0; _orMarkDirty(); }
 function _orFitObj(o){ const a=_or; if(!a) return; let m=0;
   for(const p of orbPathGeo(o.orb,90,140)) m=Math.max(m,Math.abs(p.x),Math.abs(p.y));
   a.scale=a.fitR/Math.min(200,Math.max(1.4,m*1.12)); a.panX=0; a.panY=0; a.zoom='';
   for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
+  _orZoomLbl(o.short||'Custom'); _orToolsToggle(false);
   _orMarkDirty(); }
 function _orSetT(rel){ const a=_or; if(!a) return; a.t=a.today+rel; _orSyncDate();
   if(a.sel) _orShowCard(a.sel);        // live numbers follow the scrubbed date
@@ -7298,7 +7316,10 @@ function _orRenderChips(){ const el=document.getElementById('orr-chips'); if(!el
   _or.objs.forEach((o,i)=>{ const pk=_orDayz(o.peak);
     h+=`<button class="orr-chip" id="orr-chip-${i}" onclick="_orChipObj(${i})">${o.icon} ${o.short} · ${_orFmtD(pk).replace(/ (\d{4})$/,(m,y)=>' ’'+y.slice(-2))}</button>`; });
   el.innerHTML=h; }
-function _orChipSel(id){ document.querySelectorAll('.orr-chip').forEach(c=>c.classList.toggle('sel',c.id===id)); }
+function _orChipSel(id){ document.querySelectorAll('.orr-chip').forEach(c=>c.classList.toggle('sel',c.id===id));
+  // keep the picked chip visible — the strip scrolls, so an off-screen selection reads as "nothing happened"
+  const el=document.getElementById(id), sc=el&&el.parentElement;
+  if(el&&sc&&sc.scrollWidth>sc.clientWidth) sc.scrollLeft=Math.max(0,el.offsetLeft-sc.offsetLeft-(sc.clientWidth-el.offsetWidth)/2); }
 function _orChipToday(){ const a=_or; if(!a) return; const sl=document.getElementById('orr-time'); if(sl) sl.value=0; _orSetT(0); _orChipSel('orr-chip-today'); }
 function _orChipObj(i){ const a=_or; if(!a) return; const o=a.objs[i]; if(!o) return;
   const rel=Math.round(_orDayz(o.peak)-a.today), sl=document.getElementById('orr-time');
@@ -7359,13 +7380,29 @@ function _orRenderBase(){ const a=_or; if(!a) return; const ctx=a.bctx, W=a.base
   // Oort Cloud — the true outer boundary. Only its INNER EDGE (~2,000 au) fits even the
   // widest zoom; drawn as a seeded speckle band so it reads as a swarm of icy bodies.
   { const oPx=2000*a.scale, maxWH=Math.max(W,H);
-    const oAl=Math.max(0,Math.min(1,(maxWH*2.4-oPx)/(maxWH*0.9)))*Math.max(0,Math.min(1,(oPx-80*dpr)/(120*dpr)));
+    // fade-in ramp tuned so the Oort Cloud PRESET lands near full strength (the old
+    // 80/120·dpr ramp left the cloud at ~half opacity in its own named view)
+    const oAl=Math.max(0,Math.min(1,(maxWH*2.4-oPx)/(maxWH*0.9)))*Math.max(0,Math.min(1,(oPx-50*dpr)/(95*dpr)));
     if(oAl>0.02){ const c=_orXY({x:0,y:0}); let s3=424242; const rn=()=>((s3=s3*16807%2147483647)/2147483647);
-      for(let i=0;i<650;i++){ const ang=rn()*2*Math.PI, rr=(2000+2600*Math.pow(rn(),1.6))*a.scale;
+      // soft annular haze first — gives the band a cloud BODY the speckles sit in
+      const haze=ctx.createRadialGradient(c.x,c.y,Math.max(0,oPx*0.9),c.x,c.y,4900*a.scale);
+      haze.addColorStop(0,'rgba(160,195,255,0)');
+      haze.addColorStop(0.09,'rgba(165,198,255,'+(0.06*oAl)+')');
+      haze.addColorStop(0.5,'rgba(150,185,255,'+(0.038*oAl)+')');
+      haze.addColorStop(1,'rgba(150,185,255,0)');
+      ctx.fillStyle=haze; ctx.fillRect(0,0,W,H);
+      // dense speckle swarm (base layer only, so the count is cheap)
+      for(let i=0;i<1500;i++){ const ang=rn()*2*Math.PI, rr=(2000+2600*Math.pow(rn(),1.6))*a.scale;
         const x=c.x+Math.cos(ang)*rr, y=c.y-Math.sin(ang)*rr;
         if(x<-8||y<-8||x>W+8||y>H+8) continue;
-        ctx.fillStyle='rgba(190,215,255,'+((0.06+rn()*0.22)*oAl)+')';
-        ctx.beginPath(); ctx.arc(x,y,(0.4+rn()*1.1)*dpr,0,7); ctx.fill(); }
+        ctx.fillStyle='rgba(190,215,255,'+((0.07+rn()*0.28)*oAl)+')';
+        ctx.beginPath(); ctx.arc(x,y,(0.4+rn()*1.3)*dpr,0,7); ctx.fill(); }
+      // a scatter of chunkier "near" icy bodies to sell the depth
+      for(let i=0;i<90;i++){ const ang=rn()*2*Math.PI, rr=(2000+2600*Math.pow(rn(),1.6))*a.scale;
+        const x=c.x+Math.cos(ang)*rr, y=c.y-Math.sin(ang)*rr;
+        if(x<-8||y<-8||x>W+8||y>H+8) continue;
+        ctx.fillStyle='rgba(205,225,255,'+((0.24+rn()*0.24)*oAl)+')';
+        ctx.beginPath(); ctx.arc(x,y,(1.3+rn()*1.1)*dpr,0,7); ctx.fill(); }
       ctx.fillStyle='rgba(190,215,255,'+(0.55*oAl)+')';
       ctx.fillText('Oort Cloud · inner edge ~2,000 au — where long-period comets come from',c.x,c.y-oPx-8*dpr); } }
   // planet orbits
@@ -7517,8 +7554,9 @@ function _orWireInput(){ const cv=_or.canvas; if(cv._orWired) return; cv._orWire
     const ns=Math.max(a.fitR/2600,Math.min(a.fitR/0.35,a.scale*f)); f=ns/a.scale;
     a.panX=sx-a.cx-f*(sx-a.cx-a.panX); a.panY=sy-a.cy-f*(sy-a.cy-a.panY); a.scale=ns;
     a.zoom=''; for(const k of _OR_ZOOMS){ const b=document.getElementById('orr-z-'+k); if(b) b.classList.remove('sel'); }
-    _orMarkDirty(); };
-  const down=e=>{ if(e.touches&&e.touches.length===2){ drag=false; pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); scale0=_or.scale; return; }
+    _orZoomLbl('Custom zoom'); _orMarkDirty(); };
+  const down=e=>{ _orToolsToggle(false);   // any stage touch dismisses the zoom menu
+    if(e.touches&&e.touches.length===2){ drag=false; pinch0=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY); scale0=_or.scale; return; }
     drag=true; moved=0; const t=e.touches?e.touches[0]:e; px=t.clientX; py=t.clientY; };
   const move=e=>{ const a=_or; if(!a) return;
     if(e.touches&&e.touches.length===2){ const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
