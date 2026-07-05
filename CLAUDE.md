@@ -395,12 +395,19 @@ call it done. They map to the three hats the user keeps asking for:
   is the aurora globe's base+overlay split, and **the base (starfield, AU rings, orbits, paths,
   heliopause) is deliberately time-INDEPENDENT** — scrubbing only redraws the cheap overlay
   (bodies, comet ion+dust tails, probe markers), so keep time-dependent drawing out of
-  `_orRenderBase`. Zoom: pinch/wheel/drag + labelled presets (Inner 1.9 au / Planets 33 au /
-  **Probes · Pluto** 195 au — where the five **escaping spacecraft** appear: `PROBES` carries
+  `_orRenderBase`. Zoom: pinch/wheel/drag + labelled presets **in a collapsible 🔭 menu**
+  (`_orToolsToggle` — the collapsed button names the current view, "Custom zoom" after a
+  pinch/wheel, the traveller's name after a chip-fit; any stage touch dismisses it): Inner
+  1.9 au / **All planets 52 au — sized so Pluto's whole tilted orbit (aphelion ~49 au) rides
+  with the planets, planet or not** / **Deep-space probes** 195 au — where the five
+  **escaping spacecraft** appear: `PROBES` carries
   Voyager 1/2, Pioneers 10/11 and New Horizons with distance/direction/speed cross-checked against
   NASA 2026 figures, their paths drawn through the REAL planet positions at each gravity-assist
   flyby date via `_orWpPos`, plus the 120-au heliopause ring / **Oort Cloud** 2450 au — a seeded
-  speckle band at the ~2,000-au inner edge). **Post-phone-feedback polish (second PR):** tapping a
+  speckle band at the ~2,000-au inner edge (a soft annular haze + ~1,600 two-tier speckles;
+  its fade-in ramp is tuned so the preset lands near FULL strength — don't retune the ramp
+  without re-checking `oAl` at the preset). The bottom traveller-chip strip edge-fades
+  (CSS mask) and auto-centres the selected chip (`_orChipSel` scrolls it into view). **Post-phone-feedback polish (second PR):** tapping a
   traveller/probe = **focus mode** (`_or.focus` — every other trail dims to 0.12, cleared by
   tapping empty space / closing the card); probe paths are deliberately faint context lines that
   **fade with zoom** (`_orProbeVis` ramps in past the planets and out again at Oort scale — no
