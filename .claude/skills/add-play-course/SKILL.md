@@ -264,6 +264,36 @@ Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
   reaches it at full coord precision (see the `overpass-data-via-webfetch` memory). The
   CI prebake (`scripts/build-course-maps.mjs`) and the app's runtime `fetchCourseOSM`
   use the same query.
+- **In the remote / web environment, nothing external is reachable at all** — the egress
+  proxy 403s every Overpass mirror, `services.arcgisonline.com` (the imagery), *and*
+  WebFetch on any site (the club, golfpass, even Wikipedia). Only **WebSearch** and
+  `api.github.com` get through. So **run both network stages on a runner**:
+  `.github/workflows/play-osm-fetch.yml` takes a `mode` input — `fetch` (Overpass →
+  `_osm/<slug>.osm.json`), `build` (`gap-fill.mjs`, the stage that needs imagery) or
+  `both` — plus `slug` / `target`, and commits the results straight to the working branch.
+  Start it with `mcp__github__actions_run_trigger` (`run_workflow`, `ref` = your branch).
+  Two traps: a workflow **not present on the default branch cannot be dispatched at all**
+  (404), so a *new* workflow file must be merged to `main` first or folded into one that is
+  already there; and a workflow that IS on main runs the copy from **your ref**, so you can
+  still iterate its contents on the branch. Runner queues also stall for 20+ min at times,
+  so keep a local fallback (`fairwayRibbonM`, see `scripts/play/README.md`) rather than
+  blocking the whole build on the imagery stage.
+- **Also note the remote session cannot merge its own PR.** Its git token doesn't emit
+  `push`/`pull_request` events, so the required `test` check never runs; a `workflow_dispatch`
+  run of `tests.yml` on the branch goes green but does **not** satisfy the ruleset, and the
+  proxy blocks writing a commit status. Do the work, push, open the PR, and say plainly that
+  the merge needs the user (one push or PR action from their own machine starts CI).
+- **The scorecard, when every site 403s.** WebSearch still summarises result snippets, and
+  the aggregators (18Birdies / Hole19 / golfify) carry hole-by-hole par + distance; ask for
+  the two nines in **separate queries**, since one rarely returns both. Then **cross-check
+  the card against the OSM line lengths hole for hole** before trusting it — at McLeod 14/18
+  agreed within 3% and the totals matched to 5 m, which is what made the card safe to use
+  *and* identified the four holes where OSM had mapped a different tee (fix those with
+  `cardPlaceWhite`). Aggregator distances are **yards**; a course length quoted in "yards"
+  that equals your metre total is the usual mislabelling. Stroke index is almost never in
+  these sources — **leave `si` off rather than invent it** (`effSI` falls back to hole number
+  and the card hides the SI column). Same for `cr`/`slope`: `courseHandicap` already falls
+  back to neutral (113 / CR = par), so an unrated course still scores net + Stableford.
 - OSM `golf=*` tags map to feature types: `fairway`,`green`,`tee`,`bunker`,
   `water_hazard`/`lateral_water_hazard`→`water`, `hole`→a centreline.
 

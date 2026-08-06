@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-07-04 · **Next ID:** `G-011`
+> **Last reviewed:** 2026-08-06 · **Next ID:** `G-013`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -33,10 +33,25 @@ teed off, and that the displayed hole length doesn't visibly flicker as you walk
 
 ### G-002 · Add more Play courses `[golf]` `[data]`
 **Status:** open
-The whole on-course Play feature (rangefinder + hole maps + scorecard) only exists for **St Lucia** —
-it's the one course with baked geometry in `COURSE_GEOM`/`COURSE_PLAY`. Adding even one or two more
-SEQ courses multiplies the feature's value. Use the **`add-play-course` skill** end-to-end (hand-trace
-is the primary path). Picking *which* courses is a user call — surface a shortlist.
+28 courses now carry Play geometry (`play-geom/*.json`), so this is no longer "St Lucia only" — it's
+about **breadth and depth**. Two threads: (a) more SEQ courses via the **`add-play-course` skill**
+(hand-trace is the primary path; picking which is a user call — surface a shortlist), and (b) the
+courses already in that shipped on partial data and want a second pass (Gailes is one traced hole;
+McLeod has routing but no hazards — see G-011). Prefer depth on a course the user actually plays
+over another thin course.
+
+### G-011 · McLeod: real scorecard + hand-traced hazards `[golf]` `[data]`
+**Status:** open
+McLeod shipped from OSM routing only: all 18 real centrelines, tees and pins, par 71 off the published
+card — but **no stroke index, no CR/Slope, no bunkers and no water**, and the greens are 26 m ovals at
+the mapped pin with ribbon fairways down the centrelines (`src:'OpenStreetMap routing (greens +
+fairways approximate)'`). Three upgrades, in value order: (1) enter the club's real card — `si` per hole
+plus `cr`/`slope` (the app currently falls back to hole-number SI and neutral 113/CR=par); (2)
+hand-trace the greens, bunkers and the water on 3/4/5/8/9 in `trace-tool.html` (the course map shows
+plenty of both) and re-bake via `from-traced.mjs`; (3) confirm the four card-placed tees (1, 12, 13, 16)
+on-course with **Set tee** — OSM had a different tee mapped on each, and hole 12 has two printed tees
+(12W / 12M). The build config (`scripts/play/mcleod-country-golf-club.config.json`) documents every
+assumption, so a re-run is cheap.
 
 ---
 
@@ -70,6 +85,15 @@ The History dashboard (`statsDashboardHtml`) aggregates per scope, but there's n
 FIR/GIR/putts/scoring improving across rounds? A compact sparkline-per-stat or last-N-rounds trend
 view would make the stats engine (`psAggregate`) earn more. Pure/testable if kept inside
 `PLAY-STATS-CORE`.
+
+### G-012 · Play-course build stages on CI, for the remote environment `[QA]` `[data]`
+**Status:** open
+`play-osm-fetch.yml` now does Overpass **and** the imagery gap-fill (`mode=fetch|build|both`), because
+the remote/web sandbox can't reach either host. It works, but the runner queue stalled 20+ min twice
+while building McLeod, and one dispatched run was cancelled while still queued — which is why the
+no-imagery `fairwayRibbonM` fallback exists. Worth hardening: have the build stage retry/report, and
+consider committing the built JSON as an artifact the session downloads rather than a force-added
+commit it later has to remove.
 
 ---
 
