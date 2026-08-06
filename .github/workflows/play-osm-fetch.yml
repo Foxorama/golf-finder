@@ -9,12 +9,32 @@ name: Fetch Play OSM
 # can't happen locally happens here. A single-course query also dodges the
 # bulk-prebake throttling that makes course-maps.yml flaky on CI IPs.
 #
-# Triggered by pushing the throwaway branch `ci/osm-fetch` (a push-triggered
-# workflow runs from its own branch, so it needs no presence on the protected
-# default branch — unlike workflow_dispatch). It checks out TARGET, fetches, and
-# commits the OSM JSON there. Edit the env below to fetch a different course.
+# Two ways to run it:
+#   * `workflow_dispatch` (preferred) — pass the course + target branch as inputs.
+#     A session whose git pushes don't trigger workflows (the token doesn't fire
+#     `push` events) can still start it via the Actions API.
+#   * pushing the throwaway branch `ci/osm-fetch` — the fallback, using the env
+#     defaults below.
+# Either way it checks out the target branch, fetches, and commits the OSM JSON there.
 
 on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: 'Course name regex for the Overpass name query'
+        required: true
+      slug:
+        description: 'Course slug (output file name)'
+        required: true
+      lat:
+        description: 'Interior latitude for the is_in fallback query'
+        required: true
+      lng:
+        description: 'Interior longitude for the is_in fallback query'
+        required: true
+      target:
+        description: 'Branch to commit the OSM JSON to'
+        required: true
   push:
     branches: [ 'ci/osm-fetch' ]
 
@@ -29,11 +49,11 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     env:
-      NAME: 'McLeod'
-      SLUG: 'mcleod-country-golf-club'
-      LAT: '-27.5505'
-      LNG: '152.924'
-      TARGET: 'claude/mcleod-country-club-map-7x0nvp'
+      NAME: ${{ inputs.name || 'McLeod' }}
+      SLUG: ${{ inputs.slug || 'mcleod-country-golf-club' }}
+      LAT: ${{ inputs.lat || '-27.5505' }}
+      LNG: ${{ inputs.lng || '152.924' }}
+      TARGET: ${{ inputs.target || 'claude/mcleod-country-club-map-7x0nvp' }}
     steps:
       - uses: actions/checkout@v4
         with:
