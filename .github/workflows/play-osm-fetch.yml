@@ -1,20 +1,51 @@
-name: Fetch Play OSM
+name: Play course data (fetch OSM / build geometry)
 
-# Sources a course's OpenStreetMap golf geometry from Overpass and commits the
-# raw `out geom` JSON back to the working branch, where build-play-course.mjs +
-# bake-play-course.mjs turn it into COURSE_PLAY/COURSE_GEOM.
+# Sources the open data a Play course is built from, on a runner, and commits it back to
+# the working branch. Two stages, either or both selectable via the `mode` input:
+#   * fetch — Overpass `out geom` JSON for the course  -> scripts/play/_osm/<slug>.osm.json
+#   * build — scripts/play/gap-fill.mjs (OSM + Esri World Imagery gap-fill)
+#             -> scripts/play/_osm/<slug>.osm_built.json, ready for bake-play-course.mjs
 #
-# Exists because Overpass is unreachable from some sandboxed dev environments
-# (egress policy) — a GitHub Actions runner has open internet, so the fetch that
-# can't happen locally happens here. A single-course query also dodges the
-# bulk-prebake throttling that makes course-maps.yml flaky on CI IPs.
+# Exists because both halves need hosts a sandboxed dev environment's egress policy blocks:
+# Overpass for the fetch, services.arcgisonline.com for the imagery tracing. A runner has
+# open internet, so the work that can't happen locally happens here and the session bakes +
+# QAs the result. A single-course Overpass query also dodges the bulk-prebake throttling
+# that makes course-maps.yml flaky on CI IPs.
 #
-# Triggered by pushing the throwaway branch `ci/osm-fetch` (a push-triggered
-# workflow runs from its own branch, so it needs no presence on the protected
-# default branch — unlike workflow_dispatch). It checks out TARGET, fetches, and
-# commits the OSM JSON there. Edit the env below to fetch a different course.
+# The build's QA report goes to stderr and lands in the job log — read it before baking
+# (see the add-play-course skill, §3a per-hole QA review).
+#
+# Two ways to run it:
+#   * `workflow_dispatch` (preferred) — pass the course + target branch as inputs.
+#     A session whose git pushes don't trigger workflows (the token doesn't fire
+#     `push` events) can still start it via the Actions API.
+#   * pushing the throwaway branch `ci/osm-fetch` — the fallback, using the env
+#     defaults below.
+# Either way it checks out the target branch, does the work, and commits there.
 
 on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Which stages to run'
+        type: choice
+        options: [ fetch, build, both ]
+        default: fetch
+      name:
+        description: 'Course name regex for the Overpass name query (fetch)'
+        required: false
+      slug:
+        description: 'Course slug — names the OSM/built files and the build config'
+        required: true
+      lat:
+        description: 'Interior latitude for the is_in fallback query (fetch)'
+        required: false
+      lng:
+        description: 'Interior longitude for the is_in fallback query (fetch)'
+        required: false
+      target:
+        description: 'Branch to commit the results to'
+        required: true
   push:
     branches: [ 'ci/osm-fetch' ]
 
@@ -29,11 +60,12 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     env:
-      NAME: 'Kingston Heath'
-      SLUG: 'kingston-heath-golf-club'
-      LAT: '-37.9542'
-      LNG: '145.0686'
-      TARGET: 'claude/melb-course-osm-data-4na7mg'
+      MODE: ${{ inputs.mode || 'fetch' }}
+      NAME: ${{ inputs.name || 'McLeod' }}
+      SLUG: ${{ inputs.slug || 'mcleod-country-golf-club' }}
+      LAT: ${{ inputs.lat || '-27.5505' }}
+      LNG: ${{ inputs.lng || '152.924' }}
+      TARGET: ${{ inputs.target || 'claude/mcleod-country-club-map-7x0nvp' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,27 +73,33 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Fetch OSM geometry
+        if: ${{ inputs.mode != 'build' }}
         run: node scripts/play/fetch-osm.mjs "$NAME" "scripts/play/_osm/$SLUG.osm.json" "$LAT" "$LNG"
+
+      - name: Build course geometry (OSM + imagery gap-fill)
+        if: ${{ inputs.mode == 'build' || inputs.mode == 'both' }}
+        working-directory: scripts/play
+        run: node gap-fill.mjs "_osm/$SLUG.osm.json" "$SLUG.config.json"
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: osm-${{ env.SLUG }}
+          name: play-${{ env.SLUG }}
           path: scripts/play/_osm/*.json
           if-no-files-found: ignore
 
-      - name: Commit OSM JSON to target branch
+      - name: Commit results to target branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/play/_osm/
+          git add -f scripts/play/_osm/
           if git diff --cached --quiet; then
-            echo "No new OSM data to commit"
+            echo "Nothing new to commit"
             exit 0
           fi
-          git commit -m "CI: fetch OSM geometry for $SLUG"
+          git commit -m "CI: play course data for $SLUG (mode=$MODE)"
           git push origin HEAD:"$TARGET"

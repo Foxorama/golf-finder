@@ -31,6 +31,8 @@ for (const e of osm.elements) {
 }
 const realGreenNear = pt => { let best = null, bd = 1e9; for (const gr of greens) { const d = distM(pt, gr.cen); if (d < bd) { bd = d; best = gr; } } return bd <= 25 ? best : null; };
 const bunkersNear = (pt, R = 40) => bunkers.reduce((n, b) => n + (distM(pt, b) <= R ? 1 : 0), 0);
+// fairways wanted either way: traced from imagery, or laid as ribbons down the centreline
+const wantFairways = !!(cfg.options?.traceFairways || cfg.options?.fairwayRibbonM);
 const ovalM = cfg.options?.greenOvalM ?? 26, HALF = (ovalM / 2) / 111320;
 const ovalGbb = cen => { const dLng = HALF / Math.cos(cen[0] * rad); return [r7(cen[0] - HALF), r7(cen[1] - dLng), r7(cen[0] + HALF), r7(cen[1] + dLng)]; };
 const ovalPts = gbb => { const [mnLa, mnLo, mxLa, mxLo] = gbb, cLa = (mnLa + mxLa) / 2, cLo = (mnLo + mxLo) / 2, sLa = (mxLa - mnLa) / 2, sLo = (mxLo - mnLo) / 2, o = []; for (let k = 0; k < 20; k++) { const th = k / 20 * 2 * Math.PI; o.push([+(cLa + sLa * Math.cos(th)).toFixed(6), +(cLo + sLo * Math.sin(th)).toFixed(6)]); } return o; };
@@ -57,7 +59,7 @@ for (const hc of cfg.holes) {
     lines[hc.n] = round6(line);
   } else if (hc.green && hc.tee) {                            // OSM-missing hole, placed by hand
     cen = hc.green.map(r7); tee = hc.tee.map(r7); gbb = ovalGbb(cen); greenSrc = 'placed'; line = [tee, cen]; lines[hc.n] = round6(line); note = ' (no OSM line — placed)';
-    if (cfg.options?.traceFairways) traceJobs.push({ n: hc.n, placed: true, tee, green: cen, via: hc.via || [] });   // dogleg centreline + fairway from aerial (hc.via = optional dogleg waypoints)
+    if (wantFairways) traceJobs.push({ n: hc.n, par: hc.par, placed: true, tee, green: cen, via: hc.via || [] });   // dogleg centreline + fairway from aerial (hc.via = optional dogleg waypoints)
   } else { qa.push(`h${hc.n}: needs "way" or "green"+"tee"`); continue; }
   // per-tee positions: white = tee; others stepped back by the card delta along the play line
   const tees = {};
@@ -66,29 +68,89 @@ for (const hc of cfg.holes) {
     for (const k of Object.keys(card)) tees[k] = k === 'white' ? tee : dest(tee, back, card[k] - white).map(r7);
     tees.white = tee;
   }
-  holes.push({ n: hc.n, par: hc.par, si: hc.si, tee, ...(Object.keys(tees).length ? { tees } : {}), cen, pin: null, gbb });
+  const multiTee = Object.keys(tees).length > 1;   // a lone white tee IS h.tee — don't duplicate it
+  holes.push({ n: hc.n, par: hc.par, si: hc.si, tee, ...(multiTee ? { tees } : {}), cen, pin: null, gbb });
   // cross-check: tee→green vs card white
   const len = Math.round(distM(tee, cen));
   if (white != null && Math.abs(len - white) > white * 0.15) qa.push(`h${hc.n}: tee→green ${len} m vs card ${white} m (>15% — check)`);
   if (hc.way && greenSrc === 'oval' && bunkersNear(cen, 35) === 0) qa.push(`h${hc.n}: green has no greenside bunker within 35 m (orientation?)`);
-  if (cfg.options?.traceFairways && hc.way) traceJobs.push({ n: hc.n, line: lines[hc.n] });
+  if (wantFairways && hc.way) traceJobs.push({ n: hc.n, par: hc.par, line: lines[hc.n] });
 }
 
 // ---- greens: keep real OSM polygons + an oval for every hole that lacked one ----
 for (const gr of greens) feats.push({ t: 'green', pts: simp(gr.pts) });
-for (const h of holes) { const onOsm = greens.some(gr => distM(gr.cen, h.cen) <= 25); if (!onOsm) feats.push({ t: 'green', pts: ovalPts(h.gbb) }); }
+// Generated per-hole features carry an explicit `own` (the app's _featOwner honours it). Without it
+// the nearest-centreline guess can hand a hole's own green/fairway to a parallel neighbour — on a
+// compact course a dogleg's ribbon sits closer to the next hole's line than to its own.
+for (const h of holes) { const onOsm = greens.some(gr => distM(gr.cen, h.cen) <= 25); if (!onOsm) feats.push({ t: 'green', pts: ovalPts(h.gbb), own: h.n }); }
+
+// Tapered ribbon along a centreline — the no-imagery fairway. Same shape the trace tool's
+// "↳ fairway" generates: full width down the middle, pinched to ~55% at the tee and green ends.
+// Chaikin corner-cutting: an RDP-simplified centreline turns a dogleg into one sharp vertex,
+// and a ribbon laid straight down it comes out as a hard chevron. Round the ribbon's GUIDE only
+// — lines[n] keeps its exact vertices, so distances and the play line are untouched.
+function smoothGuide(line, passes = 3) {
+  let p = line.map(q => q.slice());
+  for (let k = 0; k < passes && p.length > 2; k++) {
+    const out = [p[0]];
+    for (let i = 0; i < p.length - 1; i++) {
+      const a = p[i], b = p[i + 1];
+      out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25]);
+      out.push([a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]);
+    }
+    out.push(p[p.length - 1]);
+    p = out;
+  }
+  return p;
+}
+function fairwayRibbon(rawLine, widthM) {
+  if (!rawLine || rawLine.length < 2) return null;
+  const line = smoothGuide(rawLine);
+  const kx = Math.cos(line[0][0] * rad) * 111320, ky = 111320;
+  const P = line.map(p => [(p[1] - line[0][1]) * kx, (p[0] - line[0][0]) * ky]), n = P.length;
+  let total = 0; for (let i = 1; i < n; i++) total += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]);
+  const hw = []; let acc = 0;
+  for (let i = 0; i < n; i++) { if (i) acc += Math.hypot(P[i][0] - P[i - 1][0], P[i][1] - P[i - 1][1]); const f = total ? acc / total : 0;
+    hw.push(widthM / 2 * Math.min(1, 0.55 + 0.45 * Math.min(Math.min(1, f / 0.12), Math.min(1, (1 - f) / 0.12)))); }
+  const norm = [];
+  for (let i = 0; i < n; i++) { let dx, dy;
+    if (i === 0) { dx = P[1][0] - P[0][0]; dy = P[1][1] - P[0][1]; }
+    else if (i === n - 1) { dx = P[n - 1][0] - P[n - 2][0]; dy = P[n - 1][1] - P[n - 2][1]; }
+    else { dx = P[i + 1][0] - P[i - 1][0]; dy = P[i + 1][1] - P[i - 1][1]; }
+    const L = Math.hypot(dx, dy) || 1; norm.push([-dy / L, dx / L]); }
+  const left = [], right = [];
+  for (let i = 0; i < n; i++) { left.push([P[i][0] + norm[i][0] * hw[i], P[i][1] + norm[i][1] * hw[i]]); right.push([P[i][0] - norm[i][0] * hw[i], P[i][1] - norm[i][1] * hw[i]]); }
+  return simp(left.concat(right.reverse()).map(xy => [line[0][0] + xy[1] / ky, line[0][1] + xy[0] / kx]), 1.5);
+}
 
 // ---- fairways from imagery (sequential, polite) ----
+// `options.fairwayRibbonM` skips imagery entirely and lays a ribbon down each centreline —
+// the offline path, for a build machine that can't reach the imagery host, or a first pass
+// where the real corridor edges will be hand-traced later. A ribbon is also the fallback
+// when a trace fails, so one unreachable tile can't leave a hole with no fairway at all.
+const ribbonM = cfg.options?.fairwayRibbonM ?? 0;
+// A generated ribbon should behave like a real fairway: par 3s have none at all (you carry
+// rough to the green — drawing a corridor down one misreads the hole), and on a par 4/5 the
+// mown fairway starts past the tee-shot rough carry rather than at the tee markers.
+const ribbonFor = (n, line, par, why) => {
+  if (par === 3) { qa.push(`h${n}: par 3 — no fairway ribbon (green only)`); return; }
+  const start = Math.min(60, lineLen(line) * 0.15);
+  const guide = start > 5 ? [pointAlong(line, start), ...line.slice(1)] : line;
+  const pts = fairwayRibbon(guide, ribbonM || 34);
+  if (pts) { feats.push({ t: 'fairway', pts, own: n }); qa.push(`h${n}: ${why} — ribbon fairway from the centreline`); }
+};
 for (const job of traceJobs) {
+  const line = job.placed ? [job.tee, job.green] : job.line;
+  if (ribbonM) { ribbonFor(job.n, lines[job.n] || line, job.par, 'ribbon mode'); continue; }
   try {
     if (job.placed) {   // OSM-missing hole: trace the dogleg centreline (overrides the straight line) + fairway
       const r = await traceHoleCorridor(job.tee, job.green, { via: job.via || [] });
       if (r.line && r.line.length > 2) lines[job.n] = r.line;
-      if (r.fairway) feats.push({ t: 'fairway', pts: r.fairway.pts });
+      if (r.fairway) feats.push({ t: 'fairway', pts: r.fairway.pts, own: job.n }); else ribbonFor(job.n, lines[job.n], job.par, 'corridor trace gave no fairway');
       let mx = 0; for (const p of lines[job.n]) mx = Math.max(mx, perpM(p, job.tee, job.green));
       if (mx > 30 && !(job.via && job.via.length)) qa.push(`h${job.n}: corridor drifts ${Math.round(mx)} m off the tee→green axis — if not a real dogleg, add a "via":[[lat,lng]] waypoint`);
-    } else { const f = await traceFairway(job.line); if (f) feats.push({ t: 'fairway', pts: f.pts }); else qa.push(`h${job.n}: fairway trace too short`); }
-  } catch (e) { qa.push(`h${job.n}: fairway/corridor trace failed (${e.message})`); }
+    } else { const f = await traceFairway(job.line); if (f) feats.push({ t: 'fairway', pts: f.pts, own: job.n }); else ribbonFor(job.n, job.line, job.par, 'fairway trace too short'); }
+  } catch (e) { ribbonFor(job.n, lines[job.n] || line, job.par, `fairway/corridor trace failed (${e.message})`); }
 }
 
 // ---- bunkers from imagery (opt-in via options.traceBunkers; supplements OSM, deduped) ----

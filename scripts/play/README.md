@@ -93,6 +93,10 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
 ```
 node gap-fill.mjs <osm-geom.json> <slug>.config.json   ->  <osm>_built.json
 ```
+On a machine with no route to Overpass or the imagery host (the remote/web environment 403s both),
+run either stage on a runner instead: dispatch `.github/workflows/play-osm-fetch.yml` with
+`mode=fetch|build|both`, `slug` and `target`, and it commits the results to your working branch.
+
 Then bake with `../bake-play-course.mjs <index.html> <slug> <osm>_built.json` — it emits the
 full `COURSE_PLAY` entry (incl. `si`, `cr`/`slope`, `tees`, `teeSets`) and writes the geometry
 to `play-geom/<slug>.json`. Verify with the `add-play-course` skill §3 + the **§3a per-hole
@@ -136,7 +140,21 @@ build flags as drifting >30 m off-axis).
 - **greens** — real OSM polygon where present, else a `greenOvalM` (≈26 m) oval at the centre.
 - **tees** — per-tee positions from the card distances (`tees:{…}` for the multi-tee selector).
 - **fairways / dogleg centrelines** — traced from imagery (tree-bounded grass corridor) when
-  `traceFairways`. For placed (no-OSM) holes `traceHoleCorridor` routes the real centreline through the
+  `traceFairways`. **`options.fairwayRibbonM` is the no-imagery path**: it lays a tapered
+  ribbon of that width down each centreline instead (the shape the trace tool's "↳ fairway"
+  makes), and a ribbon is also the automatic fallback when a trace throws — so an unreachable
+  imagery host can't leave a hole with no fairway at all. Two rules keep a generated ribbon
+  golf-true: **par 3s get none** (you carry rough to the green; a corridor down one misreads
+  the hole), and the ribbon **starts past the tee-shot rough carry** (min(60 m, 15% of the
+  hole)) rather than at the tee markers. Its guide path is Chaikin-smoothed first — an
+  RDP-simplified dogleg is a single sharp vertex, and a ribbon laid straight down it comes out
+  as a hard chevron — while `lines[n]` keeps its exact vertices, so distances and the play line
+  are untouched.
+- **generated features carry `own`** — every synthetic green and ribbon fairway is tagged with
+  its hole number, which the app's `_featOwner` honours ahead of its nearest-centreline guess.
+  Don't skip it: on a compact course a dogleg's ribbon can sit closer to a **parallel
+  neighbour's** centreline than to its own, so that hole renders with no fairway and the
+  neighbour renders two (caught at McLeod on holes 3 / 17 — exactly the skill's §3a bug class). For placed (no-OSM) holes `traceHoleCorridor` routes the real centreline through the
   corridor with a **straight-line "tube" prior** so it can't wander off the hole axis into a neighbour
   fairway (the old failure); a quality gate falls back to straight if the trace bloats, and a hole that
   still drifts >30 m is **flagged** to add a `via` waypoint — the only hand-step, for the odd dogleg.
