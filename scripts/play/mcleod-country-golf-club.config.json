@@ -1,0 +1,32 @@
+{
+  "//": "McLeod Country Golf Club, Mt Ommaney. OSM carries all 18 golf=hole centrelines with refs 1-18 (plus a golf=tee node at each line start and a golf=pin node at each line end -- the way endpoints, so tee=first point, green=last point for every hole). It carries NO greens, fairways, bunkers or water, so the greens are ovals at the mapped pin and the fairways/bunkers are traced from open Esri aerial imagery (the sparse-OSM path in the add-play-course skill).",
+  "//par": "Par comes from the published card (out 37 / in 34 = 71) and is corroborated hole-for-hole by the OSM lengths: every hole falls in its par's length class. Stroke index is NOT published anywhere reachable, so si is omitted -- the app falls back to hole number and hides the SI column until a real card is entered.",
+  "//tees": "tees.white = the card distance in metres (yards/1.0936). 14 of 18 holes agree with the OSM line to within 3%. The four that don't (1, 12, 13, 16) have cardPlaceWhite so the tee sits at the card distance back along the play line -- OSM mapped a different tee on those (hole 12 has two printed tees, 12W and 12M, on the club course map). No cr/slope: the club's ratings could not be verified, and the app falls back to neutral (113 / CR = par) for net scoring.",
+  "name": "McLeod Country Golf Club",
+  "slug": "mcleod-country-golf-club",
+  "course": {
+    "par": 71,
+    "src": "OpenStreetMap routing + aerial imagery"
+  },
+  "options": { "traceFairways": true, "traceBunkers": true, "greenOvalM": 26 },
+  "holes": [
+    { "n": 1,  "par": 4, "way": 1544914219, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "white": 401 } },
+    { "n": 2,  "par": 3, "way": 1544914220, "greenEnd": "b", "tees": { "white": 184 } },
+    { "n": 3,  "par": 5, "way": 1544914221, "greenEnd": "b", "tees": { "white": 456 } },
+    { "n": 4,  "par": 4, "way": 1544914222, "greenEnd": "b", "tees": { "white": 348 } },
+    { "n": 5,  "par": 4, "way": 1544914223, "greenEnd": "b", "tees": { "white": 326 } },
+    { "n": 6,  "par": 3, "way": 1544914224, "greenEnd": "b", "tees": { "white": 136 } },
+    { "n": 7,  "par": 5, "way": 1544914225, "greenEnd": "b", "tees": { "white": 485 } },
+    { "n": 8,  "par": 4, "way": 1544914226, "greenEnd": "b", "tees": { "white": 369 } },
+    { "n": 9,  "par": 5, "way": 1544914227, "greenEnd": "b", "tees": { "white": 522 } },
+    { "n": 10, "par": 5, "way": 1544914228, "greenEnd": "b", "tees": { "white": 447 } },
+    { "n": 11, "par": 4, "way": 1544914229, "greenEnd": "b", "tees": { "white": 307 } },
+    { "n": 12, "par": 3, "way": 1544914230, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "white": 164 } },
+    { "n": 13, "par": 4, "way": 1544914231, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "white": 350 } },
+    { "n": 14, "par": 4, "way": 1544914232, "greenEnd": "b", "tees": { "white": 361 } },
+    { "n": 15, "par": 4, "way": 1544914233, "greenEnd": "b", "tees": { "white": 292 } },
+    { "n": 16, "par": 3, "way": 1544914234, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "white": 142 } },
+    { "n": 17, "par": 4, "way": 1544914235, "greenEnd": "b", "tees": { "white": 401 } },
+    { "n": 18, "par": 3, "way": 1544914236, "greenEnd": "b", "tees": { "white": 178 } }
+  ]
+}
