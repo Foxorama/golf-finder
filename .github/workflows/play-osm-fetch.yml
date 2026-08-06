@@ -29,11 +29,11 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     env:
-      NAME: 'Kingston Heath'
-      SLUG: 'kingston-heath-golf-club'
-      LAT: '-37.9542'
-      LNG: '145.0686'
-      TARGET: 'claude/melb-course-osm-data-4na7mg'
+      NAME: 'McLeod'
+      SLUG: 'mcleod-country-golf-club'
+      LAT: '-27.5505'
+      LNG: '152.924'
+      TARGET: 'claude/mcleod-country-club-map-7x0nvp'
     steps:
       - uses: actions/checkout@v4
         with:
