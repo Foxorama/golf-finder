@@ -93,6 +93,29 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
 ```
 node gap-fill.mjs <osm-geom.json> <slug>.config.json   ->  <osm>_built.json
 ```
+### Tracing hazards from a club COURSE MAP (`from-course-map.mjs`)
+
+When a course's routing is surveyed (OSM tees/greens/centrelines) but its hazards are in no open
+dataset, the club's own printed course map can supply the bunkers, water, trees, rough and the real
+fairway corridors:
+
+```
+node from-course-map.mjs map.png <slug>.coursemap.json play-geom/<slug>.json out.json --badges  # list badge blobs
+node from-course-map.mjs map.png <slug>.coursemap.json play-geom/<slug>.json out.json           # trace
+```
+
+The map is an **artistic panorama, not a plan** — a global fit is hopeless (47 m RMS affine, 89 m
+LOOCV for a smooth local warp, because the drawing's local scale genuinely swings 0.76–3.06 m/px).
+So nothing global is attempted: **each hole gets its own similarity**, fixed in closed form by two
+ground-truth correspondences (hole N's tee ↔ its number badge, hole N+1's tee ↔ its badge) and then
+refined a few degrees against the drawing's own dashed centrelines. Every feature is carried through
+the transform of the hole it belongs to. Surveyed greens are never touched — they drive distances.
+
+**The one manual step is the badge → hole map**, read off the printed numbers by eye. Do not infer
+it from a fit: doing so put six McLeod holes on their neighbour's tee, and it is *invisible* in the
+numeric diagnostics because a wrong hole still lands on *a* corridor. **The check that catches it is
+structural — every hole's green must land beside the NEXT hole's tee.**
+
 On a machine with no route to Overpass or the imagery host (the remote/web environment 403s both),
 run either stage on a runner instead: dispatch `.github/workflows/play-osm-fetch.yml` with
 `mode=fetch|build|both`, `slug` and `target`, and it commits the results to your working branch.

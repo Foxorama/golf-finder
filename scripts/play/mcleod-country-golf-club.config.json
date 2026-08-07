@@ -6,9 +6,9 @@
   "slug": "mcleod-country-golf-club",
   "course": {
     "par": 71,
-    "src": "OpenStreetMap routing (greens + fairways approximate)"
+    "src": "OSM routing + club course map (hazards approximate)"
   },
-  "//geom": "No bunkers or water are baked: OSM has none, and the club course map is a stylised illustration -- metric-overlaying one of those is what the skill warns against, so guessing hazard positions from it would be worse than leaving them out. Fairways are ribbons down the real OSM centrelines. To upgrade on a machine that can reach services.arcgisonline.com, set fairwayRibbonM to 0 and traceFairways/traceBunkers to true and re-run: the corridors and sand come from the aerial.",
+  "//geom": "This config builds the ROUTING geometry only (surveyed greens as ovals + ribbon fairways). Bunkers, water, trees, rough and the real drawn fairway corridors are then traced from the club course map by scripts/play/from-course-map.mjs (see mcleod-country-golf-club.coursemap.json), which overwrites the fairways and keeps these greens. Re-run gap-fill FIRST, then from-course-map, or the traced hazards are lost. On a machine that can reach services.arcgisonline.com, setting fairwayRibbonM to 0 with traceFairways/traceBunkers true would instead source corridors and sand from aerial imagery.",
   "options": { "traceFairways": false, "traceBunkers": false, "greenOvalM": 26, "fairwayRibbonM": 34 },
   "holes": [
     { "n": 1,  "par": 4, "way": 1544914219, "greenEnd": "b", "cardPlaceWhite": true, "tees": { "white": 401 } },

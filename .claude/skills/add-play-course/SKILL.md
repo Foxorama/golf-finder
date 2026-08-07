@@ -211,6 +211,25 @@ closer to in-play hazards). Greens are aerial estimates (~±5 m) so set `course.
 (honest footnote) — slightly-less-accurate is fine here; the visible green marker + the Set-tee tool
 correct them on-course.
 
+### 0a-ii. Hazards from the club's own COURSE MAP (`scripts/play/from-course-map.mjs`)
+When the routing is surveyed but bunkers/water/trees/rough are in no open dataset — and aerial
+imagery is unreachable — the club's printed course map can supply them (McLeod). **This does not
+contradict the "don't metric-overlay a stylised illustration" warning above; it confirms it.** A
+global fit really is hopeless: 47 m RMS for a least-squares affine over 18 control points, and 89 m
+LOOCV for a smooth local warp, because the drawing's local scale swings **0.76–3.06 m/px**. What
+works is refusing to fit anything global: **one similarity PER HOLE**, determined in closed form by
+two ground-truth correspondences (hole N's tee ↔ its number badge, hole N+1's tee ↔ its badge), then
+refined a few degrees against the map's own dashed centrelines, with every feature carried through
+its own hole's transform. Surveyed greens are never overwritten — they drive front/centre/back.
+Three traps worth knowing: the **badge → hole map must be read by eye** (inferring it from a fit put
+six holes on their neighbour's tee, and it is invisible in the numbers because a wrong hole still
+lands on *a* corridor — **the check that catches it is that every green must land beside the NEXT
+hole's tee**); the big area classes **merge across holes** in the drawing, so partition their pixels
+by nearest centreline before contouring, never assign a whole blob; and the **clubhouse and practice
+range are drawn in the same cream as bunkers**, so cap sand blob size or a building renders as a
+waste area over a green. Accuracy is corridor-relative, roughly a hazard's width — right for "which
+side of the fairway, how far short of the green", not for a carry number.
+
 ### 0b. Don't use proprietary golf-GPS data — build from the aerial instead
 A golf-GPS app or site may carry a course's vector geometry (greens, tees). **Don't use it.** It's
 **proprietary** (not open-licensed like OSM; the coordinates are traceable to the provider), and you
