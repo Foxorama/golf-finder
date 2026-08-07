@@ -40,16 +40,17 @@ courses already in that shipped on partial data and want a second pass (Gailes i
 McLeod has routing but no hazards — see G-011). Prefer depth on a course the user actually plays
 over another thin course.
 
-### G-011 · McLeod: the real scorecard `[golf]` `[data]`
+### G-011 · McLeod: the standard-card Course Rating `[golf]` `[data]`
 **Status:** open
-McLeod's hazards are now in — bunkers, water, trees, rough and the real fairway corridors, traced
-from the club course map (`scripts/play/from-course-map.mjs`). What's still missing is the **card**:
-no stroke index and no CR/Slope, so the app falls back to hole-number SI and neutral 113/CR=par, and
-the SI column stays hidden. Entering the club's real card is a five-minute edit to the `COURSE_PLAY`
-entry and the single biggest remaining upgrade. Two smaller follow-ups: confirm the four card-placed
-tees (1, 12, 13, 16) on-course with **Set tee** — OSM had a different tee mapped on each, and hole 12
-has two printed tees (12W/12M) — and note that the traced hazards are corridor-relative (right side
-of the fairway, roughly right distance), so treat a carry number over one as indicative, not surveyed.
+Nearly closed. A club card photographed on the course supplied the **stroke index** (all 18, a clean
+1-18 permutation) and **Slope 124** off the White tee, both now baked. What's still missing is the
+**Course/Scratch Rating for the standard layout**. The card in hand is a Cardiac Challenge 4-Person
+Ambrose *event* layout — it plays 1-6, **7A**, 7, 8 | 9-15, **17**, 18 (short 7A in, 16 out) for par
+68 over 5068 m, with 7/11/12/14 off temporary short tees — so its **S/R 67.0 rates that layout, not
+the par-71 course**; using it would make `cr - par` = -4 and understate every course handicap by
+about 3 strokes. Until a standard card appears the app falls back to CR = par, which is neutral and
+safe. One number, one line in `COURSE_PLAY`. (Also still worth doing: confirm the four card-placed
+tees — 1, 12, 13, 16 — on-course with **Set tee**.)
 
 ---
 
