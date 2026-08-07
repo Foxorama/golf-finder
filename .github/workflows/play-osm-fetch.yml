@@ -29,7 +29,7 @@ on:
       mode:
         description: 'Which stages to run'
         type: choice
-        options: [ fetch, build, both ]
+        options: [ fetch, build, both, aerial ]
         default: fetch
       name:
         description: 'Course name regex for the Overpass name query (fetch)'
@@ -83,6 +83,11 @@ jobs:
         if: ${{ inputs.mode == 'build' || inputs.mode == 'both' }}
         working-directory: scripts/play
         run: node gap-fill.mjs "_osm/$SLUG.osm.json" "$SLUG.config.json"
+
+      - name: Fetch a georeferenced aerial of the course
+        if: ${{ inputs.mode == 'aerial' }}
+        run: |
+          node scripts/play/fetch-aerial.mjs "play-geom/$SLUG.json" "scripts/play/_osm/$SLUG.aerial.png" 0.4 qld             || node scripts/play/fetch-aerial.mjs "play-geom/$SLUG.json" "scripts/play/_osm/$SLUG.aerial.png" 0.4 esri
 
       - name: Upload artifact
         if: always()
