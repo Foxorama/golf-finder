@@ -13,3 +13,6 @@ scripts/play/*.traced.json
 scripts/play/*.traced_built.json
 _tooltest/
 scripts/play/_osm/*_built.json
+
+# Aerial imagery pulled down by CI for tracing — large, and reproducible via the workflow.
+scripts/play/_osm/*.aerial.png
