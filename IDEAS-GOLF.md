@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-06 · **Next ID:** `G-013`
+> **Last reviewed:** 2026-08-07 · **Next ID:** `G-013`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -40,18 +40,16 @@ courses already in that shipped on partial data and want a second pass (Gailes i
 McLeod has routing but no hazards — see G-011). Prefer depth on a course the user actually plays
 over another thin course.
 
-### G-011 · McLeod: real scorecard + hand-traced hazards `[golf]` `[data]`
+### G-011 · McLeod: the real scorecard `[golf]` `[data]`
 **Status:** open
-McLeod shipped from OSM routing only: all 18 real centrelines, tees and pins, par 71 off the published
-card — but **no stroke index, no CR/Slope, no bunkers and no water**, and the greens are 26 m ovals at
-the mapped pin with ribbon fairways down the centrelines (`src:'OpenStreetMap routing (greens +
-fairways approximate)'`). Three upgrades, in value order: (1) enter the club's real card — `si` per hole
-plus `cr`/`slope` (the app currently falls back to hole-number SI and neutral 113/CR=par); (2)
-hand-trace the greens, bunkers and the water on 3/4/5/8/9 in `trace-tool.html` (the course map shows
-plenty of both) and re-bake via `from-traced.mjs`; (3) confirm the four card-placed tees (1, 12, 13, 16)
-on-course with **Set tee** — OSM had a different tee mapped on each, and hole 12 has two printed tees
-(12W / 12M). The build config (`scripts/play/mcleod-country-golf-club.config.json`) documents every
-assumption, so a re-run is cheap.
+McLeod's hazards are now in — bunkers, water, trees, rough and the real fairway corridors, traced
+from the club course map (`scripts/play/from-course-map.mjs`). What's still missing is the **card**:
+no stroke index and no CR/Slope, so the app falls back to hole-number SI and neutral 113/CR=par, and
+the SI column stays hidden. Entering the club's real card is a five-minute edit to the `COURSE_PLAY`
+entry and the single biggest remaining upgrade. Two smaller follow-ups: confirm the four card-placed
+tees (1, 12, 13, 16) on-course with **Set tee** — OSM had a different tee mapped on each, and hole 12
+has two printed tees (12W/12M) — and note that the traced hazards are corridor-relative (right side
+of the fairway, roughly right distance), so treat a carry number over one as indicative, not surveyed.
 
 ---
 
