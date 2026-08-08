@@ -748,7 +748,10 @@ call it done. They map to the three hats the user keeps asking for:
   links. **Brisbane River Golf Club** is the worked example, and `reports/brisbane-river-course-maps-2026-08-08.md`
   says why: OSM holds one partial boundary way, the only available aerial is a drought-stressed
   capture where greens don't separate from fairway, and a stylised club map fits to ~40 m on a
-  course whose holes are closer together than that. See the `add-play-course` skill.
+  course whose holes are closer together than that. See the `add-play-course` skill. **Source the
+  card from the CLUB's own card, not an aggregator** — Brisbane River's BlueGolf listing matched the
+  real miclub card on par hole-for-hole but had **14 of 18 stroke indexes wrong** and one hole 40 m
+  long; the tell was a too-tidy front-evens/back-odds index split that gave the longest hole SI 18.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Testing (regression guard)

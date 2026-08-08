@@ -14,9 +14,9 @@ club's own course map.
   5.0/1-review and 2.5/2-reviews). `rating` is already `c.rating ? … : ''` in `ccardHtml`, so a
   null degrades to no star rather than a wrong one.
 - **`COURSE_PLAY` entry, `noGps:true`** — the full card: par 66 (out 32 / in 34), all 18 stroke
-  indexes, CR 65.0 / Slope 116, and each hole's Black-tee distance. Gives the Card and History
-  tabs, net and Stableford scoring, and handicap allocation. No rangefinder, because there is no
-  geometry (below).
+  indexes, ACR 65.0 / Slope 116, and each hole's Blue (M) distance in metres. Gives the Card and
+  History tabs, net and Stableford scoring, and handicap allocation. No rangefinder, because there
+  is no geometry (below).
 - **Card distances now render** (`.cc-len`) under each hole number and on OUT/IN/TOT. This is the
   only place they can appear on a scorecard-only course, and `fmtDist` honours the yards/metres
   toggle, so a yards player reads the club's own card straight back.
@@ -24,22 +24,35 @@ club's own course map.
   in `COURSE_PLAY`. It now says "scorecard & handicap" when the course (or every layout) is
   `noGps`, matching the existing honest-CTA rule for directory-only tee-time links.
 
-## The scorecard, and the one thing worth double-checking
-Transcribed from the supplied BlueGolf card. It is internally coherent, which is the check that
-matters: the par row's seven par 3s are exactly the seven shortest holes and the lone par 5 is the
-longest, and the stroke indexes are a clean 1–18 permutation on the usual front-evens / back-odds
-convention.
+## The scorecard — and why the first one was wrong
+**Update, same day:** the club's own **miclub/GolfLink card**, photographed on the course, replaced
+an earlier transcription of the club's BlueGolf listing. Everything below is the real card, and every
+figure reconciles against its printed OUT / IN / TOTAL:
 
-**The distances are yards, not metres.** The card doesn't say. The club's published Black rating
-of **65.0 for par 66** settles it: that is consistent with ~4,720 m (5,158 yd), whereas a 5,158
-*metre* par-66 course would rate around 68. `len` in `COURSE_PLAY` is therefore the card yards
-converted to metres (4,718 m total, which round-trips to 5,160 yd against the card's 5,158 — a
-two-yard artefact of per-hole rounding).
+| tee | length | par | ACR | Slope |
+|---|---|---|---|---|
+| Blue (M) | 4,776 m (out 2,449 / in 2,327) | 66 (32 / 34) | 65.0 | 116 |
+| Red (F) | 4,222 m (out 2,173 / in 2,049) | 67 (33 / 34) | 67.0 | 118 |
 
-**Worth a look on the course:** the card gives hole 8 (a 165 m par 3) stroke index **2**, and hole 9
-(a 407 m par 4, the longest on the front) stroke index **18**. That is backwards from what the
-lengths suggest. It is baked as printed rather than second-guessed, but if the club's own card
-disagrees it is a one-line fix.
+Hole 18's Blue distance (346 m) is **derived** — In 2,327 minus the other eight — because
+bleed-through from the reverse of the card obscures that one cell. Total 4,776 = 2,449 + 2,327
+corroborates it.
+
+**BlueGolf was not a reliable source here, and that generalises.** Its par matched the real card
+hole for hole, but **14 of its 18 stroke indexes were wrong**, and it had the 7th 40 m long. The tell
+in hindsight: BlueGolf's indexes formed a suspiciously tidy front-evens / back-odds split and handed
+the **longest hole on the course's front nine (the 9th, 417 m) stroke index 18** — the easiest. The
+real card is a properly mixed allocation and puts the 9th at index **2**. That anomaly was flagged in
+the first pass as "worth a look on the course"; it was simply bad data.
+
+The earlier "the card is in yards" deduction was directionally right — BlueGolf's figures were
+yards, and 5,158 yd (4,718 m) is close to the true 4,776 m — but it was reasoning off numbers that
+were themselves inaccurate. The real card is printed in metres and needs no conversion.
+
+**Red is carried in `course._ladies`, not offered as a playable tee.** It has its own par (67 — the
+9th is a par 5 off Red) and its own stroke index, and the app scores every tee off the men's par/SI
+until per-tee par/SI lands. Offering Red today would compute a wrong Stableford, so it is stashed in
+the shape Gailes already uses, and backlogged as **G-017**.
 
 ## Why there are no hole maps
 The three sources a Play course is normally built from all came up short, and this was tested
@@ -99,7 +112,7 @@ All reusable, all committed:
   downscaled) out of a committed aerial, with crosshair rings for the registration check.
 - `aerial-centroid.mjs` pulls a seeded green/tee onto the real turf by smoothness-weighted
   mean-shift; `aerial-greens.mjs` inventories candidate putting surfaces.
-- `gap-fill.mjs` no longer hard-codes `white` as the rated tee — Brisbane River's is Black, and
+- `gap-fill.mjs` no longer hard-codes `white` as the rated tee — Brisbane River's is Blue, and
   with no `white` key the multi-tee block silently produced nothing.
 - The workflow no longer re-runs the OSM fetch on an `aerial` run. It did, with no reason to pass
   name/lat/lng, so the *previous* course's OSM overwrote this one's and the first aerial came back

@@ -330,6 +330,15 @@ Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
   run of `tests.yml` on the branch goes green but does **not** satisfy the ruleset, and the
   proxy blocks writing a commit status. Do the work, push, open the PR, and say plainly that
   the merge needs the user (one push or PR action from their own machine starts CI).
+- **Prefer the CLUB's own card over an aggregator, and cross-check if you must use one.** At
+  **Brisbane River** a BlueGolf listing was transcribed first and then replaced by a photo of the
+  club's miclub/GolfLink card: par matched hole for hole, but **14 of the 18 stroke indexes were
+  wrong** and one hole was 40 m long. The tell, visible without the real card, is an index column
+  that is *too tidy* — a clean front-evens / back-odds split that also hands the longest hole on a
+  nine the highest (easiest) index. A real allocation is mixed and puts the long holes low. So: if a
+  transcribed SI column looks mechanical, or contradicts the lengths, treat it as unverified and say
+  so, and reconcile every column against the card's own printed OUT/IN/TOTAL before trusting it (that
+  check is also what lets you *derive* a single cell obscured by bleed-through).
 - **The scorecard, when every site 403s.** WebSearch still summarises result snippets, and
   the aggregators (18Birdies / Hole19 / golfify) carry hole-by-hole par + distance; ask for
   the two nines in **separate queries**, since one rarely returns both. Then **cross-check

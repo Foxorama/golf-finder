@@ -1,42 +1,260 @@
 {
-  "//": "Brisbane River Golf Club (formerly Karana Downs), 212 College Rd, Karana Downs. The fully-OSM-absent case from the add-play-course skill: OpenStreetMap holds ONE partial boundary way (still tagged name=Karana Downs Golf Course, note='Partial boundary ... will leave it till later') and the clubhouse building. No golf=hole, no greens, tees, fairways, bunkers or water. So every green and tee below is placed off open Esri/QLD aerial imagery, with the club's own course map used only for topology (which corridor is which hole), and the fairways + dogleg centrelines are traced from the same imagery by gap-fill's traceFairways.",
-  "//status": "NOT BUILT — the course shipped scorecard-only (noGps) in index.html. This config is complete on everything the card supplies (par, SI, CR/Slope, per-tee distances) and is missing exactly one thing: a green+tee coordinate pair per hole. It is kept as the ready-made input for finishing the job: hand-trace the greens, tees and centrelines in trace-tool.html and run from-traced.mjs against this file. Why it could not be finished automatically is in reports/brisbane-river-course-maps-2026-08-08.md — briefly, the only aerial available is a drought-stressed Esri capture where putting surfaces do not separate from fairway, and the club course map fits the true clubhouse to only ~40 m, which is wider than a hole here.",
-  "//card": "Scorecard is the club's BlueGolf card (user-supplied screenshot, Aug 2026): par 66 (out 32 / in 34), Black 5158 and Red 4590, men's and women's stroke index identical, a clean 1-18 permutation on the usual front-evens / back-odds convention. The distances are YARDS, not metres -- the club's published Black rating of 65.0 for par 66 is only consistent with ~4,720 m; a 5,158 METRE par-66 course would rate about 68. The tees below are therefore the card yards converted to metres.",
-  "//si": "One oddity worth knowing before trusting it on the course: the card gives hole 8 (a 165 m par 3) stroke index 2 and hole 9 (a 407 m par 4) stroke index 18. That is the reverse of what the lengths suggest, but it is what the club publishes, so it is baked as printed rather than second-guessed. Replace if the club's own card disagrees.",
-  "//ratings": "Black CR 65.0 / Slope 116 are the club's published Black figures. The Red tee's own rating could not be verified, so its teeSet carries null cr/slope and courseHandicap falls back to the course figures for it.",
+  "//": "Brisbane River Golf Club (formerly Karana Downs Golf Course), 212 College Rd, Karana Downs. The fully-OSM-absent case from the add-play-course skill: OpenStreetMap holds ONE partial boundary way (still tagged name=Karana Downs Golf Course, note='Partial boundary ... will leave it till later') and the clubhouse building. No golf=hole, no greens, tees, fairways, bunkers or water.",
+  "//status": "NOT BUILT — the course ships scorecard-only (noGps) in index.html. Everything the card supplies is here and verified; the one missing thing is a green+tee coordinate pair per hole. Finish it by hand-tracing greens, tees and centrelines in trace-tool.html and running from-traced.mjs against this file — the tool's live readout cross-checks each centreline against the Blue distance below as you draw it. Why it could not be done automatically: reports/brisbane-river-course-maps-2026-08-08.md.",
+  "//card": "Source is the club's OWN miclub/GolfLink scorecard, photographed on the course (user-supplied, Aug 2026). Two tee sets: Blue (M) 4776 m par 66 ACR 65.0 / Slope 116, and Red (F) 4222 m par 67 ACR 67.0 / Slope 118. Every figure reconciles against the card's printed OUT/IN/TOTAL. Hole 18's Blue metres (346) is DERIVED as In 2327 minus the other eight, because bleed-through from the reverse obscures that one cell; the derivation is corroborated by Total 4776 = 2449 + 2327.",
+  "//supersedes": "This replaces an earlier transcription of the club's BlueGolf listing, and the discrepancy is worth remembering before trusting BlueGolf for another club. Par matched hole for hole, but 14 of 18 stroke indexes were wrong and the 7th was 40 m long. The tell was that BlueGolf's indexes formed a tidy front-evens / back-odds split and put the LONGEST hole (9) at index 18; the real card is a properly mixed allocation with the 9th at index 2.",
+  "//tees": "Blue (M) is the rated men's tee, so ratedTee/defaultTee are 'blue' — not 'white'. Red (F) has its own par (67; the 9th is a par 5 off Red) and its own stroke index, which the app does not yet apply per-tee, so Red is carried in _ladies rather than offered as a playable tee set that would be scored with men's par. Add it to teeSets once per-tee par/SI lands.",
   "name": "Brisbane River Golf Club",
   "slug": "brisbane-river-golf-club",
   "course": {
     "par": 66,
-    "cr": 65.0,
+    "cr": 65,
     "slope": 116,
-    "src": "aerial imagery + club course map + BlueGolf card",
-    "ratedTee": "black",
-    "defaultTee": "black",
+    "src": "aerial imagery + club scorecard (miclub/GolfLink)",
+    "ratedTee": "blue",
+    "defaultTee": "blue",
     "teeSets": [
-      { "key": "black", "name": "Black", "cr": 65.0, "slope": 116 },
-      { "key": "red", "name": "Red", "cr": null, "slope": null }
+      {
+        "key": "blue",
+        "name": "Blue (M)",
+        "cr": 65,
+        "slope": 116
+      }
     ]
   },
-  "options": { "traceFairways": true, "traceBunkers": true, "greenOvalM": 26, "fairwayRibbonM": 32 },
+  "_ladies": {
+    "tee": "Red (F)",
+    "cr": 67,
+    "slope": 118,
+    "par": [
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4,
+      3,
+      5,
+      4,
+      5,
+      3,
+      4,
+      3,
+      4,
+      3,
+      4,
+      4
+    ],
+    "si": [
+      2,
+      5,
+      14,
+      9,
+      12,
+      1,
+      17,
+      10,
+      7,
+      18,
+      4,
+      16,
+      6,
+      11,
+      8,
+      15,
+      13,
+      3
+    ],
+    "len": [
+      190,
+      310,
+      109,
+      303,
+      142,
+      300,
+      299,
+      132,
+      388,
+      210,
+      375,
+      120,
+      262,
+      132,
+      284,
+      115,
+      223,
+      328
+    ]
+  },
+  "options": {
+    "traceFairways": true,
+    "traceBunkers": true,
+    "greenOvalM": 26,
+    "fairwayRibbonM": 32
+  },
   "holes": [
-    { "n": 1,  "par": 3, "si": 6,  "tees": { "black": 206, "red": 184 } },
-    { "n": 2,  "par": 4, "si": 8,  "tees": { "black": 328, "red": 310 } },
-    { "n": 3,  "par": 3, "si": 16, "tees": { "black": 140, "red": 105 } },
-    { "n": 4,  "par": 4, "si": 14, "tees": { "black": 314, "red": 303 } },
-    { "n": 5,  "par": 3, "si": 10, "tees": { "black": 169, "red": 142 } },
-    { "n": 6,  "par": 4, "si": 4,  "tees": { "black": 309, "red": 277 } },
-    { "n": 7,  "par": 4, "si": 12, "tees": { "black": 378, "red": 319 } },
-    { "n": 8,  "par": 3, "si": 2,  "tees": { "black": 165, "red": 132 } },
-    { "n": 9,  "par": 4, "si": 18, "tees": { "black": 407, "red": 388 } },
-    { "n": 10, "par": 4, "si": 17, "tees": { "black": 246, "red": 222 } },
-    { "n": 11, "par": 5, "si": 1,  "tees": { "black": 454, "red": 370 } },
-    { "n": 12, "par": 3, "si": 15, "tees": { "black": 133, "red": 125 } },
-    { "n": 13, "par": 4, "si": 7,  "tees": { "black": 276, "red": 261 } },
-    { "n": 14, "par": 3, "si": 11, "tees": { "black": 148, "red": 132 } },
-    { "n": 15, "par": 4, "si": 9,  "tees": { "black": 336, "red": 284 } },
-    { "n": 16, "par": 3, "si": 13, "tees": { "black": 129, "red": 115 } },
-    { "n": 17, "par": 4, "si": 3,  "tees": { "black": 240, "red": 223 } },
-    { "n": 18, "par": 4, "si": 5,  "tees": { "black": 340, "red": 305 } }
+    {
+      "n": 1,
+      "par": 3,
+      "si": 4,
+      "tees": {
+        "blue": 209,
+        "red": 190
+      }
+    },
+    {
+      "n": 2,
+      "par": 4,
+      "si": 6,
+      "tees": {
+        "blue": 335,
+        "red": 310
+      }
+    },
+    {
+      "n": 3,
+      "par": 3,
+      "si": 14,
+      "tees": {
+        "blue": 137,
+        "red": 109
+      }
+    },
+    {
+      "n": 4,
+      "par": 4,
+      "si": 12,
+      "tees": {
+        "blue": 321,
+        "red": 303
+      }
+    },
+    {
+      "n": 5,
+      "par": 3,
+      "si": 10,
+      "tees": {
+        "blue": 185,
+        "red": 142
+      }
+    },
+    {
+      "n": 6,
+      "par": 4,
+      "si": 1,
+      "tees": {
+        "blue": 333,
+        "red": 300
+      }
+    },
+    {
+      "n": 7,
+      "par": 4,
+      "si": 13,
+      "tees": {
+        "blue": 338,
+        "red": 299
+      }
+    },
+    {
+      "n": 8,
+      "par": 3,
+      "si": 9,
+      "tees": {
+        "blue": 174,
+        "red": 132
+      }
+    },
+    {
+      "n": 9,
+      "par": 4,
+      "si": 2,
+      "tees": {
+        "blue": 417,
+        "red": 388
+      }
+    },
+    {
+      "n": 10,
+      "par": 4,
+      "si": 17,
+      "tees": {
+        "blue": 249,
+        "red": 210
+      }
+    },
+    {
+      "n": 11,
+      "par": 5,
+      "si": 5,
+      "tees": {
+        "blue": 461,
+        "red": 375
+      }
+    },
+    {
+      "n": 12,
+      "par": 3,
+      "si": 16,
+      "tees": {
+        "blue": 128,
+        "red": 120
+      }
+    },
+    {
+      "n": 13,
+      "par": 4,
+      "si": 7,
+      "tees": {
+        "blue": 276,
+        "red": 262
+      }
+    },
+    {
+      "n": 14,
+      "par": 3,
+      "si": 11,
+      "tees": {
+        "blue": 149,
+        "red": 132
+      }
+    },
+    {
+      "n": 15,
+      "par": 4,
+      "si": 3,
+      "tees": {
+        "blue": 343,
+        "red": 284
+      }
+    },
+    {
+      "n": 16,
+      "par": 3,
+      "si": 15,
+      "tees": {
+        "blue": 129,
+        "red": 115
+      }
+    },
+    {
+      "n": 17,
+      "par": 4,
+      "si": 18,
+      "tees": {
+        "blue": 246,
+        "red": 223
+      }
+    },
+    {
+      "n": 18,
+      "par": 4,
+      "si": 8,
+      "tees": {
+        "blue": 346,
+        "red": 328
+      }
+    }
   ]
 }
