@@ -458,10 +458,21 @@ call it done. They map to the three hats the user keeps asking for:
   the dial looked identical whether the wind was behind you or straight into you, the two cases that
   change the club. Speed bands (`_wcCol`) remain the **fallback** where there's no line to judge
   against — no compass on the device; the footer note says which of the two is live.
-  **The chrome takes the tone too** (`--wcA50/30/18/10` + `--wcWash`, all derived from it in
-  `_wcApplyTones`): title, borders, hairlines and the page's background wash, so the whole view
-  reads teal/amber/red from the doorway. Before that the frame was a fixed teal and the page read
-  green whatever the wind was doing. The **air row keeps its OWN semantics** (gust/twist warm as
+  **Emphasis is EARNED — `wcImpact(help,cross,floor,full)`.** Colouring by aim wasn't enough on its
+  own: with the tone applied at full strength always, a 6 km/h helping wind (a ~1% carry change) lit
+  the whole page teal, so nothing ever stood out and every reading looked equally urgent. Impact is
+  the **larger of the head/tail and cross components** — a pure crosswind moves the ball as far as a
+  headwind even though it barely touches carry — ramped 0→1 between `floor` (6 km/h, below which you
+  don't change club) and `full` (24 km/h). **Below the floor the tone is `WC_TONE.none` slate**, the
+  panel gets `.wc2-quiet`, and the view deliberately looks like nothing is happening. Above it,
+  `--wcInt` scales the ring opacity, the aim-bar glow, the rung glow and the background wash, so the
+  page gets louder as the shot gets harder. Tunable on a phone: `?impact=floor,full` /
+  `setImpact(floor,full)` / `window._windImpact`.
+  **The CHROME is deliberately NEUTRAL slate** (title, borders, hairlines, tile edges). Tinting it
+  with the tone was tried and made things worse — coloured data on a coloured frame has no contrast,
+  so the page read as one wall of green; only the wash stays toned, at an alpha that follows
+  `--wcInt`. The **footer key is three swatches, not a paragraph** (that paragraph was six lines of
+  coloured prose and the single biggest block of green on screen). The **air row keeps its OWN semantics** (gust/twist warm as
   they worsen; air carry gold when thin, blue when heavy) — three different questions shouldn't
   share one hue. The tone is pushed through a `--wcTone` CSS var by `_wcApplyTones()` so turning the phone
   recolours the dial without rebuilding the SVG. Because the aim normally comes off the
@@ -488,6 +499,7 @@ call it done. They map to the three hats the user keeps asking for:
   published), when it comes back visible after 15 min, and on the ↻ button with a **30 s
   cooldown**. Escape hatches: `window._windFlow=false` (kill the particles),
   `_windCompassLive=false` (no orientation), `_windAimCol=false` (colour by strength, not by aim),
+  `_windImpact=[floor,full]` (where colour starts and saturates),
   `_windCool` (cooldown ms), and the test overrides
   `?wind=spd,dir[,gust[,twist[,spread]]]` / `setWind(...)` / `window._windTest` and
   `?aim=BEARING` / `setAim(brg)` / `window._windAim`. Verify it in
@@ -1007,6 +1019,10 @@ it with the preview tool:
   hand it back to the phone. Without it the aim-relative colouring (teal helping / amber across /
   red into) can't be seen off-phone, so the hub's **Into wind / Across / Downwind** chips send it —
   computed *relative to the staged wind*, so they stay true whichever wind chip is picked.
+- `?impact=FLOOR,FULL` — km/h of effective wind at which the compass starts colouring and reaches
+  full strength (`window._windImpact`, default `6,24`). Console: `setImpact(f,l)` / `setImpact()`.
+  Below the floor the whole view is neutral slate on purpose — raise it if the dial lights up over
+  nothing, lower it if it stays too quiet. The hub's **Eager / Reserved** chips are these.
 - `?wind=spd,dir[,gust[,twist[,spread]]]` — force the **full-screen wind compass**'s reading
   (`window._windTest`, the sibling of Play's `_playWindTest`), e.g. `?wind=34,215,58,34,52` is a
   swirling SW gale. Console: `setWind(spd,dir,gust,twist,spread)` drives it with no reload;

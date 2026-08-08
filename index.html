@@ -6566,6 +6566,22 @@ function wcComponents(fromDir, aimBrg, spd){
   return { d, help, cross, tag, cls,
            crossTxt: cross > 0.26 * spd ? 'left → right' : cross < -0.26 * spd ? 'right → left' : '' };
 }
+// How much this wind actually CHANGES the shot, 0..1, from the components it resolves into.
+//
+// The reason this exists: a dial that is fully lit at 6 km/h has nothing left to say at 30, so
+// every reading looks equally urgent and none of them stands out. Emphasis has to be earned. Below
+// about 6 km/h of effective wind — along the line or across it — you don't change club, so the
+// view stays neutral; it reaches full strength by 24 km/h, which is genuinely a club or two.
+// Both ends are tunable on a phone (?impact=floor,full / setImpact) because where "worth
+// reacting to" begins is a golfer's judgement, not a number that can be derived.
+// Uses the LARGER of the head/tail and cross components, because a pure crosswind moves the ball
+// just as much as a headwind does even though it barely touches carry.
+function wcImpact(help, cross, floor = 6, full = 24){
+  if(help == null || cross == null || !isFinite(help) || !isFinite(cross)) return 0;
+  const eff = Math.max(Math.abs(help), Math.abs(cross));
+  if(!(full > floor)) return eff > floor ? 1 : 0;
+  return Math.max(0, Math.min(1, (eff - floor) / (full - floor)));
+}
 // Same conservative model as the Play rangefinder's plays-like (per-mph fractions),
 // expressed as a percentage of carry. + = plays longer.
 function wcPlaysPct(helpKmh, headF = 0.007, tailF = 0.004){
@@ -6598,14 +6614,14 @@ function _wcInjectCSS(){
   const s = document.createElement('style'); s.id = 'wc2-css';
   s.textContent = `
   #wind-panel{position:fixed;inset:0;z-index:1600;display:none;flex-direction:column;color:var(--tx);touch-action:manipulation;overscroll-behavior:contain;
-    background:radial-gradient(120% 85% at 50% 0%,var(--wcWash,rgba(22,224,163,.13)),transparent 62%),radial-gradient(130% 100% at 50% 8%,#0d1c26,#050a11 62%,#03060b);
+    background:radial-gradient(120% 85% at 50% 0%,var(--wcWash,transparent),transparent 62%),radial-gradient(130% 100% at 50% 8%,#111820,#06090f 62%,#04060a);
     transition:background .45s ease;}
   #wind-panel.on{display:flex;}
   .wc2-top{display:flex;align-items:center;gap:9px;padding:calc(env(safe-area-inset-top,0px) + 12px) 13px 6px;flex:none;}
-  .wc2-title{font-family:var(--sans);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--wcTone,#e9f7f2);transition:color .28s ease;}
+  .wc2-title{font-family:var(--sans);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap;color:#dbe6ec;}
   .wc2-place{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1;}
-  .wc2-place b{color:var(--wcTone,#7ee0c0);font-weight:700;transition:color .28s ease;}
-  .wc2-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(16,32,42,.85);border:1px solid var(--wcA30,rgba(110,200,180,.28));color:var(--tx2);font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;transition:border-color .28s ease;}
+  .wc2-place b{color:#b9ccd6;font-weight:700;}
+  .wc2-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(20,28,36,.85);border:1px solid rgba(160,182,196,.24);color:var(--tx2);font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
   .wc2-btn:active{transform:scale(.92);}
   .wc2-btn.cool{opacity:.4;}
   .wc2-btn.busy{animation:wcSpin 1s linear infinite;}
@@ -6630,6 +6646,7 @@ function _wcInjectCSS(){
   /* One variable paints the dial, so recolouring as you turn is a style write, not a rebuild. */
   #wc2-rose .wcTF{fill:var(--wcTone,#16e0a3);transition:fill .28s ease;}
   #wc2-rose .wcTS{stroke:var(--wcTone,#16e0a3);transition:stroke .28s ease;}
+  #wc2-rose .wcRing{opacity:calc(.22 + .45 * var(--wcInt,0));}
   /* The HUD lives inside the rose's hub, so it's sized off the ROSE (--wcR, set by _wcFit),
      not the viewport: a 152px rose on a small phone and a 374px one on a big phone both keep
      the number inside the disc. Below ~210px the hub can't hold five lines, so .wc2-tight
@@ -6637,7 +6654,7 @@ function _wcInjectCSS(){
   .wc2-hud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1;max-width:46%;}
   .wc2-spd{font-family:var(--mono);font-weight:700;font-size:clamp(30px,calc(var(--wcR,360px) * .175),66px);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.75);transition:color .28s ease;}
   .wc2-unit{font-family:var(--mono);font-size:clamp(7px,calc(var(--wcR,360px) * .027),10px);letter-spacing:.18em;color:var(--tx3);margin-top:3px;}
-  .wc2-from{font-family:var(--mono);font-size:clamp(9px,calc(var(--wcR,360px) * .033),12.5px);font-weight:700;color:#cfe6df;margin-top:7px;text-shadow:0 1px 8px rgba(0,0,0,.8);white-space:nowrap;}
+  .wc2-from{font-family:var(--mono);font-size:clamp(9px,calc(var(--wcR,360px) * .033),12.5px);font-weight:700;color:#dce6ec;margin-top:7px;text-shadow:0 1px 8px rgba(0,0,0,.8);white-space:nowrap;}
   .wc2-gust{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;white-space:nowrap;}
   .wc2-bft{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--tx3);margin-top:4px;text-transform:uppercase;line-height:1.3;}
   .wc2-tight .wc2-gust,.wc2-tight .wc2-bft{display:none;}
@@ -6659,21 +6676,25 @@ function _wcInjectCSS(){
   .wc2-swirl b.swirl{color:#ff6b5c;border-color:rgba(255,107,92,.5);background:rgba(255,77,77,.14);animation:wcThrob 1.9s ease-in-out infinite;}
   @keyframes wcThrob{0%,100%{box-shadow:0 0 0 0 rgba(255,77,77,0);}50%{box-shadow:0 0 14px 2px rgba(255,77,77,.4);}}
   .wc2-swirl i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;min-width:0;}
-  .wc2-aim{flex:none;margin:0 11px;background:rgba(6,14,20,.72);border:1px solid var(--wcA30,rgba(110,200,180,.25));border-radius:13px;padding:8px 13px;display:flex;align-items:center;justify-content:center;gap:11px;-webkit-tap-highlight-color:transparent;}
+  .wc2-aim{flex:none;margin:0 11px;background:rgba(10,14,20,.72);border:1px solid rgba(160,182,196,.2);border-radius:13px;padding:9px 13px;display:flex;align-items:center;justify-content:center;gap:11px;-webkit-tap-highlight-color:transparent;}
   .wc2-aim:active{transform:scale(.985);}
-  .wc2-aim .t{font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.08em;flex:none;}
-  .wc2-aim .t.help{color:#16e0a3;} .wc2-aim .t.hurt{color:#ff6b5c;} .wc2-aim .t.cross{color:#ffc233;}
+  .wc2-aim .t{font-family:var(--mono);font-size:15px;font-weight:800;letter-spacing:.06em;flex:none;line-height:1.15;}
+  .wc2-tight .wc2-aim .t{font-size:13px;}
   .wc2-aim{transition:border-color .28s ease,box-shadow .28s ease,background .28s ease;}
-  .wc2-aim.help{border-color:rgba(22,224,163,.5);background:rgba(22,224,163,.09);}
-  .wc2-aim.cross{border-color:rgba(255,194,51,.5);background:rgba(255,194,51,.09);}
-  /* Into the wind is the one that costs you a club, so it is the one that is loud. */
-  .wc2-aim.hurt{border-color:rgba(255,77,77,.62);background:rgba(255,77,77,.13);box-shadow:0 0 18px rgba(255,77,77,.22);}
+  /* One rule, driven by the tone and its strength — so the bar is a plain grey line in a wind
+     that changes nothing, and a lit panel in one that costs you a club. */
+  .wc2-aim.toned{border-color:var(--wcA30);background:var(--wcA10);
+    box-shadow:0 0 calc(22px * var(--wcInt,0)) var(--wcA18);}
+  .wc2-aim.toned .t{color:var(--wcTone);}
+  .wc2-quiet .wc2-aim .t{color:#9fb3bf;}
   .wc2-aim .s{font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;text-align:right;min-width:0;}
   .wc2-aim.locked{border-color:rgba(255,210,74,.6);box-shadow:0 0 14px rgba(255,210,74,.22);}
-  .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--tx3);background:rgba(6,14,20,.7);border:1px solid var(--wcA18,rgba(110,200,180,.18));border-radius:9px;padding:5px 8px;pointer-events:none;}
+  .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--tx3);background:rgba(10,14,20,.7);border:1px solid rgba(160,182,196,.16);border-radius:9px;padding:5px 8px;pointer-events:none;}
   .wc2-rungs{flex:none;display:flex;gap:7px;padding:8px 11px 2px;}
-  .wc2-rung{flex:1;background:rgba(10,22,30,.8);border:1px solid var(--wcA18,rgba(110,200,180,.16));border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
-  .wc2-rung.primary{border-color:currentColor;background:rgba(14,34,42,.9);box-shadow:0 0 16px -6px currentColor;}
+  .wc2-rung{flex:1;background:rgba(14,19,26,.8);border:1px solid rgba(160,182,196,.14);border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
+  .wc2-rung.primary{border-color:currentColor;background:rgba(18,24,32,.9);box-shadow:0 0 calc(18px * var(--wcInt,0)) -6px currentColor;}
+  /* Nothing worth reacting to: let the whole ladder sit back rather than glow at you. */
+  .wc2-quiet .wc2-rung{opacity:.82;}
   .wc2-rung .z{font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--tx3);}
   .wc2-rung{transition:color .28s ease;}
   .wc2-rung .v{font-family:var(--mono);font-size:19px;font-weight:700;color:inherit;line-height:1.15;}
@@ -6681,7 +6702,7 @@ function _wcInjectCSS(){
   .wc2-rung svg{display:block;margin:1px auto 0;}
   .wc2-rung .est{position:absolute;top:5px;right:6px;font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;color:var(--tx3);opacity:.75;}
   .wc2-air{flex:none;display:flex;gap:7px;padding:5px 11px 0;font-family:var(--mono);font-size:9.5px;color:var(--tx3);}
-  .wc2-air span{flex:1;background:rgba(10,22,30,.6);border:1px solid var(--wcA10,rgba(110,200,180,.12));border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;transition:border-color .28s ease;}
+  .wc2-air span{flex:1;background:rgba(14,19,26,.6);border:1px solid rgba(160,182,196,.12);border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .wc2-air b{color:var(--tx2);font-weight:700;}
   /* Own semantics, not the aim tone — see the render comment. */
   .wc2-air span.ok b{color:#9fe8cf;} .wc2-air span.ok{border-color:rgba(159,232,207,.22);}
@@ -6689,9 +6710,12 @@ function _wcInjectCSS(){
   .wc2-air span.bad b{color:#ff7a6b;} .wc2-air span.bad{border-color:rgba(255,122,107,.38);}
   .wc2-air span.thin b{color:#ffcf6b;} .wc2-air span.thin{border-color:rgba(255,207,107,.32);}
   .wc2-air span.dense b{color:#8fc4ff;} .wc2-air span.dense{border-color:rgba(143,196,255,.32);}
-  .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.4;text-align:center;}
+  .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9px;color:#6c7c88;line-height:1.4;text-align:center;}
   .wc2-note b{color:#cfe6df;font-weight:700;}
-  .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(8,20,26,.96);border:1px solid rgba(110,200,180,.4);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  .wc2-key{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin-bottom:6px;}
+  .wc2-key .k{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:#94a8b4;}
+  .wc2-key .k i{width:8px;height:8px;border-radius:50%;flex:none;}
+  .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(12,18,26,.96);border:1px solid rgba(160,182,196,.35);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
   .wc2-toast.show{opacity:1;}
   @media (prefers-reduced-motion: reduce){.wc2-swirl b.swirl{animation:none;} .wc2-btn.busy{animation:none;}}
   `;
@@ -6860,11 +6884,23 @@ function _wcAimBrg(){
 // THIS shot" — and only falls back to strength bands when there isn't. Off the same thresholds as
 // the hole-map compass, so the two never disagree.
 // window._windAimCol = false restores pure strength colouring.
-function _wcTone(dir, spd){
-  if(window._windAimCol === false) return _wcCol(spd);
-  const cls = wcAimCls(dir, _wcAimBrg());
-  return cls ? WC_TONE[cls] : _wcCol(spd);
+// The tone, and how strongly to show it. Neutral until the wind is worth reacting to — that is
+// what lets a real headwind stand out, since a page that is already teal at 6 km/h has nowhere
+// left to go. window._windAimCol = false restores pure strength colouring.
+function _wcToneOf(dir, spd){
+  if(window._windAimCol === false) return { col: _wcCol(spd), int: 1 };
+  const aim = _wcAimBrg(), cls = wcAimCls(dir, aim);
+  if(!cls) {
+    // No line to judge against: fall back to strength, and stay quiet in genuinely light air.
+    const int = Math.max(0, Math.min(1, ((spd || 0) - 6) / 18));
+    return { col: int > 0 ? _wcCol(spd) : WC_TONE.none, int };
+  }
+  const c = wcComponents(dir, aim, spd);
+  const imp = Array.isArray(window._windImpact) ? window._windImpact : [6, 24];
+  const int = c ? wcImpact(c.help, c.cross, imp[0], imp[1]) : 0;
+  return { col: int > 0 ? WC_TONE[cls] : WC_TONE.none, int };
 }
+function _wcTone(dir, spd){ return _wcToneOf(dir, spd).col; }
 // True when the tones currently mean "vs your line" rather than "how strong".
 function _wcAimToned(){ return window._windAimCol !== false && _wcAimBrg() != null; }
 
@@ -6887,13 +6923,13 @@ function _wcRoseSvg(v){
     const r1 = R, r2 = R - len, rad = (a - 90) * Math.PI / 180;
     ticks.push('<line x1="' + (C + Math.cos(rad) * r1).toFixed(1) + '" y1="' + (C + Math.sin(rad) * r1).toFixed(1) +
       '" x2="' + (C + Math.cos(rad) * r2).toFixed(1) + '" y2="' + (C + Math.sin(rad) * r2).toFixed(1) +
-      '" stroke="rgba(190,225,215,' + (card ? 0.8 : major ? 0.45 : 0.2) + ')" stroke-width="' + (card ? 2.2 : major ? 1.3 : 0.8) + '" stroke-linecap="round"/>');
+      '" stroke="rgba(196,214,226,' + (card ? 0.8 : major ? 0.45 : 0.2) + ')" stroke-width="' + (card ? 2.2 : major ? 1.3 : 0.8) + '" stroke-linecap="round"/>');
   }
   const letters = [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]].map(([t, a]) => {
     const rad = (a - 90) * Math.PI / 180, r = R - 22;
     return '<text x="' + (C + Math.cos(rad) * r).toFixed(1) + '" y="' + (C + Math.sin(rad) * r + 5).toFixed(1) +
       '" text-anchor="middle" font-family="var(--mono)" font-size="' + (a % 90 === 0 ? 19 : 12) + '" font-weight="' + (a % 90 === 0 ? 800 : 600) +
-      '" fill="' + (a === 0 ? '#ff8a8a' : a % 90 === 0 ? 'rgba(233,247,242,.9)' : 'rgba(190,225,215,.5)') + '">' + t + '</text>';
+      '" fill="' + (a === 0 ? '#ff8a8a' : a % 90 === 0 ? 'rgba(236,244,249,.9)' : 'rgba(196,214,226,.5)') + '">' + t + '</text>';
   }).join('');
 
   // Variability wedge: the span the 10 m direction has actually covered over the swirl
@@ -6919,13 +6955,14 @@ function _wcRoseSvg(v){
     const hero = i === 0;
     const at = (r) => [C + Math.cos(rad) * r, C + Math.sin(rad) * r];
     const nx = -Math.sin(rad), ny = Math.cos(rad);
-    const c = 'rgba(203,232,222,.6)';                    // ghost rungs stay ghosts; the hero is toned
+    const c = 'rgba(206,220,230,.55)';                   // ghost rungs stay ghosts; the hero is toned
     const reach = REACH[i], hl = hero ? 32 : 13, hb = hero ? 12 + str * 8 : 5.5;
     const [hx, hy] = at(reach), [bx, by] = at(reach - hl), [tx, ty] = at(96);
     const head = 'M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' L' + (bx + nx * hb).toFixed(1) + ',' + (by + ny * hb).toFixed(1) +
                  ' L' + (bx - nx * hb).toFixed(1) + ',' + (by - ny * hb).toFixed(1) + ' Z';
     // Ghost labels ride perpendicular to their own spoke so they never sit on a shaft
-    const lbl = hero ? '' : '<text x="' + (hx + nx * 14).toFixed(1) + '" y="' + (hy + ny * 14 + 3.4).toFixed(1) +
+    const off = i === 1 ? 15 : -15;                      // opposite sides so 25 m and 50 m never collide
+    const lbl = hero ? '' : '<text x="' + (hx + nx * off).toFixed(1) + '" y="' + (hy + ny * off + 3.4).toFixed(1) +
       '" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="rgba(203,232,222,.55)">' + p.z + 'm</text>';
     return '<g' + (hero ? ' filter="url(#wcGlow)"' : ' opacity=".9"') + '>' +
       '<line' + (hero ? ' class="wcTS"' : '') + ' x1="' + tx.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
@@ -6938,7 +6975,7 @@ function _wcRoseSvg(v){
       '<feGaussianBlur stdDeviation="' + (2.5 + str * 5).toFixed(1) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
       '<radialGradient id="wcHub" cx="50%" cy="42%" r="62%"><stop offset="0%" stop-color="rgba(14,38,46,.92)"/><stop offset="100%" stop-color="rgba(4,10,16,.96)"/></radialGradient></defs>' +
     '<circle cx="200" cy="200" r="' + (R + 6) + '" fill="rgba(4,10,16,.42)"/>' +
-    '<circle class="wcTS" cx="200" cy="200" r="' + R + '" fill="none" stroke-width="1.6" opacity=".55"/>' +
+    '<circle class="wcTS wcRing" cx="200" cy="200" r="' + R + '" fill="none" stroke-width="1.6"/>' +
     '<g id="wc2-rotor" transform="rotate(0 200 200)">' + wedge + ticks.join('') + letters + arrows + '</g>' +
     '<circle cx="200" cy="200" r="92" fill="url(#wcHub)" stroke="rgba(190,225,215,.16)" stroke-width="1"/>' +
     '</svg>';
@@ -7054,20 +7091,23 @@ const _wcRGB = hex => { const n = parseInt(hex.slice(1), 16); return [(n >> 16) 
 function _wcApplyTones(){
   const panel = document.getElementById('wind-panel'); if(!panel || !_wc || !_wc.view) return;
   const v = _wc.view;
-  const tone = _wcTone(v.d10, v.v10);
+  const tone = _wcToneOf(v.d10, v.v10);
   // The chrome — borders, the title, the hairlines, the wash behind the whole thing — runs off
   // the same tone as the dial. It was a fixed teal, which made the page read green no matter what
   // the wind was doing to you: the one part that mattered was in colour and everything framing it
   // was arguing with it. Now the page itself is the verdict, and you get it from the doorway.
-  const [r, g, b] = _wcRGB(tone);
-  const a = f => 'rgba(' + r + ',' + g + ',' + b + ',' + f + ')';
-  panel.style.setProperty('--wcTone', tone);
-  panel.style.setProperty('--wcA30', a(0.3));
-  panel.style.setProperty('--wcA18', a(0.18));
-  panel.style.setProperty('--wcA10', a(0.1));
-  panel.style.setProperty('--wcWash', a(0.13));
+  const [r, g, b] = _wcRGB(tone.col);
+  const a = f => 'rgba(' + r + ',' + g + ',' + b + ',' + (Math.round(f * 1000) / 1000) + ')';
+  const k = tone.int;                       // 0 = this wind changes nothing, 1 = a club or two
+  panel.style.setProperty('--wcTone', tone.col);
+  panel.style.setProperty('--wcInt', k.toFixed(3));
+  panel.style.setProperty('--wcA30', a(0.16 + 0.34 * k));
+  panel.style.setProperty('--wcA18', a(0.1 + 0.24 * k));
+  panel.style.setProperty('--wcA10', a(0.06 + 0.14 * k));
+  panel.style.setProperty('--wcWash', a(0.03 + 0.15 * k));
+  panel.classList.toggle('wc2-quiet', k < 0.02);
   const spd = document.getElementById('wc2-spd');
-  if(spd) spd.style.color = _wcTone(v.d10, v.v10);
+  if(spd) spd.style.color = tone.col;
   const head = (_wc.hasHeading ? _wc.heading : 0) || 0;
   const rungs = document.getElementById('wc2-rungs');
   if(rungs) for(const t of rungs.children){
@@ -7097,7 +7137,7 @@ function _wcPaintAim(){
     typeof window._playWindHead === 'number' ? window._playWindHead : 0.007,
     typeof window._playWindTail === 'number' ? window._playWindTail : 0.004);
   const pctTxt = pct == null ? '' : (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% carry';
-  el.className = 'wc2-aim ' + c.cls + (_wc.aimLock != null ? ' locked' : '');
+  el.className = 'wc2-aim toned ' + c.cls + (_wc.aimLock != null ? ' locked' : '');
   el.innerHTML = '<div class="t ' + c.cls + '">' + c.tag + ' ' + Math.abs(c.help).toFixed(0) +
       (Math.abs(c.cross) >= 1 ? ' · ' + (c.cross > 0 ? 'L→R ' : 'R→L ') + Math.abs(c.cross).toFixed(0) : '') + '</div>' +
     '<div class="s">aiming ' + wcPoint16(aim) + ' ' + String(Math.round(aim)).padStart(3, '0') + '° · plays ' + pctTxt +
@@ -7178,12 +7218,18 @@ function _wcRender(){
   _wcApplyTones();
   _wcFit();          // AFTER the rows are populated — see _wcFit
   const note = document.getElementById('wc2-note');
-  // Say which question the colour is answering — it genuinely changes when there's no compass,
-  // and a red dial meaning "strong" reads very differently from one meaning "into your face".
-  const toneNote = _wcAimToned()
-    ? 'Colour is the wind <b>against the line you\'re pointing down</b> — teal helping, amber across, red into your face. Point the phone at your target; tap the aim bar to lock it.'
-    : 'Colour is wind <b>strength</b> here — with no compass on this device there is no line to judge against.';
-  if(note) note.innerHTML = toneNote + ' Open-Meteo model wind at your coordinates — 10 m and 80 m are modelled, 25 m and 50 m are fitted along the shear profile between them (α ' + (v.prof[0].alpha != null ? v.prof[0].alpha.toFixed(2) : '–') + '). It is a ~10 km-grid forecast, not an anemometer on this tee: read it for the pattern, trust your eyes for the gust. Refreshes on the hour.';
+  // A three-swatch key beats a paragraph explaining it, and it was the paragraph — six lines of
+  // coloured prose — that made the page read as one wall of green. The provenance stays, because
+  // this is a model forecast and the view has to say so, but it is dim and it is one line.
+  const key = _wcAimToned()
+    ? '<span class="k"><i style="background:#16e0a3"></i>helping</span>' +
+      '<span class="k"><i style="background:#ffc233"></i>across</span>' +
+      '<span class="k"><i style="background:#ff4d4d"></i>into</span>' +
+      '<span class="k"><i style="background:#7fa8bd"></i>nothing in it</span>'
+    : '<span class="k"><i style="background:#7fa8bd"></i>no compass here — colour is strength, not your line</span>';
+  if(note) note.innerHTML = '<div class="wc2-key">' + key + '</div>' +
+    'Open-Meteo model at your coordinates, not an anemometer on this tee — 25 m and 50 m fitted between the modelled 10 m and 80 m (α ' +
+    (v.prof[0].alpha != null ? v.prof[0].alpha.toFixed(2) : '–') + '). Refreshes hourly.';
 
   _wcPaintAim();
 }
@@ -7297,6 +7343,20 @@ function closeWindCompass(){
   const n = parseFloat(q);
   if(isFinite(n)) window._windAim = n;
 })();
+// ?impact=FLOOR,FULL tunes where the view starts caring and where it maxes out (km/h of
+// effective wind). Raise the floor if it lights up over nothing; lower it if it stays too quiet.
+(function initImpactTest(){
+  const q = new URLSearchParams(location.search).get('impact');
+  if(!q) return;
+  const n = q.split(',').map(x => parseFloat(x));
+  if(isFinite(n[0]) && isFinite(n[1])) window._windImpact = [n[0], n[1]];
+})();
+// Console helper: setImpact(floor,full) tunes it live; setImpact() restores the default.
+window.setImpact = (floor, full) => {
+  if(floor == null) delete window._windImpact; else window._windImpact = [+floor, +full];
+  if(_wc) _wcRender();
+  return window._windImpact ? window._windImpact.join(' → ') + ' km/h' : 'default 6 → 24 km/h';
+};
 // Console helper: setAim(brg) forces the aim live; setAim() hands it back to the phone.
 window.setAim = (brg) => {
   if(brg == null) delete window._windAim; else window._windAim = +brg;

@@ -113,6 +113,32 @@ export const tests = {
     eq(W.wcAimCls(null, 0), null, 'no wind direction → no verdict');
   },
 
+  'impact: emphasis is earned — nothing wind reads as nothing'(){
+    // The screenshot that prompted this: 6 km/h from the east, playing WNW. The app correctly
+    // called it DOWNWIND 5 with 3 across — and lit the whole page teal for a 1% carry change.
+    const c = W.wcComponents(90, 297, 6);
+    eq(W.wcImpact(c.help, c.cross), 0, 'a 6 km/h helping wind must not light the view up');
+    // Same line, winds that do change the club.
+    ok(W.wcImpact(-12, 0) > 0.2, '12 km/h into your face should register');
+    ok(W.wcImpact(-24, 0) >= 1, '24 km/h into your face is full strength');
+    ok(W.wcImpact(-40, 0) === 1, 'and it clamps rather than overshooting');
+    // A pure crosswind barely touches carry but moves the ball just as far, so it counts too.
+    eq(W.wcImpact(0, 20), W.wcImpact(20, 0), 'cross and head of equal size matter equally');
+    // Monotonic between the two ends.
+    let prev = -1;
+    for(const v of [0, 6, 9, 12, 18, 24, 30]){ const i = W.wcImpact(-v, 0); ok(i >= prev, 'impact must not go backwards at ' + v); prev = i; }
+    // No reading is never "loud".
+    eq(W.wcImpact(null, 0), 0); eq(W.wcImpact(NaN, 0), 0); eq(W.wcImpact(5, null), 0);
+  },
+
+  'impact thresholds are tunable, and a degenerate range still behaves'(){
+    eq(W.wcImpact(-10, 0, 10, 30), 0, 'raising the floor above the wind silences it');
+    ok(W.wcImpact(-10, 0, 3, 18) > 0.4, 'lowering the floor makes the same wind speak up');
+    // floor >= full would divide by zero or go negative; it degrades to a hard switch instead.
+    eq(W.wcImpact(-10, 0, 12, 12), 0, 'below a collapsed range → nothing');
+    eq(W.wcImpact(-20, 0, 12, 12), 1, 'above a collapsed range → everything');
+  },
+
   'wcComponents agrees with wcAimCls, so the tag and the colour cannot diverge'(){
     for(const from of [0, 37, 90, 143, 180, 226, 271, 318]) for(const aim of [0, 55, 180, 300]){
       eq(W.wcComponents(from, aim, 15).cls, W.wcAimCls(from, aim),

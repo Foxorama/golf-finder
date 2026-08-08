@@ -192,6 +192,11 @@
         <button class="chip" data-wind="22,140,34,18,26">Shifty</button>
         <button class="chip" data-wind="34,215,58,34,52">Swirling gale</button>
       </div>
+      <div class="row" id="impactBtns">
+        <button class="chip" data-impact="">&#128207; Impact: default</button>
+        <button class="chip" data-impact="3,18">Eager</button>
+        <button class="chip" data-impact="10,30">Reserved</button>
+      </div>
       <div class="row" id="aimBtns">
         <button class="chip" data-aim="">&#127919; Aim: phone</button>
         <button class="chip" data-aim="into">Into wind</button>
@@ -205,7 +210,10 @@
         pointing down &#8212; <b>teal</b> helping, <b>amber</b> across, <b>red</b> into your face &#8212; which
         normally needs a phone's compass, so the aim chips force that line via
         <code>?aim=</code>/<code>setAim()</code> and are relative to the wind chip you picked.
-        <code>window._windAimCol=false</code> reverts to colouring by strength.</p>
+        <code>window._windAimCol=false</code> reverts to colouring by strength. Colour is also
+        <b>earned</b>: below the impact floor the whole view stays neutral slate, so a wind that
+        changes nothing looks like nothing &#8212; tune where that starts with
+        <code>?impact=floor,full</code>/<code>setImpact()</code>.</p>
     </div>
 
     <!-- DEVICE FRAME (desktop preview only) -->
@@ -293,6 +301,7 @@
     if(state.plays) p.push(state.plays);
     if(state.wind) p.push('wind='+state.wind);
     if(state.aim) p.push('aim='+state.aim);
+    if(state.impact) p.push('impact='+state.impact);
     return 'index.html'+(p.length?'?'+p.join('&'):'');
   }
   function summary(){
@@ -305,6 +314,7 @@
     if(state.plays) s.push('plays-like');
     if(state.wind) s.push('wind '+state.wind.split(',').slice(0,2).join('km/h @ ')+'°');
     if(state.aimRel) s.push('aim '+state.aimRel+(state.aim?' ('+state.aim+'°)':''));
+    if(state.impact) s.push('impact '+state.impact);
     return s.length? s.join('  ·  ') : 'live app (no overrides)';
   }
   function refreshSummary(){ lbSum.innerHTML = '<b>'+summary().replace(/&/g,'&amp;')+'</b>'; }
@@ -409,6 +419,18 @@
     if(!mobile()) whenReady(w=>{ try{ if(typeof w.setAim==='function') w.setAim(a); }catch(e){} });
     refreshSummary();
   }
+  // How much wind it takes before the view colours up at all. The whole page stays neutral slate
+  // below the floor, so this is the control for "it lights up over nothing" / "it never lights up".
+  const impactBtns=document.getElementById('impactBtns');
+  impactBtns.querySelectorAll('[data-impact]').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.getAttribute('data-impact');
+    state.impact = v || null;
+    lightOne(impactBtns,b); refreshSummary();
+    setBadge(v?('impact '+v):'impact default');
+    if(!mobile()) whenReady(w=>{ try{ if(typeof w.setImpact!=='function') return;
+      if(!v){ w.setImpact(); return; } const n=v.split(',').map(Number); w.setImpact(n[0],n[1]); }catch(e){} });
+  }));
+
   aimBtns.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{
     state.aimRel = b.getAttribute('data-aim') || null;
     lightOne(aimBtns,b);
