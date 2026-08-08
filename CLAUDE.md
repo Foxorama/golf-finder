@@ -427,8 +427,11 @@ call it done. They map to the three hats the user keeps asking for:
   third and biggest of the app's compasses, after the day-hero rose and the Play hole-map
   dial. It **replaced the 🏆 hole-in-one button on the main header** (an ace is too rare to
   hold prime real estate); the ace tracker now lives in the **📊 Rounds & Stats header** (its
-  `play-hio-btn` is deliberately *shown* in `historyOnly` mode) and, mid-round, on the Play
-  header. **Data is its own fetch, NOT `weatherCache`:** one Open-Meteo call at the player's
+  `play-hio-btn` is deliberately *shown* in `historyOnly` mode). It is **no longer on the Play
+  header mid-round** — that slot is the 🧭 wind compass (`play-wind-btn`), because an ace is a
+  once-a-decade event that `playSyncAce` auto-registers from the scorecard anyway, whereas the wind
+  is a question you ask on most shots. The compass being *inside* the Play sheet also matters after
+  last light, when the day-only `#btn-wind` header button is hidden by `body.night`. **Data is its own fetch, NOT `weatherCache`:** one Open-Meteo call at the player's
   **exact GPS** (the rest of the app buckets to region zones) pulling **15-minute-resolution
   wind at 10 m AND 80 m**, 12 h of hourly, and ~2 h of history — trimmed with
   `past_hours`/`forecast_hours`/`past_minutely_15`/`forecast_minutely_15` to about **2.6 KB
@@ -483,6 +486,27 @@ call it done. They map to the three hats the user keeps asking for:
   drive `_wcFlowTick()` by hand (headless rAF is unreliable) and read `_wc.view` / element
   rects. The rose's *feel* — does north read as north, is the smoothing right — can only be
   judged on a real phone (IDEAS-GOLF `G-014`).
+- **"Currently playing" resume bar (`renderResumeBar`, `#resume-bar`).** A round already survives
+  in its draft (`gf_round_draft_<slug>`) until you save it, but the only way back in was to find the
+  course in the day list and tap Play — **impossible after last light**, when the app flips to the
+  night sky and the course list is gone, which is exactly when you're most likely to be finishing a
+  round. So a bar sits **above the weather hero**, before `.loc-row`, and is deliberately **not
+  gated on `body.night`** (unlike the day-only 🎒/📊/🧭 header buttons). `_activeRoundDraft()` scans
+  every `gf_round_draft_*`, keeps only drafts with **real progress** (a score, a putt or a marked
+  shot — an opened-but-never-played course must not nag), resolves the slug back to its course via
+  `_playCourseForSlug` (layout slugs are `<courseSlug>-<key>` and course slugs contain hyphens, so
+  it matches real keys rather than splitting), and returns the most recently **started** one. Under
+  14 h it reads *Currently playing* with a pulsing dot; older it's an *Unfinished round* — both jump
+  straight in. ✕ dismisses that specific draft (`gf_resume_dismissed = slug@startedAt`) so an
+  abandoned round can't pin a banner forever; resuming clears the dismissal. It renders **before**
+  `render()`'s daylight guard (offline, with no sun data, is still a time you want back in) and
+  re-renders on `closePlay`/`playSaveRound`; a `_sig` check stops the 60 s tick rewriting identical
+  markup and restarting the dot's pulse. Logic is sliced by `RESUME-CORE` markers and unit-tested in
+  `tests/resume.test.mjs`.
+- **Overlay stacking + `_restoreBodyScroll()`.** The wind compass, My Bag, the ace tracker, the
+  aurora globe and the orrery all open **over** the Play sheet, so closing the top one must not
+  unlock the page behind it. Every close path calls `_restoreBodyScroll()`, which re-locks
+  `body.overflow` when any of them is still open instead of blindly clearing it.
 - **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
   same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
   course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent
