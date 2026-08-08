@@ -1,8 +1,8 @@
 // Sync guard for the test/demo hub (test.html).
 //
 // The hub never duplicates app logic — it drives the REAL app purely through its public
-// test hooks: URL params (?time/?wx/?loader/?loaderhold/?ldhole/?yorb/?playshead/?playstail),
-// live console helpers (setTime/setWx/toggleCompass) and the loader power-up form classes.
+// test hooks: URL params (?time/?wx/?loader/?loaderhold/?ldhole/?yorb/?playshead/?playstail/?wind),
+// live console helpers (setTime/setWx/setWind/toggleCompass) and the loader power-up form classes.
 // That keeps the hub thin, but it can silently rot: if index.html renames or drops a hook, the
 // hub's button just does nothing — no error, no test failure, until someone notices in person.
 //
@@ -44,14 +44,15 @@ export const tests = {
   'app still honours every URL hook the hub sends'(){
     const i = readIndex();
     for(const tok of ["get('time')", "get('wx')", 'loader=(day|night)', 'loaderhold=1',
-                      'ldhole=(hole|miss)', 'yorb=(ufo|normal)', 'playshead', 'playstail', '_ldForceHole'])
+                      'ldhole=(hole|miss)', 'yorb=(ufo|normal)', 'playshead', 'playstail', '_ldForceHole',
+                      "get('wind')"])
       ok(i.includes(tok), `index.html no longer reads "${tok}" — the hub control that sends it is now dead; update both`);
   },
 
   // The hub also drives the app LIVE (same-origin) via these globals.
   'app still exposes the live console helpers the hub drives'(){
     const i = readIndex();
-    for(const tok of ['function setTime', 'window.setWx=', 'toggleCompass'])
+    for(const tok of ['function setTime', 'window.setWx=', 'toggleCompass', 'window.setWind='])
       ok(i.includes(tok), `index.html no longer defines "${tok}" — the hub's live driving breaks`);
   },
 
@@ -65,7 +66,8 @@ export const tests = {
   // Guard the hub side too: it must still actually emit the hooks it documents.
   'hub still sends the loader/plays hooks it documents'(){
     const h = readHub();
-    for(const tok of ['loader=', 'loaderhold=1', 'ldhole=hole', 'yorb=', 'playshead', 'playstail'])
+    for(const tok of ['loader=', 'loaderhold=1', 'ldhole=hole', 'yorb=', 'playshead', 'playstail',
+                      "'wind='", 'setWind'])
       ok(h.includes(tok), `test.html no longer sends "${tok}"`);
   },
 };

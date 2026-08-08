@@ -168,8 +168,10 @@ body.ptr-pull .app{transition:none;will-change:transform;}
 .loc-ok{color:var(--gg);} .loc-est{color:var(--al);}
 .hdr-btn{background:var(--sur);border:1px solid var(--bdr2);border-radius:18px;width:36px;height:36px;color:var(--tx2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background 0.15s,border-color 0.15s,transform 0.1s;}
 .hdr-btn:hover{background:var(--sur2);border-color:var(--bdr);}
-/* My Bag + hole-in-one are day-only tools — hidden in the night sky-watching view */
-body.night #btn-bag, body.night #btn-hio, body.night #btn-stats{display:none;}
+/* My Bag, stats and the wind compass are day-only tools — hidden in the night sky-watching view.
+   (The 🏆 ace tracker used to sit here too; it now lives in the 📊 Rounds & Stats header, since a
+   hole-in-one is a once-a-lifetime entry that didn't earn permanent real estate on the main screen.) */
+body.night #btn-bag, body.night #btn-wind, body.night #btn-stats{display:none;}
 /* The aurora globe button is the mirror: night-only (it's a sky-watching tool) */
 #btn-aurora{display:none;} body.night #btn-aurora{display:flex;}
 #btn-orrery{display:none;} body.night #btn-orrery{display:flex;}
@@ -1580,7 +1582,7 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
         <button id="btn-aurora" class="hdr-btn" onclick="openAuroraGlobe()" aria-label="Aurora forecast globe">🌌</button>
         <button id="btn-stats" class="hdr-btn" onclick="showStats()" aria-label="Your rounds and stats">📊</button>
         <button id="btn-bag" class="hdr-btn" onclick="showBag()" aria-label="My golf bag">🎒</button>
-        <button id="btn-hio" class="hdr-btn" onclick="showHio()" aria-label="Hole in one tracker">🏆</button>
+        <button id="btn-wind" class="hdr-btn" onclick="openWindCompass()" aria-label="Full-screen wind compass">🧭</button>
       </div>
     </div>
   </div>
@@ -6400,6 +6402,827 @@ async function toggleWindCompass(){
   _dayCompassOn=true;
   if(svg) svg.classList.add('wc-active');
 }
+
+// ══ FULL-SCREEN WIND COMPASS (🧭 header button → openWindCompass) ═══════════
+// The day-hero rose and the Play hole-map compass are glances; this is the whole page.
+// It answers three questions a player standing on a tee actually asks: which way is it
+// blowing, is it steady or swirling, and does it get worse up where the ball flies.
+//
+// Data: ONE Open-Meteo call at the player's exact GPS (not the region zone the rest of
+// the app buckets into) — 15-minute-resolution wind at 10 m AND 80 m, hourly out to 12 h,
+// plus a couple of hours of history so "is it swirling?" has something to measure. The
+// 25 m / 50 m rungs are interpolated along the shear profile fitted between the two
+// modelled levels; the UI says so. It is still a ~10 km-grid model forecast, not an
+// anemometer on this tee — the note at the foot never lets that be forgotten.
+
+/* Pure wind maths: no DOM, no app globals, no fetch, so it's unit-tested straight from Node
+   (tests/wind.test.mjs). Keep anything that touches the page OUTSIDE these markers.
+   WIND-CORE-START */
+const WC_RUNGS = [10, 25, 50];              // the golf-relevant ladder: ball level → wedge apex → driver apex
+const WC_REF_HI = 80;                       // the model's upper wind level, the top anchor of the fitted profile
+function wcAng(a){ return ((a % 360) + 360) % 360; }
+// Signed shortest difference a−b, in (−180, 180]
+function wcAngDiff(a, b){ return ((((a - b) % 360) + 540) % 360) - 180; }
+// Mean of a set of compass bearings (vector mean — a plain average breaks across north)
+function wcCircMean(dirs){
+  let x = 0, y = 0, n = 0;
+  for(const d of dirs){ if(d == null || !isFinite(d)) continue; const r = d * Math.PI / 180; x += Math.cos(r); y += Math.sin(r); n++; }
+  if(!n || (x === 0 && y === 0)) return null;
+  return wcAng(Math.atan2(y, x) * 180 / Math.PI);
+}
+// Circular standard deviation in degrees: sqrt(−2·ln R). 0° = every reading identical,
+// ~30°+ = the wind genuinely can't make up its mind. Caps at ~81° (uniformly random).
+function wcCircSpread(dirs){
+  let x = 0, y = 0, n = 0;
+  for(const d of dirs){ if(d == null || !isFinite(d)) continue; const r = d * Math.PI / 180; x += Math.cos(r); y += Math.sin(r); n++; }
+  if(n < 2) return 0;
+  const R = Math.sqrt(x * x + y * y) / n;
+  if(R >= 1) return 0;
+  if(R <= 1e-6) return 81.03;
+  return Math.min(81.03, Math.sqrt(-2 * Math.log(R)) * 180 / Math.PI);
+}
+// Power-law shear exponent α from the two modelled levels: v(z) = v10·(z/10)^α.
+// Open country sits near 0.14; a rough/treed course runs higher. Clamped because a
+// near-calm v10 makes the ratio explode.
+function wcShear(v10, vHi, zHi = WC_REF_HI){
+  if(v10 == null || vHi == null || !(v10 > 0.5) || !(vHi > 0) || !(zHi > 10)) return 0.14;
+  const a = Math.log(vHi / v10) / Math.log(zHi / 10);
+  return Math.max(0, Math.min(0.6, isFinite(a) ? a : 0.14));
+}
+function wcSpeedAt(z, v10, alpha){
+  if(v10 == null) return null;
+  return v10 * Math.pow(Math.max(1, z) / 10, alpha);
+}
+// Direction veers/backs with height through the friction layer; interpolate the model's
+// own two levels in log-height (the same shape the speed profile uses).
+function wcDirAt(z, d10, dHi, zHi = WC_REF_HI){
+  if(d10 == null) return null;
+  if(dHi == null) return wcAng(d10);
+  const t = Math.max(0, Math.min(1, Math.log(Math.max(1, z) / 10) / Math.log(zHi / 10)));
+  return wcAng(d10 + wcAngDiff(dHi, d10) * t);
+}
+// The whole ladder in one call. `model:true` marks the rungs the API actually returned.
+function wcProfile(v10, d10, vHi, dHi, zHi = WC_REF_HI){
+  const alpha = wcShear(v10, vHi, zHi);
+  return WC_RUNGS.map(z => ({
+    z, alpha,
+    spd: wcSpeedAt(z, v10, alpha),
+    dir: wcDirAt(z, d10, dHi, zHi),
+    model: z === 10
+  }));
+}
+const WC_BEAUFORT = [
+  [1, 'Calm'], [6, 'Light air'], [12, 'Light breeze'], [20, 'Gentle breeze'], [29, 'Moderate breeze'],
+  [39, 'Fresh breeze'], [50, 'Strong breeze'], [62, 'Near gale'], [75, 'Gale'], [89, 'Strong gale'],
+  [103, 'Storm'], [118, 'Violent storm']
+];
+function wcBeaufort(kmh){
+  if(kmh == null || !isFinite(kmh)) return { n: null, name: '–' };
+  for(let i = 0; i < WC_BEAUFORT.length; i++) if(kmh < WC_BEAUFORT[i][0]) return { n: i, name: WC_BEAUFORT[i][1] };
+  return { n: 12, name: 'Hurricane' };
+}
+function wcPoint16(deg){
+  if(deg == null || !isFinite(deg)) return '–';
+  return ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'][Math.round(wcAng(deg) / 22.5) % 16];
+}
+// Is it swirling? Three independent tells, weighted:
+//   • timeSpread — how much the direction has wandered over the last/next couple of hours
+//   • twist      — how far the 50 m wind sits off the 10 m wind (shear veer)
+//   • gustFactor — gust ÷ mean; anything past ~1.5 is genuinely turbulent air
+// Under ~4 km/h none of it means anything, so it short-circuits to CALM.
+function wcSwirl(o){
+  const spd = o && o.spd != null ? o.spd : null;
+  // No wind reading = no verdict. Defaulting to "STEADY" here would invent confidence out of
+  // an offline fetch, which is exactly the kind of thing a player would act on.
+  if(spd == null) return { score: 0, tag: 'NO READING', cls: 'none', why: 'Waiting for a wind reading.' };
+  if(spd < 4) return { score: 0, tag: 'CALM', cls: 'calm', why: 'Barely a breath — play it straight.' };
+  const ts = Math.max(0, o.timeSpread || 0), tw = Math.abs(o.twist || 0);
+  const gf = o.gustFactor && isFinite(o.gustFactor) ? o.gustFactor : 1;
+  const cl = v => Math.max(0, Math.min(1, v));
+  const sT = cl(ts / 45), sW = cl(tw / 40), sG = cl((gf - 1.35) / 0.85);
+  const score = cl(sT * 0.5 + sW * 0.22 + sG * 0.28);
+  // Name the loudest signal, so the copy tells you WHY it's unsettled
+  const why = sT >= sW && sT >= sG ? 'direction keeps shifting hour to hour'
+            : sG >= sW ? 'gusting well above the mean'
+            : 'the wind twists as it climbs';
+  if(score < 0.26) return { score, tag: 'STEADY', cls: 'steady', why: 'Holding its line — trust the number.' };
+  if(score < 0.55) return { score, tag: 'SHIFTY', cls: 'shifty', why: 'Slightly unsettled — ' + why + '.' };
+  return { score, tag: 'SWIRLING', cls: 'swirl', why: 'Unreliable — ' + why + '. Club for the gust.' };
+}
+// Wind resolved against a bearing you're aiming at. Mirrors windVsHole's thresholds so the
+// full-screen compass and the hole map never disagree about what "crosswind" means.
+// help > 0 = downwind (helping); cross > 0 = pushing left → right.
+function wcComponents(fromDir, aimBrg, spd){
+  if(fromDir == null || aimBrg == null || spd == null) return null;
+  const d = wcAngDiff(fromDir + 180, aimBrg);          // 0 = blowing straight at your target
+  const help = Math.cos(d * Math.PI / 180) * spd, cross = Math.sin(d * Math.PI / 180) * spd;
+  const u = Math.cos(d * Math.PI / 180);
+  const tag = u > 0.34 ? 'DOWNWIND' : u < -0.34 ? 'INTO WIND' : 'CROSSWIND';
+  const cls = u > 0.34 ? 'help' : u < -0.34 ? 'hurt' : 'cross';
+  return { d, help, cross, tag, cls,
+           crossTxt: cross > 0.26 * spd ? 'left → right' : cross < -0.26 * spd ? 'right → left' : '' };
+}
+// Same conservative model as the Play rangefinder's plays-like (per-mph fractions),
+// expressed as a percentage of carry. + = plays longer.
+function wcPlaysPct(helpKmh, headF = 0.007, tailF = 0.004){
+  if(helpKmh == null || !isFinite(helpKmh)) return null;
+  const mph = helpKmh / 1.60934;
+  const frac = mph < 0 ? (-mph) * headF : -(mph) * tailF;
+  return Math.max(-40, Math.min(40, frac * 100));
+}
+// Air density vs ISA sea level (15 °C, 1013.25 hPa, dry) → an estimated carry change.
+// Thin air = less drag = more carry, but less LIFT too, which cancels part of it — so carry
+// tracks only about HALF the density fraction, not all of it. 0.5 sits between the two field
+// rules of thumb this has to satisfy at once (~2 yd per 10 °F, ~1.5–2% per 1000 ft of
+// elevation); surface_pressure already carries the course's altitude, so both fall out of the
+// one number. Deliberately conservative and capped — it's a nudge, not a yardage.
+function wcAirCarryPct(tempC, pressHpa, rh){
+  if(tempC == null || pressHpa == null || !isFinite(tempC) || !isFinite(pressHpa)) return null;
+  const T = tempC + 273.15;
+  const pv = ((rh == null || !isFinite(rh)) ? 0 : rh / 100) * 6.1078 * Math.pow(10, (7.5 * tempC) / (tempC + 237.3));
+  const rho = ((pressHpa - pv) * 100) / (287.058 * T) + (pv * 100) / (461.495 * T);
+  if(!(rho > 0)) return null;
+  return Math.max(-12, Math.min(12, (1.225 / rho - 1) * 100 * 0.5));
+}
+/* WIND-CORE-END */
+
+let _wc = null;                              // live panel state (null when closed)
+const WC_COOL_MS = () => (typeof window._windCool === 'number' ? window._windCool : 30000);
+
+function _wcInjectCSS(){
+  if(document.getElementById('wc2-css')) return;
+  const s = document.createElement('style'); s.id = 'wc2-css';
+  s.textContent = `
+  #wind-panel{position:fixed;inset:0;z-index:1600;background:radial-gradient(130% 100% at 50% 8%,#0d1c26,#050a11 62%,#03060b);display:none;flex-direction:column;color:var(--tx);touch-action:manipulation;overscroll-behavior:contain;}
+  #wind-panel.on{display:flex;}
+  .wc2-top{display:flex;align-items:center;gap:9px;padding:calc(env(safe-area-inset-top,0px) + 12px) 13px 6px;flex:none;}
+  .wc2-title{font-family:var(--sans);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap;}
+  .wc2-place{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1;}
+  .wc2-place b{color:#7ee0c0;font-weight:700;}
+  .wc2-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(16,32,42,.85);border:1px solid rgba(110,200,180,.28);color:var(--tx2);font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  .wc2-btn:active{transform:scale(.92);}
+  .wc2-btn.cool{opacity:.4;}
+  .wc2-btn.busy{animation:wcSpin 1s linear infinite;}
+  @keyframes wcSpin{to{transform:rotate(360deg);}}
+  /* Portrait: rose on top taking the slack, everything else stacked beneath it.
+     Landscape / any short viewport: the same two pieces side by side, because a phone lying
+     flat in landscape has ~390px of height and the stacked rows alone overflow it. */
+  .wc2-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+  .wc2-side{flex:none;display:flex;flex-direction:column;min-height:0;}
+  @media (max-height:560px) and (min-width:600px){
+    .wc2-body{flex-direction:row;align-items:stretch;gap:4px;}
+    /* .wc2-body-scoped so these beat the base .wc2-stage/.wc2-side rules declared below */
+    .wc2-body>.wc2-stage{flex:0 0 42%;}
+    .wc2-body>.wc2-side{flex:1 1 auto;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-bottom:6px;}
+    .wc2-note{padding-bottom:10px;}
+  }
+  .wc2-stage{position:relative;flex:1 1 auto;min-height:0;overflow:hidden;}
+  /* Slightly transparent so the panel's own gradient still tints the edges instead of the
+     trail-fade converging the whole stage to one flat colour. */
+  #wc2-flow{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.9;}
+  #wc2-rose{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+  /* The HUD lives inside the rose's hub, so it's sized off the ROSE (--wcR, set by _wcFit),
+     not the viewport: a 152px rose on a small phone and a 374px one on a big phone both keep
+     the number inside the disc. Below ~210px the hub can't hold five lines, so .wc2-tight
+     drops the two the strip and rung tiles already tell you. */
+  .wc2-hud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1;max-width:46%;}
+  .wc2-spd{font-family:var(--mono);font-weight:700;font-size:clamp(30px,calc(var(--wcR,360px) * .175),66px);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.75);}
+  .wc2-unit{font-family:var(--mono);font-size:clamp(7px,calc(var(--wcR,360px) * .027),10px);letter-spacing:.18em;color:var(--tx3);margin-top:3px;}
+  .wc2-from{font-family:var(--mono);font-size:clamp(9px,calc(var(--wcR,360px) * .033),12.5px);font-weight:700;color:#cfe6df;margin-top:7px;text-shadow:0 1px 8px rgba(0,0,0,.8);white-space:nowrap;}
+  .wc2-gust{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;white-space:nowrap;}
+  .wc2-bft{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--tx3);margin-top:4px;text-transform:uppercase;line-height:1.3;}
+  .wc2-tight .wc2-gust,.wc2-tight .wc2-bft{display:none;}
+  /* Short viewports: claw height back out of the stacked rows so the rose stays usable */
+  @media (max-height:720px){
+    .wc2-rung{padding:5px 4px 6px;} .wc2-rung .v{font-size:16px;} .wc2-rung svg{width:20px;height:20px;}
+    .wc2-note{font-size:8.5px;padding-top:5px;}
+    .wc2-swirl{padding-bottom:4px;} .wc2-air{padding-top:4px;}
+    .wc2-hr{flex-basis:36px;}
+  }
+  /* Swirl verdict and the aim readout are their OWN rows, not floating chips: on a phone the
+     rose already fills the stage edge to edge, so anything overlaid there sat on the dial's
+     ticks and cardinal letters. Rows cost ~90px of rose and cost nothing in legibility. */
+  .wc2-swirl{flex:none;display:flex;align-items:center;gap:9px;padding:2px 15px 6px;}
+  .wc2-swirl b{font-family:var(--mono);font-size:11px;font-weight:800;letter-spacing:.16em;padding:4px 12px;border-radius:999px;border:1px solid;flex:none;}
+  .wc2-swirl b.none{color:var(--tx3);border-color:rgba(150,170,180,.28);background:rgba(80,95,105,.14);}
+  .wc2-swirl b.calm{color:#9fd8ff;border-color:rgba(159,216,255,.4);background:rgba(60,120,180,.18);}
+  .wc2-swirl b.steady{color:#16e0a3;border-color:rgba(22,224,163,.45);background:rgba(22,224,163,.12);}
+  .wc2-swirl b.shifty{color:#ffc233;border-color:rgba(255,194,51,.45);background:rgba(255,194,51,.12);}
+  .wc2-swirl b.swirl{color:#ff6b5c;border-color:rgba(255,107,92,.5);background:rgba(255,77,77,.14);animation:wcThrob 1.9s ease-in-out infinite;}
+  @keyframes wcThrob{0%,100%{box-shadow:0 0 0 0 rgba(255,77,77,0);}50%{box-shadow:0 0 14px 2px rgba(255,77,77,.4);}}
+  .wc2-swirl i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;min-width:0;}
+  .wc2-aim{flex:none;margin:0 11px;background:rgba(6,14,20,.72);border:1px solid rgba(110,200,180,.25);border-radius:13px;padding:8px 13px;display:flex;align-items:center;justify-content:center;gap:11px;-webkit-tap-highlight-color:transparent;}
+  .wc2-aim:active{transform:scale(.985);}
+  .wc2-aim .t{font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.08em;flex:none;}
+  .wc2-aim .t.help{color:#16e0a3;} .wc2-aim .t.hurt{color:#ff6b5c;} .wc2-aim .t.cross{color:#ffc233;}
+  .wc2-aim .s{font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;text-align:right;min-width:0;}
+  .wc2-aim.locked{border-color:rgba(255,210,74,.6);box-shadow:0 0 14px rgba(255,210,74,.22);}
+  .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--tx3);background:rgba(6,14,20,.7);border:1px solid rgba(110,200,180,.18);border-radius:9px;padding:5px 8px;pointer-events:none;}
+  .wc2-rungs{flex:none;display:flex;gap:7px;padding:8px 11px 2px;}
+  .wc2-rung{flex:1;background:rgba(10,22,30,.8);border:1px solid rgba(110,200,180,.16);border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
+  .wc2-rung.primary{border-color:rgba(110,200,180,.42);background:rgba(14,34,42,.9);}
+  .wc2-rung .z{font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--tx3);}
+  .wc2-rung .v{font-family:var(--mono);font-size:19px;font-weight:700;color:#fff;line-height:1.15;}
+  .wc2-rung .d{font-family:var(--mono);font-size:9.5px;color:var(--tx2);}
+  .wc2-rung svg{display:block;margin:1px auto 0;}
+  .wc2-rung .est{position:absolute;top:5px;right:6px;font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;color:var(--tx3);opacity:.75;}
+  .wc2-strip-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:9px 15px 3px;font-family:var(--mono);font-size:9.5px;color:var(--tx3);flex:none;}
+  .wc2-strip-h b{color:#cfe6df;font-weight:700;}
+  .wc2-strip{flex:none;display:flex;gap:2px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:0 11px 4px;align-items:flex-end;}
+  .wc2-hr{flex:0 0 40px;display:flex;flex-direction:column;align-items:center;gap:2px;background:none;border:0;padding:4px 0 5px;border-radius:9px;color:inherit;-webkit-tap-highlight-color:transparent;}
+  .wc2-hr .hh{font-family:var(--mono);font-size:8.5px;color:var(--tx3);}
+  .wc2-hr .ss{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--tx2);line-height:1;}
+  .wc2-hr .gg{font-family:var(--mono);font-size:8px;color:var(--tx3);line-height:1;}
+  .wc2-hr.newday{border-left:1px solid rgba(110,200,180,.25);}
+  .wc2-hr-empty{font-family:var(--mono);font-size:10px;color:var(--tx3);padding:12px 4px;}
+  .wc2-hr.sel{background:rgba(22,224,163,.14);}
+  .wc2-hr.sel .hh,.wc2-hr.sel .ss{color:#eafff7;}
+  .wc2-hr.now .hh{color:#fff;font-weight:700;}
+  .wc2-air{flex:none;display:flex;gap:7px;padding:5px 11px 0;font-family:var(--mono);font-size:9.5px;color:var(--tx3);}
+  .wc2-air span{flex:1;background:rgba(10,22,30,.6);border:1px solid rgba(110,200,180,.12);border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .wc2-air b{color:var(--tx2);font-weight:700;}
+  .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.4;text-align:center;}
+  .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(8,20,26,.96);border:1px solid rgba(110,200,180,.4);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  .wc2-toast.show{opacity:1;}
+  @media (prefers-reduced-motion: reduce){.wc2-swirl b.swirl{animation:none;} .wc2-btn.busy{animation:none;}}
+  `;
+  document.head.appendChild(s);
+}
+
+function _wcToast(msg){
+  let el = document.getElementById('wc2-toast');
+  if(!el){ el = document.createElement('div'); el.id = 'wc2-toast'; el.className = 'wc2-toast'; el.setAttribute('role', 'status'); document.body.appendChild(el); }
+  el.textContent = msg; el.classList.add('show');
+  clearTimeout(window._wcToastT); window._wcToastT = setTimeout(() => el.classList.remove('show'), 2600);
+}
+
+// ── Data ───────────────────────────────────────────────────────────────────
+// One request, the player's own coordinates. Deliberately NOT weatherCache: that is keyed
+// by region zone and holds only 10 m wind, which is the whole thing this view improves on.
+async function _wcFetch(){
+  const lat = window._gpsLat, lng = window._gpsLng;
+  const la = (lat != null ? lat : -27.4698), lo = (lng != null ? lng : 153.0251);
+  const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + la.toFixed(4) + '&longitude=' + lo.toFixed(4) +
+    '&current=temperature_2m,relative_humidity_2m,surface_pressure,wind_speed_10m,wind_direction_10m,wind_gusts_10m,weather_code' +
+    '&minutely_15=wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,wind_gusts_10m' +
+    '&hourly=wind_speed_10m,wind_speed_80m,wind_direction_10m,wind_direction_80m,wind_gusts_10m,temperature_2m' +
+    '&timezone=auto&cell_selection=nearest&past_hours=2&forecast_hours=13&past_minutely_15=8&forecast_minutely_15=9';
+  const r = await tfetch(url, {}, 9000);
+  if(!r.ok) throw new Error('HTTP ' + r.status);
+  const d = await r.json();
+  return { at: Date.now(), lat: la, lng: lo, exact: lat != null,
+           elev: d.elevation, cur: d.current || null, m15: d.minutely_15 || null, hr: d.hourly || null };
+}
+
+// Nearest index in an Open-Meteo local-time array to "now" — right for the 15-minute grid,
+// where the nearest sample really is the best estimate of this moment.
+function _wcIdxNow(times){
+  if(!times || !times.length) return -1;
+  const t = Date.now(); let best = -1, bd = Infinity;
+  for(let i = 0; i < times.length; i++){
+    const ms = new Date(times[i]).getTime();
+    const diff = Math.abs(ms - t);
+    if(diff < bd){ bd = diff; best = i; }
+  }
+  return best;
+}
+// The hour you are IN, not the nearest one. At 12:41 "nearest" is 13:00, and labelling next
+// hour's forecast "now" in the strip would be a quiet lie.
+function _wcIdxHour(times){
+  if(!times || !times.length) return -1;
+  const t = Date.now(); let best = -1;
+  for(let i = 0; i < times.length; i++) if(new Date(times[i]).getTime() <= t) best = i;
+  return best < 0 ? 0 : best;
+}
+
+// Everything the view draws, derived once per data/selection change.
+function _wcDerive(){
+  const t = window._windTest;
+  const d = _wc && _wc.data;
+  let v10 = null, d10 = null, vHi = null, dHi = null, gust = null, label = 'now', hourly = [];
+  let timeSpread = 0, dirRange = null, temp = null, rh = null, pres = null;
+  let fitLo = null, fitHi = null;              // the same-sample pair the shear exponent is fitted from
+
+  if(d){
+    const hr = d.hr, m15 = d.m15, cur = d.cur;
+    // Hourly strip (skip the past hours we only pulled for the swirl window)
+    if(hr && hr.time){
+      const i0 = Math.max(0, _wcIdxHour(hr.time));
+      for(let i = i0; i < hr.time.length; i++){
+        hourly.push({ i, t: hr.time[i], spd: hr.wind_speed_10m ? hr.wind_speed_10m[i] : null,
+                      dir: hr.wind_direction_10m ? hr.wind_direction_10m[i] : null,
+                      gust: hr.wind_gusts_10m ? hr.wind_gusts_10m[i] : null,
+                      hi: hr.wind_speed_80m ? hr.wind_speed_80m[i] : null,
+                      hiDir: hr.wind_direction_80m ? hr.wind_direction_80m[i] : null });
+      }
+    }
+    const sel = _wc.selHour;
+    if(sel != null && hourly[sel]){
+      const h = hourly[sel];
+      v10 = h.spd; d10 = h.dir; vHi = h.hi; dHi = h.hiDir; gust = h.gust;
+      label = new Date(h.t).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) + ' forecast';
+    } else if(m15 && m15.time){
+      const i = _wcIdxNow(m15.time);
+      if(i >= 0){
+        v10 = m15.wind_speed_10m[i]; d10 = m15.wind_direction_10m[i];
+        vHi = m15.wind_speed_80m[i]; dHi = m15.wind_direction_80m[i];
+        gust = m15.wind_gusts_10m[i];
+      }
+    }
+    // Remember the 15-minute PAIR: the shear exponent has to be fitted from two readings of
+    // the same sample, and the `current` block below replaces only the 10 m one. Fitting
+    // current-10 m against grid-80 m would invent shear out of a timing mismatch.
+    if(sel == null && m15 && m15.time){
+      const i = _wcIdxNow(m15.time);
+      if(i >= 0){ fitLo = m15.wind_speed_10m[i]; fitHi = m15.wind_speed_80m[i]; }
+    }
+    // Live "current" beats the 15-minute grid for the surface reading when we're on "now"
+    if(sel == null && cur){
+      if(cur.wind_speed_10m != null) v10 = cur.wind_speed_10m;
+      if(cur.wind_direction_10m != null) d10 = cur.wind_direction_10m;
+      if(cur.wind_gusts_10m != null) gust = cur.wind_gusts_10m;
+      temp = cur.temperature_2m; rh = cur.relative_humidity_2m; pres = cur.surface_pressure;
+    } else if(cur){ temp = cur.temperature_2m; rh = cur.relative_humidity_2m; pres = cur.surface_pressure; }
+    // Swirl window: every 15-minute direction we hold (≈2 h back, ≈2 h forward)
+    if(m15 && m15.wind_direction_10m){
+      const dirs = m15.wind_direction_10m.filter(x => x != null);
+      timeSpread = wcCircSpread(dirs);
+      if(dirs.length){
+        const mean = wcCircMean(dirs);
+        let lo = 0, hiD = 0;
+        for(const x of dirs){ const dd = wcAngDiff(x, mean); if(dd < lo) lo = dd; if(dd > hiD) hiD = dd; }
+        dirRange = { mean, lo, hi: hiD };
+      }
+    }
+  }
+  // Test override (preview / the hub) stands in for live data end-to-end
+  if(t){
+    v10 = t.spd != null ? t.spd : v10;
+    d10 = t.dir != null ? t.dir : d10;
+    gust = t.gust != null ? t.gust : gust;
+    if(t.hi != null) vHi = t.hi; else if(v10 != null) vHi = v10 * 1.9;
+    if(t.hiDir != null) dHi = t.hiDir; else if(d10 != null) dHi = wcAng(d10 + (t.twist != null ? t.twist : 14));
+    if(t.spread != null) timeSpread = t.spread;
+    if(dirRange == null && d10 != null) dirRange = { mean: d10, lo: -timeSpread, hi: timeSpread };
+    if(temp == null) temp = 22; if(pres == null) pres = 1013; if(rh == null) rh = 55;
+    label = _wc && _wc.selHour != null ? label : 'test wind';
+  }
+
+  // Fit α on a consistent pair, then re-anchor the 80 m level on the 10 m value we're actually
+  // showing, so the ladder always climbs from the number on screen.
+  const alpha = wcShear(fitLo != null ? fitLo : v10, fitHi != null ? fitHi : vHi);
+  const vHiEff = v10 != null ? v10 * Math.pow(WC_REF_HI / 10, alpha) : vHi;
+  const prof = wcProfile(v10, d10, vHiEff, dHi);
+  // Gust factor is a ratio, and a ratio against a near-calm mean is arithmetic, not weather.
+  const gf = (gust != null && v10 != null && v10 >= 4) ? gust / v10 : null;
+  const twist = (prof[2].dir != null && prof[0].dir != null) ? wcAngDiff(prof[2].dir, prof[0].dir) : 0;
+  const swirl = wcSwirl({ spd: v10, timeSpread, twist, gustFactor: gf || 1 });
+  return { v10, d10, vHi, dHi, gust, gf, prof, twist, timeSpread, dirRange, swirl, hourly, label,
+           temp, rh, pres, bft: wcBeaufort(v10),
+           airPct: wcAirCarryPct(temp, pres, rh) };
+}
+
+// Size the rose and the flow canvas to the stage. This MUST run after every row below the
+// stage has its content, because the stage is the flex:1 remainder: measuring it before the
+// hourly strip fills gives a stage that's ~100px too tall, and the rose then overflows on a
+// short/wide viewport. Cheap enough to re-run each render; the canvas only re-inits when its
+// backing size actually changed (otherwise every render would blank the flow field).
+function _wcFit(){
+  const st = document.getElementById('wc2-stage'); if(!st || !_wc) return;
+  const svg = document.getElementById('wc2-rose'), panel = document.getElementById('wind-panel');
+  if(svg){
+    const s = Math.max(120, Math.min(st.clientWidth, st.clientHeight) * 0.96);
+    svg.setAttribute('width', s); svg.setAttribute('height', s);
+    if(panel){ panel.style.setProperty('--wcR', s.toFixed(0) + 'px'); panel.classList.toggle('wc2-tight', s < 210); }
+  }
+  const cv = document.getElementById('wc2-flow');
+  if(cv){
+    const dpr = Math.min(2, window.devicePixelRatio || 1), r = cv.getBoundingClientRect();
+    const w = Math.max(1, r.width * dpr | 0), h = Math.max(1, r.height * dpr | 0);
+    if(w !== cv.width || h !== cv.height) _wcFlowInit();
+  }
+}
+
+// Strength → the same three-colour language the Play hole-map compass uses
+function _wcCol(spd){
+  if(spd == null) return '#7fa8bd';
+  if(spd < 12) return '#16e0a3';
+  if(spd < 26) return '#ffc233';
+  return '#ff4d4d';
+}
+
+// ── The rose ───────────────────────────────────────────────────────────────
+// Everything inside #wc2-rotor lives in EARTH frame; the rotor is spun by −heading so the
+// card reads like a real compass in your palm. Screen-up therefore = where you're pointing,
+// exactly like the hole map's play-line-up convention.
+function _wcRoseSvg(v){
+  const C = 200, R = 186;
+  const col = _wcCol(v.v10), str = Math.max(0, Math.min(1, ((v.v10 || 0) - 3) / 37));
+  // Radial bands, outside in: ticks 173–186, cardinal letters ~164, arrows 96–150, hub 0–92.
+  // Nothing shares a band, so the dial stays readable whatever bearing the wind takes.
+  const ticks = [];
+  for(let a = 0; a < 360; a += 5){
+    const major = a % 30 === 0, card = a % 90 === 0;
+    const len = card ? 13 : major ? 9 : 5;
+    const r1 = R, r2 = R - len, rad = (a - 90) * Math.PI / 180;
+    ticks.push('<line x1="' + (C + Math.cos(rad) * r1).toFixed(1) + '" y1="' + (C + Math.sin(rad) * r1).toFixed(1) +
+      '" x2="' + (C + Math.cos(rad) * r2).toFixed(1) + '" y2="' + (C + Math.sin(rad) * r2).toFixed(1) +
+      '" stroke="rgba(190,225,215,' + (card ? 0.8 : major ? 0.45 : 0.2) + ')" stroke-width="' + (card ? 2.2 : major ? 1.3 : 0.8) + '" stroke-linecap="round"/>');
+  }
+  const letters = [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]].map(([t, a]) => {
+    const rad = (a - 90) * Math.PI / 180, r = R - 22;
+    return '<text x="' + (C + Math.cos(rad) * r).toFixed(1) + '" y="' + (C + Math.sin(rad) * r + 5).toFixed(1) +
+      '" text-anchor="middle" font-family="var(--mono)" font-size="' + (a % 90 === 0 ? 19 : 12) + '" font-weight="' + (a % 90 === 0 ? 800 : 600) +
+      '" fill="' + (a === 0 ? '#ff8a8a' : a % 90 === 0 ? 'rgba(233,247,242,.9)' : 'rgba(190,225,215,.5)') + '">' + t + '</text>';
+  }).join('');
+
+  // Variability wedge: the span the 10 m direction has actually covered over the swirl
+  // window. A thin blade = locked in; a fat fan = you cannot trust one number.
+  let wedge = '';
+  if(v.dirRange && v.v10 != null && v.v10 >= 3){
+    const a0 = v.dirRange.mean + v.dirRange.lo + 180, a1 = v.dirRange.mean + v.dirRange.hi + 180;
+    const span = Math.max(6, Math.min(300, a1 - a0)), rr = R - 38;
+    const p = (a) => { const rad = (a - 90) * Math.PI / 180; return [(C + Math.cos(rad) * rr).toFixed(1), (C + Math.sin(rad) * rr).toFixed(1)]; };
+    const [x0, y0] = p(a0), [x1, y1] = p(a0 + span);
+    wedge = '<path d="M' + C + ',' + C + ' L' + x0 + ',' + y0 + ' A' + rr + ',' + rr + ' 0 ' + (span > 180 ? 1 : 0) + ' 1 ' + x1 + ',' + y1 + ' Z" fill="' + col + '" opacity="' + (0.05 + 0.09 * v.swirl.score).toFixed(3) + '"/>';
+  }
+
+  // One arrow per rung, all fired outward from the hub along that rung's blowing-TO bearing.
+  // Length encodes which one you actually play: 10 m is the longest, thickest and the only one
+  // that glows and thickens with strength; 25 m and 50 m are slim, shorter spokes. Stack them
+  // and the wind is true the whole ball flight; fan them and it twists with height — the one
+  // thing this ladder exists to show, readable at arm's length.
+  const REACH = [150, 132, 114];
+  const arrows = v.prof.map((p, i) => {
+    if(p.dir == null || p.spd == null) return '';
+    const to = p.dir + 180, rad = (to - 90) * Math.PI / 180;
+    const hero = i === 0;
+    const at = (r) => [C + Math.cos(rad) * r, C + Math.sin(rad) * r];
+    const nx = -Math.sin(rad), ny = Math.cos(rad);
+    const c = hero ? col : 'rgba(203,232,222,.6)';
+    const reach = REACH[i], hl = hero ? 32 : 13, hb = hero ? 12 + str * 8 : 5.5;
+    const [hx, hy] = at(reach), [bx, by] = at(reach - hl), [tx, ty] = at(96);
+    const head = 'M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' L' + (bx + nx * hb).toFixed(1) + ',' + (by + ny * hb).toFixed(1) +
+                 ' L' + (bx - nx * hb).toFixed(1) + ',' + (by - ny * hb).toFixed(1) + ' Z';
+    // Ghost labels ride perpendicular to their own spoke so they never sit on a shaft
+    const lbl = hero ? '' : '<text x="' + (hx + nx * 14).toFixed(1) + '" y="' + (hy + ny * 14 + 3.4).toFixed(1) +
+      '" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="rgba(203,232,222,.55)">' + p.z + 'm</text>';
+    return '<g' + (hero ? ' filter="url(#wcGlow)"' : ' opacity=".9"') + '>' +
+      '<line x1="' + tx.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+        '" stroke="' + c + '" stroke-width="' + (hero ? 9 + str * 7 : 2.6) + '" stroke-linecap="round"/>' +
+      '<path d="' + head + '" fill="' + c + '"/></g>' + lbl;
+  }).join('');
+
+  return '<svg id="wc2-rose" viewBox="0 0 400 400" aria-hidden="true">' +
+    '<defs><filter id="wcGlow" x="-40%" y="-40%" width="180%" height="180%">' +
+      '<feGaussianBlur stdDeviation="' + (2.5 + str * 5).toFixed(1) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
+      '<radialGradient id="wcHub" cx="50%" cy="42%" r="62%"><stop offset="0%" stop-color="rgba(14,38,46,.92)"/><stop offset="100%" stop-color="rgba(4,10,16,.96)"/></radialGradient></defs>' +
+    '<circle cx="200" cy="200" r="' + (R + 6) + '" fill="rgba(4,10,16,.42)"/>' +
+    '<circle cx="200" cy="200" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="1.6" opacity=".55"/>' +
+    '<g id="wc2-rotor" transform="rotate(0 200 200)">' + wedge + ticks.join('') + letters + arrows + '</g>' +
+    '<circle cx="200" cy="200" r="92" fill="url(#wcHub)" stroke="rgba(190,225,215,.16)" stroke-width="1"/>' +
+    '</svg>';
+}
+
+// Small inline arrow used on the rung tiles (north-up, absolute — a chart, not a compass)
+function _wcMiniArrow(dir, col){
+  if(dir == null) return '<svg width="26" height="26"></svg>';
+  return '<svg width="26" height="26" viewBox="0 0 26 26"><g transform="rotate(' + (dir + 180).toFixed(0) + ' 13 13)">' +
+    '<line x1="13" y1="21" x2="13" y2="8" stroke="' + col + '" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<path d="M13,3 L18,12 L13,9.4 L8,12 Z" fill="' + col + '"/></g></svg>';
+}
+
+// ── Flow field ─────────────────────────────────────────────────────────────
+// Streaks blown across the stage in the real direction, at a speed and jitter set by the
+// real numbers — so the page itself is the reading before you've read a digit.
+function _wcFlowInit(){
+  const cv = document.getElementById('wc2-flow'); if(!cv || !_wc) return;
+  const dpr = Math.min(2, window.devicePixelRatio || 1), r = cv.getBoundingClientRect();
+  cv.width = Math.max(1, r.width * dpr | 0); cv.height = Math.max(1, r.height * dpr | 0);
+  _wc.fctx = cv.getContext('2d'); _wc.fdpr = dpr; _wc.fw = cv.width; _wc.fh = cv.height;
+  const n = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 96;
+  _wc.parts = [];
+  for(let i = 0; i < n; i++) _wc.parts.push({ x: Math.random() * _wc.fw, y: Math.random() * _wc.fh, len: 10 + Math.random() * 42, w: 0.6 + Math.random() * 1.5, j: Math.random() * 6.283, g: Math.random() < 0.18 });
+  _wc.fctx.clearRect(0, 0, _wc.fw, _wc.fh);
+}
+function _wcFlowTick(){
+  if(!_wc) return;
+  _wc.raf = requestAnimationFrame(_wcFlowTick);
+  const ctx = _wc.fctx, v = _wc.view; if(!ctx || !v || !_wc.parts) return;
+  // Escape hatch / reduced motion: wipe once, then leave the stage still.
+  if(window._windFlow === false || !_wc.parts.length){
+    if(!_wc.flowCleared){ ctx.clearRect(0, 0, _wc.fw, _wc.fh); _wc.flowCleared = true; }
+    return;
+  }
+  _wc.flowCleared = false;
+  const now = performance.now();
+  if(now - (_wc.lastF || 0) < 28) return;                    // ~34fps is plenty for drifting streaks
+  _wc.lastF = now;
+  const spd = v.v10 == null ? 0 : v.v10;
+  const to = (v.d10 == null ? 0 : v.d10 + 180) - (_wc.heading || 0);   // earth → screen
+  const rad = (to - 90) * Math.PI / 180;
+  const px = (0.5 + spd * 0.16) * _wc.fdpr;                   // px per frame
+  const col = _wcCol(spd), swirl = v.swirl.score;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.fillStyle = 'rgba(5,10,17,0.17)'; ctx.fillRect(0, 0, _wc.fw, _wc.fh);
+  ctx.globalCompositeOperation = 'lighter';
+  ctx.strokeStyle = col; ctx.lineCap = 'round';
+  for(const p of _wc.parts){
+    // A swirling wind wanders; a steady one runs true. Same jitter the numbers describe.
+    p.j += 0.06;
+    const wob = Math.sin(p.j) * swirl * 0.55;
+    const a = rad + wob;
+    const dx = Math.cos(a), dy = Math.sin(a);
+    const step = px * (p.g ? Math.min(2.4, v.gf || 1) : 1);
+    p.x += dx * step; p.y += dy * step;
+    const L = p.len * _wc.fdpr * (0.4 + Math.min(1.6, spd / 22));
+    ctx.globalAlpha = (p.g ? 0.42 : 0.24) * (0.35 + Math.min(1, spd / 24));
+    ctx.lineWidth = p.w * _wc.fdpr * (p.g ? 1.6 : 1);
+    ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - dx * L, p.y - dy * L); ctx.stroke();
+    // wrap with a margin so streaks don't pop in at the edge
+    const m = 60 * _wc.fdpr;
+    if(p.x < -m) p.x = _wc.fw + m; if(p.x > _wc.fw + m) p.x = -m;
+    if(p.y < -m) p.y = _wc.fh + m; if(p.y > _wc.fh + m) p.y = -m;
+  }
+  ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over';
+}
+
+// ── Device heading (hold it flat, it behaves like a compass) ───────────────
+function _wcOnOrient(e){
+  if(!_wc) return;
+  let h = null;
+  if(e.webkitCompassHeading != null && !isNaN(e.webkitCompassHeading)) h = e.webkitCompassHeading;
+  else if(e.absolute === true && e.alpha != null) h = (360 - e.alpha + (screen.orientation ? (screen.orientation.angle || 0) : 0)) % 360;
+  else if(_wc.orientEv === 'deviceorientationabsolute' && e.alpha != null) h = (360 - e.alpha + (screen.orientation ? (screen.orientation.angle || 0) : 0)) % 360;
+  if(h == null || isNaN(h)) return;
+  h = wcAng(h);
+  // Unwrapped accumulation (same trick as the day rose) so the CSS/SVG rotation always
+  // takes the short way round instead of unwinding 360° across north.
+  if(_wc.headRaw == null) _wc.headRaw = h;
+  else _wc.headRaw += wcAngDiff(h, wcAng(_wc.headRaw)) * 0.22;
+  _wc.heading = _wc.headRaw;
+  _wc.level = (e.beta != null && e.gamma != null) ? (Math.abs(e.beta) < 28 && Math.abs(e.gamma) < 28) : null;
+  _wc.hasHeading = true;
+  const rotor = document.getElementById('wc2-rotor');
+  if(rotor) rotor.setAttribute('transform', 'rotate(' + (-_wc.heading).toFixed(1) + ' 200 200)');
+  const tilt = document.getElementById('wc2-tilt');
+  if(tilt) tilt.textContent = _wc.level === false ? '▱ hold the phone flat' : '';
+  _wcPaintAim();
+}
+async function _wcStartCompass(){
+  if(!_wc || window._windCompassLive === false || !('DeviceOrientationEvent' in window)) return;
+  if(typeof DeviceOrientationEvent.requestPermission === 'function'){
+    try{ const r = await DeviceOrientationEvent.requestPermission(); if(r !== 'granted') return; }catch(e){ return; }
+  }
+  if(!_wc) return;
+  _wc.orientEv = ('ondeviceorientationabsolute' in window) ? 'deviceorientationabsolute' : 'deviceorientation';
+  _wc.orientH = _wcOnOrient;
+  window.addEventListener(_wc.orientEv, _wc.orientH, true);
+}
+
+// ── Aim readout ────────────────────────────────────────────────────────────
+// Screen-up is where the phone points, so "aim" is free: point it down your shot line and
+// the head/cross split is the wind you actually have to play. Tap to lock it and look away.
+function _wcPaintAim(){
+  const el = document.getElementById('wc2-aim'); if(!el || !_wc || !_wc.view) return;
+  const v = _wc.view;
+  const aim = _wc.aimLock != null ? _wc.aimLock : (_wc.hasHeading ? wcAng(_wc.heading) : null);
+  if(aim == null || v.d10 == null || v.v10 == null){
+    el.className = 'wc2-aim';
+    el.innerHTML = '<div class="t">AIM</div><div class="s">' +
+      (v.d10 == null ? 'waiting for wind data' : 'no compass here — the rose is locked north-up') + '</div>';
+    return;
+  }
+  const c = wcComponents(v.d10, aim, v.v10);
+  const pct = wcPlaysPct(c.help,
+    typeof window._playWindHead === 'number' ? window._playWindHead : 0.007,
+    typeof window._playWindTail === 'number' ? window._playWindTail : 0.004);
+  const pctTxt = pct == null ? '' : (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% carry';
+  el.className = 'wc2-aim ' + (_wc.aimLock != null ? 'locked' : '');
+  el.innerHTML = '<div class="t ' + c.cls + '">' + c.tag + ' ' + Math.abs(c.help).toFixed(0) +
+      (Math.abs(c.cross) >= 1 ? ' · ' + (c.cross > 0 ? 'L→R ' : 'R→L ') + Math.abs(c.cross).toFixed(0) : '') + '</div>' +
+    '<div class="s">aiming ' + wcPoint16(aim) + ' ' + String(Math.round(aim)).padStart(3, '0') + '° · plays ' + pctTxt +
+      '<br>' + (_wc.aimLock != null ? '🔒 locked — tap to release' : 'tap to lock this line') + '</div>';
+}
+function _wcToggleAimLock(){
+  if(!_wc) return;
+  if(_wc.aimLock != null){ _wc.aimLock = null; _wcToast('Aim follows the phone again.'); }
+  else if(_wc.hasHeading){ _wc.aimLock = wcAng(_wc.heading); _wcToast('Aim locked to ' + wcPoint16(_wc.aimLock) + '.'); }
+  else _wcToast('No compass available on this device.');
+  _wcPaintAim();
+}
+
+// ── Render ─────────────────────────────────────────────────────────────────
+function _wcRender(){
+  if(!_wc) return;
+  const v = _wc.view = _wcDerive();
+  const col = _wcCol(v.v10);
+  const st = document.getElementById('wc2-stage'); if(!st) return;
+
+  // Rose (rebuilt on data change; the rotor transform is re-applied so a live heading
+  // survives the innerHTML swap — same phase-continuity problem the Play compass has)
+  const holder = document.getElementById('wc2-rosewrap');
+  if(holder){
+    holder.innerHTML = _wcRoseSvg(v);
+    const rotor = document.getElementById('wc2-rotor');
+    if(rotor && _wc.hasHeading) rotor.setAttribute('transform', 'rotate(' + (-_wc.heading).toFixed(1) + ' 200 200)');
+  }
+
+  const hud = document.getElementById('wc2-hud');
+  if(hud) hud.innerHTML =
+    '<div class="wc2-spd" style="color:' + col + '">' + (v.v10 == null ? '--' : Math.round(v.v10)) + '</div>' +
+    '<div class="wc2-unit">KM/H · 10 m</div>' +
+    '<div class="wc2-from">from ' + wcPoint16(v.d10) + (v.d10 == null ? '' : ' ' + String(Math.round(v.d10)).padStart(3, '0') + '°') + '</div>' +
+    '<div class="wc2-gust">' + (v.gust != null ? 'gusting ' + Math.round(v.gust) : '') + '</div>' +
+    '<div class="wc2-bft">' + v.bft.name + (v.label !== 'now' ? ' · ' + v.label : '') + '</div>';
+
+  const sw = document.getElementById('wc2-swirl');
+  if(sw) sw.innerHTML = '<b class="' + v.swirl.cls + '">' + v.swirl.tag + '</b><i>' + v.swirl.why + '</i>';
+
+  // Rungs — 10 m is the ball, 25 m a wedge apex, 50 m a driver apex. Twist between them
+  // is the whole reason this ladder exists.
+  const rungs = document.getElementById('wc2-rungs');
+  if(rungs) rungs.innerHTML = v.prof.map((p, i) => {
+    const c = _wcCol(p.spd);
+    return '<div class="wc2-rung' + (i === 0 ? ' primary' : '') + '">' +
+      (p.model ? '' : '<span class="est">est</span>') +
+      '<div class="z">' + p.z + ' M</div>' +
+      '<div class="v" style="color:' + c + '">' + (p.spd == null ? '--' : Math.round(p.spd)) + '</div>' +
+      '<div class="d">' + wcPoint16(p.dir) + '</div>' + _wcMiniArrow(p.dir, c) + '</div>';
+  }).join('');
+
+  // Hourly strip — tap an hour to spin the rose onto that forecast
+  const strip = document.getElementById('wc2-strip');
+  if(strip){
+    if(!v.hourly.length){
+      strip.innerHTML = '<div class="wc2-hr-empty">' + (_wc.data ? 'no hourly forecast in this response' : 'waiting for the forecast…') + '</div>';
+    } else {
+      const max = Math.max(8, ...v.hourly.map(h => h.spd || 0));
+      let day = null;
+      strip.innerHTML = v.hourly.slice(0, 13).map((h, i) => {
+        const dt = new Date(h.t);
+        const hh = dt.toLocaleTimeString('en-AU', { hour: 'numeric' }).replace(' ', '').toLowerCase();
+        const dk = dt.toDateString(), newDay = day != null && dk !== day; day = dk;
+        const c = _wcCol(h.spd);
+        const barH = Math.round(5 + 24 * Math.min(1, (h.spd || 0) / max));
+        return '<button class="wc2-hr' + (_wc.selHour === i ? ' sel' : '') + (i === 0 ? ' now' : '') + (newDay ? ' newday' : '') +
+          '" onclick="_wcSelHour(' + i + ')" aria-label="' + hh + ' wind ' + Math.round(h.spd || 0) + ' km/h from ' + wcPoint16(h.dir) + '">' +
+          '<span class="hh">' + (i === 0 ? 'now' : hh) + '</span>' +
+          _wcMiniArrow(h.dir, c) +
+          '<i style="display:block;width:16px;height:' + barH + 'px;border-radius:3px 3px 0 0;background:' + c + ';opacity:.75;"></i>' +
+          '<span class="ss">' + (h.spd == null ? '--' : Math.round(h.spd)) + '</span>' +
+          '<span class="gg">' + (h.gust != null ? 'g' + Math.round(h.gust) : '') + '</span></button>';
+      }).join('');
+      const selEl = strip.querySelector('.sel'); if(selEl && selEl.scrollIntoView) selEl.scrollIntoView({ block: 'nearest', inline: 'center' });
+    }
+  }
+  const selt = document.getElementById('wc2-selt');
+  if(selt) selt.textContent = _wc.selHour != null ? v.label : 'live';
+
+  const air = document.getElementById('wc2-air');
+  if(air) air.innerHTML =
+    '<span>gust factor <b>' + (v.gf ? v.gf.toFixed(2) + '×' : '–') + '</b></span>' +
+    '<span>twist 10→50 <b>' + (v.twist ? (v.twist > 0 ? '+' : '') + v.twist.toFixed(0) + '°' : '0°') + '</b></span>' +
+    '<span>air <b>' + (v.airPct == null ? '–' : (v.airPct >= 0 ? '+' : '') + v.airPct.toFixed(1) + '%') + '</b> carry</span>';
+
+  const place = document.getElementById('wc2-place');
+  if(place){
+    const d = _wc.data;
+    if(!d) place.textContent = window._windTest ? 'test wind — no live fetch' : 'reading the wind at your position…';
+    else place.innerHTML = (d.exact ? '<b>your exact position</b>' : 'estimated location') +
+      (d.elev != null ? ' · ' + Math.round(d.elev) + ' m' : '') +
+      ' · updated ' + new Date(d.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) +
+      (_wc.selHour != null ? ' · <b>previewing ' + v.label + '</b>' : '');
+  }
+  _wcFit();          // AFTER the rows are populated — see _wcFit
+  const note = document.getElementById('wc2-note');
+  if(note) note.innerHTML = 'Open-Meteo model wind at your coordinates — 10 m and 80 m are modelled, 25 m and 50 m are fitted along the shear profile between them (α ' + (v.prof[0].alpha != null ? v.prof[0].alpha.toFixed(2) : '–') + '). It is a ~10 km-grid forecast, not an anemometer on this tee: read it for the pattern, trust your eyes for the gust. Refreshes on the hour.';
+
+  _wcPaintAim();
+}
+
+function _wcSelHour(i){
+  if(!_wc) return;
+  _wc.selHour = (_wc.selHour === i || i === 0) ? null : i;
+  _wcRender();
+}
+
+// ── Refresh: on the hour, and on demand with a 30 s cooldown ───────────────
+async function _wcLoad(manual){
+  if(!_wc || _wc.busy) return;
+  const now = Date.now();
+  if(manual){
+    if(now < (_wc.coolUntil || 0)){ _wcToast('Just refreshed — wait ' + Math.ceil((_wc.coolUntil - now) / 1000) + ' s.'); return; }
+    if(window._windTest){ _wcToast('Wind is overridden in test mode.'); return; }
+  }
+  _wc.busy = true;
+  const btn = document.getElementById('wc2-refresh'); if(btn) btn.classList.add('busy');
+  try{
+    const d = await _wcFetch();
+    if(!_wc) return;
+    _wc.data = d; _wc.selHour = null;
+    if(manual){ _wc.coolUntil = Date.now() + WC_COOL_MS(); _wcToast('Wind updated.'); }
+    _wcRender();
+  }catch(e){
+    if(_wc && manual) _wcToast('Could not refresh — kept the last reading.');
+    if(_wc && !_wc.data) _wcRender();
+  }finally{
+    if(_wc){ _wc.busy = false; const b = document.getElementById('wc2-refresh'); if(b) b.classList.remove('busy'); }
+  }
+}
+// Fire a few seconds past each hour, when the model's new hour is actually published.
+function _wcScheduleHourly(){
+  if(!_wc) return;
+  clearTimeout(_wc.hourT);
+  const d = new Date(), ms = ((60 - d.getMinutes()) * 60 - d.getSeconds()) * 1000 + 8000;
+  _wc.hourT = setTimeout(() => { if(!_wc) return; _wcLoad(false); _wcScheduleHourly(); }, Math.max(15000, ms));
+}
+function _wcOnVisible(){
+  if(!_wc || document.hidden) return;
+  if(!_wc.data || Date.now() - _wc.data.at > 900000) _wcLoad(false);   // stale after 15 min in the background
+}
+function _wcResize(){ if(!_wc) return; _wcRender(); }   // _wcFit re-inits the canvas if the size really changed
+
+function openWindCompass(){
+  _wcInjectCSS();
+  let w = document.getElementById('wind-panel');
+  if(!w){
+    w = document.createElement('div'); w.id = 'wind-panel'; w.setAttribute('aria-hidden', 'true');
+    w.innerHTML =
+      '<div class="wc2-top"><div class="wc2-title">🧭 Wind</div>' +
+        '<div class="wc2-place" id="wc2-place">locating…</div>' +
+        '<button class="wc2-btn" id="wc2-refresh" onclick="_wcLoad(true)" aria-label="Refresh the wind reading">↻</button>' +
+        '<button class="wc2-btn" onclick="closeWindCompass()" aria-label="Close">✕</button></div>' +
+      '<div class="wc2-body">' +
+        '<div class="wc2-stage" id="wc2-stage">' +
+          '<canvas id="wc2-flow"></canvas>' +
+          '<div id="wc2-rosewrap"></div>' +
+          '<div class="wc2-hud" id="wc2-hud"></div>' +
+          '<div class="wc2-tilt" id="wc2-tilt"></div>' +
+        '</div>' +
+        '<div class="wc2-side">' +
+          '<div class="wc2-swirl" id="wc2-swirl"></div>' +
+          '<div class="wc2-aim" id="wc2-aim" role="button" tabindex="0" onclick="_wcToggleAimLock()"></div>' +
+          '<div class="wc2-rungs" id="wc2-rungs"></div>' +
+          '<div class="wc2-air" id="wc2-air"></div>' +
+          '<div class="wc2-strip-h"><span>Next 12 hours — tap to preview</span><span id="wc2-selt"></span></div>' +
+          '<div class="wc2-strip" id="wc2-strip"></div>' +
+          '<div class="wc2-note" id="wc2-note"></div>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(w);
+  }
+  _wc = { data: (_wc && _wc.data) || null, selHour: null, heading: 0, headRaw: null, hasHeading: false,
+          aimLock: null, level: null, coolUntil: 0, busy: false, raf: 0, hourT: 0, view: null };
+  w.classList.add('on'); w.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  _wcRender();                                        // sizes the canvas + rose via _wcFit
+  window.addEventListener('resize', _wcResize);
+  document.addEventListener('visibilitychange', _wcOnVisible);
+  _wcStartCompass();                                  // opening IS the user gesture iOS needs
+  _wc.raf = requestAnimationFrame(_wcFlowTick);
+  _wcScheduleHourly();
+  _wcLoad(false);
+}
+function closeWindCompass(){
+  const w = document.getElementById('wind-panel');
+  if(w){ w.classList.remove('on'); w.setAttribute('aria-hidden', 'true'); }
+  window.removeEventListener('resize', _wcResize);
+  document.removeEventListener('visibilitychange', _wcOnVisible);
+  if(_wc){
+    if(_wc.raf) cancelAnimationFrame(_wc.raf);
+    clearTimeout(_wc.hourT);
+    if(_wc.orientH) window.removeEventListener(_wc.orientEv, _wc.orientH, true);
+    _wc = { data: _wc.data };                          // keep the last reading for a fast reopen
+  }
+  document.body.style.overflow = '';
+}
+// Test hooks — the full-screen compass has no live weather in preview, so the same
+// override shape the Play compass uses stands in for it end to end.
+// ?wind=spd,dir[,gust[,twist[,spread]]]  e.g. ?wind=28,215,44,35,50 = a swirling SW gale.
+(function initWindTest(){
+  const q = new URLSearchParams(location.search).get('wind');
+  if(!q) return;
+  const n = q.split(',').map(x => parseFloat(x));
+  if(!isFinite(n[0]) || !isFinite(n[1])) return;
+  window._windTest = { spd: n[0], dir: n[1] };
+  if(isFinite(n[2])) window._windTest.gust = n[2];
+  if(isFinite(n[3])) window._windTest.twist = n[3];
+  if(isFinite(n[4])) window._windTest.spread = n[4];
+})();
+// Console helper: setWind(spd,dir,gust,twist,spread) drives the panel live; setWind() clears.
+window.setWind=(spd, dir, gust, twist, spread) => {
+  if(spd == null){ delete window._windTest; }
+  else {
+    window._windTest = { spd: +spd, dir: +dir || 0 };
+    if(gust != null) window._windTest.gust = +gust;
+    if(twist != null) window._windTest.twist = +twist;
+    if(spread != null) window._windTest.spread = +spread;
+  }
+  if(_wc) _wcRender();
+  return window._windTest || 'live wind';
+};
+
 function fmtClock(d){ return minsToStr(d.getHours()*60+d.getMinutes()); }
 function now_mins_for_astro(d){ return d.getHours()*60+d.getMinutes(); }
 
@@ -10377,7 +11200,9 @@ function playRender(){
     if(sub0) sub0.textContent='your golf history';
     if(tabs) tabs.style.display='none';
     if(backBtn) backBtn.style.display='none';
-    if(hioBtn) hioBtn.style.display='none';
+    // The ace tracker's home now that it's off the main header: 📊 Rounds & Stats is where your
+    // golf history lives, so 🏆 belongs beside it (mid-round it's still on the Play header).
+    if(hioBtn) hioBtn.style.display='';
     if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0){ body0.setAttribute('aria-labelledby','play-title'); body0.innerHTML=historyTabHtml(); }

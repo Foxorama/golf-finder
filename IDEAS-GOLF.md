@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-08 · **Next ID:** `G-014`
+> **Last reviewed:** 2026-08-08 · **Next ID:** `G-016`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -30,6 +30,26 @@ matches reality hole by hole. Each is behind a `window._*` escape-hatch — note
 re-tuning rather than disabling. **Add G-010's auto-tee to this pass** (`window._playAutoTee`,
 `_playTeeAutoNear`): confirm the tee it captures as you stand on the box is where you actually
 teed off, and that the displayed hole length doesn't visibly flicker as you walk up.
+
+### G-014 · On-course verification of the full-screen wind compass `[QA]` `[golf]` `[needs-phone]`
+**Status:** open
+The 🧭 panel (`openWindCompass`) was built and measured in preview, but its two headline behaviours
+are sensor- and place-dependent: (a) the rose spins off `_wcOnOrient`, so held flat it should read
+like a real compass — check north is north and that the 0.22 smoothing isn't sluggish or jittery
+(`window._windCompassLive=false` disables); (b) the SWIRLING / SHIFTY / STEADY verdict
+(`wcSwirl`) is a model call — stand on an exposed tee in a real breeze and see whether the badge
+matches what the flag is doing. Also worth sanity-checking that the 25 m / 50 m rungs read plausibly
+against a ball flight, and whether `_windFlow` (the particle field) is a help or a distraction in
+sunlight. Escape hatches: `_windCompassLive`, `_windFlow`, `_windCool`.
+
+### G-015 · Give the ace tracker a permanent home `[UX]`
+**Status:** open
+The 🏆 button came off the main header (a hole-in-one is too rare to hold prime real estate) and now
+lives in the 📊 Rounds & Stats header plus the Play header. That's *reachable*, not *discoverable* —
+if you've never opened stats you won't know aces are tracked. Options: a trophy row inside the stats
+dashboard itself (count + last ace, tapping opens the tracker), or fold it into the History tab as a
+card. Auto-registration from a scored 1 (`playSyncAce`) already works, so this is purely about where
+the shelf lives.
 
 ### G-002 · Add more Play courses `[golf]` `[data]`
 **Status:** open
@@ -82,7 +102,17 @@ so plan a schema bump + migration.
 `_playsLike` models wind only — "Elevation isn't modelled (St Lucia is flat)". Fine for St Lucia, but
 a blocker for any hillier course added under G-002. Pair this with the first non-flat course: add an
 uphill/downhill term (source per-hole elevation when tracing) so plays-like stays honest. Keep it
-behind a tunable like the wind terms.
+behind a tunable like the wind terms. **Related:** the wind compass already computes an air-density
+carry nudge (`wcAirCarryPct`, from temp/pressure/humidity at the player's elevation) — if that reads
+true on-course it belongs in `_playsLike` too, so the rangefinder and the compass agree.
+
+### G-016 · Feed the wind compass's ladder into the Play rangefinder `[golf]`
+**Status:** open
+`_playsLike` uses the 10 m wind only, but a full shot spends most of its flight nearer the 25–50 m
+rungs the compass now models (`wcProfile`). If G-014 says the rungs read true on-course, weight the
+plays-like calculation toward an apex-height wind (a wedge lives lower than a driver, so club-aware)
+instead of surface wind. Keep the conservative coefficients and the escape hatch — this changes a
+number a player hits a shot on, so it needs the on-course pass first, not before it.
 
 ### G-005 · Real multi-tee data for St Lucia `[golf]` `[data]`
 **Status:** open

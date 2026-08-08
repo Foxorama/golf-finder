@@ -59,6 +59,23 @@ export function loadOrreryCore(){
   return sandbox.__exports;
 }
 
+// Loads the pure WIND-CORE region (shear profile, circular stats, swirl classification and
+// the wind-vs-aim maths behind the full-screen compass). Fully self-contained — no shims.
+const WIND_EXPORTS = ['WC_RUNGS','wcAng','wcAngDiff','wcCircMean','wcCircSpread','wcShear','wcSpeedAt',
+                      'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcComponents',
+                      'wcPlaysPct','wcAirCarryPct'];
+export function loadWindCore(){
+  const html = readIndex();
+  const s = html.indexOf('WIND-CORE-START');
+  const e = html.indexOf('WIND-CORE-END');
+  if(s<0||e<0) throw new Error('WIND-CORE markers not found in index.html');
+  const code = html.slice(html.indexOf('\n',s)+1, html.lastIndexOf('\n',e));
+  const sandbox = {};
+  vm.createContext(sandbox);
+  vm.runInContext(code + `\nthis.__exports={${WIND_EXPORTS.join(',')}};`, sandbox, {filename:'wind-core'});
+  return sandbox.__exports;
+}
+
 // Extract every inline (non-src) <script> body from index.html — used by the syntax test.
 export function inlineScripts(){
   const html = readIndex();
