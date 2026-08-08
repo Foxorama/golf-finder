@@ -693,6 +693,17 @@ call it done. They map to the three hats the user keeps asking for:
   touches them. The **🏆 trophy (`#btn-hio`) and 🎒 My Bag (`#btn-bag`) header buttons are
   day-only** — a CSS rule hides them under `body.night` (they're golf tools, irrelevant to the
   night sky-watching view).
+- **A Play course can ship SCORECARD-ONLY (`noGps:true` on the `COURSE_PLAY` entry).** It gets the
+  Card + History tabs, handicap, net and Stableford, but no rangefinder and no hole map — the
+  honest shape when the card is solid and the geometry isn't sourceable. Holes may then carry a
+  **`len`** (rated-tee metres from the card), which is the only place those distances can surface;
+  the Card renders it under each hole number and on OUT/IN/TOT via `fmtDist`, so a yards player
+  reads the club's own card back. The day card's Play button follows suit ("scorecard & handicap"
+  rather than "GPS rangefinder & scorecard"), the same honest-CTA rule as the directory-only tee
+  links. **Brisbane River Golf Club** is the worked example, and `reports/brisbane-river-course-maps-2026-08-08.md`
+  says why: OSM holds one partial boundary way, the only available aerial is a drought-stressed
+  capture where greens don't separate from fairway, and a stylised club map fits to ~40 m on a
+  course whose holes are closer together than that. See the `add-play-course` skill.
 - Icons / screenshots / `README.md` / `INSTALL.md` are static assets.
 
 ## Testing (regression guard)

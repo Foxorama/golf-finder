@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-07 · **Next ID:** `G-013`
+> **Last reviewed:** 2026-08-08 · **Next ID:** `G-014`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -39,6 +39,19 @@ about **breadth and depth**. Two threads: (a) more SEQ courses via the **`add-pl
 courses already in that shipped on partial data and want a second pass (Gailes is one traced hole;
 McLeod has routing but no hazards — see G-011). Prefer depth on a course the user actually plays
 over another thin course.
+
+### G-013 · Brisbane River: trace the hole maps `[golf]` `[data]`
+**Status:** open
+The course shipped **scorecard-only** (`noGps`) because none of the three geometry sources works
+for it: OSM holds a single partial boundary way and the clubhouse, the QLD state imagery refuses on
+the runner so the only aerial is a drought-stressed Esri capture where greens don't separate from
+fairway, and the club's course map is a stylised drawing that fits the true clubhouse to ~40 m —
+wider than a hole on a compact estate course with parallel corridors. So the numbering can't be
+established, and the skill says ship the card rather than guess. **The unblock is a hand-trace in
+`scripts/play/trace-tool.html`, which needs a browser** — `scripts/play/brisbane-river-golf-club.config.json`
+already carries the full card (par / SI / CR 65.0 / Slope 116 / Black + Red per-hole distances), so
+tracing greens + tees + centrelines and running `from-traced.mjs` finishes it. Full write-up:
+`reports/brisbane-river-course-maps-2026-08-08.md`.
 
 ### G-011 · McLeod: the standard-card Course Rating `[golf]` `[data]`
 **Status:** open

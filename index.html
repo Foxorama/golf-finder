@@ -1016,6 +1016,7 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .cc-table th{font-size:9px;color:var(--tx3);text-transform:uppercase;letter-spacing:0.05em;padding:4px 2px;text-align:center;font-weight:500;}
 .cc-table td{text-align:center;padding:3px 2px;border-top:1px solid var(--bdr);font-size:13px;color:var(--tx2);}
 .cc-h{color:var(--tx);font-weight:600;} .cc-p{color:var(--tx3);}
+.cc-len{display:block;font-size:9px;font-weight:500;color:var(--tx3);letter-spacing:.02em;margin-top:1px;}
 .cc-step{display:inline-flex;align-items:center;gap:6px;}
 .cc-step button{width:26px;height:26px;border-radius:7px;border:1px solid var(--bdr2);background:var(--sur);color:var(--tx);font-size:15px;cursor:pointer;line-height:1;}
 .cc-val{display:inline-block;width:22px;height:22px;line-height:19px;text-align:center;font-size:15px;font-weight:700;color:var(--tx);border:1.5px solid transparent;box-sizing:border-box;}
@@ -1751,6 +1752,7 @@ const COURSES = [
   {name:"Wynnum Golf Club",suburb:"Wynnum",lat:-27.4459,lng:153.1649,drive:25,holes:[9,18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://wynnumgolf.com.au/",fee18:55,fee9:32,rating:4.0,note:'Semi-private bayside club. Pleasant layout with sea breezes.',zone:'bayside'},
   {name:"Howeston Golf Course",suburb:"Birkdale",lat:-27.5003,lng:153.199,drive:30,holes:[9,18],type:"public",par3:false,noBooking:true,golfnow:false,region:"brisbane",url:"https://www.howestongolfcourse.com.au/",fee18:28,fee9:16,rating:4.0,note:'27-hole family-owned walk-up course. Best value in SEQ, sunrise to sunset.',zone:'bayside'},
   {name:"Gailes Golf Club",suburb:"Gailes",lat:-27.6026,lng:152.918,drive:30,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.gailesgolf.com.au/",visitorNote:"Reduced hours Sundays — check ahead",fee18:45,fee9:27,rating:4.1,note:'Public 9/18-hole course. Well-maintained and one of Ipswich\'s most popular.',zone:'ipswich'},
+  {name:"Brisbane River Golf Club",suburb:"Karana Downs",lat:-27.5426,lng:152.8299,drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.brgc.com.au/",fee18:null,fee9:null,rating:null,note:'Par 66 on a Brisbane River bend at Karana Downs. Seven par 3s and tight tree-lined corridors — short on the card, stingy on the scorecard.',zone:'ipswich'},
   {name:"Brookwater Golf & Country Club",suburb:"Brookwater",lat:-27.6625,lng:152.8942,drive:35,holes:[18],type:"semi-private",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://www.brookwatergolf.com.au/",fee18:null,fee9:null,rating:4.6,note:'Greg Norman design. One of SEQ\'s best semi-private layouts.',zone:'ipswich'},
   {name:"Meadowbrook Golf Club",suburb:"Meadowbrook",lat:-27.658,lng:153.1502,drive:32,holes:[18],type:"public",par3:false,noBooking:false,golfnow:true,region:"brisbane",url:"https://www.golfnow.com.au/tee-times/facility/2523-meadowbrook-golf-club/search",fee18:45,fee9:null,rating:4.0,note:'Public 18-hole south of Brisbane. Affordable and accessible.',zone:'ipswich'},
   {name:"Pine Rivers Golf Club",suburb:"Bray Park",lat:-27.2309,lng:152.9746,drive:35,holes:[9,18],type:"public",par3:false,noBooking:false,golfnow:false,region:"brisbane",url:"https://golf.com.au/venue/pine-rivers-golf-club",fee18:null,fee9:null,rating:3.9,note:'Public 9/18-hole north Brisbane. Local community club.',zone:'brisbane_metro'},
@@ -2442,6 +2444,41 @@ const COURSE_PLAY = {
       {n:16, par:3, si:18, tee:[-27.5464762,152.924704], cen:[-27.5462083,152.9232957], pin:null, gbb:[-27.5463251,152.923164,-27.5460915,152.9234274]},
       {n:17, par:4, si:3, tee:[-27.5465539,152.9226936], cen:[-27.548263,152.9261955], pin:null, gbb:[-27.5483798,152.9260638,-27.5481462,152.9263272]},
       {n:18, par:3, si:10, tee:[-27.548641,152.925714], cen:[-27.5498614,152.9246187], pin:null, gbb:[-27.5499782,152.924487,-27.5497446,152.9247504]},
+    ],
+  },
+  // Scorecard-only (noGps): the card is real and complete, the geometry does not exist to source.
+  // OSM holds ONE partial boundary way for this course (still named "Karana Downs Golf Course") and
+  // the clubhouse — no holes, greens, tees, fairways or bunkers — and the only open imagery that
+  // answers for it is a dry-season Esri capture in which the putting surfaces do not separate from
+  // the fairways. The club's course map gives the routing but it is a stylised drawing, so on a
+  // compact course with parallel corridors it cannot say which corridor is which hole to better
+  // than the width of a hole. Per the add-play-course skill: when the numbering can't be trusted,
+  // ship the card and don't guess. Hand-tracing on the aerial (scripts/play/trace-tool.html) is
+  // what upgrades this to a GPS course.
+  // Card: the club's BlueGolf card. Distances are YARDS on that card — the published Black rating
+  // of 65.0 for par 66 only works at ~4,720 m, where 5,158 METRES would rate about 68 — so `len`
+  // below is the Black card distance converted to metres.
+  'brisbane-river-golf-club': {
+    name:'Brisbane River Golf Club', par:66, holesN:18, cr:65, slope:116, noGps:true, src:'club scorecard (BlueGolf)',
+    holes:[
+      {n:1, par:3, si:6, len:206},
+      {n:2, par:4, si:8, len:328},
+      {n:3, par:3, si:16, len:140},
+      {n:4, par:4, si:14, len:314},
+      {n:5, par:3, si:10, len:169},
+      {n:6, par:4, si:4, len:309},
+      {n:7, par:4, si:12, len:378},
+      {n:8, par:3, si:2, len:165},
+      {n:9, par:4, si:18, len:407},
+      {n:10, par:4, si:17, len:246},
+      {n:11, par:5, si:1, len:454},
+      {n:12, par:3, si:15, len:133},
+      {n:13, par:4, si:7, len:276},
+      {n:14, par:3, si:11, len:148},
+      {n:15, par:4, si:9, len:336},
+      {n:16, par:3, si:13, len:129},
+      {n:17, par:4, si:3, len:240},
+      {n:18, par:4, si:5, len:340},
     ],
   },
 };
@@ -8169,7 +8206,12 @@ function courseCard(c,daylight,dimmed){
   const safeName=c.name.replace(/'/g,"\\'");
   const safeSuburb=c.suburb.replace(/'/g,"\\'");
   // On-course Play (GPS rangefinder + scorecard) — only courses with baked play data
-  const playBtn=COURSE_PLAY[slugify(c.name)]?`<button class="ccard-play" onclick="openPlay(&quot;${safeName}&quot;)" aria-label="Play ${safeName} — GPS rangefinder and scorecard">⛳ Play · GPS rangefinder &amp; scorecard</button>`:'';
+  // Same honest-CTA rule as the tee-times button above: a scorecard-only course has no rangefinder,
+  // so don't promise one. A multi-layout course counts as scorecard-only only if EVERY layout is.
+  const _pc=COURSE_PLAY[slugify(c.name)];
+  const _pcNoGps=_pc&&(_pc.layouts?_pc.layouts.every(l=>l.noGps):!!_pc.noGps);
+  const _pcTxt=_pcNoGps?'scorecard &amp; handicap':'GPS rangefinder &amp; scorecard';
+  const playBtn=_pc?`<button class="ccard-play" onclick="openPlay(&quot;${safeName}&quot;)" aria-label="Play ${safeName} — ${_pcNoGps?'scorecard and handicap':'GPS rangefinder and scorecard'}">⛳ Play · ${_pcTxt}</button>`:'';
   return `<div class="ccard${dimmed?' dimmed':''}${isClosed?' closed-today':''}" role="listitem">
     <div class="ccard-left">
       <div class="ccard-name">${c.name}</div>
@@ -10202,22 +10244,28 @@ function cardTabHtml(){
     const net=(s!=null&&ch!=null)?s-recv:null, pts=s!=null?Math.max(0,(h.par-s)+recv+2):null;
     const dot=recv>0?`<span class="cc-recv">${'•'.repeat(Math.min(3,recv))}</span>`:recv<0?`<span class="cc-recv minus">–</span>`:'';
     return `<tr>
-      <td class="cc-h">${h.n}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
+      <td class="cc-h">${h.n}${h.len!=null?`<span class="cc-len">${fmtDist(h.len)}</span>`:''}${s!=null?`<button class="cc-clr" onclick="playClearScore(${h.n})" aria-label="Clear hole ${h.n}">✕</button>`:''}</td>
       <td class="cc-p">${h.par}<span class="cc-si">${h.si||''}</span></td>
       <td><div class="cc-step"><button onclick="playBumpScore(${h.n},-1)" aria-label="Lower score hole ${h.n}">–</button><span class="cc-val ${rc}"${s!=null?` aria-label="${s}, ${_scoreTerm(rel)}"`:''}>${s!=null?s:'·'}</span><button onclick="playBumpScore(${h.n},1)" aria-label="Raise score hole ${h.n}">+</button></div></td>
       <td class="cc-net">${net!=null?net:''}${dot}</td>
       <td class="cc-pts">${pts!=null?pts:''}</td>
     </tr>`; };
   const outPar=holes.slice(0,9).reduce((a,h)=>a+h.par,0), inPar=holes.slice(9).reduce((a,h)=>a+h.par,0);
+  // Card distances, when the course carries them. This is the only place they can show on a
+  // scorecard-only course, and fmtDist honours the yards/metres toggle so a yards player reads the
+  // club's own card back. `null` on any hole means the total would lie, so it is suppressed.
+  const lenSum=hs=>hs.every(h=>h.len!=null)?hs.reduce((a,h)=>a+h.len,0):null;
+  const outLen=lenSum(holes.slice(0,9)), inLen=lenSum(holes.slice(9)), totLen=lenSum(holes);
+  const lenCell=v=>v!=null?`<span class="cc-len">${fmtDist(v)}</span>`:'';
   const vpTxt=t.holesPlayed?(t.vsPar===0?'E':t.vsPar>0?'+'+t.vsPar:t.vsPar):'';
   return `
     ${hcpBar}
     <table class="cc-table"><thead><tr><th>Hole</th><th>Par<span class="cc-si-h">SI</span></th><th>Score</th><th>Net</th><th>Pts</th></tr></thead>
       <tbody>${holes.slice(0,9).map(row).join('')}
-        <tr class="cc-sub"><td>OUT</td><td>${outPar}</td><td>${t.out||'–'}</td><td colspan="2"></td></tr>
+        <tr class="cc-sub"><td>OUT${lenCell(outLen)}</td><td>${outPar}</td><td>${t.out||'–'}</td><td colspan="2"></td></tr>
         ${holes.slice(9).map(row).join('')}
-        <tr class="cc-sub"><td>IN</td><td>${inPar}</td><td>${t.inn||'–'}</td><td colspan="2"></td></tr>
-        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${t.holesPlayed?t.points:''}</td></tr>
+        <tr class="cc-sub"><td>IN${lenCell(inLen)}</td><td>${inPar}</td><td>${t.inn||'–'}</td><td colspan="2"></td></tr>
+        <tr class="cc-tot"><td>TOT${t.holesPlayed&&t.holesPlayed<course.holesN?`<span class="cc-thru">thru ${t.holesPlayed}</span>`:''}${lenCell(totLen)}</td><td>${course.par}</td><td>${t.holesPlayed?t.gross:'–'}<span class="cc-vp">${vpTxt}</span></td><td>${ch!=null&&t.holesPlayed?t.net:''}</td><td>${t.holesPlayed?t.points:''}</td></tr>
       </tbody></table>
     ${ch!=null?`<div class="play-net-sum">Net <b>${t.holesPlayed?t.net:'–'}</b> · Stableford <b>${t.holesPlayed?t.points:'–'}</b> pts${t.recvTotal?` · ${t.recvTotal>0?t.recvTotal+' strokes received':(-t.recvTotal)+' given'}`:''}${!hasSI?' · strokes by hole order':''}</div>`:''}
     <button class="play-save" onclick="playSaveRound()">💾 Save round to history</button>
