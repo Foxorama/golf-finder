@@ -463,15 +463,23 @@ call it done. They map to the three hats the user keeps asking for:
   the whole page teal, so nothing ever stood out and every reading looked equally urgent. Impact is
   the **larger of the head/tail and cross components** — a pure crosswind moves the ball as far as a
   headwind even though it barely touches carry — ramped 0→1 between `floor` (6 km/h, below which you
-  don't change club) and `full` (24 km/h). **Below the floor the tone is `WC_TONE.none` slate**, the
-  panel gets `.wc2-quiet`, and the view deliberately looks like nothing is happening. Above it,
-  `--wcInt` scales the ring opacity, the aim-bar glow, the rung glow and the background wash, so the
-  page gets louder as the shot gets harder. Tunable on a phone: `?impact=floor,full` /
-  `setImpact(floor,full)` / `window._windImpact`.
-  **The CHROME is deliberately NEUTRAL slate** (title, borders, hairlines, tile edges). Tinting it
-  with the tone was tried and made things worse — coloured data on a coloured frame has no contrast,
-  so the page read as one wall of green; only the wash stays toned, at an alpha that follows
-  `--wcInt`. The **footer key is three swatches, not a paragraph** (that paragraph was six lines of
+  don't change club) and `full` (24 km/h). **HUE and LOUDNESS are separate jobs**: the hue always
+  says what the wind does to your line (draining it to grey in light air just moves the problem —
+  tried, rejected), while `--wcInt` scales the ring opacity, aim-bar glow, rung glow and background
+  wash. So a 6 km/h tailwind is still green, it just doesn't shout, and `.wc2-quiet` lets the ladder
+  sit back below the floor. Tunable on a phone: `?impact=floor,full` / `setImpact(floor,full)` /
+  `window._windImpact`.
+  **The panel has a PALETTE, not one hue — this is the thing that keeps getting re-broken.** Two
+  failed attempts are on record: tinting the chrome with the tone (coloured data on a coloured
+  frame = no contrast, the page read as one wall of green) and then neutralising the chrome to
+  slate (same monotone, different colour). What works is that **each role owns its own hue**, set as
+  tokens on `#wind-panel`: `--wcBrass` #f0c46a (the instrument's identity — title, Beaufort, and the
+  gust streaks in the flow field), `--wcSteel` #b7d2e8 (the compass card's ticks/letters, meta, tile
+  directions), and a ground→sky ladder ramp `--wcZ10/25/50` (#d5c39a → #8fb6e8 → #9b93f0) on the
+  height tiles' left edge + label, over a navy ground rather than near-black. The **wind tone stays
+  exactly as it was** — it was the part that worked. The **air row keeps its OWN semantics** (gust/
+  twist warm as they worsen; air carry gold when thin, blue when heavy), and the swirl pill keeps
+  its four. The **footer key is three swatches, not a paragraph** (that paragraph was six lines of
   coloured prose and the single biggest block of green on screen). The **air row keeps its OWN semantics** (gust/twist warm as
   they worsen; air carry gold when thin, blue when heavy) — three different questions shouldn't
   share one hue. The tone is pushed through a `--wcTone` CSS var by `_wcApplyTones()` so turning the phone
