@@ -733,6 +733,27 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 /* z above the Play sheet (1100) so My Bag / the ace tracker can be opened from inside a
    round (the History tab's "Edit my bag") and layer over it, not behind it; below the
    immersive night view (2000) and loader. */
+/* Resume bar — the one control that must read the same in day and night mode, since the round
+   it points at doesn't care which the app is in. Green like the Play CTA it leads to. */
+#resume-bar{display:flex;align-items:stretch;gap:6px;margin:0 0 10px;}
+#resume-bar .rb-go{flex:1;min-width:0;display:flex;align-items:center;gap:10px;text-align:left;
+  background:linear-gradient(90deg,rgba(22,224,163,.16),rgba(22,224,163,.05));
+  border:1px solid rgba(22,224,163,.42);border-radius:13px;padding:9px 13px;color:var(--tx);
+  font-family:var(--sans);cursor:pointer;-webkit-tap-highlight-color:transparent;}
+#resume-bar .rb-go:active{transform:scale(.99);}
+#resume-bar .rb-dot{flex:none;width:9px;height:9px;border-radius:50%;background:#16e0a3;box-shadow:0 0 9px rgba(22,224,163,.9);}
+#resume-bar.live .rb-dot{animation:rbPulse 2.1s ease-in-out infinite;}
+#resume-bar:not(.live) .rb-dot{background:#8aa3ad;box-shadow:none;}
+#resume-bar .rb-txt{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px;}
+#resume-bar .rb-txt b{font-size:12.5px;font-weight:800;letter-spacing:.01em;color:#c8f5e4;}
+#resume-bar:not(.live) .rb-txt b{color:var(--tx2);}
+#resume-bar .rb-txt i{font-style:normal;font-family:var(--mono);font-size:10px;color:var(--tx3);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#resume-bar .rb-arw{flex:none;font-size:15px;}
+#resume-bar .rb-x{flex:none;width:34px;border:1px solid var(--bdr);border-radius:13px;background:transparent;
+  color:var(--tx3);font-size:12px;cursor:pointer;-webkit-tap-highlight-color:transparent;}
+@keyframes rbPulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+@media (prefers-reduced-motion: reduce){#resume-bar.live .rb-dot{animation:none;}}
 .hio-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:1500;backdrop-filter:blur(2px);}
 .hio-sheet{position:fixed;bottom:0;left:0;right:0;max-width:480px;margin:0 auto;background:var(--sur);border-top:1px solid var(--bdr2);border-radius:20px 20px 0 0;z-index:1501;padding:20px 20px env(safe-area-inset-bottom,16px);max-height:85dvh;overflow-y:auto;}
 .hio-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;}
@@ -1638,6 +1659,9 @@ body.wx-paused .day-wx *,body.wx-paused .night-wx *,body.wx-paused .night-star{a
     <span id="test-banner-text">TEST MODE</span>
     <span style="opacity:0.7;">· tap to cycle · </span><span onclick="event.stopPropagation();clearTime();hideTestBanner();" style="text-decoration:underline;">exit</span>
   </div>
+
+  <!-- Resume the round in progress. Above the weather, and shown in BOTH modes on purpose. -->
+  <div id="resume-bar" style="display:none;"></div>
 
   <div class="loc-row"><div class="app-meta" id="loc-status" style="margin-top:0;"></div><select class="pill-select" id="filter-select" onchange="setFilter(this.value,null)" aria-label="Filter courses"><option value="favs">★ Favs</option><option value="all">All courses</option><option value="playable">Playable now</option><option value="18">18 holes</option><option value="9">9 holes</option><option value="par3">Par 3</option><option value="close">≤30 min drive</option><option value="visitor">Visitor-friendly</option><option value="golfnow">On GolfNow</option><option value="nobooking">No booking</option><option value="brisbane">Brisbane</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="toowoomba">Toowoomba</option><option value="melbourne">Melbourne</option></select><select class="pill-select" id="region-select" onchange="setNightRegion(this.value)" aria-label="Sky-watching region"><option value="">📍 My location</option><optgroup label="SE Queensland"><option value="brisbane">Brisbane / SEQ</option><option value="goldcoast">Gold Coast</option><option value="sunshine">Sunshine Coast</option><option value="ipswich">Ipswich</option><option value="toowoomba">Toowoomba</option></optgroup><optgroup label="Regional QLD"><option value="cairns">Cairns</option><option value="townsville">Townsville</option><option value="mackay">Mackay</option><option value="rockhampton">Rockhampton</option></optgroup><optgroup label="NSW / ACT"><option value="sydney">Sydney</option><option value="newcastle">Newcastle</option><option value="centralcoast">Central Coast</option><option value="wollongong">Wollongong</option><option value="canberra">Canberra</option></optgroup><optgroup label="Victoria"><option value="melbourne">Melbourne</option><option value="geelong">Geelong</option><option value="ballarat">Ballarat</option></optgroup><optgroup label="SA / WA"><option value="adelaide">Adelaide</option><option value="perth">Perth</option></optgroup><optgroup label="Tasmania"><option value="hobart">Hobart</option><option value="launceston">Launceston</option></optgroup><optgroup label="Northern Territory"><option value="darwin">Darwin</option><option value="alicesprings">Alice Springs</option></optgroup></select></div>
   <div class="hero-zone">
@@ -7288,7 +7312,7 @@ function closeWindCompass(){
     if(_wc.orientH) window.removeEventListener(_wc.orientEv, _wc.orientH, true);
     _wc = { data: _wc.data };                          // keep the last reading for a fast reopen
   }
-  document.body.style.overflow = '';
+  _restoreBodyScroll();       // the compass opens over the Play sheet, so don't unlock the page under it
 }
 // Test hooks — the full-screen compass has no live weather in preview, so the same
 // override shape the Play compass uses stands in for it end to end.
@@ -8715,6 +8739,9 @@ async function fetchOvation(force){
 
 function cardinal8(deg){ const d=['N','NE','E','SE','S','SW','W','NW']; return d[Math.round(((deg%360)+360)%360/45)%8]; }
 function render(){
+  // Before the daylight guard on purpose: a round in progress doesn't depend on sun data
+  // having arrived, and offline (no sun, no weather) is exactly when you want the way back in.
+  renderResumeBar();
   if(sunsetMins===null||lastLightMins===null)return;
   if(!window._firstRender){ window._firstRender=true; tryHideLoader(); }
   const now=nowMins();
@@ -9178,8 +9205,8 @@ function showHio(){
 }
 function hideHio(){
   document.getElementById('hio-panel').style.display='none';
-  document.body.style.overflow='';
   document.getElementById('hio-celebration').style.display='none';
+  _restoreBodyScroll();
 }
 function recordHio(){
   const course=document.getElementById('hio-course').value.trim();
@@ -9509,7 +9536,7 @@ function _bagUnit(){ return localStorage.getItem('gf_units')==='yd'?'yd':'m'; }
 function _toDisplay(m){ return Math.round(_bagUnit()==='yd'?m*1.09361:m); }
 function _toMetres(v){ const n=parseFloat(v); return isFinite(n)?(_bagUnit()==='yd'?n/1.09361:n):null; }
 function showBag(){ bagTab='bag'; document.getElementById('bag-panel').style.display='block'; document.body.style.overflow='hidden'; renderBag(); }
-function hideBag(){ document.getElementById('bag-panel').style.display='none'; document.body.style.overflow=''; }
+function hideBag(){ document.getElementById('bag-panel').style.display='none'; _restoreBodyScroll(); }
 function setBagClubInput(club,v){ setBagClub(club, v===''?null:_toMetres(v)); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); }
 function useTracked(club){ const ca=clubAvg(club); if(ca){ setBagClub(club,ca.avg); renderBag(); if(typeof playS!=='undefined'&&playS) playRender(); } }
 function setBagTab(t){ bagTab=t; renderBag(); }
@@ -9594,11 +9621,94 @@ function layoutPickerHtml(course){
     </button>`).join('')+`</div>`;
 }
 function playBackToCourses(){ if(playS&&playS.parentName) openPlay(playS.parentName); }
+// ── Resume the round you're in the middle of ───────────────────────────────────
+// A round lives in a draft (gf_round_draft_<slug>) until it's saved, so an unfinished round is
+// already durable — but the only way back into it was to find the course in the day list and
+// tap Play, which is impossible after last light, when the whole app flips to the night sky and
+// the course list is gone. That is exactly when you're most likely to be finishing a round.
+// So the bar sits above the weather hero and is deliberately NOT gated on day/night.
+//
+// slug → the course + layout it belongs to. Layout slugs are `<courseSlug>-<key>`, and a course
+// slug can itself contain hyphens, so this matches against the real keys rather than splitting.
+/* RESUME-CORE-START — sliced by tests/resume.test.mjs; reads COURSE_PLAY + localStorage only */
+function _playCourseForSlug(slug){
+  if(!slug) return null;
+  const direct=COURSE_PLAY[slug];
+  if(direct&&!direct.layouts) return {name:direct.name,layoutKey:null,label:direct.name};
+  for(const base in COURSE_PLAY){ const c=COURSE_PLAY[base]; if(!c.layouts) continue;
+    for(const L of c.layouts) if(base+'-'+L.key===slug) return {name:c.name,layoutKey:L.key,label:c.name+' — '+L.name}; }
+  return null;
+}
+// The most recently started draft that actually has something in it. An empty draft (opened the
+// course, marked nothing) is not a round in progress and must not nag.
+function _activeRoundDraft(){
+  let best=null;
+  for(let i=0;i<localStorage.length;i++){
+    const k=localStorage.key(i); if(!k||k.indexOf('gf_round_draft_')!==0) continue;
+    let d=null; try{ d=JSON.parse(localStorage.getItem(k)||'null'); }catch(e){}
+    if(!d) continue;
+    const holes=Object.keys(d.scores||{}).filter(n=>d.scores[n]!=null).length;
+    const marks=Object.values(d.shots||{}).reduce((a,v)=>a+((v&&v.length)||0),0);
+    const putts=Object.keys(d.putts||{}).filter(n=>d.putts[n]).length;
+    if(!holes&&!marks&&!putts) continue;                       // opened, never played
+    const slug=k.slice('gf_round_draft_'.length), c=_playCourseForSlug(slug);
+    if(!c) continue;                                            // course no longer in the app
+    const started=+d.startedAt||0;
+    if(!best||started>best.startedAt) best={slug,started:started,startedAt:started,holes,marks,...c};
+  }
+  return best;
+}
+/* RESUME-CORE-END */
+const _RESUME_DISMISS='gf_resume_dismissed';
+function renderResumeBar(){
+  const el=document.getElementById('resume-bar'); if(!el) return;
+  const r=_activeRoundDraft();
+  let dismissed=''; try{ dismissed=localStorage.getItem(_RESUME_DISMISS)||''; }catch(e){}
+  if(!r||dismissed===r.slug+'@'+r.startedAt){ el.style.display='none'; el.innerHTML=''; el._sig=''; return; }
+  // "Currently playing" has to be true. A round started this morning still is; a draft from last
+  // week is an unfinished round you can resume, which is a different sentence.
+  const ageH=r.startedAt?(Date.now()-r.startedAt)/3600000:999;
+  const live=ageH<14;
+  const thru=r.holes?('thru '+r.holes):(r.marks?'shots tracked':'started');
+  // render() ticks every 60 s; rewriting identical markup would restart the dot's pulse each
+  // time, which reads as a stutter rather than a heartbeat.
+  const sig=[r.slug,r.startedAt,live,thru].join('|');
+  if(el._sig===sig&&el.style.display!=='none') return;
+  el._sig=sig;
+  el.style.display='';
+  el.className=live?'live':'';
+  el.innerHTML='<button class="rb-go" onclick="resumeRound()" aria-label="Return to your round at '+
+      r.label.replace(/"/g,'&quot;')+'">'+
+      '<span class="rb-dot" aria-hidden="true"></span>'+
+      '<span class="rb-txt"><b>'+(live?'Currently playing':'Unfinished round')+'</b>'+
+      '<i>'+r.label+' · '+thru+'</i></span><span class="rb-arw" aria-hidden="true">⛳</span></button>'+
+    '<button class="rb-x" onclick="dismissResume()" aria-label="Hide this round">✕</button>';
+}
+function resumeRound(){
+  const r=_activeRoundDraft(); if(!r) return;
+  try{ localStorage.removeItem(_RESUME_DISMISS); }catch(e){}
+  openPlay(r.name, r.layoutKey||undefined);
+}
+function dismissResume(){
+  const r=_activeRoundDraft(); if(!r) return;
+  try{ localStorage.setItem(_RESUME_DISMISS,r.slug+'@'+r.startedAt); }catch(e){}
+  renderResumeBar();
+}
+
+// Overlays stack — the wind compass, My Bag and the ace tracker all open OVER the Play sheet —
+// so closing the top one must not unlock the page behind it. Restores scrolling only when
+// nothing full-screen is left open.
+function _restoreBodyScroll(){
+  const open = ['play-panel', 'wind-panel', 'hio-panel', 'bag-panel', 'aurora-globe', 'orrery', 'sky-modal']
+    .some(id => { const el = document.getElementById(id); return el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none'; });
+  document.body.style.overflow = open ? 'hidden' : '';
+}
 function closePlay(){
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }
   document.getElementById('play-panel').style.display='none';
-  document.body.style.overflow='';
   playS=null; _mapZoom=null; _needleStop();
+  _restoreBodyScroll();
+  renderResumeBar();          // the round is still unfinished — offer the way back in
 }
 // ── GPS smoothing (constant-position Kalman) ───────────────────────────────────
 // watchPosition reports a single-fix accuracy (often ±10–15 m on a phone). Fusing
@@ -10127,6 +10237,7 @@ function _commitRound(t){
     legs:legsByHole, holeStats:_buildHoleStats() });
   saveRounds(rounds);
   localStorage.removeItem(_draftKey(playS.slug));
+  renderResumeBar();                 // saved ⇒ the round is finished, so the bar goes
   playS.scores={}; playS.putts={}; playS.scoreAuto={}; playS.picked={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.teePos={}; playS.teeAuto={}; playS.teeManual={}; playS._teeAutoBest={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
@@ -11298,7 +11409,7 @@ function playRender(){
   if(!playS)return;
   const tabs=document.querySelector('.play-tabs'), backBtn=document.getElementById('play-back');
   const hioBtn=document.getElementById('play-hio-btn'), foot=document.getElementById('play-foot');
-  const histBtn=document.getElementById('play-hist-btn');
+  const histBtn=document.getElementById('play-hist-btn'), windBtn=document.getElementById('play-wind-btn');
   const ttl0=document.getElementById('play-title'), sub0=document.getElementById('play-subtitle'), body0=document.getElementById('play-body');
   const hideFoot=()=>{ if(foot){ foot.style.display='none'; foot.innerHTML=''; } };
   if(playS.historyOnly){   // dedicated "Rounds & Stats" view opened from the header (no course / GPS)
@@ -11309,6 +11420,7 @@ function playRender(){
     // The ace tracker's home now that it's off the main header: 📊 Rounds & Stats is where your
     // golf history lives, so 🏆 belongs beside it (mid-round it's still on the Play header).
     if(hioBtn) hioBtn.style.display='';
+    if(windBtn) windBtn.style.display='none';   // the wind is an on-course tool, not a history one
     if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0){ body0.setAttribute('aria-labelledby','play-title'); body0.innerHTML=historyTabHtml(); }
@@ -11320,6 +11432,7 @@ function playRender(){
     if(tabs) tabs.style.display='none';
     if(backBtn) backBtn.style.display='none';
     if(hioBtn) hioBtn.style.display='none';
+    if(windBtn) windBtn.style.display='none';
     if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0) body0.innerHTML=layoutPickerHtml(playS.course);
@@ -11327,7 +11440,11 @@ function playRender(){
   }
   if(tabs) tabs.style.display='';
   if(backBtn) backBtn.style.display=playS.parentName?'':'none';   // back-to-courses only for a layout of a multi-course site
-  if(hioBtn) hioBtn.style.display='';
+  // Mid-round the header slot goes to the WIND, not the ace tracker: an ace is a once-a-decade
+  // event and is auto-registered from the scorecard anyway (playSyncAce), whereas the wind is a
+  // question you ask on most shots. 🏆 keeps its home on the 📊 Rounds & Stats header.
+  if(hioBtn) hioBtn.style.display='none';
+  if(windBtn) windBtn.style.display='';
   if(histBtn){ histBtn.style.display=''; histBtn.classList.toggle('on',playS.tab==='history'); }
   const noGps=!!playS.course.noGps;
   if(noGps&&playS.tab==='play') playS.tab='card';   // no rangefinder tab for scorecard-only courses
@@ -11643,6 +11760,7 @@ showTestBanner();
         <div class="play-subtitle" id="play-subtitle">GPS rangefinder · scorecard</div>
       </div>
       <button class="play-back" id="play-hist-btn" onclick="playSetTab('history')" aria-label="Round history and stats" title="History &amp; stats">📊</button>
+      <button class="play-back" id="play-wind-btn" onclick="openWindCompass()" aria-label="Full-screen wind compass" title="Wind compass">🧭</button>
       <button class="play-back" id="play-hio-btn" onclick="showHio()" aria-label="Hole-in-one tracker" title="Record a hole-in-one">🏆</button>
       <button class="play-close" onclick="closePlay()" aria-label="Close play">✕</button>
     </div>

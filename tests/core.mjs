@@ -64,6 +64,28 @@ export function loadOrreryCore(){
 const WIND_EXPORTS = ['WC_RUNGS','wcAng','wcAngDiff','wcCircMean','wcCircSpread','wcShear','wcSpeedAt',
                       'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcAimCls','wcComponents',
                       'wcPlaysPct','wcAirCarryPct'];
+// Loads the resume-round slug resolution + draft scan. Not pure — it reads COURSE_PLAY and
+// localStorage — so both are injected as stubs, which is the point: the logic worth guarding is
+// what it does with awkward DATA (layout slugs, empty drafts, a course that has been removed).
+export function loadResumeCore(coursePlay, store){
+  const html = readIndex();
+  const s = html.indexOf('RESUME-CORE-START');
+  const e = html.indexOf('RESUME-CORE-END');
+  if(s<0||e<0) throw new Error('RESUME-CORE markers not found in index.html');
+  const code = html.slice(html.indexOf('\n', s) + 1, html.lastIndexOf('\n', e));
+  const localStorage = {
+    get length(){ return Object.keys(store).length; },
+    key(i){ return Object.keys(store)[i]; },
+    getItem(k){ return k in store ? store[k] : null; },
+    setItem(k, v){ store[k] = String(v); },
+    removeItem(k){ delete store[k]; },
+  };
+  const sandbox = { COURSE_PLAY: coursePlay, localStorage, Date, Object, JSON };
+  vm.createContext(sandbox);
+  vm.runInContext(code + '\nthis.__exports={_playCourseForSlug,_activeRoundDraft};', sandbox, {filename:'resume-core'});
+  return sandbox.__exports;
+}
+
 export function loadWindCore(){
   const html = readIndex();
   const s = html.indexOf('WIND-CORE-START');
