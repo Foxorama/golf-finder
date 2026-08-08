@@ -43,6 +43,12 @@ on:
       lng:
         description: 'Interior longitude for the is_in fallback query (fetch)'
         required: false
+      aerial_src:
+        description: 'Extent for the aerial fetch — a play-geom/<slug>.json, an Overpass JSON, or "minLat,minLng,maxLat,maxLng" (aerial)'
+        required: false
+      aerial_mpp:
+        description: 'Target metres-per-pixel for the aerial (aerial)'
+        required: false
       target:
         description: 'Branch to commit the results to'
         required: true
@@ -66,6 +72,8 @@ jobs:
       LAT: ${{ inputs.lat || '-27.5505' }}
       LNG: ${{ inputs.lng || '152.924' }}
       TARGET: ${{ inputs.target || 'claude/mcleod-country-club-map-7x0nvp' }}
+      AERIAL_SRC: ${{ inputs.aerial_src || '' }}
+      AERIAL_MPP: ${{ inputs.aerial_mpp || '0.4' }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -87,14 +95,17 @@ jobs:
       - name: Fetch a georeferenced aerial of the course
         if: ${{ inputs.mode == 'aerial' }}
         run: |
-          node scripts/play/fetch-aerial.mjs "play-geom/$SLUG.json" "scripts/play/_osm/$SLUG.aerial.png" 0.4 qld             || node scripts/play/fetch-aerial.mjs "play-geom/$SLUG.json" "scripts/play/_osm/$SLUG.aerial.png" 0.4 esri
+          SRC="${AERIAL_SRC:-play-geom/$SLUG.json}"
+          node scripts/play/fetch-aerial.mjs "$SRC" "scripts/play/_osm/$SLUG.aerial.png" "$AERIAL_MPP" qld             || node scripts/play/fetch-aerial.mjs "$SRC" "scripts/play/_osm/$SLUG.aerial.png" "$AERIAL_MPP" esri
 
       - name: Upload artifact
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: play-${{ env.SLUG }}
-          path: scripts/play/_osm/*.json
+          path: |
+            scripts/play/_osm/*.json
+            scripts/play/_osm/*.aerial.png
           if-no-files-found: ignore
 
       - name: Commit results to target branch

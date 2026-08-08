@@ -2,7 +2,11 @@
 // sandbox that can't reach the imagery host can still trace from real imagery (run this on a
 // runner, commit the PNG, work on it locally).
 //
-// Usage: node fetch-aerial.mjs <play-geom/<slug>.json> <out.png> [mPerPx] [source]
+// Usage: node fetch-aerial.mjs <extent> <out.png> [mPerPx] [source]
+//   extent: play-geom/<slug>.json (a built course — extent from its hole centrelines)
+//           | an Overpass `out geom` JSON (extent from every element's geometry — this is the
+//             path for a course OSM has no holes for, where only the boundary way exists)
+//           | "minLat,minLng,maxLat,maxLng" as a literal bbox
 //   source: esri (default) | qld     — QLD is the CC-BY state program imagery, usually sharper
 //                                      over SEQ; Esri World Imagery is the OSM-tracing-approved
 //                                      fallback and is what imagery.mjs already uses.
@@ -14,12 +18,24 @@ const [, , geomPath, outPath, mppArg, srcArg] = process.argv;
 if (!geomPath || !outPath) { console.error('usage: node fetch-aerial.mjs <play-geom.json> <out.png> [mPerPx] [esri|qld]'); process.exit(1); }
 const mpp = +(mppArg || 0.5), source = (srcArg || 'esri').toLowerCase();
 
-const geom = JSON.parse(fs.readFileSync(geomPath, 'utf8'));
-let mnLa = 99, mnLo = 999, mxLa = -99, mxLo = -999;
-for (const n of Object.keys(geom.lines)) for (const [la, lo] of geom.lines[n]) {
-  mnLa = Math.min(mnLa, la); mxLa = Math.max(mxLa, la); mnLo = Math.min(mnLo, lo); mxLo = Math.max(mxLo, lo);
+let mnLa = 99, mnLo = 999, mxLa = -99, mxLo = -999, padM = 120;
+const see = (la, lo) => { mnLa = Math.min(mnLa, la); mxLa = Math.max(mxLa, la); mnLo = Math.min(mnLo, lo); mxLo = Math.max(mxLo, lo); };
+const asBbox = geomPath.match(/^\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/);
+if (asBbox) {
+  see(+asBbox[1], +asBbox[2]); see(+asBbox[3], +asBbox[4]); padM = 0;   // a literal bbox is taken as given
+} else {
+  const geom = JSON.parse(fs.readFileSync(geomPath, 'utf8'));
+  if (geom.lines) {                                   // a built course — extent from the hole lines
+    for (const n of Object.keys(geom.lines)) for (const [la, lo] of geom.lines[n]) see(la, lo);
+  } else if (Array.isArray(geom.elements)) {          // raw Overpass — extent from every geometry
+    for (const e of geom.elements) {
+      if (e.geometry) for (const p of e.geometry) see(p.lat, p.lon);
+      else if (e.lat != null) see(e.lat, e.lon);
+    }
+  } else { console.error('extent: expected play-geom {lines}, Overpass {elements}, or a bbox string'); process.exit(1); }
 }
-const padM = 120, rad = Math.PI / 180;
+if (mnLa > mxLa) { console.error('extent: no coordinates found'); process.exit(1); }
+const rad = Math.PI / 180;
 const padLa = padM / 110540, padLo = padM / (111320 * Math.cos(((mnLa + mxLa) / 2) * rad));
 const bb = { minLat: mnLa - padLa, maxLat: mxLa + padLa, minLng: mnLo - padLo, maxLng: mxLo + padLo };
 
