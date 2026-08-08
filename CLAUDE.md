@@ -433,9 +433,11 @@ call it done. They map to the three hats the user keeps asking for:
   is a question you ask on most shots. The compass being *inside* the Play sheet also matters after
   last light, when the day-only `#btn-wind` header button is hidden by `body.night`. **Data is its own fetch, NOT `weatherCache`:** one Open-Meteo call at the player's
   **exact GPS** (the rest of the app buckets to region zones) pulling **15-minute-resolution
-  wind at 10 m AND 80 m**, 12 h of hourly, and ~2 h of history — trimmed with
-  `past_hours`/`forecast_hours`/`past_minutely_15`/`forecast_minutely_15` to about **2.6 KB
-  a refresh**, which is what makes it usable on course data. The **25 m and 50 m rungs are
+  wind at 10 m AND 80 m** and ~2 h of history — trimmed with
+  `past_minutely_15`/`forecast_minutely_15` to about **1.5 KB a refresh**, which is what makes it
+  usable on course data. **There is no hourly forecast**: a tappable 12-hour strip shipped and was
+  cut on user feedback (noise on a course, where the question is always *this shot*), taking
+  `_wcSelHour`/`_wcIdxHour` and the `&hourly=` block with it. The **25 m and 50 m rungs are
   interpolated** along a power-law shear profile fitted between the two modelled levels
   (`wcShear` → `v(z)=v10·(z/10)^α`, direction interpolated in log-height); the tiles badge them
   `est` and the footer names α, because they are derived, not measured. **Fit α on a
@@ -449,12 +451,19 @@ call it done. They map to the three hats the user keeps asking for:
   same ±0.34-cosine split as `windVsHole`, so the full-screen compass and the hole-map dial can
   never disagree. It tones the rose, the flow field, the big number and **each rung tile by its own
   direction** — so a red 50 m tile under a teal 10 m one is the shot that starts downwind and lands
-  into it. Colouring by *speed* was the original scheme and it had a real hole: in a steady 15 km/h
+  into it. Each rung's mini-arrow is rotated into the **same screen frame as the rose and the flow
+  field** (`_wcApplyTones` sets `.wcMA`'s transform per heading frame); they used to be absolute
+  north-up "charts", which meant the tile arrow and the streaks pointed different ways at the same
+  wind. Colouring by *speed* was the original scheme and it had a real hole: in a steady 15 km/h
   the dial looked identical whether the wind was behind you or straight into you, the two cases that
   change the club. Speed bands (`_wcCol`) remain the **fallback** where there's no line to judge
-  against — no compass on the device — and stay in use for the hourly strip, which is a forecast of
-  strength over time rather than a reading of this shot; the footer note says which of the two is
-  live. The tone is pushed through a `--wcTone` CSS var by `_wcApplyTones()` so turning the phone
+  against — no compass on the device; the footer note says which of the two is live.
+  **The chrome takes the tone too** (`--wcA50/30/18/10` + `--wcWash`, all derived from it in
+  `_wcApplyTones`): title, borders, hairlines and the page's background wash, so the whole view
+  reads teal/amber/red from the doorway. Before that the frame was a fixed teal and the page read
+  green whatever the wind was doing. The **air row keeps its OWN semantics** (gust/twist warm as
+  they worsen; air carry gold when thin, blue when heavy) — three different questions shouldn't
+  share one hue. The tone is pushed through a `--wcTone` CSS var by `_wcApplyTones()` so turning the phone
   recolours the dial without rebuilding the SVG. Because the aim normally comes off the
   magnetometer, **`?aim=BEARING` / `setAim(brg)`** force it, otherwise the whole colour scheme is
   invisible anywhere but a real phone outdoors.
@@ -473,7 +482,7 @@ call it done. They map to the three hats the user keeps asking for:
   (stage + `.wc2-side`), column in portrait and **row on any short viewport**
   (`max-height:560px`) — a phone in landscape has ~390 px of height and the stacked rows alone
   overflow it. **`_wcFit` must run AFTER the rows are populated** (the stage is the `flex:1`
-  remainder, so measuring before the hourly strip fills gives a stage ~100 px too tall) and it
+  remainder, so measuring before the rung/air rows fill gives a stage ~100 px too tall) and it
   sets `--wcR` so the HUD scales off the *rose*, not the viewport, plus `.wc2-tight` under
   210 px. Refreshes **on the hour** (`_wcScheduleHourly`, +8 s so the model's new hour is
   published), when it comes back visible after 15 min, and on the ↻ button with a **30 s
