@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-08 · **Next ID:** `G-016`
+> **Last reviewed:** 2026-08-08 · **Next ID:** `G-018`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -69,9 +69,21 @@ fairway, and the club's course map is a stylised drawing that fits the true club
 wider than a hole on a compact estate course with parallel corridors. So the numbering can't be
 established, and the skill says ship the card rather than guess. **The unblock is a hand-trace in
 `scripts/play/trace-tool.html`, which needs a browser** — `scripts/play/brisbane-river-golf-club.config.json`
-already carries the full card (par / SI / CR 65.0 / Slope 116 / Black + Red per-hole distances), so
+already carries the full card (par / SI / ACR 65.0 / Slope 116 / Blue + Red per-hole distances), so
 tracing greens + tees + centrelines and running `from-traced.mjs` finishes it. Full write-up:
 `reports/brisbane-river-course-maps-2026-08-08.md`.
+
+### G-017 · Per-tee par + stroke index `[golf]` `[data]`
+**Status:** open
+Scoring uses the **men's** par/SI for every tee, so a ladies tee with its own card can't be offered
+without computing a wrong Stableford. Two courses now carry the ladies card stashed for exactly this:
+Gailes (`course._ladies`, ACR 73) and **Brisbane River** (Red (F) — par **67** where the men's is 66,
+because the 9th is a par 5 off Red, plus its own SI, ACR 67.0 / Slope 118). The work is per-tee `par`
+and `si` on a `teeSets` entry, honoured by `playTotals`, `strokesForSI`/`effSI` and `courseHandicap`
+(which already picks the selected tee's cr/slope at `_selTeeKey(1)`), then adding those tees to
+`teeSets`. Related: a `noGps` course has **no tee selector at all** — it lives in the GPS map-tools
+row — so this also wants a tee choice on the Card tab, otherwise a scorecard-only course can never
+use its second tee.
 
 ### G-011 · McLeod: the standard-card Course Rating `[golf]` `[data]`
 **Status:** open
