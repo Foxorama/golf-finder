@@ -92,6 +92,34 @@ export const tests = {
     ok(W.wcSwirl({ spd: 18, timeSpread: 5, twist: 40, gustFactor: 1 }).why.includes('twist'));
   },
 
+  'aim class is the whole compass\'s colour, and it splits where the hole map splits'(){
+    // Directions are where the wind comes FROM, so aiming INTO the source is the headwind.
+    eq(W.wcAimCls(0, 0), 'hurt', 'wind out of the north, played north, is in your face');
+    eq(W.wcAimCls(180, 0), 'help', 'wind out of the south, played north, is at your back');
+    eq(W.wcAimCls(90, 0), 'cross', 'wind out of the east, played north, is across');
+    eq(W.wcAimCls(270, 0), 'cross', 'and so is the other way across');
+    // The boundary is windVsHole's ±0.34 cosine, i.e. ~70.1deg off the line. Either side of it.
+    const edge = Math.acos(0.34) * 180 / Math.PI;
+    eq(W.wcAimCls(180 - (edge - 1), 0), 'help', 'just inside the downwind cone still helps');
+    eq(W.wcAimCls(180 - (edge + 1), 0), 'cross', 'just outside it is a crosswind');
+    eq(W.wcAimCls(edge - 1, 0), 'hurt', 'just inside the into-wind cone hurts');
+    eq(W.wcAimCls(edge + 1, 0), 'cross', 'just outside it is a crosswind');
+    // Rotating the aim rotates the verdict — the point of colouring by aim at all. One wind,
+    // opposite lines, opposite colours: the case a speed-only dial painted identically.
+    eq(W.wcAimCls(180, 0), 'help', 'played north, this wind helps');
+    eq(W.wcAimCls(180, 180), 'hurt', 'turn around and the same wind is in your face');
+    // No line to judge against must never invent one; the UI falls back to strength bands.
+    eq(W.wcAimCls(180, null), null, 'no aim → no verdict');
+    eq(W.wcAimCls(null, 0), null, 'no wind direction → no verdict');
+  },
+
+  'wcComponents agrees with wcAimCls, so the tag and the colour cannot diverge'(){
+    for(const from of [0, 37, 90, 143, 180, 226, 271, 318]) for(const aim of [0, 55, 180, 300]){
+      eq(W.wcComponents(from, aim, 15).cls, W.wcAimCls(from, aim),
+         'components/class disagree at from=' + from + ' aim=' + aim);
+    }
+  },
+
   'wind vs aim matches the hole-map convention exactly'(){
     // Wind FROM the north while you aim south → it blows at your back: downwind.
     const dw = W.wcComponents(0, 180, 20);

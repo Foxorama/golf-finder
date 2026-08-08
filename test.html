@@ -192,10 +192,20 @@
         <button class="chip" data-wind="22,140,34,18,26">Shifty</button>
         <button class="chip" data-wind="34,215,58,34,52">Swirling gale</button>
       </div>
+      <div class="row" id="aimBtns">
+        <button class="chip" data-aim="">&#127919; Aim: phone</button>
+        <button class="chip" data-aim="into">Into wind</button>
+        <button class="chip" data-aim="across">Across</button>
+        <button class="chip" data-aim="down">Downwind</button>
+      </div>
       <p class="note">The GPS rangefinder, hole maps &amp; shot-tracking need a phone on a course. Tune via
         <code>?playshead=</code>/<code>?playstail=</code>. The wind chips drive the full-screen
         compass (&#129517; day header) via <code>?wind=spd,dir,gust,twist,spread</code> /
-        <code>setWind()</code> &#8212; the rose itself needs a <b>real phone</b>'s compass to point north.</p>
+        <code>setWind()</code>. The compass is coloured by what the wind does to the line you're
+        pointing down &#8212; <b>teal</b> helping, <b>amber</b> across, <b>red</b> into your face &#8212; which
+        normally needs a phone's compass, so the aim chips force that line via
+        <code>?aim=</code>/<code>setAim()</code> and are relative to the wind chip you picked.
+        <code>window._windAimCol=false</code> reverts to colouring by strength.</p>
     </div>
 
     <!-- DEVICE FRAME (desktop preview only) -->
@@ -282,6 +292,7 @@
     if(state.ldhole) p.push('ldhole=hole');
     if(state.plays) p.push(state.plays);
     if(state.wind) p.push('wind='+state.wind);
+    if(state.aim) p.push('aim='+state.aim);
     return 'index.html'+(p.length?'?'+p.join('&'):'');
   }
   function summary(){
@@ -293,6 +304,7 @@
     if(state.cycle) s.push('auto-cycle');
     if(state.plays) s.push('plays-like');
     if(state.wind) s.push('wind '+state.wind.split(',').slice(0,2).join('km/h @ ')+'°');
+    if(state.aimRel) s.push('aim '+state.aimRel+(state.aim?' ('+state.aim+'°)':''));
     return s.length? s.join('  ·  ') : 'live app (no overrides)';
   }
   function refreshSummary(){ lbSum.innerHTML = '<b>'+summary().replace(/&/g,'&amp;')+'</b>'; }
@@ -306,6 +318,7 @@
     whenReady(w=>{ try{ if(state.time!=null) w.setTime(hhmm(state.time)); }catch(e){}
                    try{ if(state.wx) w.setWx(state.wx); }catch(e){} });
     if(state.wind) liveWind(state.wind);   // ?wind= already covers it, but a live setWind is harmless and keeps them in step
+    if(state.aim) whenReady(w=>{ try{ if(typeof w.setAim==='function') w.setAim(+state.aim); }catch(e){} });
   });
 
   // On DESKTOP, a URL-carried change (loader / plays) applies immediately by reloading
@@ -377,6 +390,30 @@
     lightOne(windBtns,b); refreshSummary();
     setBadge(v?'wind override':'live wind');
     if(!mobile()) liveWind(v);
+    if(state.aimRel) applyAim();          // the aim chips are relative, so re-resolve against the new wind
+  }));
+
+  // Aim: the compass colours by wind-vs-your-line, which normally comes off the magnetometer.
+  // These force it, and do it RELATIVE to the staged wind so "into wind" stays into the wind
+  // whichever wind chip is selected.
+  const aimBtns=document.getElementById('aimBtns');
+  function aimFor(rel){
+    if(!rel) return null;
+    const dir = state.wind ? (parseFloat(state.wind.split(',')[1])||0) : 0;   // where it blows FROM
+    // aiming AT the source is into the wind; 180° off it is downwind; 90° off is across
+    return Math.round(((rel==='into'?dir : rel==='down'?dir+180 : dir+90)%360+360)%360);
+  }
+  function applyAim(){
+    const a = aimFor(state.aimRel);
+    state.aim = a==null?null:String(a);
+    if(!mobile()) whenReady(w=>{ try{ if(typeof w.setAim==='function') w.setAim(a); }catch(e){} });
+    refreshSummary();
+  }
+  aimBtns.querySelectorAll('[data-aim]').forEach(b=>b.addEventListener('click',()=>{
+    state.aimRel = b.getAttribute('data-aim') || null;
+    lightOne(aimBtns,b);
+    setBadge(state.aimRel?('aim: '+state.aimRel):'aim follows phone');
+    applyAim();
   }));
 
   // ── immersive sky (live action) ──

@@ -62,7 +62,7 @@ export function loadOrreryCore(){
 // Loads the pure WIND-CORE region (shear profile, circular stats, swirl classification and
 // the wind-vs-aim maths behind the full-screen compass). Fully self-contained — no shims.
 const WIND_EXPORTS = ['WC_RUNGS','wcAng','wcAngDiff','wcCircMean','wcCircSpread','wcShear','wcSpeedAt',
-                      'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcComponents',
+                      'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcAimCls','wcComponents',
                       'wcPlaysPct','wcAirCarryPct'];
 export function loadWindCore(){
   const html = readIndex();
