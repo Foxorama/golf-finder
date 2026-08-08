@@ -422,6 +422,51 @@ call it done. They map to the three hats the user keeps asking for:
   sits under the orrery's 1600). Preview gotchas: the headless preview tab suspends rAF — drive
   `_orRenderBase()` + `_orPaint()` manually from `preview_eval`; screenshots wedge over the night
   scene (as ever), so verify geometry numerically (`_or.hits`, `_orXY`, canvas `getImageData`).
+- **Full-screen wind compass (`openWindCompass`).** The **🧭 day-only header button**
+  (sibling of 🎒/📊; hidden under `body.night` like them) opens a full-page wind view — the
+  third and biggest of the app's compasses, after the day-hero rose and the Play hole-map
+  dial. It **replaced the 🏆 hole-in-one button on the main header** (an ace is too rare to
+  hold prime real estate); the ace tracker now lives in the **📊 Rounds & Stats header** (its
+  `play-hio-btn` is deliberately *shown* in `historyOnly` mode) and, mid-round, on the Play
+  header. **Data is its own fetch, NOT `weatherCache`:** one Open-Meteo call at the player's
+  **exact GPS** (the rest of the app buckets to region zones) pulling **15-minute-resolution
+  wind at 10 m AND 80 m**, 12 h of hourly, and ~2 h of history — trimmed with
+  `past_hours`/`forecast_hours`/`past_minutely_15`/`forecast_minutely_15` to about **2.6 KB
+  a refresh**, which is what makes it usable on course data. The **25 m and 50 m rungs are
+  interpolated** along a power-law shear profile fitted between the two modelled levels
+  (`wcShear` → `v(z)=v10·(z/10)^α`, direction interpolated in log-height); the tiles badge them
+  `est` and the footer names α, because they are derived, not measured. **Fit α on a
+  same-sample pair** — the `current` block replaces only the 10 m value, so `_wcDerive` keeps
+  `fitLo`/`fitHi` from the 15-minute grid and re-anchors 80 m off the displayed 10 m, else you
+  invent shear out of a timing mismatch. All the maths is the pure **`WIND-CORE`** block
+  (`wcAng`/`wcAngDiff`/`wcCircMean`/`wcCircSpread`/`wcShear`/`wcProfile`/`wcSwirl`/
+  `wcComponents`/`wcPlaysPct`/`wcAirCarryPct`), unit-tested in `tests/wind.test.mjs`.
+  **"Is it swirling?"** (`wcSwirl`) blends three tells — the circular spread of direction over
+  the ±2 h window, the 10→50 m twist, and the gust factor — into **CALM / STEADY / SHIFTY /
+  SWIRLING**, and the copy names the loudest one. Two honesty rules are baked in and tested:
+  under ~4 km/h it short-circuits to CALM (ratios against a near-calm mean are arithmetic, not
+  weather — the gust-factor tile blanks for the same reason), and with **no reading at all it
+  returns `NO READING`**, never a fabricated "STEADY". The rose is **earth-frame**: everything
+  inside `#wc2-rotor` is spun by −heading from `_wcOnOrient`, so held flat it behaves like a
+  real compass and **screen-up = where you're pointing** — which makes the **aim row** free
+  (point the phone down your shot line for the head/cross split + a plays-like %, tap to lock
+  it and look away). Behind the dial a canvas **flow field** blows streaks in the real wind
+  direction, at a speed set by the real speed and a per-particle wobble set by the real swirl
+  score, so the page is the reading before you read a digit. **Layout is a `.wc2-body` split**
+  (stage + `.wc2-side`), column in portrait and **row on any short viewport**
+  (`max-height:560px`) — a phone in landscape has ~390 px of height and the stacked rows alone
+  overflow it. **`_wcFit` must run AFTER the rows are populated** (the stage is the `flex:1`
+  remainder, so measuring before the hourly strip fills gives a stage ~100 px too tall) and it
+  sets `--wcR` so the HUD scales off the *rose*, not the viewport, plus `.wc2-tight` under
+  210 px. Refreshes **on the hour** (`_wcScheduleHourly`, +8 s so the model's new hour is
+  published), when it comes back visible after 15 min, and on the ↻ button with a **30 s
+  cooldown**. Escape hatches: `window._windFlow=false` (kill the particles),
+  `_windCompassLive=false` (no orientation), `_windCool` (cooldown ms), and the test override
+  `?wind=spd,dir[,gust[,twist[,spread]]]` / `setWind(...)` / `window._windTest`. Verify it in
+  preview **numerically** — screenshots can't be taken over the animated full-screen stage;
+  drive `_wcFlowTick()` by hand (headless rAF is unreliable) and read `_wc.view` / element
+  rects. The rose's *feel* — does north read as north, is the smoothing right — can only be
+  judged on a real phone (IDEAS-GOLF `G-014`).
 - **Day↔night harmony.** The two modes are meant to read as one app. Day reuses the
   same surfaces as night (`.stat` cards, `.daybar` frame, `.pill-select`) and the day
   course `.ccard` deliberately mirrors the night `.acard` visual language — a left accent
@@ -711,7 +756,8 @@ call it done. They map to the three hats the user keeps asking for:
   portable Node: `"$LOCALAPPDATA\gf-node\node-v24.17.0-win-x64\node.exe" tests/run.mjs`
   (Bash path: `/c/Users/<you>/AppData/Local/gf-node/node-v24.17.0-win-x64/node.exe`).
   `tests/run.mjs` discovers every `*.test.mjs` and runs the functions on its exported
-  `tests` object. Three suites today: **`syntax.test.mjs`** parses *every* inline `<script>`
+  `tests` object. Suites today (the aurora + orrery + wind cores are sliced the same way as
+  the play stats one — see `tests/core.mjs`): **`syntax.test.mjs`** parses *every* inline `<script>`
   in index.html with `new vm.Script` (catches stray-brace / bad-template-literal / TDZ edits
   that otherwise only show as a stuck loader — run this after any non-trivial index.html
   edit), **`play-stats.test.mjs`** evals the `PLAY-STATS-CORE` block in a `vm` and asserts
@@ -884,7 +930,9 @@ it with the preview tool:
   scenes, the **loader** (held open via `?loaderhold=1`: day-loop, a Force-hole-in-one toggle
   that climbs the Super-Saiyan ladder, night Y'orb / UFO) + immersive-sky toggle (reload-based,
   since the loader is first-paint only and tilt needs phone sensors), plays-like wind params,
-  and links out to the trace tool / space-manta loader / live site. Served by Pages at
+  and links out to the trace tool / space-manta loader / live site. The **wind chips** stage
+  `?wind=` and, on desktop, drive `setWind()` live so the rose, the swirl verdict and the flow
+  field change without a reload. Served by Pages at
   `…/golf-finder/test.html`. It's the single place to show features instead of pasting `?time=…&wx=…`
   URLs around. (`noindex`; additive — touches no app code.) **Layout is responsive in two
   distinct modes** (the preview can't share a phone screen with the controls — it bleeds over
@@ -902,6 +950,12 @@ it with the preview tool:
   the app hook → add the hub control (+ `buildURL()` / live driver) → extend the guard test →
   update these docs. The hub deploys with the app from `main` (same Pages site), so there's no
   separate publish step — keeping it in sync is the whole job.
+- `?wind=spd,dir[,gust[,twist[,spread]]]` — force the **full-screen wind compass**'s reading
+  (`window._windTest`, the sibling of Play's `_playWindTest`), e.g. `?wind=34,215,58,34,52` is a
+  swirling SW gale. Console: `setWind(spd,dir,gust,twist,spread)` drives it with no reload;
+  `setWind()` restores live wind. The hub's **Steady breeze / Shifty / Swirling gale** chips are
+  these. A manual ↻ refresh is refused while the override is on, so the fake wind can't be
+  silently replaced.
 - `?time=HH:MM` — override "now" (e.g. `?time=21:00` for night mode).
 - `?wx=storm|rain|shower|drizzle|snow|hail|overcast|partly|clear|fog` — force the
   hero scene's weather. Console: `setWx('storm')` does the same with no reload;

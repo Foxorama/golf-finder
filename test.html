@@ -186,8 +186,16 @@
         <button class="chip half" id="b-plays-def">Plays-like (default)</button>
         <button class="chip half" id="b-plays-strong">Plays-like (strong)</button>
       </div>
+      <div class="row" id="windBtns">
+        <button class="chip" data-wind="">&#129517; Wind: live</button>
+        <button class="chip" data-wind="6,60,11,6,8">Steady breeze</button>
+        <button class="chip" data-wind="22,140,34,18,26">Shifty</button>
+        <button class="chip" data-wind="34,215,58,34,52">Swirling gale</button>
+      </div>
       <p class="note">The GPS rangefinder, hole maps &amp; shot-tracking need a phone on a course. Tune via
-        <code>?playshead=</code>/<code>?playstail=</code>.</p>
+        <code>?playshead=</code>/<code>?playstail=</code>. The wind chips drive the full-screen
+        compass (&#129517; day header) via <code>?wind=spd,dir,gust,twist,spread</code> /
+        <code>setWind()</code> &#8212; the rose itself needs a <b>real phone</b>'s compass to point north.</p>
     </div>
 
     <!-- DEVICE FRAME (desktop preview only) -->
@@ -250,7 +258,7 @@
 
   // ── staged state (the single source of truth) ──
   const state={ time:null, wx:null, loader:null, yorb:null, ldhole:false, plays:null,
-                compass:false, cycle:false, frame:'phone' };
+                wind:null, compass:false, cycle:false, frame:'phone' };
 
   // ── helpers ──
   function win(){ try{ return app.contentWindow; }catch(e){ return null; } }
@@ -273,6 +281,7 @@
     if(state.yorb) p.push('yorb='+state.yorb);
     if(state.ldhole) p.push('ldhole=hole');
     if(state.plays) p.push(state.plays);
+    if(state.wind) p.push('wind='+state.wind);
     return 'index.html'+(p.length?'?'+p.join('&'):'');
   }
   function summary(){
@@ -283,6 +292,7 @@
     if(state.compass) s.push('immersive sky');
     if(state.cycle) s.push('auto-cycle');
     if(state.plays) s.push('plays-like');
+    if(state.wind) s.push('wind '+state.wind.split(',').slice(0,2).join('km/h @ ')+'°');
     return s.length? s.join('  ·  ') : 'live app (no overrides)';
   }
   function refreshSummary(){ lbSum.innerHTML = '<b>'+summary().replace(/&/g,'&amp;')+'</b>'; }
@@ -295,6 +305,7 @@
   app.addEventListener('load',()=>{                   // re-apply live overrides a reload dropped
     whenReady(w=>{ try{ if(state.time!=null) w.setTime(hhmm(state.time)); }catch(e){}
                    try{ if(state.wx) w.setWx(state.wx); }catch(e){} });
+    if(state.wind) liveWind(state.wind);   // ?wind= already covers it, but a live setWind is harmless and keeps them in step
   });
 
   // On DESKTOP, a URL-carried change (loader / plays) applies immediately by reloading
@@ -354,6 +365,19 @@
     refreshSummary(); setBadge('plays-like'); applyDesktop(); }
   plDef.onclick=()=>setPlays(PLAYS_DEF);
   plStr.onclick=()=>setPlays(PLAYS_STR);
+
+  // ── full-screen wind compass: staged as ?wind=, and driven LIVE via setWind() on desktop
+  // so you can watch the rose, the swirl verdict and the flow field change without a reload.
+  const windBtns=document.getElementById('windBtns');
+  function liveWind(v){ whenReady(w=>{ try{ if(typeof w.setWind!=='function') return;
+    if(!v){ w.setWind(); return; } const n=v.split(',').map(Number); w.setWind(n[0],n[1],n[2],n[3],n[4]); }catch(e){} }); }
+  windBtns.querySelectorAll('[data-wind]').forEach(b=>b.addEventListener('click',()=>{
+    const v=b.getAttribute('data-wind');
+    state.wind = v || null;
+    lightOne(windBtns,b); refreshSummary();
+    setBadge(v?'wind override':'live wind');
+    if(!mobile()) liveWind(v);
+  }));
 
   // ── immersive sky (live action) ──
   document.getElementById('b-compass').addEventListener('click',()=>{
