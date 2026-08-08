@@ -2,7 +2,11 @@
 // sandbox that can't reach the imagery host can still trace from real imagery (run this on a
 // runner, commit the PNG, work on it locally).
 //
-// Usage: node fetch-aerial.mjs <play-geom/<slug>.json> <out.png> [mPerPx] [source]
+// Usage: node fetch-aerial.mjs <extent> <out.png> [mPerPx] [source]
+//   extent: play-geom/<slug>.json (a built course — extent from its hole centrelines)
+//           | an Overpass `out geom` JSON (extent from every element's geometry — this is the
+//             path for a course OSM has no holes for, where only the boundary way exists)
+//           | "minLat,minLng,maxLat,maxLng" as a literal bbox
 //   source: esri (default) | qld     — QLD is the CC-BY state program imagery, usually sharper
 //                                      over SEQ; Esri World Imagery is the OSM-tracing-approved
 //                                      fallback and is what imagery.mjs already uses.
@@ -14,12 +18,24 @@ const [, , geomPath, outPath, mppArg, srcArg] = process.argv;
 if (!geomPath || !outPath) { console.error('usage: node fetch-aerial.mjs <play-geom.json> <out.png> [mPerPx] [esri|qld]'); process.exit(1); }
 const mpp = +(mppArg || 0.5), source = (srcArg || 'esri').toLowerCase();
 
-const geom = JSON.parse(fs.readFileSync(geomPath, 'utf8'));
-let mnLa = 99, mnLo = 999, mxLa = -99, mxLo = -999;
-for (const n of Object.keys(geom.lines)) for (const [la, lo] of geom.lines[n]) {
-  mnLa = Math.min(mnLa, la); mxLa = Math.max(mxLa, la); mnLo = Math.min(mnLo, lo); mxLo = Math.max(mxLo, lo);
+let mnLa = 99, mnLo = 999, mxLa = -99, mxLo = -999, padM = 120;
+const see = (la, lo) => { mnLa = Math.min(mnLa, la); mxLa = Math.max(mxLa, la); mnLo = Math.min(mnLo, lo); mxLo = Math.max(mxLo, lo); };
+const asBbox = geomPath.match(/^\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*$/);
+if (asBbox) {
+  see(+asBbox[1], +asBbox[2]); see(+asBbox[3], +asBbox[4]); padM = 0;   // a literal bbox is taken as given
+} else {
+  const geom = JSON.parse(fs.readFileSync(geomPath, 'utf8'));
+  if (geom.lines) {                                   // a built course — extent from the hole lines
+    for (const n of Object.keys(geom.lines)) for (const [la, lo] of geom.lines[n]) see(la, lo);
+  } else if (Array.isArray(geom.elements)) {          // raw Overpass — extent from every geometry
+    for (const e of geom.elements) {
+      if (e.geometry) for (const p of e.geometry) see(p.lat, p.lon);
+      else if (e.lat != null) see(e.lat, e.lon);
+    }
+  } else { console.error('extent: expected play-geom {lines}, Overpass {elements}, or a bbox string'); process.exit(1); }
 }
-const padM = 120, rad = Math.PI / 180;
+if (mnLa > mxLa) { console.error('extent: no coordinates found'); process.exit(1); }
+const rad = Math.PI / 180;
 const padLa = padM / 110540, padLo = padM / (111320 * Math.cos(((mnLa + mxLa) / 2) * rad));
 const bb = { minLat: mnLa - padLa, maxLat: mxLa + padLa, minLng: mnLo - padLo, maxLng: mxLo + padLo };
 
@@ -36,14 +52,40 @@ const SRC = {
   esri: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export',
   qld:  'https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Basemaps/LatestStateProgramImagery/ImageServer/exportImage',
 };
-const base = SRC[source] || SRC.esri;
-const url = `${base}?bbox=${bb.minLng},${bb.minLat},${bb.maxLng},${bb.maxLat}&bboxSR=4326&imageSR=4326&size=${W},${H}&format=png24&f=image`;
+// One shot at one host is not enough: a whole-course export is a big ask and both hosts answer a
+// bad moment with an HTML error page (Esri's CDN in particular), which is a hard failure for a
+// stage that costs a runner round trip to retry by hand. So try the preferred source, then the
+// other, several times each with backoff.
+const order = [source, ...Object.keys(SRC).filter(s => s !== source)];
+const urlFor = src => `${SRC[src]}?bbox=${bb.minLng},${bb.minLat},${bb.maxLng},${bb.maxLat}` +
+  `&bboxSR=4326&imageSR=4326&size=${W},${H}&format=png24&f=image`;
 
-console.error(`source=${source} size=${W}x${H} (~${(lngM / W).toFixed(2)} m/px) bbox=${JSON.stringify(bb)}`);
-const r = await fetch(url, { headers: { 'User-Agent': 'golf-finder-build/1.0' } });
-if (!r.ok) { console.error(`imagery fetch failed: HTTP ${r.status}`); console.error(await r.text().catch(() => '')); process.exit(1); }
-const buf = Buffer.from(await r.arrayBuffer());
-if (buf.length < 5000) { console.error('suspiciously small response — probably an error image'); process.exit(1); }
+console.error(`size=${W}x${H} (~${(lngM / W).toFixed(2)} m/px) bbox=${JSON.stringify(bb)}`);
+// Every attempt is also replayed at the very end. A CI log is read from the tail, and the reason a
+// preferred source was skipped is the single most useful line here — it must not be buried above
+// a successful fallback's output.
+const tried = [];
+let buf = null, used = null;
+outer:
+for (let attempt = 0; attempt < 3; attempt++) {
+  for (const src of order) {
+    try {
+      const r = await fetch(urlFor(src), { headers: { 'User-Agent': 'golf-finder-build/1.0' } });
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok) tried.push(`${src} #${attempt + 1}: HTTP ${r.status} ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160)}`);
+      else if (!/image/i.test(ct)) tried.push(`${src} #${attempt + 1}: not an image (content-type ${ct}) ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160)}`);
+      else {
+        const b = Buffer.from(await r.arrayBuffer());
+        // an ArcGIS "no data"/error tile still comes back as a valid tiny PNG
+        if (b.length < 5000) tried.push(`${src} #${attempt + 1}: suspiciously small (${b.length} B) — probably an error image`);
+        else { buf = b; used = src; tried.push(`${src} #${attempt + 1}: OK ${(b.length / 1048576).toFixed(2)} MB`); break outer; }
+      }
+    } catch (e) { tried.push(`${src} #${attempt + 1}: ${e.message}`); }
+    await new Promise(res => setTimeout(res, 4000 * (attempt + 1)));
+  }
+}
+console.error('attempts:\n  - ' + tried.join('\n  - '));
+if (!buf) { console.error('imagery fetch failed on every source'); process.exit(1); }
 fs.writeFileSync(outPath, buf);
-fs.writeFileSync(outPath.replace(/\.png$/, '') + '.json', JSON.stringify({ bb, W, H, source, mPerPx: lngM / W }));
-console.error(`-> ${outPath} (${(buf.length / 1024 / 1024).toFixed(2)} MB)`);
+fs.writeFileSync(outPath.replace(/\.png$/, '') + '.json', JSON.stringify({ bb, W, H, source: used, mPerPx: lngM / W }));
+console.error(`-> ${outPath} from ${used} (${(buf.length / 1024 / 1024).toFixed(2)} MB)`);

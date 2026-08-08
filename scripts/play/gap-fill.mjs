@@ -37,10 +37,16 @@ const ovalM = cfg.options?.greenOvalM ?? 26, HALF = (ovalM / 2) / 111320;
 const ovalGbb = cen => { const dLng = HALF / Math.cos(cen[0] * rad); return [r7(cen[0] - HALF), r7(cen[1] - dLng), r7(cen[0] + HALF), r7(cen[1] + dLng)]; };
 const ovalPts = gbb => { const [mnLa, mnLo, mxLa, mxLo] = gbb, cLa = (mnLa + mxLa) / 2, cLo = (mnLo + mxLo) / 2, sLa = (mxLa - mnLa) / 2, sLo = (mxLo - mnLo) / 2, o = []; for (let k = 0; k < 20; k++) { const th = k / 20 * 2 * Math.PI; o.push([+(cLa + sLa * Math.cos(th)).toFixed(6), +(cLo + sLo * Math.sin(th)).toFixed(6)]); } return o; };
 
+// The RATED tee — the one whose card distance every other tee is stepped back from, and the one
+// the cross-check compares the measured tee→green against. It is `white` on most Australian cards,
+// but a club is free to call it anything (Brisbane River's rated men's tee is Black), so it comes
+// from the config: course.ratedTee, else course.defaultTee, else white.
+const RATED = cfg.course?.ratedTee || cfg.course?.defaultTee || 'white';
+
 // ---- resolve each hole ----
 const holes = [], lines = {}, qa = [], traceJobs = [];
 for (const hc of cfg.holes) {
-  const card = hc.tees || {}, white = card.white;
+  const card = hc.tees || {}, rated = card[RATED];
   let cen, tee, gbb, line, greenSrc, note = '';
   if (hc.way) {
     let pts = waysById[hc.way]; if (!pts) { qa.push(`h${hc.n}: WAY ${hc.way} not in OSM`); continue; }
@@ -51,9 +57,9 @@ for (const hc of cfg.holes) {
     const greenPt = pts[pts.length - 1], teeEnd = pts[0];
     const rg = realGreenNear(greenPt); cen = rg ? rg.cen.map(r7) : greenPt.map(r7); greenSrc = rg ? 'osm' : 'oval';
     gbb = rg ? rg.bb.map(r7) : ovalGbb(cen);
-    // white tee: explicit coord, else card-placed (overshoot holes), else OSM tee end
+    // rated tee: explicit coord, else card-placed (overshoot holes), else OSM tee end
     if (hc.tee) tee = hc.tee.map(r7);
-    else if (hc.cardPlaceWhite && white) { tee = pointAlong(pts.slice().reverse(), white).map(r7); note += ' white card-placed'; }
+    else if (hc.cardPlaceWhite && rated) { tee = pointAlong(pts.slice().reverse(), rated).map(r7); note += ` ${RATED} card-placed`; }
     else tee = teeEnd.map(r7);
     line = (hc.cardPlaceWhite || hc.tee) ? [tee, cen] : simp(pts);   // trim overshoot to tee→green
     lines[hc.n] = round6(line);
@@ -61,18 +67,19 @@ for (const hc of cfg.holes) {
     cen = hc.green.map(r7); tee = hc.tee.map(r7); gbb = ovalGbb(cen); greenSrc = 'placed'; line = [tee, cen]; lines[hc.n] = round6(line); note = ' (no OSM line — placed)';
     if (wantFairways) traceJobs.push({ n: hc.n, par: hc.par, placed: true, tee, green: cen, via: hc.via || [] });   // dogleg centreline + fairway from aerial (hc.via = optional dogleg waypoints)
   } else { qa.push(`h${hc.n}: needs "way" or "green"+"tee"`); continue; }
-  // per-tee positions: white = tee; others stepped back by the card delta along the play line
+  // per-tee positions: the rated tee IS h.tee; the others are stepped back along the play line by
+  // their card delta (a forward tee has a negative delta, so it lands toward the green)
   const tees = {};
-  if (Object.keys(card).length && white) {
+  if (Object.keys(card).length && rated) {
     const ln = lines[hc.n], back = bearing(ln[1] || cen, ln[0]);   // from 2nd pt back through the tee
-    for (const k of Object.keys(card)) tees[k] = k === 'white' ? tee : dest(tee, back, card[k] - white).map(r7);
-    tees.white = tee;
+    for (const k of Object.keys(card)) tees[k] = k === RATED ? tee : dest(tee, back, card[k] - rated).map(r7);
+    tees[RATED] = tee;
   }
-  const multiTee = Object.keys(tees).length > 1;   // a lone white tee IS h.tee — don't duplicate it
+  const multiTee = Object.keys(tees).length > 1;   // a lone rated tee IS h.tee — don't duplicate it
   holes.push({ n: hc.n, par: hc.par, si: hc.si, tee, ...(multiTee ? { tees } : {}), cen, pin: null, gbb });
-  // cross-check: tee→green vs card white
+  // cross-check: tee→green vs the rated-tee card distance
   const len = Math.round(distM(tee, cen));
-  if (white != null && Math.abs(len - white) > white * 0.15) qa.push(`h${hc.n}: tee→green ${len} m vs card ${white} m (>15% — check)`);
+  if (rated != null && Math.abs(len - rated) > rated * 0.15) qa.push(`h${hc.n}: tee→green ${len} m vs card ${rated} m (${RATED}, >15% — check)`);
   if (hc.way && greenSrc === 'oval' && bunkersNear(cen, 35) === 0) qa.push(`h${hc.n}: green has no greenside bunker within 35 m (orientation?)`);
   if (wantFairways && hc.way) traceJobs.push({ n: hc.n, par: hc.par, line: lines[hc.n] });
 }

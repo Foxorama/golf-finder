@@ -191,6 +191,23 @@ affine fixes numbering + gives real green centres; Gailes). (3) **Hand-trace** t
 (above). Scorecard data are facts — read them, don't fabricate; Australian cards are **ACR/CCR** (no USGA
 Slope) so carry the course Slope. See the `play-trace-tool-accurate-display` + `icon-asset-rendering` memories.
 
+**When the aerial is a DRY-SEASON capture, the fully-absent path can fail outright — ship `noGps`.**
+The whole aerial-placement method rests on greens being the one irrigated thing on the property, so
+they stay vivid while everything else goes pale. On a drought-stressed capture that contrast is gone:
+at **Brisbane River (Karana Downs)** the putting surfaces did not separate from the fairways at all,
+and a detector calibrated off the image itself (`aerial-greens.mjs`) returned 16 candidates for 18
+greens, several of them house lawns in the surrounding estate. Two further things have to be true for
+the fallback chain to save you, and neither was: the **QLD state imagery** (sharper, and the way out
+of a bad Esri capture) can simply refuse on a runner across repeated attempts; and the club's course
+map only pins the routing to about **40 m**, which is fine on a spread-out course and useless on a
+compact one threaded between houses, where 40 m is wider than a hole. Individually survivable,
+together they mean the **numbering** cannot be established — so the existing "numbering can't be
+trusted ⇒ ship the card, don't guess" rule (§0c, Sanctuary Cove Palms) applies to a whole course, not
+just a layout. Ship `COURSE_PLAY` with `noGps:true` + par/SI/CR/Slope and, if the card carries them,
+per-hole `len` (the Card tab renders it). **Test this before committing to the build, not after:**
+fetch the aerial, run `aerial-greens.mjs`, and look — if it can't find ~18 plausible greens, the
+hand-trace is the only path and it needs a browser the remote environment doesn't have.
+
 **Fully-absent courses (no OSM holes at all) — place every green + tee from the aerial.** There are
 no hole lines to anchor to, so trace each green + back-tee directly from open imagery (Minnippi, PR
 #220): fetch a tight Esri crop aimed at each feature, then take the **green-turf centroid** by a
@@ -283,6 +300,17 @@ Overpass, the **`is_in` containment** query (never grabs a neighbouring course):
   reaches it at full coord precision (see the `overpass-data-via-webfetch` memory). The
   CI prebake (`scripts/build-course-maps.mjs`) and the app's runtime `fetchCourseOSM`
   use the same query.
+- **Seeing the imagery from an environment that can't reach it.** Fetch it once on a runner
+  (`play-osm-fetch.yml` `mode=aerial`; `aerial_src` accepts a `play-geom/<slug>.json`, a raw
+  Overpass JSON — the form a boundary-only course has — or a literal bbox) and it is committed to
+  the branch. Then `crop-aerial.mjs` cuts georeferenced windows out of it, magnified for one green
+  or downscaled for a whole-course overview, and `aerial-centroid.mjs` pulls a seeded green/tee onto
+  the real turf. A crop with a ring drawn at a computed centroid IS the registration check. **Delete
+  the `.aerial.png` from the branch before the PR** — it is tens of MB and gitignored for that
+  reason. (Two traps, both now fixed but worth knowing: an `aerial` run used to re-run the OSM fetch
+  with the workflow's DEFAULT course inputs, silently overwriting this course's OSM and fetching an
+  aerial of the previous course 9 km away with every step green; and `fetch-aerial` printed its
+  per-attempt errors before a successful fallback's output, i.e. unreachable from a log tail.)
 - **In the remote / web environment, nothing external is reachable at all** — the egress
   proxy 403s every Overpass mirror, `services.arcgisonline.com` (the imagery), *and*
   WebFetch on any site (the club, golfpass, even Wikipedia). Only **WebSearch** and
@@ -406,7 +434,10 @@ hierarchy / the overlay gradients / the one layer-loop order, not per-shape opac
   like Red read shorter and the landing marker moves), and the map tee marker is coloured to the tee.
   **To populate a course**, either trace each colour in the tool (`from-traced` keeps every traced colour),
   or put each tee's **card distance** in the build config (`tees:{black:343,…}`) and the pipeline steps them
-  back along the play line (white = rated tee). For the selector to show a colour, it **must have a `teeSets`
+  back along the play line. **The rated tee is `course.ratedTee`** (falling back to `defaultTee`, then
+  `white`) — set it whenever the club's rated men's tee isn't white (Brisbane River's is Black), because
+  the anchor key is what every other tee's distance is measured back from and what the length
+  cross-check compares against; with no matching key the multi-tee block silently produces nothing. For the selector to show a colour, it **must have a `teeSets`
   entry** — a Ladies/Red tee often has its own par+SI (Gailes), which the app doesn't yet apply per-tee
   (scoring uses men's par/SI for all tees); stash the Ladies card in `course._ladies` for the future
   per-tee-par feature. Courses with no `teeSets` keep one tee + the **"Set tee" GPS tool**, unchanged.
