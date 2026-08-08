@@ -6613,15 +6613,20 @@ function _wcInjectCSS(){
   if(document.getElementById('wc2-css')) return;
   const s = document.createElement('style'); s.id = 'wc2-css';
   s.textContent = `
-  #wind-panel{position:fixed;inset:0;z-index:1600;display:none;flex-direction:column;color:var(--tx);touch-action:manipulation;overscroll-behavior:contain;
-    background:radial-gradient(120% 85% at 50% 0%,var(--wcWash,transparent),transparent 62%),radial-gradient(130% 100% at 50% 8%,#111820,#06090f 62%,#04060a);
+  /* Palette. The wind tone (teal helping / amber across / red into) is the hero and is set from
+     JS. Everything else gets its own hue so the screen isn't one colour end to end: brass for the
+     instrument's identity, steel for the compass card, and a ground→sky ramp for the height ladder. */
+  #wind-panel{--wcBrass:#f0c46a;--wcSteel:#b7d2e8;--wcEdge:rgba(126,166,205,.24);--wcEdgeSoft:rgba(126,166,205,.14);
+    --wcZ10:#d5c39a;--wcZ25:#8fb6e8;--wcZ50:#9b93f0;
+    position:fixed;inset:0;z-index:1600;display:none;flex-direction:column;color:var(--tx);touch-action:manipulation;overscroll-behavior:contain;
+    background:radial-gradient(120% 85% at 50% 0%,var(--wcWash,transparent),transparent 62%),radial-gradient(135% 105% at 50% 4%,#141b33,#0a0e1e 55%,#05070f);
     transition:background .45s ease;}
   #wind-panel.on{display:flex;}
   .wc2-top{display:flex;align-items:center;gap:9px;padding:calc(env(safe-area-inset-top,0px) + 12px) 13px 6px;flex:none;}
-  .wc2-title{font-family:var(--sans);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap;color:#dbe6ec;}
+  .wc2-title{font-family:var(--sans);font-weight:800;font-size:17px;display:flex;align-items:center;gap:8px;white-space:nowrap;color:var(--wcBrass);}
   .wc2-place{font-family:var(--mono);font-size:10px;color:var(--tx3);line-height:1.3;min-width:0;overflow:hidden;text-overflow:ellipsis;flex:1;}
-  .wc2-place b{color:#b9ccd6;font-weight:700;}
-  .wc2-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(20,28,36,.85);border:1px solid rgba(160,182,196,.24);color:var(--tx2);font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  .wc2-place b{color:var(--wcSteel);font-weight:700;}
+  .wc2-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(22,30,50,.85);border:1px solid var(--wcEdge);color:var(--wcSteel);font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
   .wc2-btn:active{transform:scale(.92);}
   .wc2-btn.cool{opacity:.4;}
   .wc2-btn.busy{animation:wcSpin 1s linear infinite;}
@@ -6653,10 +6658,10 @@ function _wcInjectCSS(){
      drops the two the strip and rung tiles already tell you. */
   .wc2-hud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1;max-width:46%;}
   .wc2-spd{font-family:var(--mono);font-weight:700;font-size:clamp(30px,calc(var(--wcR,360px) * .175),66px);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.75);transition:color .28s ease;}
-  .wc2-unit{font-family:var(--mono);font-size:clamp(7px,calc(var(--wcR,360px) * .027),10px);letter-spacing:.18em;color:var(--tx3);margin-top:3px;}
+  .wc2-unit{font-family:var(--mono);font-size:clamp(7px,calc(var(--wcR,360px) * .027),10px);letter-spacing:.18em;color:var(--wcSteel);opacity:.72;margin-top:3px;}
   .wc2-from{font-family:var(--mono);font-size:clamp(9px,calc(var(--wcR,360px) * .033),12.5px);font-weight:700;color:#dce6ec;margin-top:7px;text-shadow:0 1px 8px rgba(0,0,0,.8);white-space:nowrap;}
   .wc2-gust{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;white-space:nowrap;}
-  .wc2-bft{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--tx3);margin-top:4px;text-transform:uppercase;line-height:1.3;}
+  .wc2-bft{font-family:var(--mono);font-size:9px;letter-spacing:.06em;color:var(--wcBrass);opacity:.85;margin-top:4px;text-transform:uppercase;line-height:1.3;}
   .wc2-tight .wc2-gust,.wc2-tight .wc2-bft{display:none;}
   /* Short viewports: claw height back out of the stacked rows so the rose stays usable */
   @media (max-height:720px){
@@ -6676,7 +6681,7 @@ function _wcInjectCSS(){
   .wc2-swirl b.swirl{color:#ff6b5c;border-color:rgba(255,107,92,.5);background:rgba(255,77,77,.14);animation:wcThrob 1.9s ease-in-out infinite;}
   @keyframes wcThrob{0%,100%{box-shadow:0 0 0 0 rgba(255,77,77,0);}50%{box-shadow:0 0 14px 2px rgba(255,77,77,.4);}}
   .wc2-swirl i{font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;min-width:0;}
-  .wc2-aim{flex:none;margin:0 11px;background:rgba(10,14,20,.72);border:1px solid rgba(160,182,196,.2);border-radius:13px;padding:9px 13px;display:flex;align-items:center;justify-content:center;gap:11px;-webkit-tap-highlight-color:transparent;}
+  .wc2-aim{flex:none;margin:0 11px;background:rgba(12,17,30,.72);border:1px solid var(--wcEdge);border-radius:13px;padding:9px 13px;display:flex;align-items:center;justify-content:center;gap:11px;-webkit-tap-highlight-color:transparent;}
   .wc2-aim:active{transform:scale(.985);}
   .wc2-aim .t{font-family:var(--mono);font-size:15px;font-weight:800;letter-spacing:.06em;flex:none;line-height:1.15;}
   .wc2-tight .wc2-aim .t{font-size:13px;}
@@ -6686,23 +6691,26 @@ function _wcInjectCSS(){
   .wc2-aim.toned{border-color:var(--wcA30);background:var(--wcA10);
     box-shadow:0 0 calc(22px * var(--wcInt,0)) var(--wcA18);}
   .wc2-aim.toned .t{color:var(--wcTone);}
-  .wc2-quiet .wc2-aim .t{color:#9fb3bf;}
+  .wc2-quiet .wc2-aim .t{opacity:.72;}
   .wc2-aim .s{font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;text-align:right;min-width:0;}
   .wc2-aim.locked{border-color:rgba(255,210,74,.6);box-shadow:0 0 14px rgba(255,210,74,.22);}
-  .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--tx3);background:rgba(10,14,20,.7);border:1px solid rgba(160,182,196,.16);border-radius:9px;padding:5px 8px;pointer-events:none;}
+  .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--wcSteel);background:rgba(12,17,30,.7);border:1px solid var(--wcEdgeSoft);border-radius:9px;padding:5px 8px;pointer-events:none;}
   .wc2-rungs{flex:none;display:flex;gap:7px;padding:8px 11px 2px;}
-  .wc2-rung{flex:1;background:rgba(14,19,26,.8);border:1px solid rgba(160,182,196,.14);border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
+  .wc2-rung{flex:1;background:rgba(15,20,34,.8);border:1px solid var(--wcEdgeSoft);border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
+  .wc2-rung::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--zc,var(--wcSteel));opacity:.85;}
+  .wc2-rung:nth-child(1){--zc:var(--wcZ10);} .wc2-rung:nth-child(2){--zc:var(--wcZ25);} .wc2-rung:nth-child(3){--zc:var(--wcZ50);}
+  .wc2-rung .z{color:var(--zc,var(--wcSteel));}
   .wc2-rung.primary{border-color:currentColor;background:rgba(18,24,32,.9);box-shadow:0 0 calc(18px * var(--wcInt,0)) -6px currentColor;}
   /* Nothing worth reacting to: let the whole ladder sit back rather than glow at you. */
   .wc2-quiet .wc2-rung{opacity:.82;}
-  .wc2-rung .z{font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--tx3);}
+  .wc2-rung .z{font-family:var(--mono);font-size:9px;letter-spacing:.13em;font-weight:700;}
   .wc2-rung{transition:color .28s ease;}
   .wc2-rung .v{font-family:var(--mono);font-size:19px;font-weight:700;color:inherit;line-height:1.15;}
-  .wc2-rung .d{font-family:var(--mono);font-size:9.5px;color:var(--tx2);}
+  .wc2-rung .d{font-family:var(--mono);font-size:9.5px;color:var(--wcSteel);opacity:.8;}
   .wc2-rung svg{display:block;margin:1px auto 0;}
   .wc2-rung .est{position:absolute;top:5px;right:6px;font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;color:var(--tx3);opacity:.75;}
   .wc2-air{flex:none;display:flex;gap:7px;padding:5px 11px 0;font-family:var(--mono);font-size:9.5px;color:var(--tx3);}
-  .wc2-air span{flex:1;background:rgba(14,19,26,.6);border:1px solid rgba(160,182,196,.12);border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .wc2-air span{flex:1;background:rgba(14,19,30,.6);border:1px solid var(--wcEdgeSoft);border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .wc2-air b{color:var(--tx2);font-weight:700;}
   /* Own semantics, not the aim tone — see the render comment. */
   .wc2-air span.ok b{color:#9fe8cf;} .wc2-air span.ok{border-color:rgba(159,232,207,.22);}
@@ -6710,12 +6718,12 @@ function _wcInjectCSS(){
   .wc2-air span.bad b{color:#ff7a6b;} .wc2-air span.bad{border-color:rgba(255,122,107,.38);}
   .wc2-air span.thin b{color:#ffcf6b;} .wc2-air span.thin{border-color:rgba(255,207,107,.32);}
   .wc2-air span.dense b{color:#8fc4ff;} .wc2-air span.dense{border-color:rgba(143,196,255,.32);}
-  .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9px;color:#6c7c88;line-height:1.4;text-align:center;}
+  .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9px;color:#6e7f9b;line-height:1.4;text-align:center;}
   .wc2-note b{color:#cfe6df;font-weight:700;}
   .wc2-key{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 12px;margin-bottom:6px;}
-  .wc2-key .k{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:#94a8b4;}
+  .wc2-key .k{display:inline-flex;align-items:center;gap:5px;font-size:9.5px;color:#93a7c4;}
   .wc2-key .k i{width:8px;height:8px;border-radius:50%;flex:none;}
-  .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(12,18,26,.96);border:1px solid rgba(160,182,196,.35);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
+  .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(14,20,34,.96);border:1px solid var(--wcEdge);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
   .wc2-toast.show{opacity:1;}
   @media (prefers-reduced-motion: reduce){.wc2-swirl b.swirl{animation:none;} .wc2-btn.busy{animation:none;}}
   `;
@@ -6890,15 +6898,14 @@ function _wcAimBrg(){
 function _wcToneOf(dir, spd){
   if(window._windAimCol === false) return { col: _wcCol(spd), int: 1 };
   const aim = _wcAimBrg(), cls = wcAimCls(dir, aim);
-  if(!cls) {
-    // No line to judge against: fall back to strength, and stay quiet in genuinely light air.
-    const int = Math.max(0, Math.min(1, ((spd || 0) - 6) / 18));
-    return { col: int > 0 ? _wcCol(spd) : WC_TONE.none, int };
-  }
+  // HUE and LOUDNESS are two different jobs. The hue always says what the wind is doing to your
+  // line, because that is the reading and draining it to grey in light air just moves the problem;
+  // the intensity says how much it matters, and drives glow, ring and wash. So a 6 km/h tailwind
+  // is still green — it just doesn't shout — and a 25 km/h headwind lights the page up.
+  if(!cls) return { col: _wcCol(spd), int: Math.max(0, Math.min(1, ((spd || 0) - 6) / 18)) };
   const c = wcComponents(dir, aim, spd);
   const imp = Array.isArray(window._windImpact) ? window._windImpact : [6, 24];
-  const int = c ? wcImpact(c.help, c.cross, imp[0], imp[1]) : 0;
-  return { col: int > 0 ? WC_TONE[cls] : WC_TONE.none, int };
+  return { col: WC_TONE[cls], int: c ? wcImpact(c.help, c.cross, imp[0], imp[1]) : 0 };
 }
 function _wcTone(dir, spd){ return _wcToneOf(dir, spd).col; }
 // True when the tones currently mean "vs your line" rather than "how strong".
@@ -6923,13 +6930,13 @@ function _wcRoseSvg(v){
     const r1 = R, r2 = R - len, rad = (a - 90) * Math.PI / 180;
     ticks.push('<line x1="' + (C + Math.cos(rad) * r1).toFixed(1) + '" y1="' + (C + Math.sin(rad) * r1).toFixed(1) +
       '" x2="' + (C + Math.cos(rad) * r2).toFixed(1) + '" y2="' + (C + Math.sin(rad) * r2).toFixed(1) +
-      '" stroke="rgba(196,214,226,' + (card ? 0.8 : major ? 0.45 : 0.2) + ')" stroke-width="' + (card ? 2.2 : major ? 1.3 : 0.8) + '" stroke-linecap="round"/>');
+      '" stroke="rgba(174,208,238,' + (card ? 0.85 : major ? 0.48 : 0.22) + ')" stroke-width="' + (card ? 2.2 : major ? 1.3 : 0.8) + '" stroke-linecap="round"/>');
   }
   const letters = [['N', 0], ['NE', 45], ['E', 90], ['SE', 135], ['S', 180], ['SW', 225], ['W', 270], ['NW', 315]].map(([t, a]) => {
     const rad = (a - 90) * Math.PI / 180, r = R - 22;
     return '<text x="' + (C + Math.cos(rad) * r).toFixed(1) + '" y="' + (C + Math.sin(rad) * r + 5).toFixed(1) +
       '" text-anchor="middle" font-family="var(--mono)" font-size="' + (a % 90 === 0 ? 19 : 12) + '" font-weight="' + (a % 90 === 0 ? 800 : 600) +
-      '" fill="' + (a === 0 ? '#ff8a8a' : a % 90 === 0 ? 'rgba(236,244,249,.9)' : 'rgba(196,214,226,.5)') + '">' + t + '</text>';
+      '" fill="' + (a === 0 ? '#ff8a8a' : a % 90 === 0 ? '#e6f0fa' : 'rgba(174,208,238,.55)') + '">' + t + '</text>';
   }).join('');
 
   // Variability wedge: the span the 10 m direction has actually covered over the swirl
@@ -6955,7 +6962,7 @@ function _wcRoseSvg(v){
     const hero = i === 0;
     const at = (r) => [C + Math.cos(rad) * r, C + Math.sin(rad) * r];
     const nx = -Math.sin(rad), ny = Math.cos(rad);
-    const c = 'rgba(206,220,230,.55)';                   // ghost rungs stay ghosts; the hero is toned
+    const c = i === 1 ? 'rgba(143,182,232,.72)' : 'rgba(155,147,240,.72)';   // 25 m / 50 m keep the ladder's own colours
     const reach = REACH[i], hl = hero ? 32 : 13, hb = hero ? 12 + str * 8 : 5.5;
     const [hx, hy] = at(reach), [bx, by] = at(reach - hl), [tx, ty] = at(96);
     const head = 'M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' L' + (bx + nx * hb).toFixed(1) + ',' + (by + ny * hb).toFixed(1) +
@@ -6963,7 +6970,7 @@ function _wcRoseSvg(v){
     // Ghost labels ride perpendicular to their own spoke so they never sit on a shaft
     const off = i === 1 ? 15 : -15;                      // opposite sides so 25 m and 50 m never collide
     const lbl = hero ? '' : '<text x="' + (hx + nx * off).toFixed(1) + '" y="' + (hy + ny * off + 3.4).toFixed(1) +
-      '" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="rgba(203,232,222,.55)">' + p.z + 'm</text>';
+      '" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="' + c + '">' + p.z + 'm</text>';
     return '<g' + (hero ? ' filter="url(#wcGlow)"' : ' opacity=".9"') + '>' +
       '<line' + (hero ? ' class="wcTS"' : '') + ' x1="' + tx.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
         '"' + (hero ? '' : ' stroke="' + c + '"') + ' stroke-width="' + (hero ? 9 + str * 7 : 2.6) + '" stroke-linecap="round"/>' +
@@ -7029,7 +7036,11 @@ function _wcFlowTick(){
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = 'rgba(5,10,17,0.17)'; ctx.fillRect(0, 0, _wc.fw, _wc.fh);
   ctx.globalCompositeOperation = 'lighter';
-  ctx.strokeStyle = col; ctx.lineCap = 'round';
+  ctx.lineCap = 'round';
+  // Gust streaks run in the instrument's brass rather than the wind tone, so the field shows two
+  // things at once — where the wind is going, and the gusts riding on top of it — instead of being
+  // one flat colour moving in one direction.
+  const gustCol = '#f0c46a';
   for(const p of _wc.parts){
     // A swirling wind wanders; a steady one runs true. Same jitter the numbers describe.
     p.j += 0.06;
@@ -7041,6 +7052,7 @@ function _wcFlowTick(){
     const L = p.len * _wc.fdpr * (0.4 + Math.min(1.6, spd / 22));
     ctx.globalAlpha = (p.g ? 0.42 : 0.24) * (0.35 + Math.min(1, spd / 24));
     ctx.lineWidth = p.w * _wc.fdpr * (p.g ? 1.6 : 1);
+    ctx.strokeStyle = p.g ? gustCol : col;
     ctx.beginPath(); ctx.moveTo(p.x, p.y); ctx.lineTo(p.x - dx * L, p.y - dy * L); ctx.stroke();
     // wrap with a margin so streaks don't pop in at the edge
     const m = 60 * _wc.fdpr;
@@ -7225,7 +7237,7 @@ function _wcRender(){
     ? '<span class="k"><i style="background:#16e0a3"></i>helping</span>' +
       '<span class="k"><i style="background:#ffc233"></i>across</span>' +
       '<span class="k"><i style="background:#ff4d4d"></i>into</span>' +
-      '<span class="k"><i style="background:#7fa8bd"></i>nothing in it</span>'
+      '<span class="k">brighter = more in it</span>'
     : '<span class="k"><i style="background:#7fa8bd"></i>no compass here — colour is strength, not your line</span>';
   if(note) note.innerHTML = '<div class="wc2-key">' + key + '</div>' +
     'Open-Meteo model at your coordinates, not an anemometer on this tee — 25 m and 50 m fitted between the modelled 10 m and 80 m (α ' +
