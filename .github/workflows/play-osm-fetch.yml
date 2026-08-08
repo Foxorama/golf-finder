@@ -83,8 +83,12 @@ jobs:
         with:
           node-version: 22
 
+      # Only the fetch stages source OSM. This used to be `mode != 'build'`, which meant an
+      # `aerial` run also re-ran the fetch — and since an aerial dispatch has no reason to pass
+      # name/lat/lng, those fell back to the workflow defaults and the previous course's OSM
+      # overwrote this course's file, so the aerial came back over the wrong course entirely.
       - name: Fetch OSM geometry
-        if: ${{ inputs.mode != 'build' }}
+        if: ${{ inputs.mode == 'fetch' || inputs.mode == 'both' }}
         run: node scripts/play/fetch-osm.mjs "$NAME" "scripts/play/_osm/$SLUG.osm.json" "$LAT" "$LNG"
 
       - name: Build course geometry (OSM + imagery gap-fill)
