@@ -62,7 +62,7 @@ export function loadOrreryCore(){
 // Loads the pure WIND-CORE region (shear profile, circular stats, swirl classification and
 // the wind-vs-aim maths behind the full-screen compass). Fully self-contained — no shims.
 const WIND_EXPORTS = ['WC_RUNGS','wcAng','wcAngDiff','wcCircMean','wcCircSpread','wcShear','wcSpeedAt',
-                      'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcAimCls','wcComponents',
+                      'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcAimCls','wcComponents','wcImpact',
                       'wcPlaysPct','wcAirCarryPct'];
 // Loads the resume-round slug resolution + draft scan. Not pure — it reads COURSE_PLAY and
 // localStorage — so both are injected as stubs, which is the point: the logic worth guarding is
