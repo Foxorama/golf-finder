@@ -10,7 +10,10 @@ memory). Pure Node, **no npm dependencies** (built-in `fetch` + `zlib`).
 | file | what it does |
 |---|---|
 | `lib-geo.mjs` | geo helpers — `distM`, `bearing`, `dest`, `pointAlong`, `rdp`, `simp` |
-| `lib-png.mjs` | minimal pure-Node PNG decoder (8-bit RGB/RGBA/indexed) via `zlib` |
+| `lib-png.mjs` | minimal pure-Node PNG codec (decode 8-bit RGB/RGBA/indexed, encode RGB) via `zlib` |
+| `fetch-aerial.mjs` | pull ONE georeferenced aerial + world JSON for a course (runner-side; retries across Esri/QLD) |
+| `crop-aerial.mjs` | cut a georeferenced window out of that aerial — magnify a feature, or downscale for an overview |
+| `aerial-centroid.mjs` | pull a hand-seeded green/tee estimate onto the real turf (smoothness-weighted mean-shift) |
 | `imagery.mjs` | fetch georeferenced **Esri World Imagery** tiles → trace the fairway corridor |
 | `gap-fill.mjs` | **the orchestrator** — OSM + config → `<osm>_built.json` (`{play,geom}`) |
 | `trace-tool.html` | **click-to-place tracer** for *accurate display* — trace features on the aerial by hand |
@@ -125,6 +128,24 @@ full `COURSE_PLAY` entry (incl. `si`, `cr`/`slope`, `tees`, `teeSets`) and write
 to `play-geom/<slug>.json`. Verify with the `add-play-course` skill §3 + the **§3a per-hole
 QA review**.
 
+## Seeing the imagery from an environment that can't reach it
+The remote/web environment 403s the imagery host, so the aerial is fetched once on a runner
+(`play-osm-fetch.yml` `mode=aerial`, `aerial_src` = a `play-geom/<slug>.json`, a raw Overpass JSON,
+or a literal `minLat,minLng,maxLat,maxLng` — the Overpass form is what a course with only a
+boundary way has) and committed to the working branch. From there it is a local file:
+
+```
+node crop-aerial.mjs <aerial.png> overview.png <lat> <lng> 1300 0.28              # whole course, viewable
+node crop-aerial.mjs <aerial.png> h7.png <lat> <lng> 190 2                        # one green, magnified
+node aerial-centroid.mjs <aerial.png> <lat> <lng> 22 9 green                      # refine a seed
+node crop-aerial.mjs <aerial.png> h7chk.png <lat> <lng> 120 2 "<lat>,<lng>,14"    # ring = the check
+```
+
+That last one is the registration check the skill's fully-absent path asks for: a ring drawn at the
+computed centroid has to land on the putting surface. **Delete the committed `.aerial.png` before
+opening the PR** — it is tens of megabytes, it is gitignored for exactly that reason, and it is
+reproducible from the workflow at any time.
+
 ## The config — where the human-in-the-loop decisions live
 OSM, imagery and geometry are automated; the things you **can't** read off a map
 reliably go in the config: hole numbering, the scorecard, per-tee distances. For a
@@ -133,7 +154,7 @@ sparse-OSM course (Oxley: no `ref`s, no fairways, 2/18 greens) you supply:
 ```jsonc
 {
   "name": "Oxley Golf Club", "slug": "oxley-golf-club",
-  "course": { "par": 71, "cr": 70, "slope": 113, "defaultTee": "white",
+  "course": { "par": 71, "cr": 70, "slope": 113, "defaultTee": "white", // "ratedTee" if it isn't the default tee
     "teeSets": [ {"key":"black","name":"Black","cr":72,"slope":113}, … ] },
   "options": { "traceFairways": true, "traceBunkers": true, "greenOvalM": 26 },
   "holes": [
@@ -149,6 +170,11 @@ sparse-OSM course (Oxley: no `ref`s, no fairways, 2/18 greens) you supply:
   ]
 }
 ```
+
+Course-level fields worth knowing: **`ratedTee`** names the tee whose card distance every other
+tee is stepped back from and that the length cross-check compares against — it defaults to
+`defaultTee`, then to `white`, so a card whose rated men's tee is Black (Brisbane River) or Blue
+needs it set rather than silently producing no multi-tee positions at all.
 
 Per-hole fields: **`way`** (OSM `golf=hole` way id) or **`green`+`tee`** (coords, for an
 OSM-missing hole); **`greenEnd`** `"a"`/`"b"` (which end of the way is the green — defaults

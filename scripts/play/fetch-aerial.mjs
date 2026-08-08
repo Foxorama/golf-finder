@@ -61,6 +61,10 @@ const urlFor = src => `${SRC[src]}?bbox=${bb.minLng},${bb.minLat},${bb.maxLng},$
   `&bboxSR=4326&imageSR=4326&size=${W},${H}&format=png24&f=image`;
 
 console.error(`size=${W}x${H} (~${(lngM / W).toFixed(2)} m/px) bbox=${JSON.stringify(bb)}`);
+// Every attempt is also replayed at the very end. A CI log is read from the tail, and the reason a
+// preferred source was skipped is the single most useful line here — it must not be buried above
+// a successful fallback's output.
+const tried = [];
 let buf = null, used = null;
 outer:
 for (let attempt = 0; attempt < 3; attempt++) {
@@ -68,18 +72,19 @@ for (let attempt = 0; attempt < 3; attempt++) {
     try {
       const r = await fetch(urlFor(src), { headers: { 'User-Agent': 'golf-finder-build/1.0' } });
       const ct = r.headers.get('content-type') || '';
-      if (!r.ok) { console.error(`[${src} #${attempt + 1}] HTTP ${r.status}`); }
-      else if (!/image/i.test(ct)) { console.error(`[${src} #${attempt + 1}] not an image (content-type ${ct})`); }
+      if (!r.ok) tried.push(`${src} #${attempt + 1}: HTTP ${r.status} ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160)}`);
+      else if (!/image/i.test(ct)) tried.push(`${src} #${attempt + 1}: not an image (content-type ${ct}) ${(await r.text().catch(() => '')).replace(/\s+/g, ' ').slice(0, 160)}`);
       else {
         const b = Buffer.from(await r.arrayBuffer());
         // an ArcGIS "no data"/error tile still comes back as a valid tiny PNG
-        if (b.length < 5000) console.error(`[${src} #${attempt + 1}] suspiciously small (${b.length} B) — probably an error image`);
-        else { buf = b; used = src; break outer; }
+        if (b.length < 5000) tried.push(`${src} #${attempt + 1}: suspiciously small (${b.length} B) — probably an error image`);
+        else { buf = b; used = src; tried.push(`${src} #${attempt + 1}: OK ${(b.length / 1048576).toFixed(2)} MB`); break outer; }
       }
-    } catch (e) { console.error(`[${src} #${attempt + 1}] ${e.message}`); }
+    } catch (e) { tried.push(`${src} #${attempt + 1}: ${e.message}`); }
     await new Promise(res => setTimeout(res, 4000 * (attempt + 1)));
   }
 }
+console.error('attempts:\n  - ' + tried.join('\n  - '));
 if (!buf) { console.error('imagery fetch failed on every source'); process.exit(1); }
 fs.writeFileSync(outPath, buf);
 fs.writeFileSync(outPath.replace(/\.png$/, '') + '.json', JSON.stringify({ bb, W, H, source: used, mPerPx: lngM / W }));
