@@ -441,6 +441,20 @@ call it done. They map to the three hats the user keeps asking for:
   invent shear out of a timing mismatch. All the maths is the pure **`WIND-CORE`** block
   (`wcAng`/`wcAngDiff`/`wcCircMean`/`wcCircSpread`/`wcShear`/`wcProfile`/`wcSwirl`/
   `wcComponents`/`wcPlaysPct`/`wcAirCarryPct`), unit-tested in `tests/wind.test.mjs`.
+  **Colour = what the wind does to the line you're pointing down**, not how strong it is
+  (`wcAimCls` in WIND-CORE → `_wcTone`): teal helping, amber across, **red into your face**, off the
+  same ±0.34-cosine split as `windVsHole`, so the full-screen compass and the hole-map dial can
+  never disagree. It tones the rose, the flow field, the big number and **each rung tile by its own
+  direction** — so a red 50 m tile under a teal 10 m one is the shot that starts downwind and lands
+  into it. Colouring by *speed* was the original scheme and it had a real hole: in a steady 15 km/h
+  the dial looked identical whether the wind was behind you or straight into you, the two cases that
+  change the club. Speed bands (`_wcCol`) remain the **fallback** where there's no line to judge
+  against — no compass on the device — and stay in use for the hourly strip, which is a forecast of
+  strength over time rather than a reading of this shot; the footer note says which of the two is
+  live. The tone is pushed through a `--wcTone` CSS var by `_wcApplyTones()` so turning the phone
+  recolours the dial without rebuilding the SVG. Because the aim normally comes off the
+  magnetometer, **`?aim=BEARING` / `setAim(brg)`** force it, otherwise the whole colour scheme is
+  invisible anywhere but a real phone outdoors.
   **"Is it swirling?"** (`wcSwirl`) blends three tells — the circular spread of direction over
   the ±2 h window, the 10→50 m twist, and the gust factor — into **CALM / STEADY / SHIFTY /
   SWIRLING**, and the copy names the loudest one. Two honesty rules are baked in and tested:
@@ -461,8 +475,10 @@ call it done. They map to the three hats the user keeps asking for:
   210 px. Refreshes **on the hour** (`_wcScheduleHourly`, +8 s so the model's new hour is
   published), when it comes back visible after 15 min, and on the ↻ button with a **30 s
   cooldown**. Escape hatches: `window._windFlow=false` (kill the particles),
-  `_windCompassLive=false` (no orientation), `_windCool` (cooldown ms), and the test override
-  `?wind=spd,dir[,gust[,twist[,spread]]]` / `setWind(...)` / `window._windTest`. Verify it in
+  `_windCompassLive=false` (no orientation), `_windAimCol=false` (colour by strength, not by aim),
+  `_windCool` (cooldown ms), and the test overrides
+  `?wind=spd,dir[,gust[,twist[,spread]]]` / `setWind(...)` / `window._windTest` and
+  `?aim=BEARING` / `setAim(brg)` / `window._windAim`. Verify it in
   preview **numerically** — screenshots can't be taken over the animated full-screen stage;
   drive `_wcFlowTick()` by hand (headless rAF is unreliable) and read `_wc.view` / element
   rects. The rose's *feel* — does north read as north, is the smoothing right — can only be
@@ -953,6 +969,11 @@ it with the preview tool:
   the app hook → add the hub control (+ `buildURL()` / live driver) → extend the guard test →
   update these docs. The hub deploys with the app from `main` (same Pages site), so there's no
   separate publish step — keeping it in sync is the whole job.
+- `?aim=BEARING` — force the line the full-screen wind compass resolves the wind against
+  (`window._windAim`), standing in for the phone's compass. Console: `setAim(brg)` / `setAim()` to
+  hand it back to the phone. Without it the aim-relative colouring (teal helping / amber across /
+  red into) can't be seen off-phone, so the hub's **Into wind / Across / Downwind** chips send it —
+  computed *relative to the staged wind*, so they stay true whichever wind chip is picked.
 - `?wind=spd,dir[,gust[,twist[,spread]]]` — force the **full-screen wind compass**'s reading
   (`window._windTest`, the sibling of Play's `_playWindTest`), e.g. `?wind=34,215,58,34,52` is a
   swirling SW gale. Console: `setWind(spd,dir,gust,twist,spread)` drives it with no reload;

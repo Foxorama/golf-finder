@@ -6520,16 +6520,24 @@ function wcSwirl(o){
   if(score < 0.55) return { score, tag: 'SHIFTY', cls: 'shifty', why: 'Slightly unsettled — ' + why + '.' };
   return { score, tag: 'SWIRLING', cls: 'swirl', why: 'Unreliable — ' + why + '. Club for the gust.' };
 }
-// Wind resolved against a bearing you're aiming at. Mirrors windVsHole's thresholds so the
-// full-screen compass and the hole map never disagree about what "crosswind" means.
+// Where a wind sits relative to a bearing you're playing down, as the app's three-state verdict.
+// Split out on its own because it is what COLOURS the whole compass — the rose, the flow field
+// and each rung tile all ask this question of a different direction, and none of them wants the
+// speed/cross numbers. Thresholds are windVsHole's ±0.34 cosine (~±70° of the line), so the hole
+// map, the aim row and the rose can never disagree about where crosswind ends.
+function wcAimCls(fromDir, aimBrg){
+  if(fromDir == null || aimBrg == null) return null;
+  const u = Math.cos(wcAngDiff(fromDir + 180, aimBrg) * Math.PI / 180);
+  return u > 0.34 ? 'help' : u < -0.34 ? 'hurt' : 'cross';
+}
+// Wind resolved against a bearing you're aiming at.
 // help > 0 = downwind (helping); cross > 0 = pushing left → right.
 function wcComponents(fromDir, aimBrg, spd){
   if(fromDir == null || aimBrg == null || spd == null) return null;
   const d = wcAngDiff(fromDir + 180, aimBrg);          // 0 = blowing straight at your target
   const help = Math.cos(d * Math.PI / 180) * spd, cross = Math.sin(d * Math.PI / 180) * spd;
-  const u = Math.cos(d * Math.PI / 180);
-  const tag = u > 0.34 ? 'DOWNWIND' : u < -0.34 ? 'INTO WIND' : 'CROSSWIND';
-  const cls = u > 0.34 ? 'help' : u < -0.34 ? 'hurt' : 'cross';
+  const cls = wcAimCls(fromDir, aimBrg);
+  const tag = cls === 'help' ? 'DOWNWIND' : cls === 'hurt' ? 'INTO WIND' : 'CROSSWIND';
   return { d, help, cross, tag, cls,
            crossTxt: cross > 0.26 * spd ? 'left → right' : cross < -0.26 * spd ? 'right → left' : '' };
 }
@@ -6592,12 +6600,15 @@ function _wcInjectCSS(){
      trail-fade converging the whole stage to one flat colour. */
   #wc2-flow{position:absolute;inset:0;width:100%;height:100%;display:block;opacity:.9;}
   #wc2-rose{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);}
+  /* One variable paints the dial, so recolouring as you turn is a style write, not a rebuild. */
+  #wc2-rose .wcTF{fill:var(--wcTone,#16e0a3);transition:fill .28s ease;}
+  #wc2-rose .wcTS{stroke:var(--wcTone,#16e0a3);transition:stroke .28s ease;}
   /* The HUD lives inside the rose's hub, so it's sized off the ROSE (--wcR, set by _wcFit),
      not the viewport: a 152px rose on a small phone and a 374px one on a big phone both keep
      the number inside the disc. Below ~210px the hub can't hold five lines, so .wc2-tight
      drops the two the strip and rung tiles already tell you. */
   .wc2-hud{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;line-height:1;max-width:46%;}
-  .wc2-spd{font-family:var(--mono);font-weight:700;font-size:clamp(30px,calc(var(--wcR,360px) * .175),66px);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.75);}
+  .wc2-spd{font-family:var(--mono);font-weight:700;font-size:clamp(30px,calc(var(--wcR,360px) * .175),66px);letter-spacing:-.04em;color:#fff;text-shadow:0 2px 18px rgba(0,0,0,.75);transition:color .28s ease;}
   .wc2-unit{font-family:var(--mono);font-size:clamp(7px,calc(var(--wcR,360px) * .027),10px);letter-spacing:.18em;color:var(--tx3);margin-top:3px;}
   .wc2-from{font-family:var(--mono);font-size:clamp(9px,calc(var(--wcR,360px) * .033),12.5px);font-weight:700;color:#cfe6df;margin-top:7px;text-shadow:0 1px 8px rgba(0,0,0,.8);white-space:nowrap;}
   .wc2-gust{font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:4px;white-space:nowrap;}
@@ -6626,6 +6637,11 @@ function _wcInjectCSS(){
   .wc2-aim:active{transform:scale(.985);}
   .wc2-aim .t{font-family:var(--mono);font-size:12.5px;font-weight:800;letter-spacing:.08em;flex:none;}
   .wc2-aim .t.help{color:#16e0a3;} .wc2-aim .t.hurt{color:#ff6b5c;} .wc2-aim .t.cross{color:#ffc233;}
+  .wc2-aim{transition:border-color .28s ease,box-shadow .28s ease,background .28s ease;}
+  .wc2-aim.help{border-color:rgba(22,224,163,.5);background:rgba(22,224,163,.09);}
+  .wc2-aim.cross{border-color:rgba(255,194,51,.5);background:rgba(255,194,51,.09);}
+  /* Into the wind is the one that costs you a club, so it is the one that is loud. */
+  .wc2-aim.hurt{border-color:rgba(255,77,77,.62);background:rgba(255,77,77,.13);box-shadow:0 0 18px rgba(255,77,77,.22);}
   .wc2-aim .s{font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.35;text-align:right;min-width:0;}
   .wc2-aim.locked{border-color:rgba(255,210,74,.6);box-shadow:0 0 14px rgba(255,210,74,.22);}
   .wc2-tilt{position:absolute;right:10px;bottom:10px;z-index:4;font-family:var(--mono);font-size:9.5px;color:var(--tx3);background:rgba(6,14,20,.7);border:1px solid rgba(110,200,180,.18);border-radius:9px;padding:5px 8px;pointer-events:none;}
@@ -6633,7 +6649,8 @@ function _wcInjectCSS(){
   .wc2-rung{flex:1;background:rgba(10,22,30,.8);border:1px solid rgba(110,200,180,.16);border-radius:13px;padding:8px 6px 9px;text-align:center;position:relative;overflow:hidden;}
   .wc2-rung.primary{border-color:rgba(110,200,180,.42);background:rgba(14,34,42,.9);}
   .wc2-rung .z{font-family:var(--mono);font-size:9px;letter-spacing:.13em;color:var(--tx3);}
-  .wc2-rung .v{font-family:var(--mono);font-size:19px;font-weight:700;color:#fff;line-height:1.15;}
+  .wc2-rung{transition:color .28s ease;}
+  .wc2-rung .v{font-family:var(--mono);font-size:19px;font-weight:700;color:inherit;line-height:1.15;}
   .wc2-rung .d{font-family:var(--mono);font-size:9.5px;color:var(--tx2);}
   .wc2-rung svg{display:block;margin:1px auto 0;}
   .wc2-rung .est{position:absolute;top:5px;right:6px;font-family:var(--mono);font-size:7.5px;letter-spacing:.06em;color:var(--tx3);opacity:.75;}
@@ -6653,6 +6670,7 @@ function _wcInjectCSS(){
   .wc2-air span{flex:1;background:rgba(10,22,30,.6);border:1px solid rgba(110,200,180,.12);border-radius:9px;padding:5px 7px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .wc2-air b{color:var(--tx2);font-weight:700;}
   .wc2-note{flex:none;padding:7px 15px calc(env(safe-area-inset-bottom,0px) + 11px);font-family:var(--mono);font-size:9.5px;color:var(--tx3);line-height:1.4;text-align:center;}
+  .wc2-note b{color:#cfe6df;font-weight:700;}
   .wc2-toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 84px);z-index:1710;background:rgba(8,20,26,.96);border:1px solid rgba(110,200,180,.4);color:#dff6ee;padding:9px 15px;border-radius:12px;font-family:var(--mono);font-size:12px;box-shadow:0 12px 34px rgba(0,0,0,.55);opacity:0;pointer-events:none;transition:opacity .2s;}
   .wc2-toast.show{opacity:1;}
   @media (prefers-reduced-motion: reduce){.wc2-swirl b.swirl{animation:none;} .wc2-btn.busy{animation:none;}}
@@ -6815,12 +6833,46 @@ function _wcFit(){
 }
 
 // Strength → the same three-colour language the Play hole-map compass uses
+// The three tones the whole app uses for wind, shared with the hole-map compass: helping is
+// teal, cross is amber, into-the-wind is red.
+const WC_TONE = { help: '#16e0a3', cross: '#ffc233', hurt: '#ff4d4d', none: '#7fa8bd' };
+
+// Strength bands — the FALLBACK colouring, used where there is no line to judge against
+// (no compass on the device, or the hourly forecast strip, which is a chart of strength over
+// time rather than a reading of this shot).
 function _wcCol(spd){
-  if(spd == null) return '#7fa8bd';
-  if(spd < 12) return '#16e0a3';
-  if(spd < 26) return '#ffc233';
-  return '#ff4d4d';
+  if(spd == null) return WC_TONE.none;
+  if(spd < 12) return WC_TONE.help;
+  if(spd < 26) return WC_TONE.cross;
+  return WC_TONE.hurt;
 }
+
+// The bearing the reading is resolved against: a forced test aim, else a locked aim, else
+// wherever the phone points. The test override exists because the aim normally comes from the
+// magnetometer, so without it the aim-relative colouring — the whole point of the dial — cannot
+// be seen anywhere but on a real phone outdoors.
+function _wcAimBrg(){
+  if(typeof window._windAim === 'number' && isFinite(window._windAim)) return wcAng(window._windAim);
+  if(!_wc) return null;
+  if(_wc.aimLock != null) return _wc.aimLock;
+  return _wc.hasHeading ? wcAng(_wc.heading) : null;
+}
+// The compass's colour for one wind direction.
+//
+// Colouring by SPEED alone was the original scheme and it had a real hole in it: standing on a
+// tee in a steady 15 km/h, the dial looked identical whether that wind was behind you or straight
+// into your face — the two situations a golfer most needs told apart, and the ones that change
+// the club. So when there is a line to judge against, the tone answers "what does this wind do to
+// THIS shot" — and only falls back to strength bands when there isn't. Off the same thresholds as
+// the hole-map compass, so the two never disagree.
+// window._windAimCol = false restores pure strength colouring.
+function _wcTone(dir, spd){
+  if(window._windAimCol === false) return _wcCol(spd);
+  const cls = wcAimCls(dir, _wcAimBrg());
+  return cls ? WC_TONE[cls] : _wcCol(spd);
+}
+// True when the tones currently mean "vs your line" rather than "how strong".
+function _wcAimToned(){ return window._windAimCol !== false && _wcAimBrg() != null; }
 
 // ── The rose ───────────────────────────────────────────────────────────────
 // Everything inside #wc2-rotor lives in EARTH frame; the rotor is spun by −heading so the
@@ -6828,7 +6880,10 @@ function _wcCol(spd){
 // exactly like the hole map's play-line-up convention.
 function _wcRoseSvg(v){
   const C = 200, R = 186;
-  const col = _wcCol(v.v10), str = Math.max(0, Math.min(1, ((v.v10 || 0) - 3) / 37));
+  // The tone lives in a CSS variable, not in these attributes: it depends on where the phone is
+  // pointing, which changes every frame, and the rose is only rebuilt on a DATA change. Painting
+  // it through --wcTone lets _wcPaintAim recolour the dial as you turn without touching the SVG.
+  const str = Math.max(0, Math.min(1, ((v.v10 || 0) - 3) / 37));
   // Radial bands, outside in: ticks 173–186, cardinal letters ~164, arrows 96–150, hub 0–92.
   // Nothing shares a band, so the dial stays readable whatever bearing the wind takes.
   const ticks = [];
@@ -6855,7 +6910,7 @@ function _wcRoseSvg(v){
     const span = Math.max(6, Math.min(300, a1 - a0)), rr = R - 38;
     const p = (a) => { const rad = (a - 90) * Math.PI / 180; return [(C + Math.cos(rad) * rr).toFixed(1), (C + Math.sin(rad) * rr).toFixed(1)]; };
     const [x0, y0] = p(a0), [x1, y1] = p(a0 + span);
-    wedge = '<path d="M' + C + ',' + C + ' L' + x0 + ',' + y0 + ' A' + rr + ',' + rr + ' 0 ' + (span > 180 ? 1 : 0) + ' 1 ' + x1 + ',' + y1 + ' Z" fill="' + col + '" opacity="' + (0.05 + 0.09 * v.swirl.score).toFixed(3) + '"/>';
+    wedge = '<path class="wcTF" d="M' + C + ',' + C + ' L' + x0 + ',' + y0 + ' A' + rr + ',' + rr + ' 0 ' + (span > 180 ? 1 : 0) + ' 1 ' + x1 + ',' + y1 + ' Z" opacity="' + (0.05 + 0.09 * v.swirl.score).toFixed(3) + '"/>';
   }
 
   // One arrow per rung, all fired outward from the hub along that rung's blowing-TO bearing.
@@ -6870,7 +6925,7 @@ function _wcRoseSvg(v){
     const hero = i === 0;
     const at = (r) => [C + Math.cos(rad) * r, C + Math.sin(rad) * r];
     const nx = -Math.sin(rad), ny = Math.cos(rad);
-    const c = hero ? col : 'rgba(203,232,222,.6)';
+    const c = 'rgba(203,232,222,.6)';                    // ghost rungs stay ghosts; the hero is toned
     const reach = REACH[i], hl = hero ? 32 : 13, hb = hero ? 12 + str * 8 : 5.5;
     const [hx, hy] = at(reach), [bx, by] = at(reach - hl), [tx, ty] = at(96);
     const head = 'M' + hx.toFixed(1) + ',' + hy.toFixed(1) + ' L' + (bx + nx * hb).toFixed(1) + ',' + (by + ny * hb).toFixed(1) +
@@ -6879,9 +6934,9 @@ function _wcRoseSvg(v){
     const lbl = hero ? '' : '<text x="' + (hx + nx * 14).toFixed(1) + '" y="' + (hy + ny * 14 + 3.4).toFixed(1) +
       '" text-anchor="middle" font-family="var(--mono)" font-size="9.5" fill="rgba(203,232,222,.55)">' + p.z + 'm</text>';
     return '<g' + (hero ? ' filter="url(#wcGlow)"' : ' opacity=".9"') + '>' +
-      '<line x1="' + tx.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
-        '" stroke="' + c + '" stroke-width="' + (hero ? 9 + str * 7 : 2.6) + '" stroke-linecap="round"/>' +
-      '<path d="' + head + '" fill="' + c + '"/></g>' + lbl;
+      '<line' + (hero ? ' class="wcTS"' : '') + ' x1="' + tx.toFixed(1) + '" y1="' + ty.toFixed(1) + '" x2="' + bx.toFixed(1) + '" y2="' + by.toFixed(1) +
+        '"' + (hero ? '' : ' stroke="' + c + '"') + ' stroke-width="' + (hero ? 9 + str * 7 : 2.6) + '" stroke-linecap="round"/>' +
+      '<path' + (hero ? ' class="wcTF"' : '') + ' d="' + head + '"' + (hero ? '' : ' fill="' + c + '"') + '/></g>' + lbl;
   }).join('');
 
   return '<svg id="wc2-rose" viewBox="0 0 400 400" aria-hidden="true">' +
@@ -6889,18 +6944,19 @@ function _wcRoseSvg(v){
       '<feGaussianBlur stdDeviation="' + (2.5 + str * 5).toFixed(1) + '" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>' +
       '<radialGradient id="wcHub" cx="50%" cy="42%" r="62%"><stop offset="0%" stop-color="rgba(14,38,46,.92)"/><stop offset="100%" stop-color="rgba(4,10,16,.96)"/></radialGradient></defs>' +
     '<circle cx="200" cy="200" r="' + (R + 6) + '" fill="rgba(4,10,16,.42)"/>' +
-    '<circle cx="200" cy="200" r="' + R + '" fill="none" stroke="' + col + '" stroke-width="1.6" opacity=".55"/>' +
+    '<circle class="wcTS" cx="200" cy="200" r="' + R + '" fill="none" stroke-width="1.6" opacity=".55"/>' +
     '<g id="wc2-rotor" transform="rotate(0 200 200)">' + wedge + ticks.join('') + letters + arrows + '</g>' +
     '<circle cx="200" cy="200" r="92" fill="url(#wcHub)" stroke="rgba(190,225,215,.16)" stroke-width="1"/>' +
     '</svg>';
 }
 
 // Small inline arrow used on the rung tiles (north-up, absolute — a chart, not a compass)
-function _wcMiniArrow(dir, col){
+function _wcMiniArrow(dir){
   if(dir == null) return '<svg width="26" height="26"></svg>';
+  // currentColor, so retoning the tile as you turn recolours the arrow with the number
   return '<svg width="26" height="26" viewBox="0 0 26 26"><g transform="rotate(' + (dir + 180).toFixed(0) + ' 13 13)">' +
-    '<line x1="13" y1="21" x2="13" y2="8" stroke="' + col + '" stroke-width="2.4" stroke-linecap="round"/>' +
-    '<path d="M13,3 L18,12 L13,9.4 L8,12 Z" fill="' + col + '"/></g></svg>';
+    '<line x1="13" y1="21" x2="13" y2="8" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>' +
+    '<path d="M13,3 L18,12 L13,9.4 L8,12 Z" fill="currentColor"/></g></svg>';
 }
 
 // ── Flow field ─────────────────────────────────────────────────────────────
@@ -6933,7 +6989,7 @@ function _wcFlowTick(){
   const to = (v.d10 == null ? 0 : v.d10 + 180) - (_wc.heading || 0);   // earth → screen
   const rad = (to - 90) * Math.PI / 180;
   const px = (0.5 + spd * 0.16) * _wc.fdpr;                   // px per frame
-  const col = _wcCol(spd), swirl = v.swirl.score;
+  const col = _wcTone(v.d10, spd), swirl = v.swirl.score;
   ctx.globalCompositeOperation = 'source-over';
   ctx.fillStyle = 'rgba(5,10,17,0.17)'; ctx.fillRect(0, 0, _wc.fw, _wc.fh);
   ctx.globalCompositeOperation = 'lighter';
@@ -6992,12 +7048,30 @@ async function _wcStartCompass(){
 }
 
 // ── Aim readout ────────────────────────────────────────────────────────────
+// Push the current tones onto the dial, the big number and each rung. Cheap enough to run on
+// every heading frame — it writes a CSS variable and three inline colours, and never rebuilds
+// any markup — which is what lets the whole page answer as you swing the phone through the line.
+function _wcApplyTones(){
+  const panel = document.getElementById('wind-panel'); if(!panel || !_wc || !_wc.view) return;
+  const v = _wc.view;
+  panel.style.setProperty('--wcTone', _wcTone(v.d10, v.v10));
+  const spd = document.getElementById('wc2-spd');
+  if(spd) spd.style.color = _wcTone(v.d10, v.v10);
+  const rungs = document.getElementById('wc2-rungs');
+  if(rungs) for(const t of rungs.children){
+    const d = t.getAttribute('data-dir'), sp = t.getAttribute('data-spd');
+    t.style.color = _wcTone(d === '' ? null : +d, sp === '' ? null : +sp);
+  }
+}
+
 // Screen-up is where the phone points, so "aim" is free: point it down your shot line and
 // the head/cross split is the wind you actually have to play. Tap to lock it and look away.
 function _wcPaintAim(){
   const el = document.getElementById('wc2-aim'); if(!el || !_wc || !_wc.view) return;
   const v = _wc.view;
+  _wcApplyTones();                       // the aim moved, so what the wind DOES may have changed
   const aim = _wc.aimLock != null ? _wc.aimLock : (_wc.hasHeading ? wcAng(_wc.heading) : null);
+  const forced = typeof window._windAim === 'number' && isFinite(window._windAim);
   if(aim == null || v.d10 == null || v.v10 == null){
     el.className = 'wc2-aim';
     el.innerHTML = '<div class="t">AIM</div><div class="s">' +
@@ -7009,11 +7083,11 @@ function _wcPaintAim(){
     typeof window._playWindHead === 'number' ? window._playWindHead : 0.007,
     typeof window._playWindTail === 'number' ? window._playWindTail : 0.004);
   const pctTxt = pct == null ? '' : (pct >= 0 ? '+' : '') + pct.toFixed(0) + '% carry';
-  el.className = 'wc2-aim ' + (_wc.aimLock != null ? 'locked' : '');
+  el.className = 'wc2-aim ' + c.cls + (_wc.aimLock != null ? ' locked' : '');
   el.innerHTML = '<div class="t ' + c.cls + '">' + c.tag + ' ' + Math.abs(c.help).toFixed(0) +
       (Math.abs(c.cross) >= 1 ? ' · ' + (c.cross > 0 ? 'L→R ' : 'R→L ') + Math.abs(c.cross).toFixed(0) : '') + '</div>' +
     '<div class="s">aiming ' + wcPoint16(aim) + ' ' + String(Math.round(aim)).padStart(3, '0') + '° · plays ' + pctTxt +
-      '<br>' + (_wc.aimLock != null ? '🔒 locked — tap to release' : 'tap to lock this line') + '</div>';
+      '<br>' + (forced ? '🧪 test aim — setAim() to release' : _wc.aimLock != null ? '🔒 locked — tap to release' : 'tap to lock this line') + '</div>';
 }
 function _wcToggleAimLock(){
   if(!_wc) return;
@@ -7027,7 +7101,6 @@ function _wcToggleAimLock(){
 function _wcRender(){
   if(!_wc) return;
   const v = _wc.view = _wcDerive();
-  const col = _wcCol(v.v10);
   const st = document.getElementById('wc2-stage'); if(!st) return;
 
   // Rose (rebuilt on data change; the rotor transform is re-applied so a live heading
@@ -7041,7 +7114,7 @@ function _wcRender(){
 
   const hud = document.getElementById('wc2-hud');
   if(hud) hud.innerHTML =
-    '<div class="wc2-spd" style="color:' + col + '">' + (v.v10 == null ? '--' : Math.round(v.v10)) + '</div>' +
+    '<div class="wc2-spd" id="wc2-spd">' + (v.v10 == null ? '--' : Math.round(v.v10)) + '</div>' +
     '<div class="wc2-unit">KM/H · 10 m</div>' +
     '<div class="wc2-from">from ' + wcPoint16(v.d10) + (v.d10 == null ? '' : ' ' + String(Math.round(v.d10)).padStart(3, '0') + '°') + '</div>' +
     '<div class="wc2-gust">' + (v.gust != null ? 'gusting ' + Math.round(v.gust) : '') + '</div>' +
@@ -7053,13 +7126,16 @@ function _wcRender(){
   // Rungs — 10 m is the ball, 25 m a wedge apex, 50 m a driver apex. Twist between them
   // is the whole reason this ladder exists.
   const rungs = document.getElementById('wc2-rungs');
+  // Each rung is toned by ITS OWN direction, so when the wind twists with height the ladder
+  // changes colour up the stack — a 50 m tile going red under a teal 10 m tile is the shot that
+  // starts downwind and lands into it, which is exactly what this ladder exists to catch.
   if(rungs) rungs.innerHTML = v.prof.map((p, i) => {
-    const c = _wcCol(p.spd);
-    return '<div class="wc2-rung' + (i === 0 ? ' primary' : '') + '">' +
+    return '<div class="wc2-rung' + (i === 0 ? ' primary' : '') + '" data-dir="' + (p.dir == null ? '' : p.dir.toFixed(1)) +
+      '" data-spd="' + (p.spd == null ? '' : p.spd.toFixed(1)) + '">' +
       (p.model ? '' : '<span class="est">est</span>') +
       '<div class="z">' + p.z + ' M</div>' +
-      '<div class="v" style="color:' + c + '">' + (p.spd == null ? '--' : Math.round(p.spd)) + '</div>' +
-      '<div class="d">' + wcPoint16(p.dir) + '</div>' + _wcMiniArrow(p.dir, c) + '</div>';
+      '<div class="v">' + (p.spd == null ? '--' : Math.round(p.spd)) + '</div>' +
+      '<div class="d">' + wcPoint16(p.dir) + '</div>' + _wcMiniArrow(p.dir) + '</div>';
   }).join('');
 
   // Hourly strip — tap an hour to spin the rose onto that forecast
@@ -7105,9 +7181,15 @@ function _wcRender(){
       ' · updated ' + new Date(d.at).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' }) +
       (_wc.selHour != null ? ' · <b>previewing ' + v.label + '</b>' : '');
   }
+  _wcApplyTones();
   _wcFit();          // AFTER the rows are populated — see _wcFit
   const note = document.getElementById('wc2-note');
-  if(note) note.innerHTML = 'Open-Meteo model wind at your coordinates — 10 m and 80 m are modelled, 25 m and 50 m are fitted along the shear profile between them (α ' + (v.prof[0].alpha != null ? v.prof[0].alpha.toFixed(2) : '–') + '). It is a ~10 km-grid forecast, not an anemometer on this tee: read it for the pattern, trust your eyes for the gust. Refreshes on the hour.';
+  // Say which question the colour is answering — it genuinely changes when there's no compass,
+  // and a red dial meaning "strong" reads very differently from one meaning "into your face".
+  const toneNote = _wcAimToned()
+    ? 'Colour is the wind <b>against the line you\'re pointing down</b> — teal helping, amber across, red into your face. Point the phone at your target; tap the aim bar to lock it.'
+    : 'Colour is wind <b>strength</b> here — with no compass on this device there is no line to judge against.';
+  if(note) note.innerHTML = toneNote + ' Open-Meteo model wind at your coordinates — 10 m and 80 m are modelled, 25 m and 50 m are fitted along the shear profile between them (α ' + (v.prof[0].alpha != null ? v.prof[0].alpha.toFixed(2) : '–') + '). It is a ~10 km-grid forecast, not an anemometer on this tee: read it for the pattern, trust your eyes for the gust. Refreshes on the hour.';
 
   _wcPaintAim();
 }
@@ -7221,6 +7303,19 @@ function closeWindCompass(){
   if(isFinite(n[3])) window._windTest.twist = n[3];
   if(isFinite(n[4])) window._windTest.spread = n[4];
 })();
+// ?aim=BEARING forces the line the wind is resolved against, standing in for the compass.
+(function initAimTest(){
+  const q = new URLSearchParams(location.search).get('aim');
+  if(q == null) return;
+  const n = parseFloat(q);
+  if(isFinite(n)) window._windAim = n;
+})();
+// Console helper: setAim(brg) forces the aim live; setAim() hands it back to the phone.
+window.setAim = (brg) => {
+  if(brg == null) delete window._windAim; else window._windAim = +brg;
+  if(_wc) _wcPaintAim();
+  return window._windAim != null ? Math.round(window._windAim) + '°' : 'aim follows the phone';
+};
 // Console helper: setWind(spd,dir,gust,twist,spread) drives the panel live; setWind() clears.
 window.setWind=(spd, dir, gust, twist, spread) => {
   if(spd == null){ delete window._windTest; }
