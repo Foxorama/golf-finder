@@ -10,7 +10,8 @@
 // Usage:
 //   node crop-aerial.mjs <aerial.png> <out.png> <lat> <lng> <spanM> [scale] [mark=lat,lng[,r];...]
 //     lat,lng  centre of the window        spanM  window width in metres (height matches)
-//     scale    integer pixel magnifier (default 1; 2-3 helps when reading a small feature)
+//     scale    pixel scale (default 1). >1 magnifies for reading a small feature; <1 downsamples,
+//              which is how you get a whole-course overview into something viewable.
 //     mark     optional crosshair rings drawn at those coords, radius r metres (default 12) —
 //              this is the registration check: fetch a crop centred on a computed green centroid
 //              with a ring on it and the ring must sit on the putting surface.
@@ -19,7 +20,7 @@ import { decodePNG, encodePNG } from './lib-png.mjs';
 
 const [, , inPng, outPng, latS, lngS, spanS, scaleS, marksS] = process.argv;
 if (!spanS) { console.error('usage: node crop-aerial.mjs <aerial.png> <out.png> <lat> <lng> <spanM> [scale] [marks]'); process.exit(1); }
-const lat = +latS, lng = +lngS, spanM = +spanS, scale = Math.max(1, Math.round(+(scaleS || 1)));
+const lat = +latS, lng = +lngS, spanM = +spanS, scale = +(scaleS || 1) > 0 ? +(scaleS || 1) : 1;
 
 const meta = JSON.parse(fs.readFileSync(inPng.replace(/\.png$/, '') + '.json', 'utf8'));
 const bb = meta.bb;
@@ -37,9 +38,9 @@ const x0 = Math.round(cx - halfX), y0 = Math.round(cy - halfY);
 const cw = Math.round(halfX * 2), chh = Math.round(halfY * 2);
 if (cw < 2 || chh < 2) { console.error('crop is empty — spanM too small for this image resolution'); process.exit(1); }
 
-const out = Buffer.alloc(cw * scale * chh * scale * 3);
-const OW = cw * scale;
-for (let y = 0; y < chh * scale; y++) {
+const OW = Math.max(1, Math.round(cw * scale)), OH = Math.max(1, Math.round(chh * scale));
+const out = Buffer.alloc(OW * OH * 3);
+for (let y = 0; y < OH; y++) {
   const sy = y0 + Math.floor(y / scale);
   for (let x = 0; x < OW; x++) {
     const sx = x0 + Math.floor(x / scale), o = (y * OW + x) * 3;
@@ -59,22 +60,22 @@ for (const m of (marksS || '').split(';').filter(Boolean)) {
     const t = a / 1440 * Math.PI * 2;
     for (const k of [0.98, 1, 1.02]) {
       const x = Math.round(px + Math.cos(t) * rx * k), y = Math.round(py + Math.sin(t) * ry * k);
-      if (x < 0 || y < 0 || x >= OW || y >= chh * scale) continue;
+      if (x < 0 || y < 0 || x >= OW || y >= OH) continue;
       const o = (y * OW + x) * 3; out[o] = 255; out[o + 1] = 40; out[o + 2] = 40;
     }
   }
   for (let d = -Math.round(ry * 1.5); d <= Math.round(ry * 1.5); d++) {   // centre cross
     for (const [x, y] of [[Math.round(px), Math.round(py + d)], [Math.round(px + d), Math.round(py)]]) {
-      if (x < 0 || y < 0 || x >= OW || y >= chh * scale) continue;
+      if (x < 0 || y < 0 || x >= OW || y >= OH) continue;
       const o = (y * OW + x) * 3; out[o] = 255; out[o + 1] = 40; out[o + 2] = 40;
     }
   }
 }
 
-fs.writeFileSync(outPng, encodePNG(OW, chh * scale, out));
+fs.writeFileSync(outPng, encodePNG(OW, OH, out));
 const cbb = {
   minLat: bb.maxLat - (y0 + chh) / H * (bb.maxLat - bb.minLat), maxLat: bb.maxLat - y0 / H * (bb.maxLat - bb.minLat),
   minLng: bb.minLng + x0 / W * (bb.maxLng - bb.minLng), maxLng: bb.minLng + (x0 + cw) / W * (bb.maxLng - bb.minLng),
 };
-fs.writeFileSync(outPng.replace(/\.png$/, '') + '.json', JSON.stringify({ bb: cbb, W: OW, H: chh * scale, scale, mPerPx: mPerPxX / scale }));
-console.error(`-> ${outPng} ${OW}x${chh * scale} (${(mPerPxX / scale).toFixed(3)} m/px) centred ${lat},${lng}`);
+fs.writeFileSync(outPng.replace(/\.png$/, '') + '.json', JSON.stringify({ bb: cbb, W: OW, H: OH, scale, mPerPx: mPerPxX / scale }));
+console.error(`-> ${outPng} ${OW}x${OH} (${(mPerPxX / scale).toFixed(3)} m/px) centred ${lat},${lng}`);

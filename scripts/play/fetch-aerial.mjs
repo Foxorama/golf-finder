@@ -52,14 +52,35 @@ const SRC = {
   esri: 'https://services.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/export',
   qld:  'https://spatial-gis.information.qld.gov.au/arcgis/rest/services/Basemaps/LatestStateProgramImagery/ImageServer/exportImage',
 };
-const base = SRC[source] || SRC.esri;
-const url = `${base}?bbox=${bb.minLng},${bb.minLat},${bb.maxLng},${bb.maxLat}&bboxSR=4326&imageSR=4326&size=${W},${H}&format=png24&f=image`;
+// One shot at one host is not enough: a whole-course export is a big ask and both hosts answer a
+// bad moment with an HTML error page (Esri's CDN in particular), which is a hard failure for a
+// stage that costs a runner round trip to retry by hand. So try the preferred source, then the
+// other, several times each with backoff.
+const order = [source, ...Object.keys(SRC).filter(s => s !== source)];
+const urlFor = src => `${SRC[src]}?bbox=${bb.minLng},${bb.minLat},${bb.maxLng},${bb.maxLat}` +
+  `&bboxSR=4326&imageSR=4326&size=${W},${H}&format=png24&f=image`;
 
-console.error(`source=${source} size=${W}x${H} (~${(lngM / W).toFixed(2)} m/px) bbox=${JSON.stringify(bb)}`);
-const r = await fetch(url, { headers: { 'User-Agent': 'golf-finder-build/1.0' } });
-if (!r.ok) { console.error(`imagery fetch failed: HTTP ${r.status}`); console.error(await r.text().catch(() => '')); process.exit(1); }
-const buf = Buffer.from(await r.arrayBuffer());
-if (buf.length < 5000) { console.error('suspiciously small response — probably an error image'); process.exit(1); }
+console.error(`size=${W}x${H} (~${(lngM / W).toFixed(2)} m/px) bbox=${JSON.stringify(bb)}`);
+let buf = null, used = null;
+outer:
+for (let attempt = 0; attempt < 3; attempt++) {
+  for (const src of order) {
+    try {
+      const r = await fetch(urlFor(src), { headers: { 'User-Agent': 'golf-finder-build/1.0' } });
+      const ct = r.headers.get('content-type') || '';
+      if (!r.ok) { console.error(`[${src} #${attempt + 1}] HTTP ${r.status}`); }
+      else if (!/image/i.test(ct)) { console.error(`[${src} #${attempt + 1}] not an image (content-type ${ct})`); }
+      else {
+        const b = Buffer.from(await r.arrayBuffer());
+        // an ArcGIS "no data"/error tile still comes back as a valid tiny PNG
+        if (b.length < 5000) console.error(`[${src} #${attempt + 1}] suspiciously small (${b.length} B) — probably an error image`);
+        else { buf = b; used = src; break outer; }
+      }
+    } catch (e) { console.error(`[${src} #${attempt + 1}] ${e.message}`); }
+    await new Promise(res => setTimeout(res, 4000 * (attempt + 1)));
+  }
+}
+if (!buf) { console.error('imagery fetch failed on every source'); process.exit(1); }
 fs.writeFileSync(outPath, buf);
-fs.writeFileSync(outPath.replace(/\.png$/, '') + '.json', JSON.stringify({ bb, W, H, source, mPerPx: lngM / W }));
-console.error(`-> ${outPath} (${(buf.length / 1024 / 1024).toFixed(2)} MB)`);
+fs.writeFileSync(outPath.replace(/\.png$/, '') + '.json', JSON.stringify({ bb, W, H, source: used, mPerPx: lngM / W }));
+console.error(`-> ${outPath} from ${used} (${(buf.length / 1024 / 1024).toFixed(2)} MB)`);
