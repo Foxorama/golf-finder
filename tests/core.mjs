@@ -98,6 +98,22 @@ export function loadWindCore(){
   return sandbox.__exports;
 }
 
+// Loads the pure ROUND-REVIEW-CORE region (a saved round's shots -> the hole-by-hole record
+// the review screen draws, plus the backup merge). Fully self-contained — no shims.
+const REVIEW_EXPORTS = ['rvDist','rvTee','rvLegs','rvHoleRows','rvSummary','rvHasShots','rvJson',
+                        'rvRoundKey','rvMergeRounds','rvMergeClubStats','rvMergeHios','rvMergeBackup'];
+export function loadReviewCore(){
+  const html = readIndex();
+  const s = html.indexOf('ROUND-REVIEW-CORE-START');
+  const e = html.indexOf('ROUND-REVIEW-CORE-END');
+  if(s<0||e<0) throw new Error('ROUND-REVIEW-CORE markers not found in index.html');
+  const code = html.slice(html.indexOf('\n',s)+1, html.lastIndexOf('\n',e));
+  const sandbox = { Map, Date, JSON, Object, Array, Math };
+  vm.createContext(sandbox);
+  vm.runInContext(code + `\nthis.__exports={${REVIEW_EXPORTS.join(',')}};`, sandbox, {filename:'round-review-core'});
+  return sandbox.__exports;
+}
+
 // Extract every inline (non-src) <script> body from index.html — used by the syntax test.
 export function inlineScripts(){
   const html = readIndex();

@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-08 · **Next ID:** `G-018`
+> **Last reviewed:** 2026-08-31 · **Next ID:** `G-019`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -19,6 +19,16 @@ _(empty — promote from P1 when something becomes the active task.)_
 ---
 
 ## P1 — Soon
+
+### G-003 · True strokes-gained off the now-saved shot positions `[golf]` `[data]`
+**Status:** open
+#297 shipped "Where your strokes go" as *strokes-lost-lite* because we didn't store each shot's
+start distance-to-pin. **G-018 removed that blocker**: round schema v3 saves every mark's
+coordinates in `track.shots`, so distance-to-pin at the start of each shot is now derivable
+(`rvLegs` + `holeTargets(h).cen`) for any v3 round — retroactively, with no further capture. What's
+left is the SG *baseline* (expected strokes from distance + lie) and where to surface it. Keep the
+maths in `PLAY-STATS-CORE`/`ROUND-REVIEW-CORE` so it's unit-tested, and be honest that a public
+baseline table is a model, not the player's own data. Legacy (v1/v2) rounds can never contribute.
 
 ### G-001 · On-course feel verification pass for the recent Play GPS/touch work `[QA]` `[UX]` `[needs-phone]`
 **Status:** open
@@ -101,14 +111,6 @@ tees — 1, 12, 13, 16 — on-course with **Set tee**.)
 
 ## P2 — Someday
 
-### G-003 · Per-shot distance-to-pin capture → true strokes-gained `[golf]` `[data]`
-**Status:** open
-#297 shipped "Where your strokes go" as a deliberate *strokes-lost-lite* and called out why full
-shot-by-shot strokes-gained isn't possible yet: we don't store each shot's start distance-to-pin.
-Capturing that (the rangefinder already knows distance-to-green at each mark) would unlock a real SG
-baseline. Scope the data-model change first; it touches the saved-round schema (`legs`/`holeStats`),
-so plan a schema bump + migration.
-
 ### G-004 · Elevation-adjusted plays-like `[golf]`
 **Status:** open
 `_playsLike` models wind only — "Elevation isn't modelled (St Lucia is flat)". Fine for St Lucia, but
@@ -175,6 +177,16 @@ existing list. Low urgency.
 ---
 
 ## Done ✓
+
+### G-018 · View a finished round in full — shots, lies, clubs and the hole map `[UX]` `[golf]` `[QA]`
+**Status:** done — this PR (branch `claude/previous-rounds-history-guhxnp`)
+History listed a saved round as one summary line and nothing more: the marks, clubs, lies, penalties
+and the tee you actually played were all discarded at save time, so a past round could never be
+re-opened. Round schema **v3** now keeps them (`_buildRoundTrack` → `track`), tapping a round in
+History replays it in the Play sheet read-only (`openRoundReview`) with the shot path drawn on the
+same hole map, and the backup file carries it all. Import **merges** by default (`rvMergeBackup`) so
+restoring on a second device stops destroying that device's rounds. New pure block
+`ROUND-REVIEW-CORE` + `tests/round-review.test.mjs`.
 
 ### G-010 · Auto-capture the tee so a drive is one Mark `[golf]` `[UX]` `[needs-phone]`
 **Status:** done — this PR (branch `claude/tee-mark-shot-drives-dobpvu`)
