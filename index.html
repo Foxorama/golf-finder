@@ -1114,6 +1114,38 @@ body.night .pill-select:hover{background-color:rgba(124,148,210,0.4);border-colo
 .psd-backup{display:flex;gap:8px;}
 .psd-backup button{flex:1;background:var(--sur);border:1px solid var(--bdr2);border-radius:9px;padding:9px;color:var(--tx2);font-family:var(--sans);font-size:12px;font-weight:600;cursor:pointer;}
 .psd-backup-note{font-family:var(--mono);font-size:10px;color:var(--tx3);text-align:center;margin-top:6px;}
+/* round review — a saved round re-opened and walked hole by hole */
+.ph-row.tappable{cursor:pointer;transition:border-color .15s,box-shadow .15s;}
+.ph-row.tappable:hover,.ph-row.tappable:focus-visible{border-color:var(--gl);box-shadow:inset 0 0 24px -18px var(--gg);outline:none;}
+.ph-go{color:var(--tx3);font-size:16px;font-weight:700;flex-shrink:0;}
+.ph-tag{color:var(--gg);margin-left:6px;}
+.rv-score{font-family:var(--sans);font-size:14px;font-weight:800;margin-left:8px;color:var(--tx);background:var(--sur);border:1px solid var(--bdr2);border-radius:8px;padding:2px 8px;vertical-align:2px;}
+.rv-score i{font-family:var(--mono);font-size:11px;font-style:normal;font-weight:600;margin-left:3px;color:var(--tx3);}
+.rv-score.under i{color:var(--gg);} .rv-score.over i{color:var(--al);}
+.rv-score.none{color:var(--tx3);font-weight:600;}
+.play-pip.rv-nos{border-style:dashed;opacity:0.55;}
+.rv-shotcard{background:var(--bg3);border:1px solid var(--bdr);border-radius:12px;padding:10px 12px;margin-top:10px;}
+.rv-shots-h{font-family:var(--sans);font-weight:700;font-size:13px;color:var(--tx);display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;}
+.rv-shots-h span{font-family:var(--mono);font-size:9.5px;color:var(--tx3);font-weight:400;text-transform:uppercase;letter-spacing:0.04em;}
+.rv-shot{display:grid;grid-template-columns:20px 72px 1fr auto;gap:8px;align-items:baseline;padding:6px 0;}
+.rv-shot+.rv-shot{border-top:1px solid rgba(255,255,255,0.05);}
+.rv-i{font-family:var(--mono);font-size:10px;font-weight:700;color:#0e1a0c;background:#ffd24a;border-radius:50%;width:18px;height:18px;line-height:18px;text-align:center;}
+.rv-d{font-family:var(--mono);font-size:14px;font-weight:700;color:var(--tx);}
+.rv-d i{font-size:9.5px;font-style:normal;color:var(--tx3);margin-left:2px;}
+.rv-club{font-family:var(--sans);font-size:12px;font-weight:700;color:var(--gg);}
+.rv-club em{font-style:normal;font-weight:400;color:var(--tx3);font-family:var(--mono);font-size:10px;}
+.rv-man{font-family:var(--mono);font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);border:1px dashed var(--bdr2);border-radius:4px;padding:0 3px;margin-left:4px;}
+.rv-lie{font-family:var(--mono);font-size:10.5px;color:var(--tx2);border-left:2px solid var(--lc,var(--bdr2));padding-left:6px;}
+.rv-pens{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.rv-pen{font-family:var(--mono);font-size:10px;color:#ffb4a8;border:1px solid rgba(255,120,100,0.35);background:rgba(255,90,70,0.09);border-radius:6px;padding:2px 6px;}
+.rv-holefoot{font-family:var(--mono);font-size:10.5px;color:var(--tx3);margin-top:8px;}
+.rv-none{font-family:var(--mono);font-size:11px;color:var(--tx3);text-align:center;padding:8px 4px;}
+.rv-note{font-family:var(--mono);font-size:10.5px;color:var(--tx3);text-align:center;margin:10px 2px 12px;line-height:1.5;}
+.rv-dot{color:var(--al);font-size:7px;vertical-align:2px;margin-left:3px;}
+.rv-max{font-family:var(--mono);font-size:8px;text-transform:uppercase;letter-spacing:0.06em;color:var(--tx3);margin-left:4px;}
+tr.rv-jump{cursor:pointer;}
+tr.rv-jump:hover td{background:rgba(255,255,255,0.035);}
+.pc-row.pc-wrap{flex-wrap:wrap;}
 /* handicap bar on the Card tab */
 .play-hcp-bar{display:flex;align-items:center;gap:10px;background:var(--bg3);border:1px solid var(--bdr);border-radius:14px;padding:11px 14px;margin-bottom:4px;}
 .phb-lbl{font-family:var(--mono);font-size:10px;line-height:1.1;color:var(--tx3);text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0;}
@@ -9477,7 +9509,10 @@ document.addEventListener('visibilitychange',()=>{
 let playS=null;
 const _draftKey=slug=>'gf_round_draft_'+slug;
 function loadRounds(){ try{ return JSON.parse(localStorage.getItem('gf_rounds')||'[]'); }catch(e){ return []; } }
-function saveRounds(r){ try{ localStorage.setItem('gf_rounds',JSON.stringify(r)); }catch(e){} }
+// Returns false when the write failed (a full localStorage is the realistic case now that a
+// round carries its shots) — the caller MUST NOT clear the draft on a failed save, or the round
+// is gone.
+function saveRounds(r){ try{ localStorage.setItem('gf_rounds',JSON.stringify(r)); return true; }catch(e){ return false; } }
 function playPos(){ return window.__playPos||(playS&&playS.pos)||null; }   // __playPos = test hook
 function playUnit(){ return playS.units==='yd'?'yd':'m'; }
 function fmtDist(m){ if(m==null) return '--'; return Math.round(playS.units==='yd'?m*1.09361:m); }
@@ -9741,7 +9776,7 @@ function _restoreBodyScroll(){
 function closePlay(){
   if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} }
   document.getElementById('play-panel').style.display='none';
-  playS=null; _mapZoom=null; _needleStop();
+  playS=null; _playStash=null; _mapZoom=null; _needleStop();
   _restoreBodyScroll();
   renderResumeBar();          // the round is still unfinished — offer the way back in
 }
@@ -9816,7 +9851,8 @@ function playBumpPutts(n,d){ const auto=playS.scoreAuto[n];
     let v=playS.putts[n]; v=(v==null)?(d>0?Math.min(1,cap):0):Math.max(0,Math.min(cap,v+d));
     playS.putts[n]=v; }
   playPersistDraft(); playRender(); }
-function playPersistDraft(){ try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,scoreAuto:playS.scoreAuto,picked:playS.picked,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeAuto:playS.teeAuto,teeManual:playS.teeManual,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
+function playPersistDraft(){ if(playS&&playS.review) return;   // a review must never write over the live round's draft
+  try{ localStorage.setItem(_draftKey(playS.slug),JSON.stringify({scores:playS.scores,putts:playS.putts,scoreAuto:playS.scoreAuto,picked:playS.picked,shots:playS.shots,shotClubs:playS.shotClubs,shotLies:playS.shotLies,shotAuto:playS.shotAuto,shotMan:playS.shotMan,pens:playS.pens,teePos:playS.teePos,teeAuto:playS.teeAuto,teeManual:playS.teeManual,teeSelByHole:playS.teeSelByHole,startedAt:playS.startedAt})); }catch(e){} }
 function playTotals(){ let gross=0,parPlayed=0,holesPlayed=0,putts=0,out=0,inn=0,net=0,points=0,recvTotal=0;
   const ch=courseHandicap(getHcpIndex(),playS.course);
   playS.course.holes.forEach(h=>{ const s=playS.scores[h.n]; const recv=ch!=null?strokesForSI(ch,effSI(playS.course,h)):0;
@@ -10183,6 +10219,152 @@ function psAggregate(rounds){
 // PLAY-STATS-CORE-END
 // ════════════════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════════════════
+// ROUND-REVIEW-CORE-START  —  pure, DOM-free, references NO app globals.
+// tests/round-review.test.mjs slices out exactly this region (between the START/END
+// markers) and evals it in a bare Node vm, so keep it self-contained: no playS, no
+// localStorage, no COURSE_PLAY. Everything it needs is an argument.
+//
+// A saved round used to keep only the SCORECARD plus rolled-up stats: the marks, clubs,
+// lies, penalties and the tee you actually played were thrown away at save time, which is
+// why a past round could never be re-opened and replayed on the hole map. Schema v3 keeps
+// them in `track` (see _buildRoundTrack), and this block turns that back into the
+// hole-by-hole record the review screen draws — and merges two devices' backups, so an
+// import adds rounds instead of destroying them.
+//
+// track shape (per hole number, sparse — a key only exists when there's something to say):
+//   { shots:{n:[[lat,lng],…]}, clubs:{n:[club|null,…]}, lies:{n:[lie|null,…]},
+//     man:{n:[bool,…]}, pens:{n:['water',…]}, tee:{n:[lat,lng]}, teeSel:{n:'white'},
+//     putts:{n:2}, picked:{n:1} }
+// ════════════════════════════════════════════════════════════════════════════
+// Metres between two [lat,lng] — equirectangular, exact enough over a golf hole.
+// (Same maths as the app's _distM; duplicated here so the core stays standalone.)
+function rvDist(a,b){ if(!a||!b) return 0; const k=Math.cos(a[0]*Math.PI/180); return Math.hypot(a[0]-b[0],(a[1]-b[1])*k)*111320; }
+// The tee a hole was actually played from: the GPS/manually-set tee saved with the round,
+// else the saved tee-set's box, else the course's baked tee. Without this a forward-tee
+// round would replay its drives from the wrong end of the hole.
+function rvTee(hole,track){ if(!hole) return null; const n=hole.n, t=track||{};
+  if(t.tee&&t.tee[n]) return t.tee[n];
+  const k=t.teeSel&&t.teeSel[n];
+  if(k&&hole.tees&&hole.tees[k]) return hole.tees[k];
+  return hole.tee||null; }
+// Shot legs for one hole: tee → mark 1 → mark 2 … Leg i is the shot that ENDED at mark i,
+// so it carries mark i's club and lie — the same indexing the live tracker uses. No tee
+// (a course with no geometry) ⇒ no legs: distances would be guesses.
+function rvLegs(marks,tee,clubs,lies,man){
+  const out=[]; if(!tee||!marks||!marks.length) return out;
+  const chain=[tee].concat(marks);
+  for(let i=1;i<chain.length;i++) out.push({ i:i-1, from:chain[i-1], to:chain[i],
+    d:rvDist(chain[i-1],chain[i]), tee:i===1,
+    club:(clubs&&clubs[i-1])||null, lie:(lies&&lies[i-1])||null, man:!!(man&&man[i-1]) });
+  return out; }
+// One display record per hole of the course, merging the round's scores + holeStats + track.
+// A legacy (v1/v2) round simply has no marks — every other field still resolves, so the
+// review screen degrades to the scorecard instead of breaking.
+function rvHoleRows(round,holes){
+  round=round||{}; holes=holes||[];
+  const t=round.track||{}, hs={}; (round.holeStats||[]).forEach(h=>{ if(h&&h.n!=null) hs[h.n]=h; });
+  const scores=round.scores||[];
+  return holes.map((h,i)=>{
+    const n=h.n, st=hs[n]||null;
+    const score=(scores[i]!=null)?scores[i]:(st&&st.score!=null?st.score:null);
+    const putts=(t.putts&&t.putts[n]!=null)?t.putts[n]:(st&&st.putts!=null?st.putts:null);
+    const marks=(t.shots&&t.shots[n])||[];
+    const tee=rvTee(h,t);
+    const legs=rvLegs(marks,tee,t.clubs&&t.clubs[n],t.lies&&t.lies[n],t.man&&t.man[n]);
+    const pens=(t.pens&&t.pens[n])||[];
+    return { n, par:h.par!=null?h.par:null, si:h.si!=null?h.si:null, score, putts,
+      vsPar:(score!=null&&h.par!=null)?score-h.par:null,
+      marks, tee, teeKey:(t.teeSel&&t.teeSel[n])||null, legs, pens,
+      penalties:(st&&st.penalties!=null)?st.penalties:pens.length,
+      picked:!!(t.picked&&t.picked[n]),
+      fir:st?st.fir:null, gir:st?st.gir:null, miss:st?st.miss:null,
+      driveM:st?st.driveM:null, bunkers:(st&&st.bunkers)||0, ballsLost:(st&&st.ballsLost)||0 };
+  });
+}
+// Round-level rollup of those rows for the review header. `tracked` = holes with marks,
+// which is what decides whether the round can be replayed on the map at all.
+function rvSummary(rows){
+  rows=rows||[];
+  const o={ holes:0, gross:0, par:0, vsPar:0, putts:0, puttHoles:0, penalties:0,
+            marks:0, tracked:0, fir:{hit:0,of:0}, gir:{hit:0,of:0} };
+  for(const r of rows){
+    o.marks+=r.marks.length; if(r.marks.length) o.tracked++;
+    if(r.score==null) continue;
+    o.holes++; o.gross+=r.score; o.par+=(r.par||0);
+    if(r.putts!=null){ o.putts+=r.putts; o.puttHoles++; }
+    o.penalties+=r.penalties||0;
+    if(r.fir===true||r.fir===false){ o.fir.of++; if(r.fir)o.fir.hit++; }
+    if(r.gir===true||r.gir===false){ o.gir.of++; if(r.gir)o.gir.hit++; }
+  }
+  o.vsPar=o.gross-o.par;
+  return o;
+}
+function rvHasShots(round){ const s=round&&round.track&&round.track.shots; if(!s) return false;
+  for(const k in s) if((s[k]||[]).length) return true; return false; }
+
+// ── Backup merge ────────────────────────────────────────────────────────────
+// Restoring a backup used to REPLACE everything, which quietly destroys the rounds a
+// second device played since the file was written. Merging is the honest default: two
+// devices hold different rounds, and a round is a fact, not a setting.
+function rvJson(s,fb){ if(s==null) return fb; try{ const v=JSON.parse(s); return v==null?fb:v; }catch(e){ return fb; } }
+function rvRoundKey(r){ return (r&&r.id!=null)?('id:'+r.id):('k:'+[r&&r.slug,r&&r.date,r&&r.gross].join('|')); }
+// Which of two copies of the same round to keep: newer schema, then stats, then the one
+// with more marks — so importing an older backup can never downgrade a replayable round.
+function rvRoundRank(r){ let m=0; const s=(r&&r.track&&r.track.shots)||{}; for(const k in s) m+=(s[k]||[]).length;
+  return [(r&&r.v)||1, (r&&r.holeStats)?1:0, m]; }
+function rvRicher(a,b){ const ra=rvRoundRank(a), rb=rvRoundRank(b);
+  for(let i=0;i<ra.length;i++) if(ra[i]!==rb[i]) return ra[i]>rb[i]?a:b;
+  return a; }
+function rvMergeRounds(mine,theirs){
+  const map=new Map(), order=[];
+  const add=r=>{ if(!r||typeof r!=='object') return; const k=rvRoundKey(r);
+    if(map.has(k)) map.set(k,rvRicher(map.get(k),r)); else { map.set(k,r); order.push(k); } };
+  (mine||[]).forEach(add); (theirs||[]).forEach(add);
+  const out=order.map(k=>map.get(k));
+  out.sort((a,b)=>(+new Date(b&&b.date)||0)-(+new Date(a&&a.date)||0));
+  return out;
+}
+// The two devices' club shots are DIFFERENT shots, so they concatenate (newest last),
+// capped the same way addClubShot caps a running list.
+function rvMergeClubStats(mine,theirs,cap){
+  cap=cap||40; mine=mine||{}; theirs=theirs||{}; const out={};
+  Object.keys(mine).concat(Object.keys(theirs)).forEach(k=>{
+    if(out[k]) return;
+    const a=Array.isArray(mine[k])?mine[k]:[], b=Array.isArray(theirs[k])?theirs[k]:[];
+    out[k]=a.concat(b).slice(-cap); });
+  return out;
+}
+// Aces dedupe on their auto-sync source key, else on course+date+hole (the same ace typed
+// into two devices is one ace).
+function rvMergeHios(mine,theirs){
+  const seen={}, out=[];
+  [].concat(mine||[],theirs||[]).forEach(h=>{ if(!h||typeof h!=='object') return;
+    const k=h.src||('h:'+[h.course,h.date,h.hole].join('|'));
+    if(seen[k]) return; seen[k]=1; out.push(h); });
+  return out;
+}
+// Merge an imported backup's gf_* payload into this device's. Rounds, club shots and
+// trophies are ADDITIVE; the single-value settings (bag, WITB, handicap index, units) are
+// this device's business and are only taken from the file when this device has none.
+// Values in and out are the raw JSON strings the app stores, so the result writes straight
+// back to localStorage.
+function rvMergeBackup(local,file){
+  local=local||{}; file=file||{};
+  const mineR=rvJson(local.gf_rounds,[]), theirR=rvJson(file.gf_rounds,[]);
+  const mineH=rvJson(local.gf_hios,[]), theirH=rvJson(file.gf_hios,[]);
+  const rounds=rvMergeRounds(Array.isArray(mineR)?mineR:[],Array.isArray(theirR)?theirR:[]);
+  const hios=rvMergeHios(Array.isArray(mineH)?mineH:[],Array.isArray(theirH)?theirH:[]);
+  const out={ gf_rounds:JSON.stringify(rounds), gf_hios:JSON.stringify(hios),
+              gf_club_stats:JSON.stringify(rvMergeClubStats(rvJson(local.gf_club_stats,{}),rvJson(file.gf_club_stats,{}))) };
+  ['gf_bag','gf_witb','gf_hcp_index','gf_units'].forEach(k=>{
+    const v=(local[k]!=null&&local[k]!=='')?local[k]:file[k]; if(v!=null) out[k]=v; });
+  return { out, added:{ rounds:Math.max(0,rounds.length-(Array.isArray(mineR)?mineR.length:0)),
+                        aces:Math.max(0,hios.length-(Array.isArray(mineH)?mineH.length:0)) } };
+}
+// ROUND-REVIEW-CORE-END
+// ════════════════════════════════════════════════════════════════════════════
+
 // Geo offset (metres) of point p from the green centre, decomposed along the play line:
 // {forward:+ past the pin (long), lateral:+ right of the play line}. brgDeg = tee→green bearing.
 function _greenOffset(p,cen,brgDeg){
@@ -10223,15 +10405,48 @@ function _buildHoleStats(){
   return out;
 }
 
-// Resolve a saved round's slug back to its course hole list (handles multi-course
-// layout slugs '<base>-<key>'). Used to backfill stats for legacy rounds.
-function _courseHolesForSlug(slug){
+// Snapshot the round's TRACKING data — the shots themselves, not just what they add up to.
+// The scorecard and the rolled-up stats were always saved; the marks, clubs, lies, penalties
+// and the tee actually played were discarded, so a finished round could never be re-opened
+// and walked hole by hole. Schema v3 keeps them here (ROUND-REVIEW-CORE reads them back).
+// Sparse by design — a key only exists when a hole has something to say — and coordinates are
+// rounded to 6 dp (~0.1 m, far inside GPS noise), which keeps a full round to a few KB.
+function _buildRoundTrack(){
+  const rd=p=>(p&&p.length>=2)?[+(+p[0]).toFixed(6),+(+p[1]).toFixed(6)]:null;
+  const t={shots:{},clubs:{},lies:{},man:{},pens:{},tee:{},teeSel:{},putts:{},picked:{}};
+  playS.course.holes.forEach(h=>{
+    const n=h.n, mk=(playS.shots[n]||[]).map(rd).filter(Boolean);
+    if(mk.length){
+      t.shots[n]=mk;
+      const cl=(playS.shotClubs[n]||[]).slice(0,mk.length),
+            li=(playS.shotLies[n]||[]).slice(0,mk.length),
+            mn=(playS.shotMan[n]||[]).slice(0,mk.length);
+      if(cl.some(x=>x)) t.clubs[n]=mk.map((_,i)=>cl[i]||null);
+      if(li.some(x=>x)) t.lies[n]=mk.map((_,i)=>li[i]||null);
+      if(mn.some(x=>x)) t.man[n]=mk.map((_,i)=>!!mn[i]);
+    }
+    const pens=(playS.pens&&playS.pens[n])||[]; if(pens.length) t.pens[n]=pens.slice();
+    const tp=playS.teePos&&playS.teePos[n]; if(tp) t.tee[n]=rd(tp);
+    const tk=_selTeeKey(n); if(tk) t.teeSel[n]=tk;
+    if(playS.putts[n]!=null) t.putts[n]=playS.putts[n];
+    if(playS.picked&&playS.picked[n]) t.picked[n]=1;
+  });
+  return t;
+}
+// Resolve a saved round's slug back to the course config it was played on (handles
+// multi-course layout slugs '<base>-<key>'), shaped exactly like openPlay's `active` object
+// so a saved round can be re-opened for review on the same renderers. Used to backfill
+// stats for legacy rounds and to replay a round hole by hole.
+function _courseCfgForSlug(slug){
   if(!slug) return null;
-  const direct=COURSE_PLAY[slug]; if(direct&&direct.holes) return direct.holes;
+  const direct=COURSE_PLAY[slug]; if(direct&&direct.holes) return direct;
   for(const base in COURSE_PLAY){ const c=COURSE_PLAY[base]; if(!c.layouts) continue;
-    for(const L of c.layouts){ if(base+'-'+L.key===slug&&L.holes) return L.holes; } }
+    for(const L of c.layouts){ if(base+'-'+L.key===slug&&L.holes)
+      return { name:c.name+' \u2014 '+L.name, par:L.par, holesN:L.holesN, holes:L.holes,
+               noGps:!!L.noGps, cr:L.cr, slope:L.slope }; } }
   return null;
 }
+function _courseHolesForSlug(slug){ const c=_courseCfgForSlug(slug); return (c&&c.holes)||null; }
 // holeStats for a round: the saved v2 array if present, else a partial set derived from the
 // course pars + stored per-hole scores (legacy rounds saved no per-hole putts/lies, so their
 // GIR/FIR/miss stay null — they still contribute scoring + par-3/4/5 averages).
@@ -10264,50 +10479,95 @@ function _commitRound(t){
     const tagged=legs.map((l,i)=>({d:Math.round(l.d),club:cl[i]||null,lie:li[i]||null})).filter(x=>x.d>=20);
     if(tagged.length){ legsByHole[h.n]=tagged; tagged.forEach(x=>{ if(x.club) addClubShot(x.club,x.d); }); } });
   const rounds=loadRounds();
-  rounds.unshift({ v:2, id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
+  rounds.unshift({ v:3, id:Date.now(), slug:playS.slug, course:playS.course.name, par:playS.course.par,
     date:new Date().toISOString(),
     scores:playS.course.holes.map(h=>playS.scores[h.n]??null),
     gross:t.gross, parPlayed:t.parPlayed, vsPar:t.vsPar, putts:t.putts, holesPlayed:t.holesPlayed,
     hcpIndex:getHcpIndex(), courseHcp:t.ch, net:(t.ch!=null?t.net:null), stableford:(t.ch!=null?t.points:null),
-    legs:legsByHole, holeStats:_buildHoleStats() });
-  saveRounds(rounds);
+    legs:legsByHole, holeStats:_buildHoleStats(), track:_buildRoundTrack() });
+  if(!saveRounds(rounds)){   // out of storage: keep the draft, say so, and let them make room
+    playToast('Could not save — this device’s storage is full. Export a backup, then delete an old round.');
+    return; }
   localStorage.removeItem(_draftKey(playS.slug));
   renderResumeBar();                 // saved ⇒ the round is finished, so the bar goes
   playS.scores={}; playS.putts={}; playS.scoreAuto={}; playS.picked={}; playS.shots={}; playS.shotClubs={}; playS.shotLies={}; playS.shotAuto={}; playS.shotMan={}; playS.pens={}; playS.teePos={}; playS.teeAuto={}; playS.teeManual={}; playS._teeAutoBest={}; playS.startedAt=Date.now();
   playS.tab='history'; playRender();
   playToast('Round saved to history.');
 }
-function playDeleteRound(id){ playConfirm('Delete this round from your history?','Delete',()=>{ saveRounds(loadRounds().filter(r=>r.id!==id)); playRender(); },true); }
+function playDeleteRound(id,fromReview){ playConfirm('Delete this round from your history?','Delete',()=>{
+  saveRounds(loadRounds().filter(r=>r.id!==id));
+  if(fromReview&&playS&&playS.review) closeRoundReview(); else playRender(); },true); }
+// One round on its own — the shareable/archivable unit, and what you'd hand another device
+// without shipping your whole history. It imports through the same picker as a full backup.
+function playExportRound(id){
+  const r=loadRounds().find(x=>x.id===id); if(!r){ playToast('That round is no longer saved.'); return; }
+  const out={ app:'golf-finder', kind:'play-backup', v:BACKUP_V, exported:new Date().toISOString(),
+              note:'single round', data:{ gf_rounds:JSON.stringify([r]) } };
+  const d=new Date(r.date), ds=isNaN(d)?'round':d.toISOString().slice(0,10);
+  _downloadJson(out,'golf-finder-round-'+(r.slug||'course')+'-'+ds+'.json','Round exported.');
+}
 
 // ── Backup / restore ────────────────────────────────────────────────────────
 // Your rounds, bag, club stats, handicap and trophies live only in this device's
 // localStorage (one cache wipe loses them). Export bundles them into a JSON file;
 // import restores it. Keys are namespaced gf_* so import only ever touches our own.
 const _BACKUP_KEYS=['gf_rounds','gf_bag','gf_witb','gf_club_stats','gf_hcp_index','gf_hios','gf_units'];
-function playExportData(){
-  const out={ app:'golf-finder', kind:'play-backup', v:2, exported:new Date().toISOString(), data:{} };
-  _BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+const BACKUP_V=3;   // 3 = rounds carry `track` (the shots themselves), so a backup replays, not just tallies
+function _downloadJson(obj,name,okMsg){
   try{
-    const blob=new Blob([JSON.stringify(out,null,2)],{type:'application/json'});
-    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-    a.download='golf-finder-backup-'+new Date().toISOString().slice(0,10)+'.json';
+    const blob=new Blob([JSON.stringify(obj,null,2)],{type:'application/json'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=name;
     document.body.appendChild(a); a.click();
     setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },1000);
-    playToast('Backup downloaded.');
+    playToast(okMsg);
   }catch(e){ playToast('Could not export right now.'); }
 }
+function playExportData(){
+  const out={ app:'golf-finder', kind:'play-backup', v:BACKUP_V, exported:new Date().toISOString(), data:{} };
+  _BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) out.data[k]=v; });
+  // a human-readable header so a file sitting in a downloads folder says what it holds
+  const rounds=loadRounds();
+  out.meta={ rounds:rounds.length, replayable:rounds.filter(rvHasShots).length,
+             courses:Object.keys(rounds.reduce((a,r)=>{ a[r.slug]=1; return a; },{})).length };
+  _downloadJson(out,'golf-finder-backup-'+new Date().toISOString().slice(0,10)+'.json','Backup downloaded.');
+}
 function playImportPick(){ const inp=document.getElementById('play-import-file'); if(inp) inp.click(); }
+// Restoring used to REPLACE everything, which quietly destroys whatever the device you're
+// restoring onto has played since the file was written. So the file is now MERGED by default
+// (rounds, club shots and aces are facts and add up; the settings stay this device's), and
+// Replace is still there when you really do mean "make this device match the file".
 function playImportData(input){
   const f=input.files&&input.files[0]; if(!f) return;
   const rd=new FileReader();
   rd.onload=()=>{ let obj; try{ obj=JSON.parse(rd.result); }catch(e){ obj=null; }
-    if(!obj||obj.kind!=='play-backup'||!obj.data){ playToast('That file is not a Golf Finder backup.'); input.value=''; return; }
-    playConfirm('Restore this backup? It replaces your saved rounds, bag and stats on this device.','Restore',()=>{
-      Object.keys(obj.data).forEach(k=>{ if(/^gf_/.test(k)&&typeof obj.data[k]==='string') localStorage.setItem(k,obj.data[k]); });
-      _histScope=null; playToast('Backup restored.'); if(playS) playRender();
-    });
-    input.value=''; };
+    input.value='';
+    if(!obj||obj.kind!=='play-backup'||!obj.data){ playToast('That file is not a Golf Finder backup.'); return; }
+    const inRounds=rvJson(obj.data.gf_rounds,[]);
+    const n=Array.isArray(inRounds)?inRounds.length:0;
+    const what=`${n} round${n===1?'':'s'}${obj.exported?' from '+_rvDate(obj.exported):''}`;
+    playChoice(`This file holds ${what}.<br><b>Merge</b> keeps the rounds already on this device and adds the new ones. <b>Replace</b> wipes this device's rounds, bag and stats and uses the file instead.`,
+      [{label:'Merge',cls:'pc-ok',fn:()=>_applyBackup(obj.data,false)},
+       {label:'Replace',cls:'pc-ok pc-danger',fn:()=>_applyBackup(obj.data,true)}]);
+  };
   rd.readAsText(f);
+}
+function _applyBackup(data,replace){
+  let msg;
+  if(replace){
+    Object.keys(data).forEach(k=>{ if(/^gf_/.test(k)&&typeof data[k]==='string') localStorage.setItem(k,data[k]); });
+    msg='Backup restored.';
+  }else{
+    const local={}; _BACKUP_KEYS.forEach(k=>{ const v=localStorage.getItem(k); if(v!=null) local[k]=v; });
+    const res=rvMergeBackup(local,data);
+    Object.keys(res.out).forEach(k=>{ if(/^gf_/.test(k)&&typeof res.out[k]==='string') localStorage.setItem(k,res.out[k]); });
+    // any gf_* key the merge doesn't know about rides along only where this device has none
+    Object.keys(data).forEach(k=>{ if(/^gf_/.test(k)&&typeof data[k]==='string'&&res.out[k]==null&&localStorage.getItem(k)==null) localStorage.setItem(k,data[k]); });
+    const a=res.added;
+    msg=a.rounds?`Merged — ${a.rounds} new round${a.rounds===1?'':'s'}${a.aces?', '+a.aces+' new ace'+(a.aces===1?'':'s'):''}.`
+                : (a.aces?`Merged — ${a.aces} new ace${a.aces===1?'':'s'}.`:'Merged — nothing new in that file.');
+  }
+  try{ hios=JSON.parse(localStorage.getItem('gf_hios')||'[]'); }catch(e){ hios=[]; }   // the in-memory copy would otherwise be stale
+  _histScope=null; playToast(msg); if(playS) playRender();
 }
 
 // Adjusted gross for form/handicap: every hole capped at NET DOUBLE BOGEY (par + 2 + strokes
@@ -10422,6 +10682,20 @@ function playConfirm(msg,okLabel,onOk,danger){
   el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
 }
 
+// Same sheet dialog as playConfirm, but for a genuine fork (merge vs replace) rather than
+// a yes/no. Each action is {label,cls,fn}; the backdrop and Cancel both just close.
+function playChoice(msg,actions){
+  const sheet=document.querySelector('.play-sheet'); if(!sheet) return;
+  let el=document.getElementById('play-confirm');
+  if(!el){ el=document.createElement('div'); el.id='play-confirm'; el.className='play-confirm'; sheet.appendChild(el); }
+  el.innerHTML=`<div class="pc-card" role="alertdialog" aria-modal="true"><div class="pc-msg">${msg}</div><div class="pc-row pc-wrap"><button class="pc-cancel">Cancel</button>${actions.map((a,i)=>`<button class="${a.cls||'pc-ok'}" data-i="${i}">${a.label}</button>`).join('')}</div></div>`;
+  const close=()=>el.classList.remove('show');
+  el.querySelector('.pc-cancel').onclick=close;
+  el.querySelectorAll('[data-i]').forEach(b=>{ b.onclick=()=>{ close(); const a=actions[+b.dataset.i]; a&&a.fn&&a.fn(); }; });
+  el.onclick=e=>{ if(e.target===el) close(); };
+  el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+}
+
 // ── live (GPS-tick) refresh of just the rangefinder, map and shot readout ──
 // Auto-advance to the hole whose tee you've walked to. Fires only when that tee is
 // the nearest, you're within ~25 m of it, AND you're now closer to it than to your
@@ -10520,7 +10794,7 @@ function playDistBarHtml(si){
 // centre number) and content. Hidden on the History tab and on scorecard-only (no-GPS) courses.
 function playRefreshDist(){
   const el=document.getElementById('play-rangebar'); if(!el) return;
-  const show=playS&&!playS.historyOnly&&!playS.picker&&!playS.course.noGps&&playS.tab!=='history';
+  const show=playS&&!playS.historyOnly&&!playS.picker&&!playS.review&&!playS.course.noGps&&playS.tab!=='history';
   if(!show){ el.style.display='none'; el.innerHTML=''; el.className='play-rangebar'; return; }
   el.style.display='';
   const si=_playShotInfo();
@@ -11058,11 +11332,31 @@ function playHoleSvg(){
     const bw=38, bx=Math.min(W-bw-4,Math.max(4,L.x-bw/2)), by=L.y+11;
     s+=`<rect x="${bx.toFixed(1)}" y="${by.toFixed(1)}" width="${bw}" height="15" rx="7.5" fill="rgba(20,14,4,0.86)" stroke="#ffcf6a" stroke-width="0.6"/><text x="${(bx+bw/2).toFixed(1)}" y="${(by+10.7).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#ffcf6a">${cm.club} ${fmtDist(cm.dist)}</text>`;
   }
+  // ── REVIEW: the round's shot path, tee → mark → mark, numbered, with each leg's distance
+  //    on it. Live play deliberately draws no such chain (mid-round the line that matters is
+  //    you → green, and a trail of played legs competes with it); reviewing, the chain IS the
+  //    hole. Drawn under the mark dots so the lie colours stay readable.
+  if(playS.review){
+    const _rl=((playS.review.rows||[])[playS.hole-1]||{}).legs||[];
+    _rl.forEach(l=>{ const A=P(l.from[0],l.from[1]), B=P(l.to[0],l.to[1]);
+      s+=`<line x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}" stroke="rgba(6,18,8,0.7)" stroke-width="4" stroke-linecap="round"/>`;
+      s+=`<line x1="${A.x.toFixed(1)}" y1="${A.y.toFixed(1)}" x2="${B.x.toFixed(1)}" y2="${B.y.toFixed(1)}" stroke="#ffd24a" stroke-width="1.8" stroke-linecap="round" opacity="0.95"/>`;
+      // the leg's own label, but only when the leg is long enough on SCREEN to carry one —
+      // otherwise a flurry of chips and putts round the green stacks into an unreadable pile.
+      const len=Math.hypot(B.x-A.x,B.y-A.y); if(len<26) return;
+      const mx=(A.x+B.x)/2, my=(A.y+B.y)/2, txt=`${l.i+1} · ${fmtDist(l.d)}${u}${l.club?' '+l.club:''}`;
+      const bw=Math.max(34,txt.length*5.6+10), bx=Math.min(W-bw-3,Math.max(3,mx-bw/2));
+      s+=`<rect x="${bx.toFixed(1)}" y="${(my-8).toFixed(1)}" width="${bw.toFixed(1)}" height="16" rx="8" fill="rgba(8,18,10,0.86)" stroke="rgba(255,210,74,0.5)" stroke-width="0.6"/>`;
+      s+=`<text x="${(bx+bw/2).toFixed(1)}" y="${(my+3.5).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#ffd24a">${txt}</text>`; });
+  }
   // dropped shot marks — filled with the auto-detected lie colour (sand/water/green/rough/…)
   const _lieArr=playS.shotLies[playS.hole]||[];
   (playS.shots[playS.hole]||[]).forEach((mk,i)=>{ const M=P(mk[0],mk[1]);
     const li=_lieArr[i]&&LIE_INFO[_lieArr[i]], col=li?li.col:'#ffd24a';
-    s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="3.4" fill="${col}" stroke="#16300f" stroke-width="1"/>`; });
+    // reviewing, a mark is where the BALL came to rest, so it's drawn as one: white, ringed in
+    // the lie colour (a lie-coloured disc on its own surface — fairway on fairway — vanishes).
+    if(playS.review) s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="4.2" fill="#fff" stroke="${col}" stroke-width="2"/><circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="6.4" fill="none" stroke="rgba(6,18,8,0.55)" stroke-width="1"/>`;
+    else s+=`<circle cx="${M.x.toFixed(1)}" cy="${M.y.toFixed(1)}" r="3.4" fill="${col}" stroke="#16300f" stroke-width="1"/>`; });
   // you + dashed line to centre, with the live distance on it. The translucent ring is
   // scaled to the (filtered) GPS accuracy, so it visibly tightens as the fix settles.
   if(pos){ const Y=P(pos[0],pos[1]);
@@ -11101,6 +11395,9 @@ function playHoleSvg(){
   // expose the live projection so playMapTap can invert screen taps back to lat/lng;
   // `rose` is the compass control's hit region so a tap on it doesn't drop a measure reticle
   window._playMapProj={tee,kx,ky,sinB,cosB,uMin,vMax,offX,offY,scl,W,H,rose:{cx:wcx,cy:wcy,r:R+16}};
+  // A REVIEW is a record, not a live read: today's wind drawn over a shot you hit last month
+  // would be a lie, so the whole dial is left off (the same honesty rule as the plays-like number).
+  if(!playS.review){
   // slim graduated bezel (replaces the old chunky glow dial)
   if(wv) s+=`<circle cx="${wcx}" cy="${wcy}" r="${(R+3+str*7).toFixed(1)}" fill="${wcol}" opacity="${(0.06+str*0.16).toFixed(2)}"/>`;  // soft strength halo
   s+=`<circle cx="${wcx}" cy="${wcy}" r="${R+2}" fill="rgba(4,10,7,0.55)"/>`;
@@ -11144,7 +11441,10 @@ function playHoleSvg(){
   } else {
     s+=`<text x="${wcx}" y="${(wcy+3).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="8.5" fill="#9fc6e8">wind</text><text x="${wcx}" y="${(wcy+R+14).toFixed(1)}" text-anchor="middle" font-family="monospace" font-size="9" fill="#9fc6e8">no live data</text>`;
   }
-  const aLbl=`Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass top-right.`;
+  }
+  const aLbl=playS.review
+    ? `Hole ${h.n} replay: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Your ${(playS.shots[playS.hole]||[]).length} tracked shots are drawn from the tee at the bottom.`
+    : `Hole ${h.n} map: par ${h.par}, ${fmtDist(tg.len)} ${u} to the centre of the green, which is up the screen. Tee at the bottom, wind compass top-right.`;
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${aLbl}" style="display:block;max-height:86vh;" xmlns="http://www.w3.org/2000/svg"><title>${aLbl}</title>${defs?'<defs>'+defs+'</defs>':''}${s}</svg>`;
 }
 
@@ -11433,11 +11733,156 @@ function historyTabHtml(){
     const vp=r.vsPar===0?'E':r.vsPar>0?'+'+r.vsPar:''+r.vsPar;
     const partial=r.holesPlayed<18?` · ${r.holesPlayed} holes`:'';
     const netTxt=(r.net!=null)?`<div class="ph-net">net <b>${r.net}</b>${r.stableford!=null?` · ${r.stableford} pts`:''}${r.courseHcp!=null?` · ch ${r.courseHcp}`:''}</div>`:'';
-    return `<div class="ph-row"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}</div>${netTxt}</div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><button class="ph-del" onclick="playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
-  const backup=`<div class="psd-sec" style="margin-top:18px;"><div class="psd-backup"><button onclick="playExportData()">⤓ Export backup</button><button onclick="playImportPick()">⤴ Import</button><input type="file" id="play-import-file" accept="application/json,.json" style="display:none" onchange="playImportData(this)"></div><div class="psd-backup-note">Your rounds &amp; stats live only on this device — export a backup to keep them safe.</div></div>`;
+    const shots=rvHasShots(r)?'<span class="ph-tag">⛳ shots tracked</span>':'';
+    // the whole row opens the round — a saved round is 18 holes of shots, not just a number
+    return `<div class="ph-row tappable" role="button" tabindex="0" onclick="openRoundReview(${r.id})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openRoundReview(${r.id});}" aria-label="Open ${r.course}, ${ds}"><div class="ph-main"><div class="ph-course">${r.course}</div><div class="ph-meta">${ds}${partial}${r.putts?` · ${r.putts} putts`:''}${shots}</div>${netTxt}</div><div class="ph-score"><b>${r.gross}</b><span class="ph-vp ${r.vsPar<0?'under':r.vsPar>0?'over':''}">${vp}</span></div><span class="ph-go" aria-hidden="true">›</span><button class="ph-del" onclick="event.stopPropagation();playDeleteRound(${r.id})" aria-label="Delete round">✕</button></div>`; }).join('');
+  const backup=`<div class="psd-sec" style="margin-top:18px;"><div class="psd-backup"><button onclick="playExportData()">⤓ Export backup</button><button onclick="playImportPick()">⤴ Import</button><input type="file" id="play-import-file" accept="application/json,.json" style="display:none" onchange="playImportData(this)"></div><div class="psd-backup-note">Your rounds &amp; stats live only on this device — export a backup to keep them safe. Importing <b>merges</b> by default, so a backup from another phone adds its rounds instead of replacing yours.</div></div>`;
   return hcpCard+scope+statsDashboardHtml()+clubsDetailHtml()
-    +`<div class="psd-sec"><div class="psd-sec-h">Rounds <span>${rounds.length}${_histScope?' · this course':''}</span></div><div class="ph-list">${list}</div></div>`
+    +`<div class="psd-sec"><div class="psd-sec-h">Rounds <span>${rounds.length}${_histScope?' · this course':''} · tap to replay</span></div><div class="ph-list">${list}</div></div>`
     +backup;
+}
+
+// ── Round review — open a finished round and walk it again ───────────────────
+// A saved round is not a number, it's 18 holes of shots on real ground. Reviewing one
+// re-opens the SAME Play sheet in a read-only mode, so the round replays on the same hole
+// map (with its shot path drawn on it) and the same scorecard rather than a second set of
+// renderers that could drift. Whatever the sheet was showing (a live round, or the Rounds &
+// Stats panel) is parked in _playStash and restored on the way out — and its GPS watch is
+// stopped first, so a review can never take a fix or write to the live round's draft
+// (playPersistDraft is a no-op while playS.review is set).
+let _playStash=null;
+function _rvDate(iso,long){ const d=new Date(iso); if(isNaN(d)) return '';
+  return d.toLocaleDateString('en-AU',long?{weekday:'short',day:'numeric',month:'long',year:'numeric'}:{day:'numeric',month:'short',year:'numeric'}); }
+function _rvVp(v){ return v==null?'':v===0?'E':v>0?'+'+v:''+v; }
+function openRoundReview(id){
+  const round=loadRounds().find(r=>r.id===id);
+  if(!round){ playToast('That round is no longer saved.'); return; }
+  const course=_courseCfgForSlug(round.slug);
+  if(!course){ playToast('That course is no longer in the app, so this round can’t be opened.'); return; }
+  const rows=rvHoleRows(round,course.holes), sum=rvSummary(rows);
+  if(playS&&playS.watchId!=null&&navigator.geolocation){ try{navigator.geolocation.clearWatch(playS.watchId);}catch(e){} playS.watchId=null; }
+  _playStash=playS; _mapZoom=null;
+  const t=round.track||{}, scores={}, putts={};
+  rows.forEach(r=>{ if(r.score!=null) scores[r.n]=r.score; if(r.putts!=null) putts[r.n]=r.putts; });
+  const first=rows.find(r=>r.marks.length)||rows.find(r=>r.score!=null)||rows[0];
+  playS={ review:{round,rows,sum}, slug:round.slug, course, hole:(first?first.n:1),
+          units:(localStorage.getItem('gf_units')||'m'),
+          watchId:null, pos:null, acc:null, gpsErr:null, measure:null,
+          shots:(t.shots||{}), shotClubs:(t.clubs||{}), shotLies:(t.lies||{}), shotAuto:{}, shotMan:(t.man||{}),
+          pens:(t.pens||{}), teePos:(t.tee||{}), teeAuto:{}, teeManual:{}, teeSelByHole:(t.teeSel||{}),
+          scores, putts, scoreAuto:{}, picked:(t.picked||{}), showClub:false,
+          tab:(course.noGps||!sum.marks)?'card':'play' };
+  playS.nineView=playS.hole<=9?1:2;
+  if(!course.noGps) loadCourseGeom(round.slug);      // the hole map needs the course's baked geometry
+  document.getElementById('play-panel').style.display='block';
+  document.body.style.overflow='hidden';
+  playRender();
+}
+function closeRoundReview(){
+  const prev=_playStash; _playStash=null; _mapZoom=null;
+  if(!prev){ playS=null; showStats(); return; }       // reviewed straight from the header panel
+  playS=prev; playS.tab='history';
+  if(!playS.historyOnly&&!playS.picker&&playS.course&&!playS.course.noGps) playStartGps();
+  playRender();
+}
+// The header's ⟵ does double duty: back to the course picker mid-round, back to your rounds
+// while reviewing one.
+function playBack(){ if(playS&&playS.review) closeRoundReview(); else playBackToCourses(); }
+
+// The Play tab, read-only: the same hole map with the round's shot path on it, then the
+// shots themselves — what you hit, how far it went and what you found when you got there.
+function reviewTabHtml(){
+  const rv=playS.review, h=playS.course.holes[playS.hole-1], row=rv.rows[playS.hole-1]||{}, u=playUnit();
+  const tg=holeTargets(h);
+  const view=playS.nineView||(playS.hole<=9?1:2), lo=view===1?1:10, hi=view===1?9:18;
+  const pips=playS.course.holes.filter(x=>x.n>=lo&&x.n<=hi).map(x=>{ const r=rv.rows[x.n-1]||{};
+    const cls=x.n===playS.hole?'on':(r.score!=null?'done':'');
+    return `<button class="play-pip ${cls}${(r.marks&&r.marks.length)?'':' rv-nos'}" onclick="playSetHole(${x.n})" aria-label="Hole ${x.n}${(r.marks&&r.marks.length)?'':', no shots tracked'}" title="${(r.marks&&r.marks.length)?r.marks.length+' shots tracked':'no shots tracked'}">${x.n}</button>`; }).join('');
+  const nineBar=`<div class="play-ninebar" role="tablist" aria-label="Choose nine"><button class="play-nine${view===1?' on':''}" onclick="playSetNine(1)">Front 9</button><button class="play-nine${view===2?' on':''}" onclick="playSetNine(2)">Back 9</button></div>`;
+  const rel=row.vsPar, scoreChip=row.score!=null
+    ? `<span class="rv-score ${rel<0?'under':rel>0?'over':'level'}">${row.score}<i>${_rvVp(rel)}</i></span>`
+    : `<span class="rv-score none">–</span>`;
+  const teeTxt=row.teeKey?` · <span class="play-yourtee">${row.teeKey} tee</span>`:(playS.teePos&&playS.teePos[h.n]?' · <span class="play-yourtee">your tee</span>':'');
+  return `
+    ${nineBar}
+    <div class="play-pips">${pips}</div>
+    <div class="play-holehdr">
+      <button class="play-nav" onclick="playSetHole(${playS.hole-1})" ${playS.hole<=1?'disabled':''} aria-label="Previous hole">‹</button>
+      <div class="play-holemeta"><div class="play-holeno">Hole ${h.n} ${scoreChip}</div><div class="play-holesub">Par ${h.par} · ${fmtDist(tg.len)} ${u}${teeTxt}<button class="play-units" onclick="playToggleUnits()">${u==='m'?'→ yd':'→ m'}</button></div></div>
+      <button class="play-nav" onclick="playSetHole(${playS.hole+1})" ${playS.hole>=playS.course.holesN?'disabled':''} aria-label="Next hole">›</button>
+    </div>
+    <div class="play-mapwrap">
+      <div id="play-map">${playHoleSvg()}</div>
+      <div class="play-map-tools"><button class="pmt-btn" id="pmt-fit" onclick="event.stopPropagation();playZoomReset()" aria-label="Reset map zoom to fit the hole" title="Zoom out to fit the hole">⊟<span class="pmt-lbl">fit</span></button></div>
+    </div>
+    ${reviewShotsHtml(row)}
+  `;
+}
+// The hole's shots, in order, with the club and the lie each one finished in.
+function reviewShotsHtml(row){
+  const u=playUnit();
+  const legs=row.legs||[], pens=row.pens||[];
+  const shots=legs.map(l=>{ const li=l.lie&&LIE_INFO[l.lie];
+    return `<div class="rv-shot"><span class="rv-i">${l.i+1}</span>
+      <span class="rv-d">${fmtDist(l.d)}<i>${u}</i></span>
+      <span class="rv-club">${l.club?l.club:'<em>untagged</em>'}${l.man?'<b class="rv-man" title="Added by hand, not from a GPS mark">added</b>':''}</span>
+      <span class="rv-lie" style="${li?`--lc:${li.col}`:''}">${li?`${li.ico} ${li.lbl}`:'—'}</span></div>`; }).join('');
+  const penRow=pens.length?`<div class="rv-pens">${pens.map(p=>{ const pi=PEN_INFO&&PEN_INFO[p]; return `<span class="rv-pen">${pi?pi.ico+' '+pi.lbl:p}</span>`; }).join('')}</div>`:'';
+  const bits=[];
+  if(row.putts!=null) bits.push(`${row.putts} putt${row.putts===1?'':'s'}`);
+  if(row.gir===true) bits.push('green in reg'); else if(row.gir===false) bits.push('missed the green'+(row.miss?' '+row.miss:''));
+  if(row.fir===true) bits.push('fairway hit'); else if(row.fir===false) bits.push('off the fairway');
+  if(row.driveM!=null) bits.push('drive '+fmtDist(row.driveM)+' '+u);
+  if(row.picked) bits.push('picked up');
+  const foot=bits.length?`<div class="rv-holefoot">${bits.join(' · ')}</div>`:'';
+  if(!legs.length) return `<div class="rv-shotcard"><div class="rv-none">${row.score!=null?'No shots were tracked on this hole — only the score was entered.':'This hole wasn’t played.'}</div>${penRow}${foot}</div>`;
+  return `<div class="rv-shotcard"><div class="rv-shots-h">Shots <span>${legs.length} tracked</span></div>${shots}${penRow}${foot}</div>`;
+}
+// The round's scorecard, read-only, scored with the handicap that was in play ON THE DAY —
+// not today's index, which would silently re-score history every time you update it.
+function reviewCardHtml(){
+  const rv=playS.review, r=rv.round, sum=rv.sum, course=playS.course, ch=(r.courseHcp!=null?r.courseHcp:null);
+  const rows=rv.rows, u=playUnit();
+  const tile=(n,l,s)=>`<div class="psd-tile"><div class="psd-num">${n}</div><div class="psd-lbl">${l}</div><div class="psd-sub">${s||''}</div></div>`;
+  const pct=(a,b)=>b>0?Math.round(a/b*100)+'%':'–';
+  const tiles=`<div class="psd-tiles">
+      ${tile(sum.gross||'–','Gross',_rvVp(sum.vsPar)+(sum.holes<course.holesN?` · ${sum.holes} holes`:''))}
+      ${tile(r.net!=null?r.net:'–','Net',ch!=null?`course hcp ${ch}`:'no handicap set')}
+      ${tile(r.stableford!=null?r.stableford:'–','Points',r.hcpIndex!=null?`index ${r.hcpIndex}`:'')}
+      ${tile(sum.puttHoles?sum.putts:(r.putts!=null?r.putts:'–'),'Putts',sum.puttHoles?`over ${sum.puttHoles} holes`:(r.putts!=null?'round total only':'not recorded'))}
+      ${tile(sum.gir.of?pct(sum.gir.hit,sum.gir.of):'–','Greens',sum.gir.of?`${sum.gir.hit}/${sum.gir.of}`:'')}
+      ${tile(sum.fir.of?pct(sum.fir.hit,sum.fir.of):'–','Fairways',sum.fir.of?`${sum.fir.hit}/${sum.fir.of}`:'')}
+    </div>`;
+  const row=(x)=>{ const h=course.holes[x.n-1], rel=x.vsPar;
+    const rc=rel==null?'':rel<0?'sc-under':rel>0?'sc-over':'sc-par';
+    const recv=ch!=null?strokesForSI(ch,effSI(course,h)):0;
+    const net=(x.score!=null&&ch!=null)?x.score-recv:null, pts=x.score!=null?Math.max(0,(h.par-x.score)+recv+2):null;
+    const dot=recv>0?`<span class="cc-recv">${'•'.repeat(Math.min(3,recv))}</span>`:recv<0?`<span class="cc-recv minus">–</span>`:'';
+    const jump=(x.marks&&x.marks.length&&!course.noGps)?` onclick="playSetTab('play');playSetHole(${x.n})" class="rv-jump" title="See hole ${x.n} on the map"`:'';
+    return `<tr${jump}>
+      <td class="cc-h">${x.n}${x.marks&&x.marks.length?'<span class="rv-dot" aria-label="shots tracked">●</span>':''}</td>
+      <td class="cc-p">${h.par}<span class="cc-si">${h.si||''}</span></td>
+      <td><span class="cc-val ${rc}">${x.score!=null?x.score:'·'}</span>${x.picked?'<span class="rv-max">max</span>':''}</td>
+      <td class="cc-net">${x.putts!=null?x.putts:''}</td>
+      <td class="cc-net">${net!=null?net:''}${dot}</td>
+      <td class="cc-pts">${pts!=null?pts:''}</td>
+    </tr>`; };
+  const sub=(lbl,hs)=>{ let g=0,p=0,n=0; hs.forEach(x=>{ if(x.score!=null){ g+=x.score; p+=(x.par||0); n++; } });
+    return `<tr class="cc-sub"><td>${lbl}</td><td>${p||''}</td><td>${n?g:'–'}</td><td colspan="3"></td></tr>`; };
+  const table=`<table class="cc-table"><thead><tr><th>Hole</th><th>Par<span class="cc-si-h">SI</span></th><th>Score</th><th>Putts</th><th>Net</th><th>Pts</th></tr></thead>
+      <tbody>${rows.slice(0,9).map(row).join('')}${sub('OUT',rows.slice(0,9))}
+        ${rows.slice(9).map(row).join('')}${rows.length>9?sub('IN',rows.slice(9)):''}
+        <tr class="cc-tot"><td>TOT${sum.holes&&sum.holes<course.holesN?`<span class="cc-thru">thru ${sum.holes}</span>`:''}</td><td>${sum.par}</td><td>${sum.gross}<span class="cc-vp">${_rvVp(sum.vsPar)}</span></td><td>${sum.puttHoles?sum.putts:(r.putts!=null?r.putts:'')}</td><td>${r.net!=null?r.net:''}</td><td>${r.stableford!=null?r.stableford:''}</td></tr>
+      </tbody></table>`;
+  const extra=[];
+  if(sum.penalties) extra.push(`${sum.penalties} penalty stroke${sum.penalties===1?'':'s'}`);
+  if(sum.marks) extra.push(`${sum.marks} shot${sum.marks===1?'':'s'} tracked over ${sum.tracked} hole${sum.tracked===1?'':'s'}`);
+  else extra.push('no shots were tracked in this round');
+  const note=`<div class="rv-note">${_rvDate(r.date,true)} · ${course.name}${extra.length?' · '+extra.join(' · '):''}</div>`;
+  const acts=`<div class="psd-backup" style="margin-top:14px;">
+      <button onclick="playExportRound(${r.id})">⤓ Export this round</button>
+      <button onclick="playDeleteRound(${r.id},true)">✕ Delete round</button></div>`;
+  return tiles+note+table+acts;
 }
 
 function playRender(){
@@ -11459,6 +11904,28 @@ function playRender(){
     if(histBtn) histBtn.style.display='none';
     hideFoot();
     if(body0){ body0.setAttribute('aria-labelledby','play-title'); body0.innerHTML=historyTabHtml(); }
+    return;
+  }
+  if(playS.review){   // replaying a finished round — the same sheet, read-only
+    if(playS.tab==='history'){ closeRoundReview(); return; }   // 📊 = back to your rounds
+    const r=playS.review.round, sum=playS.review.sum;
+    const canMap=!playS.course.noGps&&sum.marks>0;
+    if(!canMap&&playS.tab==='play') playS.tab='card';
+    if(ttl0) ttl0.textContent=playS.course.name;
+    if(sub0) sub0.textContent='Round review · '+_rvDate(r.date)+' · '+sum.gross+' ('+_rvVp(sum.vsPar)+')';
+    if(tabs) tabs.style.display='';
+    if(backBtn) backBtn.style.display='';                      // ⟵ back to your rounds
+    if(hioBtn) hioBtn.style.display='none';
+    if(windBtn) windBtn.style.display='none';                  // the wind is a live tool, not a record
+    if(histBtn){ histBtn.style.display=''; histBtn.classList.remove('on'); }
+    const ptb=document.getElementById('play-tab-play');
+    if(ptb){ ptb.style.display=canMap?'':'none'; const lb=ptb.querySelector('.pt-lbl'); if(lb) lb.textContent='Holes'; }
+    document.querySelectorAll('.play-tab').forEach(t=>{ const on=t.dataset.tab===playS.tab; t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); });
+    hideFoot();
+    if(body0){ body0.setAttribute('aria-labelledby','play-tab-'+playS.tab);
+               body0.innerHTML=playS.tab==='play'?reviewTabHtml():reviewCardHtml(); }
+    playRefreshDist();
+    if(playS.tab==='play'){ playMapZoomInit(); playApplyMapZoom(); }
     return;
   }
   if(playS.picker){   // course-selection screen for a multi-course site
@@ -11483,7 +11950,8 @@ function playRender(){
   if(histBtn){ histBtn.style.display=''; histBtn.classList.toggle('on',playS.tab==='history'); }
   const noGps=!!playS.course.noGps;
   if(noGps&&playS.tab==='play') playS.tab='card';   // no rangefinder tab for scorecard-only courses
-  const playTabBtn=document.getElementById('play-tab-play'); if(playTabBtn) playTabBtn.style.display=noGps?'none':'';
+  const playTabBtn=document.getElementById('play-tab-play');
+  if(playTabBtn){ playTabBtn.style.display=noGps?'none':''; const lb=playTabBtn.querySelector('.pt-lbl'); if(lb) lb.textContent='Play'; }
   const sub=document.getElementById('play-subtitle'); if(sub) sub.textContent=noGps?'Scorecard · history':'GPS rangefinder · scorecard';
   document.querySelectorAll('.play-tab').forEach(t=>{ const on=t.dataset.tab===playS.tab; t.classList.toggle('on',on); t.setAttribute('aria-selected',on?'true':'false'); });
   const ttl=document.getElementById('play-title'); if(ttl) ttl.textContent=playS.course.name;
@@ -11789,7 +12257,7 @@ showTestBanner();
 <div id="play-panel" style="display:none;" role="dialog" aria-modal="true" aria-label="Play round">
   <div class="play-sheet">
     <div class="play-header">
-      <button class="play-back" id="play-back" onclick="playBackToCourses()" style="display:none" aria-label="Back to course selection" title="Choose a different course">⟵</button>
+      <button class="play-back" id="play-back" onclick="playBack()" style="display:none" aria-label="Back" title="Back">⟵</button>
       <div style="flex:1;min-width:0;">
         <div class="play-title" id="play-title">Course</div>
         <div class="play-subtitle" id="play-subtitle">GPS rangefinder · scorecard</div>
@@ -11800,7 +12268,7 @@ showTestBanner();
       <button class="play-close" onclick="closePlay()" aria-label="Close play">✕</button>
     </div>
     <div class="play-tabs" role="tablist" aria-label="Play and scorecard">
-      <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')"><span class="pt-ico">⛳</span>Play</button>
+      <button class="play-tab on" id="play-tab-play" data-tab="play" role="tab" aria-controls="play-body" aria-selected="true" onclick="playSetTab('play')"><span class="pt-ico">⛳</span><span class="pt-lbl">Play</span></button>
       <div class="play-rangebar" id="play-rangebar" onclick="playSetTab('play')" aria-label="Distance to the green"></div>
       <button class="play-tab" id="play-tab-card" data-tab="card" role="tab" aria-controls="play-body" aria-selected="false" onclick="playSetTab('card')"><span class="pt-ico">📋</span>Card</button>
     </div>

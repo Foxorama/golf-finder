@@ -777,6 +777,43 @@ call it done. They map to the three hats the user keeps asking for:
   store). The whole dashboard is reachable **without first opening a course** via the day-only
   **📊 header button** (`showStats()` → a `historyOnly` Play panel: tabs + footer hidden, History
   only) — the easiest path to your history.
+- **Reviewing a finished round (`openRoundReview`) + round schema v3.** A saved round used to be
+  one summary line in History and nothing more: `_commitRound` kept the scorecard, the rolled-up
+  `holeStats` and `legs` (distances only, and only legs ≥20 m), and **threw away the shots
+  themselves** — the marks' coordinates, the tee actually played, the per-hole penalties — so a past
+  round could never be re-opened. Schema **`v:3`** adds **`track`** (`_buildRoundTrack`): sparse
+  per-hole `{shots,clubs,lies,man,pens,tee,teeSel,putts,picked}`, coordinates rounded to 6 dp
+  (~0.1 m, inside GPS noise) — about **4–8 KB a round**. Tapping a row in History opens
+  `openRoundReview(id)`, which **re-opens the SAME Play sheet in a read-only mode** rather than a
+  second set of renderers that could drift: `playS.review` is set, `playRender` takes an early
+  branch (like `historyOnly`/`picker`), the tabs become **Holes / Card**, and the footer, rangebar,
+  wind dial and map tools are gone. The **Holes** tab draws the round's shot path on `playHoleSvg`
+  (tee→mark→mark, numbered pills carrying each leg's distance + club, marks drawn as white
+  lie-ringed *balls* — a lie-coloured disc on its own surface is invisible), then the shot list
+  (distance · club · lie), penalties and the hole's putts/GIR/FIR line. The **Card** tab is the
+  scorecard scored with **the handicap that was in play on the day** (`round.courseHcp`), not
+  today's index. Whatever the sheet was showing — a live round mid-play, or the 📊 stats panel — is
+  parked in **`_playStash`** and restored on the way out (⟵ or 📊), and its **GPS watch is stopped
+  first**; `playPersistDraft` no-ops while `playS.review` is set, so a review can never write over
+  the live round's draft (verified). The **wind dial is deliberately absent** in review — today's
+  wind drawn over a shot you hit last month is a lie (same honesty rule as plays-like). A legacy
+  (v1/v2) round still opens: no marks ⇒ the Holes tab hides and the Card says so. All the data
+  shaping is the pure **`ROUND-REVIEW-CORE`** block (`rvDist`/`rvTee`/`rvLegs`/`rvHoleRows`/
+  `rvSummary`/`rvHasShots` + the merge helpers), unit-tested in `tests/round-review.test.mjs`.
+- **Backup: export carries the shots, import MERGES.** `playExportData` is unchanged in shape
+  (`gf_*` values as raw JSON strings, so `track` rides along automatically) but stamps
+  `v:BACKUP_V` (3) and a `meta` count; `playExportRound(id)` writes a **single round** as the same
+  file kind. Import used to **replace** every key, which silently destroyed whatever the receiving
+  device had played since the file was written — so `playImportData` now offers **Merge (default) /
+  Replace** via `playChoice` (the two-action sibling of `playConfirm`), and `rvMergeBackup` does the
+  additive half: rounds union by `id` (falling back to slug|date|gross), keeping the **richer** copy
+  of a duplicate (schema version → holeStats → mark count, so an old file can't downgrade a
+  replayable round); club shots concatenate and re-cap at 40; aces dedupe on `src` or
+  course|date|hole; the single-value settings (bag, WITB, index, units) stay **this** device's and
+  are only taken from the file when it has none. `_applyBackup` also reloads the in-memory `hios`
+  global, which the old replace path left stale. **Storage:** rounds are bigger now, so
+  `saveRounds` returns false on a quota failure and `_commitRound` **keeps the draft** and says so
+  rather than silently losing the round.
 - **Shot tracking completeness.** Auto-club has **two modes** (`suggestClub(d,mode,fromTee)`):
   `'reach'` (rangefinder default — the **shortest club whose carry will REACH mid-green**
   (carry ≥ distance), i.e. the club capable of getting there on the fly that you swing softer to
@@ -833,7 +870,9 @@ call it done. They map to the three hats the user keeps asking for:
   in index.html with `new vm.Script` (catches stray-brace / bad-template-literal / TDZ edits
   that otherwise only show as a stuck loader — run this after any non-trivial index.html
   edit), **`play-stats.test.mjs`** evals the `PLAY-STATS-CORE` block in a `vm` and asserts
-  the stats math on synthetic rounds, and **`test-hub.test.mjs`** is a **sync-guard for the
+  the stats math on synthetic rounds, **`round-review.test.mjs`** does the same for
+  `ROUND-REVIEW-CORE` (a saved round's `track` → the hole-by-hole replay record, and the
+  backup merge — the two places where getting it wrong silently destroys a round), and **`test-hub.test.mjs`** is a **sync-guard for the
   demo hub** — it asserts `test.html` still matches the app's test hooks (weather conditions,
   URL params, console helpers, loader forms) so the test site can't silently drift when you
   change the app (see the **`keep-test-hub-in-sync` skill**). `tests/core.mjs` does the slicing;
