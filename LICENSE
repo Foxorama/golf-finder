@@ -38,7 +38,8 @@ ours and keep their own terms, which take precedence for that material:
     usage terms.
 
   - The fonts in fonts/ (DM Mono and Syne) are licensed under the SIL Open
-    Font License 1.1: https://openfontlicense.org
+    Font License 1.1. Their copyright notices and the licence text ship
+    beside them: fonts/OFL-DMMono.txt and fonts/OFL-Syne.txt.
 
   - The world outline used by the aurora globe (world-land.json) is derived
     from Natural Earth, which is in the public domain.

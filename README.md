@@ -33,7 +33,9 @@ own licence (independent of the notice above):
 - **Star catalogues** (`star-catalog.json`, `star-catalog-deep.json`, and the embedded
   `STAR_FIGURES` seed) are derived from the **HYG Database** (public domain) —
   https://www.astronexus.com/hyg.
-- **Fonts** (`fonts/`: DM Mono and Syne) are under the **SIL Open Font License 1.1**.
+- **Fonts** (`fonts/`: DM Mono and Syne) are under the **SIL Open Font License 1.1** —
+  notices and licence text in [`fonts/OFL-DMMono.txt`](fonts/OFL-DMMono.txt) and
+  [`fonts/OFL-Syne.txt`](fonts/OFL-Syne.txt).
 - **World outline** (`world-land.json`, the aurora globe) is derived from
   **Natural Earth** (public domain).
 - **Live weather & sky data** are fetched at runtime from
