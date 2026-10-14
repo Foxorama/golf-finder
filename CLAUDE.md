@@ -515,6 +515,11 @@ call it done. They map to the three hats the user keeps asking for:
   drive `_wcFlowTick()` by hand (headless rAF is unreliable) and read `_wc.view` / element
   rects. The rose's *feel* — does north read as north, is the smoothing right — can only be
   judged on a real phone (IDEAS-GOLF `G-014`).
+  **Wind calculator (🧮 in the compass top bar → `openWindCalc`, `#wcalc-panel`, z 1650 over the
+  compass).** Manual what-if: distance + wind speed inputs and a one-finger **drag dial** (target up,
+  handle = where the wind blows FROM, snapped to 5°) → plays-like + aim L/R via the pure
+  `wcShotCalc(dist,kmh,rel,head,tail,cross)` in WIND-CORE. Drift is a rule of thumb (0.5%/mph cross,
+  `window._windCross`); the dial's lateral offset is drawn ×3. Inputs persist in `gf_wcalc`.
 - **"Currently playing" resume bar (`renderResumeBar`, `#resume-bar`).** A round already survives
   in its draft (`gf_round_draft_<slug>`) until you save it, but the only way back in was to find the
   course in the day list and tap Play — **impossible after last light**, when the app flips to the

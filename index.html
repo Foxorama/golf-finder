@@ -6636,6 +6636,21 @@ function wcAirCarryPct(tempC, pressHpa, rh){
   if(!(rho > 0)) return null;
   return Math.max(-12, Math.min(12, (1.225 / rho - 1) * 100 * 0.5));
 }
+// Manual wind → distance calculator (the 🧮 dial on the wind compass). relDeg is where the wind
+// blows FROM relative to the shot line, clockwise: 0 = from the target (into your face), 90 = from
+// the right, 180 = from behind. Carry uses the SAME conservative per-mph head/tail fractions as
+// plays-like. Drift is a rule of thumb, ~0.5% of distance per mph of crosswind (≈ 7–8 m on a
+// 150 m shot in a 10 mph cross) — a forecast-grade nudge, not a launch-monitor number.
+// cross > 0 = blowing left → right, so the ball drifts right and you AIM LEFT (aimM < 0 = left).
+function wcShotCalc(distM, spdKmh, relDeg, headF = 0.007, tailF = 0.004, crossF = 0.005){
+  if(distM == null || spdKmh == null || relDeg == null || !isFinite(distM) || !isFinite(spdKmh) || !isFinite(relDeg)) return null;
+  const c = wcComponents(relDeg, 0, Math.max(0, spdKmh));
+  const pct = wcPlaysPct(c.help, headF, tailF);
+  const crossMph = c.cross / 1.60934;
+  const drift = Math.max(-0.25, Math.min(0.25, crossMph * crossF)) * distM;   // + = ball goes right
+  return { help: c.help, cross: c.cross, cls: c.cls, tag: c.tag, pct,
+           playsM: distM * (1 + pct / 100), deltaM: distM * pct / 100, driftM: drift, aimM: -drift };
+}
 /* WIND-CORE-END */
 
 let _wc = null;                              // live panel state (null when closed)
@@ -7323,6 +7338,7 @@ function openWindCompass(){
     w.innerHTML =
       '<div class="wc2-top"><div class="wc2-title">🧭 Wind</div>' +
         '<div class="wc2-place" id="wc2-place">locating…</div>' +
+        '<button class="wc2-btn" onclick="openWindCalc()" aria-label="Wind distance calculator" title="Wind calculator">🧮</button>' +
         '<button class="wc2-btn" id="wc2-refresh" onclick="_wcLoad(true)" aria-label="Refresh the wind reading">↻</button>' +
         '<button class="wc2-btn" onclick="closeWindCompass()" aria-label="Close">✕</button></div>' +
       '<div class="wc2-body">' +
@@ -7366,6 +7382,197 @@ function closeWindCompass(){
     _wc = { data: _wc.data };                          // keep the last reading for a fast reopen
   }
   _restoreBodyScroll();       // the compass opens over the Play sheet, so don't unlock the page under it
+}
+// ── Wind → distance calculator (🧮 on the wind compass) ────────────────────────────────────────
+// Manual counterpart to the live compass: type a distance and a wind speed, then DRAG the dial to
+// say where the wind comes from relative to your shot (target always up the screen, same
+// play-line-up idiom as the hole map). Reads back what the shot plays and how far left/right to
+// aim. Maths is wcShotCalc in WIND-CORE; colours match the compass (teal helping / amber across /
+// red into). Inputs persist in gf_wcalc. "Use live wind" seeds it from the compass reading + aim.
+let _wk = null;
+const _WK_COL = { help: '#16e0a3', cross: '#ffc233', hurt: '#ff4d4d' };
+function _wkInjectCSS(){
+  if(document.getElementById('wk-css')) return;
+  const s = document.createElement('style'); s.id = 'wk-css';
+  s.textContent = `
+  #wcalc-panel{position:fixed;inset:0;z-index:1650;display:none;flex-direction:column;color:var(--tx);overscroll-behavior:contain;
+    background:radial-gradient(135% 105% at 50% 4%,#141b33,#0a0e1e 55%,#05070f);overflow-y:auto;-webkit-overflow-scrolling:touch;}
+  #wcalc-panel.on{display:flex;}
+  .wk-top{display:flex;align-items:center;gap:10px;padding:max(12px,env(safe-area-inset-top)) 16px 6px;}
+  .wk-title{font-weight:800;font-size:17px;color:#f0c46a;flex:1;}
+  .wk-btn{width:38px;height:38px;flex:none;border-radius:50%;background:rgba(22,30,50,.85);border:1px solid rgba(126,166,205,.24);color:#b7d2e8;font-size:15px;display:flex;align-items:center;justify-content:center;-webkit-tap-highlight-color:transparent;}
+  .wk-wrap{width:100%;max-width:440px;margin:0 auto;padding:0 16px max(18px,env(safe-area-inset-bottom));box-sizing:border-box;display:flex;flex-direction:column;gap:12px;}
+  .wk-dial{width:min(78vw,300px);aspect-ratio:1;margin:0 auto;display:block;touch-action:none;cursor:grab;-webkit-user-select:none;user-select:none;}
+  .wk-dial:active{cursor:grabbing;}
+  .wk-hint{text-align:center;font-family:var(--mono);font-size:10px;color:var(--tx3);margin-top:-6px;}
+  .wk-out{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+  .wk-card{background:rgba(22,30,50,.7);border:1px solid rgba(126,166,205,.18);border-radius:12px;padding:10px 12px;}
+  .wk-card .l{font-family:var(--mono);font-size:10px;letter-spacing:.08em;color:var(--tx3);text-transform:uppercase;}
+  .wk-card .v{font-size:26px;font-weight:800;line-height:1.1;margin-top:2px;}
+  .wk-card .s{font-family:var(--mono);font-size:11px;color:var(--tx2);margin-top:2px;}
+  .wk-comp{grid-column:1/-1;text-align:center;font-family:var(--mono);font-size:12px;color:var(--tx2);}
+  .wk-row{background:rgba(22,30,50,.55);border:1px solid rgba(126,166,205,.14);border-radius:12px;padding:10px 12px;}
+  .wk-rh{display:flex;align-items:center;gap:8px;}
+  .wk-rh .l{flex:1;font-family:var(--mono);font-size:11px;letter-spacing:.06em;color:#b7d2e8;text-transform:uppercase;}
+  .wk-step{width:34px;height:34px;border-radius:9px;background:rgba(10,14,30,.8);border:1px solid rgba(126,166,205,.24);color:var(--tx);font-size:18px;-webkit-tap-highlight-color:transparent;}
+  .wk-num{width:68px;height:34px;text-align:center;font-size:18px;font-weight:700;background:rgba(10,14,30,.8);border:1px solid rgba(126,166,205,.24);border-radius:9px;color:var(--tx);-moz-appearance:textfield;}
+  .wk-num::-webkit-inner-spin-button,.wk-num::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}
+  .wk-u{min-width:46px;height:34px;border-radius:9px;background:transparent;border:1px solid rgba(126,166,205,.24);color:#f0c46a;font-family:var(--mono);font-size:11px;}
+  .wk-range{width:100%;margin-top:8px;accent-color:#f0c46a;}
+  .wk-live{height:40px;border-radius:12px;background:rgba(240,196,106,.12);border:1px solid rgba(240,196,106,.4);color:#f0c46a;font-weight:700;font-size:13px;}
+  .wk-note{font-family:var(--mono);font-size:10px;line-height:1.45;color:var(--tx3);}`;
+  document.head.appendChild(s);
+}
+function _wkLoad(){
+  let o = {};
+  try { o = JSON.parse(localStorage.getItem('gf_wcalc') || '{}') || {}; } catch(e){ o = {}; }
+  return { dist: isFinite(o.dist) && o.dist > 0 ? +o.dist : 150, spd: isFinite(o.spd) && o.spd >= 0 ? +o.spd : 15,
+           rel: isFinite(o.rel) ? wcAng(+o.rel) : 0, wu: o.wu === 'mph' ? 'mph' : 'kmh' };
+}
+function _wkSave(){ try { localStorage.setItem('gf_wcalc', JSON.stringify({ dist: _wk.dist, spd: _wk.spd, rel: _wk.rel, wu: _wk.wu })); } catch(e){} }
+const _wkDU = () => _bagUnit();                                   // m | yd, shared with My Bag / Play
+const _wkD = m => _wkDU() === 'yd' ? m * 1.09361 : m;             // metres → display
+const _wkW = k => _wk.wu === 'mph' ? k / 1.60934 : k;             // km/h → display
+function _wkLiveWind(){
+  const v = _wc && _wc.view;
+  if(!v || v.v10 == null || v.d10 == null) return null;
+  const forced = typeof window._windAim === 'number' && isFinite(window._windAim) ? wcAng(window._windAim) : null;
+  const aim = forced != null ? forced : _wc.aimLock != null ? _wc.aimLock : (_wc.hasHeading ? wcAng(_wc.heading) : null);
+  return aim == null ? null : { spd: v.v10, rel: wcAng(v.d10 - aim) };
+}
+function openWindCalc(){
+  _wkInjectCSS();
+  let w = document.getElementById('wcalc-panel');
+  if(!w){
+    w = document.createElement('div'); w.id = 'wcalc-panel'; w.setAttribute('aria-hidden', 'true');
+    w.innerHTML =
+      '<div class="wk-top"><div class="wk-title">🧮 Wind calculator</div>' +
+        '<button class="wk-btn" onclick="closeWindCalc()" aria-label="Close">✕</button></div>' +
+      '<div class="wk-wrap">' +
+        '<svg class="wk-dial" id="wk-dial" viewBox="-130 -130 260 260" role="slider" aria-label="Wind direction relative to your shot" tabindex="0"></svg>' +
+        '<div class="wk-hint">drag round the dial · where the wind blows FROM</div>' +
+        '<div class="wk-out" id="wk-out"></div>' +
+        '<div class="wk-row"><div class="wk-rh"><span class="l">Distance</span>' +
+          '<button class="wk-step" onclick="_wkStep(\'dist\',-5)" aria-label="Less distance">−</button>' +
+          '<input class="wk-num" id="wk-dist" type="number" inputmode="numeric" min="1" max="400" oninput="_wkInput(\'dist\',this.value)">' +
+          '<button class="wk-step" onclick="_wkStep(\'dist\',5)" aria-label="More distance">+</button>' +
+          '<button class="wk-u" id="wk-du" onclick="_wkToggleDU()"></button></div>' +
+          '<input class="wk-range" id="wk-distr" type="range" min="20" max="320" step="1" oninput="_wkInput(\'dist\',this.value)"></div>' +
+        '<div class="wk-row"><div class="wk-rh"><span class="l">Wind</span>' +
+          '<button class="wk-step" onclick="_wkStep(\'spd\',-1)" aria-label="Less wind">−</button>' +
+          '<input class="wk-num" id="wk-spd" type="number" inputmode="numeric" min="0" max="120" oninput="_wkInput(\'spd\',this.value)">' +
+          '<button class="wk-step" onclick="_wkStep(\'spd\',1)" aria-label="More wind">+</button>' +
+          '<button class="wk-u" id="wk-wu" onclick="_wkToggleWU()"></button></div>' +
+          '<input class="wk-range" id="wk-spdr" type="range" min="0" max="60" step="1" oninput="_wkInput(\'spd\',this.value)"></div>' +
+        '<button class="wk-live" id="wk-live" onclick="_wkUseLive()">⟳ Use live wind + my aim</button>' +
+        '<div class="wk-note">Carry uses the same conservative model as plays-like (≈0.7%/mph into, 0.4%/mph behind). ' +
+          'Drift is a rule of thumb, ≈0.5% of the distance per mph of crosswind (~7–8 m on 150 m in a 10 mph cross) — ' +
+          'real drift depends on ball flight and spin. Dial lateral offset is exaggerated ×3 so it’s visible.</div>' +
+      '</div>';
+    document.body.appendChild(w);
+    _wkDialInit(document.getElementById('wk-dial'));
+  }
+  _wk = _wkLoad();
+  w.classList.add('on'); w.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  _wkSyncInputs(); _wkRender();
+}
+function closeWindCalc(){
+  const w = document.getElementById('wcalc-panel');
+  if(w){ w.classList.remove('on'); w.setAttribute('aria-hidden', 'true'); }
+  _restoreBodyScroll();
+}
+function _wkSyncInputs(){
+  const du = _wkDU(), dv = Math.round(_wkD(_wk.dist)), wv = Math.round(_wkW(_wk.spd));
+  const set = (id, v) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = v; };
+  set('wk-dist', dv); set('wk-distr', dv); set('wk-spd', wv); set('wk-spdr', wv);
+  document.getElementById('wk-du').textContent = du;
+  document.getElementById('wk-wu').textContent = _wk.wu === 'mph' ? 'mph' : 'km/h';
+  document.getElementById('wk-live').style.display = _wkLiveWind() ? '' : 'none';
+}
+function _wkInput(k, val){
+  const n = parseFloat(val); if(!isFinite(n)) return;
+  if(k === 'dist') _wk.dist = Math.max(1, Math.min(400, _wkDU() === 'yd' ? n / 1.09361 : n));
+  else _wk.spd = Math.max(0, Math.min(120, _wk.wu === 'mph' ? n * 1.60934 : n));
+  _wkSave(); _wkSyncInputs(); _wkRender();
+}
+function _wkStep(k, d){
+  const cur = k === 'dist' ? Math.round(_wkD(_wk.dist)) : Math.round(_wkW(_wk.spd));
+  _wkInput(k, cur + d);
+}
+function _wkToggleDU(){ localStorage.setItem('gf_units', _wkDU() === 'yd' ? 'm' : 'yd'); _wkSyncInputs(); _wkRender(); }
+function _wkToggleWU(){ _wk.wu = _wk.wu === 'mph' ? 'kmh' : 'mph'; _wkSave(); _wkSyncInputs(); _wkRender(); }
+function _wkUseLive(){
+  const l = _wkLiveWind(); if(!l) return;
+  _wk.spd = Math.round(l.spd * 10) / 10; _wk.rel = Math.round(l.rel / 5) * 5 % 360;
+  _wkSave(); _wkSyncInputs(); _wkRender();
+}
+// One-finger drag anywhere on the dial sets the bearing (snapped to 5°); arrow keys nudge it.
+function _wkDialInit(svg){
+  const setFrom = e => {
+    const r = svg.getBoundingClientRect(), x = e.clientX - (r.left + r.width / 2), y = e.clientY - (r.top + r.height / 2);
+    if(Math.hypot(x, y) < r.width * 0.06) return;                  // dead centre has no direction
+    _wk.rel = wcAng(Math.round(Math.atan2(x, -y) * 180 / Math.PI / 5) * 5);
+    _wkRender();
+  };
+  svg.addEventListener('pointerdown', e => { e.preventDefault(); try { svg.setPointerCapture(e.pointerId); } catch(_){} svg._drag = true; setFrom(e); });
+  svg.addEventListener('pointermove', e => { if(svg._drag) setFrom(e); });
+  const end = () => { if(svg._drag){ svg._drag = false; _wkSave(); } };
+  svg.addEventListener('pointerup', end); svg.addEventListener('pointercancel', end);
+  svg.addEventListener('keydown', e => {
+    const d = e.key === 'ArrowRight' || e.key === 'ArrowUp' ? 5 : e.key === 'ArrowLeft' || e.key === 'ArrowDown' ? -5 : 0;
+    if(d){ e.preventDefault(); _wk.rel = wcAng(_wk.rel + d); _wkSave(); _wkRender(); }
+  });
+}
+function _wkRender(){
+  if(!_wk) return;
+  const r = wcShotCalc(_wk.dist, _wk.spd,  _wk.rel,
+    typeof window._playWindHead === 'number' ? window._playWindHead : 0.007,
+    typeof window._playWindTail === 'number' ? window._playWindTail : 0.004,
+    typeof window._windCross === 'number' ? window._windCross : 0.005);
+  const svg = document.getElementById('wk-dial'), out = document.getElementById('wk-out');
+  if(!svg || !out || !r) return;
+  const calm = _wk.spd < 0.5, col = calm ? '#b7d2e8' : _WK_COL[r.cls], du = _wkDU(), wu = _wk.wu === 'mph' ? 'mph' : 'km/h';
+  const rad = _wk.rel * Math.PI / 180, R = 112, hx = Math.sin(rad) * R, hy = -Math.cos(rad) * R;
+  // ball flight: tee at the bottom, flag at the top; aim point offset (×3) the opposite way to drift
+  const L = 134, ax = Math.max(-70, Math.min(70, r.aimM / _wk.dist * L * 3));
+  let ticks = '';
+  for(let a = 0; a < 360; a += 15){
+    const t = a * Math.PI / 180, big = a % 90 === 0, r1 = big ? 100 : 104;
+    ticks += `<line x1="${(Math.sin(t) * r1).toFixed(1)}" y1="${(-Math.cos(t) * r1).toFixed(1)}" x2="${(Math.sin(t) * 109).toFixed(1)}" y2="${(-Math.cos(t) * 109).toFixed(1)}" stroke="#b7d2e8" stroke-opacity="${big ? .7 : .3}" stroke-width="${big ? 2 : 1}"/>`;
+  }
+  const ux = -Math.sin(rad), uy = Math.cos(rad);                    // the direction the wind blows TO
+  svg.setAttribute('aria-valuenow', String(_wk.rel));
+  svg.setAttribute('aria-valuetext', `wind from ${_wk.rel} degrees, ${r.tag.toLowerCase()}`);
+  svg.innerHTML =
+    `<circle r="118" fill="rgba(10,14,30,.85)" stroke="${col}" stroke-opacity=".35" stroke-width="2"/>` + ticks +
+    // target + ball + aim line + curved flight that the wind brings back to the flag
+    `<line x1="0" y1="72" x2="${ax.toFixed(1)}" y2="-62" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4"/>` +
+    `<path d="M0 72 Q${(ax * 1.05).toFixed(1)} -20 0 -62" fill="none" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>` +
+    `<line x1="0" y1="-62" x2="0" y2="-84" stroke="#fff" stroke-width="1.6"/><path d="M0 -84 L13 -79 L0 -74Z" fill="#ff4d4d"/>` +
+    `<circle cx="0" cy="-62" r="3" fill="#000" stroke="#fff" stroke-width="1"/>` +
+    `<circle cx="0" cy="72" r="5" fill="#fff"/>` +
+    (calm ? '' :
+      // wind streak across the dial, from the handle toward the far side
+      `<line x1="${(hx * .82).toFixed(1)}" y1="${(hy * .82).toFixed(1)}" x2="${(hx * .82 + ux * 70).toFixed(1)}" y2="${(hy * .82 + uy * 70).toFixed(1)}" stroke="${col}" stroke-width="5" stroke-linecap="round" opacity=".85"/>` +
+      `<path transform="translate(${(hx * .82 + ux * 80).toFixed(1)} ${(hy * .82 + uy * 80).toFixed(1)}) rotate(${_wk.rel + 180})" d="M0 -10 L8 4 L-8 4Z" fill="${col}"/>`) +
+    `<circle cx="${hx.toFixed(1)}" cy="${hy.toFixed(1)}" r="13" fill="${col}" stroke="#05070f" stroke-width="2"/>` +
+    `<text x="${hx.toFixed(1)}" y="${(hy + 4).toFixed(1)}" text-anchor="middle" font-size="11" font-weight="800" fill="#05070f">≋</text>` +
+    `<text y="-92" text-anchor="middle" font-size="9" fill="#ff4d4d" opacity=".75" font-family="monospace">INTO</text>` +
+    `<text y="93" text-anchor="middle" font-size="9" fill="#16e0a3" opacity=".75" font-family="monospace">HELPING</text>` +
+    `<text x="-90" y="3" text-anchor="middle" font-size="9" fill="#ffc233" opacity=".75" font-family="monospace">L</text>` +
+    `<text x="90" y="3" text-anchor="middle" font-size="9" fill="#ffc233" opacity=".75" font-family="monospace">R</text>`;
+  const plays = Math.round(_wkD(r.playsM)), dlt = Math.round(_wkD(r.deltaM)), aim = Math.round(_wkD(Math.abs(r.aimM)));
+  const clk = Math.round(_wk.rel / 30) % 12 || 12;
+  let club = '';
+  try { const sc = typeof suggestClub === 'function' ? suggestClub(r.playsM, 'reach', true) : null;
+        if(sc) club = `≈ ${sc.club} (${Math.round(_wkD(sc.avg))} ${du})`; } catch(e){}
+  out.innerHTML =
+    `<div class="wk-card"><div class="l">Plays like</div><div class="v" style="color:${col}">${plays}<small style="font-size:13px"> ${du}</small></div>` +
+      `<div class="s">${calm || !dlt ? 'as the number' : (dlt > 0 ? '+' : '−') + Math.abs(dlt) + ' ' + du + ' (' + (r.pct >= 0 ? '+' : '') + r.pct.toFixed(0) + '%)'}${club ? '<br>' + club : ''}</div></div>` +
+    `<div class="wk-card"><div class="l">Aim</div><div class="v" style="color:${aim ? '#ffc233' : '#16e0a3'}">${aim ? aim + '<small style="font-size:13px"> ' + du + '</small> ' + (r.aimM > 0 ? 'R' : 'L') : 'at flag'}</div>` +
+      `<div class="s">${aim ? (r.aimM > 0 ? 'right' : 'left') + ' of target · ball drifts ' + (r.aimM > 0 ? 'left' : 'right') : 'no meaningful crosswind'}</div></div>` +
+    `<div class="wk-comp">from ${String(_wk.rel).padStart(3, '0')}° (${clk} o’clock) · ${calm ? 'calm' : `${r.help >= 0 ? 'helping' : 'into'} ${Math.abs(_wkW(r.help)).toFixed(0)} · cross ${Math.abs(_wkW(r.cross)).toFixed(0)} ${wu}`}</div>`;
 }
 // Test hooks — the full-screen compass has no live weather in preview, so the same
 // override shape the Play compass uses stands in for it end to end.
@@ -9769,7 +9976,7 @@ function dismissResume(){
 // so closing the top one must not unlock the page behind it. Restores scrolling only when
 // nothing full-screen is left open.
 function _restoreBodyScroll(){
-  const open = ['play-panel', 'wind-panel', 'hio-panel', 'bag-panel', 'aurora-globe', 'orrery', 'sky-modal']
+  const open = ['play-panel', 'wind-panel', 'wcalc-panel', 'hio-panel', 'bag-panel', 'aurora-globe', 'orrery', 'sky-modal']
     .some(id => { const el = document.getElementById(id); return el && el.style.display !== 'none' && getComputedStyle(el).display !== 'none'; });
   document.body.style.overflow = open ? 'hidden' : '';
 }
