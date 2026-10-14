@@ -186,6 +186,8 @@ back **plays-like** (same conservative head/tail model as the rangefinder) and *
 (rule-of-thumb drift ≈0.5% of distance per mph of crosswind, `window._windCross` tunes it). "Use live
 wind + my aim" seeds it from the compass. Pure `wcShotCalc` in WIND-CORE, tested. Drift factor and
 dial feel still want an on-course sanity check.
+Follow-up: **height** row added (uphill +1/unit, downhill −0.7/unit), drift now off the plays-like
+distance, and the dial's flight curve fixed to launch along the aim line.
 
 ### G-018 · View a finished round in full — shots, lies, clubs and the hole map `[UX]` `[golf]` `[QA]`
 **Status:** done — this PR (branch `claude/previous-rounds-history-guhxnp`)

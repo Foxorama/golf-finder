@@ -518,8 +518,14 @@ call it done. They map to the three hats the user keeps asking for:
   **Wind calculator (🧮 in the compass top bar → `openWindCalc`, `#wcalc-panel`, z 1650 over the
   compass).** Manual what-if: distance + wind speed inputs and a one-finger **drag dial** (target up,
   handle = where the wind blows FROM, snapped to 5°) → plays-like + aim L/R via the pure
-  `wcShotCalc(dist,kmh,rel,head,tail,cross)` in WIND-CORE. Drift is a rule of thumb (0.5%/mph cross,
-  `window._windCross`); the dial's lateral offset is drawn ×3. Inputs persist in `gf_wcalc`.
+  `wcShotCalc(dist,kmh,rel,head,tail,cross,elevM,upF,downF)` in WIND-CORE. **Height** row: target above
+  (+) / below (−) you, m or ft (follows the distance unit) — +1 per unit climbed, −0.7 per unit dropped
+  (the common rule; a falling ball flattens). Drift is a rule of thumb (0.5%/mph cross, `window._windCross`;
+  published rules run ~5–11 yd for 150 yd/10 mph) and is taken off the **plays-like** distance — the
+  longer club hangs longer. The dial's lateral offset is drawn ×3 and the flight is `x=ax·(t−t²)` (a
+  quadratic with its control at the aim line's midpoint) so the ball **launches along the dashed aim
+  line** and curves back — the first cut put the control at 1.05·ax, so it launched outside the line and
+  looked wrong. Inputs persist in `gf_wcalc`.
 - **"Currently playing" resume bar (`renderResumeBar`, `#resume-bar`).** A round already survives
   in its draft (`gf_round_draft_<slug>`) until you save it, but the only way back in was to find the
   course in the day list and tap Play — **impossible after last light**, when the app flips to the

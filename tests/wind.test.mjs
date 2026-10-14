@@ -200,4 +200,18 @@ export const tests = {
     eq(W.wcShotCalc(null, 10, 0), null, 'missing input → null, never a number');
     close(W.wcShotCalc(150, 0, 45).playsM, 150, 0.001, 'calm → plays its number');
   },
+  'shot calc: height — uphill adds metre-for-metre, downhill takes off less'(){
+    close(W.wcShotCalc(150, 0, 0, 0.007, 0.004, 0.005, 10).playsM, 160, 0.001, '+10 m uphill → +10');
+    close(W.wcShotCalc(150, 0, 0, 0.007, 0.004, 0.005, -10).playsM, 143, 0.001, '−10 m downhill → −7');
+    const both = W.wcShotCalc(150, 16.0934, 0, 0.007, 0.004, 0.005, 10);
+    close(both.windM, 10.5, 0.01); close(both.heightM, 10, 0.001);
+    close(both.playsM, 170.5, 0.01, 'wind and height add');
+  },
+
+  'shot calc: drift comes off the club you actually hit (plays-like), not the raw number'(){
+    const flat = W.wcShotCalc(150, 16.0934, 90);
+    const up = W.wcShotCalc(150, 16.0934, 90, 0.007, 0.004, 0.005, 20);
+    close(up.aimM, 0.05 * 170, 0.01, 'longer club up the hill hangs longer');
+    ok(up.aimM > flat.aimM);
+  },
 };
