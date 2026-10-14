@@ -4,7 +4,7 @@
 > every pass should rerank, adjust, merge, retire and add. Format + maintenance rules are in
 > **"How this doc works"** at the bottom.
 >
-> **Last reviewed:** 2026-08-31 · **Next ID:** `G-019`
+> **Last reviewed:** 2026-10-14 · **Next ID:** `G-020`
 
 Legend — tier: `P0` now · `P1` soon · `P2` someday · `P3` parked/needs-decision.
 Tags: `[UX]` `[QA]` `[golf]` (the three lenses) · `[needs-phone]` (feel only judgeable on-device) ·
@@ -177,6 +177,15 @@ existing list. Low urgency.
 ---
 
 ## Done ✓
+
+### G-019 · Manual wind → distance calculator with a drag dial `[UX]` `[golf]`
+**Status:** done — branch `ccr-a645d892-2ku06f`
+🧮 on the full-screen wind compass opens `openWindCalc`: enter distance + wind speed (m/yd,
+km/h/mph), drag the dial to where the wind blows FROM relative to the shot (target up), and it reads
+back **plays-like** (same conservative head/tail model as the rangefinder) and **aim left/right**
+(rule-of-thumb drift ≈0.5% of distance per mph of crosswind, `window._windCross` tunes it). "Use live
+wind + my aim" seeds it from the compass. Pure `wcShotCalc` in WIND-CORE, tested. Drift factor and
+dial feel still want an on-course sanity check.
 
 ### G-018 · View a finished round in full — shots, lies, clubs and the hole map `[UX]` `[golf]` `[QA]`
 **Status:** done — this PR (branch `claude/previous-rounds-history-guhxnp`)

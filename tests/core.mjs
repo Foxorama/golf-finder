@@ -63,7 +63,7 @@ export function loadOrreryCore(){
 // the wind-vs-aim maths behind the full-screen compass). Fully self-contained — no shims.
 const WIND_EXPORTS = ['WC_RUNGS','wcAng','wcAngDiff','wcCircMean','wcCircSpread','wcShear','wcSpeedAt',
                       'wcDirAt','wcProfile','wcBeaufort','wcPoint16','wcSwirl','wcAimCls','wcComponents','wcImpact',
-                      'wcPlaysPct','wcAirCarryPct'];
+                      'wcPlaysPct','wcAirCarryPct','wcShotCalc'];
 // Loads the resume-round slug resolution + draft scan. Not pure — it reads COURSE_PLAY and
 // localStorage — so both are injected as stubs, which is the point: the logic worth guarding is
 // what it does with awkward DATA (layout slugs, empty drafts, a course that has been removed).

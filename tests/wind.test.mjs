@@ -177,4 +177,27 @@ export const tests = {
     ok(Math.abs(W.wcAirCarryPct(35, 1013.25, 50)) < 5, 'stays a nudge, not a fantasy');
     eq(W.wcAirCarryPct(null, 1013, 50), null);
   },
+  'shot calc: into the face plays longer, behind plays shorter, no drift either way'(){
+    const into = W.wcShotCalc(150, 16.0934, 0);           // 10 mph straight into you
+    close(into.pct, 7, 0.01, '0.7%/mph head');
+    close(into.playsM, 160.5, 0.01);
+    close(into.aimM, 0, 0.001, 'no crosswind → aim at the flag');
+    eq(into.cls, 'hurt');
+    const behind = W.wcShotCalc(150, 16.0934, 180);
+    close(behind.pct, -4, 0.01, '0.4%/mph tail');
+    ok(behind.playsM < 150);
+    eq(behind.cls, 'help');
+  },
+
+  'shot calc: wind from the right drifts the ball left, so aim right'(){
+    const r = W.wcShotCalc(150, 16.0934, 90);             // 10 mph from the right
+    ok(r.cross < 0, 'blows right → left');
+    close(r.driftM, -7.5, 0.01, '0.5% of distance per mph');
+    close(r.aimM, 7.5, 0.01, 'aim right by the drift');
+    close(r.pct, 0, 0.01, 'a pure cross barely touches carry');
+    const l = W.wcShotCalc(150, 16.0934, 270);
+    close(l.aimM, -7.5, 0.01, 'from the left → aim left');
+    eq(W.wcShotCalc(null, 10, 0), null, 'missing input → null, never a number');
+    close(W.wcShotCalc(150, 0, 45).playsM, 150, 0.001, 'calm → plays its number');
+  },
 };
