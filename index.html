@@ -6636,20 +6636,28 @@ function wcAirCarryPct(tempC, pressHpa, rh){
   if(!(rho > 0)) return null;
   return Math.max(-12, Math.min(12, (1.225 / rho - 1) * 100 * 0.5));
 }
-// Manual wind → distance calculator (the 🧮 dial on the wind compass). relDeg is where the wind
-// blows FROM relative to the shot line, clockwise: 0 = from the target (into your face), 90 = from
-// the right, 180 = from behind. Carry uses the SAME conservative per-mph head/tail fractions as
-// plays-like. Drift is a rule of thumb, ~0.5% of distance per mph of crosswind (≈ 7–8 m on a
-// 150 m shot in a 10 mph cross) — a forecast-grade nudge, not a launch-monitor number.
+// Manual wind + height → distance calculator (the 🧮 dial on the wind compass). relDeg is where the
+// wind blows FROM relative to the shot line, clockwise: 0 = from the target (into your face), 90 =
+// from the right, 180 = from behind. Carry uses the SAME conservative per-mph head/tail fractions
+// as plays-like. elevM is the target's height above you (+ uphill, − downhill), in metres: the
+// common rule adds ~1 m per metre of climb and takes off only ~0.7 m per metre of drop (a falling
+// ball also flattens out — upF/downF tune it). Drift is a rule of thumb, ~0.5% of distance per mph
+// of crosswind (≈ 7–8 m on a 150 m shot in a 10 mph cross; published rules of thumb run ~5–11 yd)
+// and it is taken off the PLAYS-LIKE distance, not the raw one — you're hitting the longer club
+// into wind / uphill, so the ball is in the air longer and drifts further.
 // cross > 0 = blowing left → right, so the ball drifts right and you AIM LEFT (aimM < 0 = left).
-function wcShotCalc(distM, spdKmh, relDeg, headF = 0.007, tailF = 0.004, crossF = 0.005){
+function wcShotCalc(distM, spdKmh, relDeg, headF = 0.007, tailF = 0.004, crossF = 0.005, elevM = 0, upF = 1, downF = 0.7){
   if(distM == null || spdKmh == null || relDeg == null || !isFinite(distM) || !isFinite(spdKmh) || !isFinite(relDeg)) return null;
   const c = wcComponents(relDeg, 0, Math.max(0, spdKmh));
   const pct = wcPlaysPct(c.help, headF, tailF);
+  const windM = distM * pct / 100;
+  const e = isFinite(elevM) ? +elevM : 0;
+  const heightM = e >= 0 ? e * upF : e * downF;
+  const playsM = Math.max(1, distM + windM + heightM);
   const crossMph = c.cross / 1.60934;
-  const drift = Math.max(-0.25, Math.min(0.25, crossMph * crossF)) * distM;   // + = ball goes right
-  return { help: c.help, cross: c.cross, cls: c.cls, tag: c.tag, pct,
-           playsM: distM * (1 + pct / 100), deltaM: distM * pct / 100, driftM: drift, aimM: -drift };
+  const drift = Math.max(-0.25, Math.min(0.25, crossMph * crossF)) * playsM;   // + = ball goes right
+  return { help: c.help, cross: c.cross, cls: c.cls, tag: c.tag, pct, windM, heightM,
+           playsM, deltaM: playsM - distM, driftM: drift, aimM: -drift };
 }
 /* WIND-CORE-END */
 
@@ -7427,12 +7435,14 @@ function _wkLoad(){
   let o = {};
   try { o = JSON.parse(localStorage.getItem('gf_wcalc') || '{}') || {}; } catch(e){ o = {}; }
   return { dist: isFinite(o.dist) && o.dist > 0 ? +o.dist : 150, spd: isFinite(o.spd) && o.spd >= 0 ? +o.spd : 15,
-           rel: isFinite(o.rel) ? wcAng(+o.rel) : 0, wu: o.wu === 'mph' ? 'mph' : 'kmh' };
+           rel: isFinite(o.rel) ? wcAng(+o.rel) : 0, elev: isFinite(o.elev) ? +o.elev : 0, wu: o.wu === 'mph' ? 'mph' : 'kmh' };
 }
-function _wkSave(){ try { localStorage.setItem('gf_wcalc', JSON.stringify({ dist: _wk.dist, spd: _wk.spd, rel: _wk.rel, wu: _wk.wu })); } catch(e){} }
+function _wkSave(){ try { localStorage.setItem('gf_wcalc', JSON.stringify({ dist: _wk.dist, spd: _wk.spd, rel: _wk.rel, elev: _wk.elev, wu: _wk.wu })); } catch(e){} }
 const _wkDU = () => _bagUnit();                                   // m | yd, shared with My Bag / Play
 const _wkD = m => _wkDU() === 'yd' ? m * 1.09361 : m;             // metres → display
 const _wkW = k => _wk.wu === 'mph' ? k / 1.60934 : k;             // km/h → display
+const _wkHU = () => _wkDU() === 'yd' ? 'ft' : 'm';                 // height unit follows distance
+const _wkH = m => _wkDU() === 'yd' ? m * 3.28084 : m;              // metres → display height
 function _wkLiveWind(){
   const v = _wc && _wc.view;
   if(!v || v.v10 == null || v.d10 == null) return null;
@@ -7446,7 +7456,7 @@ function openWindCalc(){
   if(!w){
     w = document.createElement('div'); w.id = 'wcalc-panel'; w.setAttribute('aria-hidden', 'true');
     w.innerHTML =
-      '<div class="wk-top"><div class="wk-title">🧮 Wind calculator</div>' +
+      '<div class="wk-top"><div class="wk-title">🧮 Wind &amp; height</div>' +
         '<button class="wk-btn" onclick="closeWindCalc()" aria-label="Close">✕</button></div>' +
       '<div class="wk-wrap">' +
         '<svg class="wk-dial" id="wk-dial" viewBox="-130 -130 260 260" role="slider" aria-label="Wind direction relative to your shot" tabindex="0"></svg>' +
@@ -7464,10 +7474,17 @@ function openWindCalc(){
           '<button class="wk-step" onclick="_wkStep(\'spd\',1)" aria-label="More wind">+</button>' +
           '<button class="wk-u" id="wk-wu" onclick="_wkToggleWU()"></button></div>' +
           '<input class="wk-range" id="wk-spdr" type="range" min="0" max="60" step="1" oninput="_wkInput(\'spd\',this.value)"></div>' +
+        '<div class="wk-row"><div class="wk-rh"><span class="l">Height <small id="wk-elevtag" style="text-transform:none;letter-spacing:0;color:var(--tx3)"></small></span>' +
+          '<button class="wk-step" onclick="_wkStep(\'elev\',-1)" aria-label="Lower target">−</button>' +
+          '<input class="wk-num" id="wk-elev" type="number" inputmode="decimal" min="-150" max="150" oninput="_wkInput(\'elev\',this.value)">' +
+          '<button class="wk-step" onclick="_wkStep(\'elev\',1)" aria-label="Higher target">+</button>' +
+          '<span class="wk-u" id="wk-hu" style="display:flex;align-items:center;justify-content:center"></span></div>' +
+          '<input class="wk-range" id="wk-elevr" type="range" min="-40" max="40" step="1" oninput="_wkInput(\'elev\',this.value)"></div>' +
         '<button class="wk-live" id="wk-live" onclick="_wkUseLive()">⟳ Use live wind + my aim</button>' +
         '<div class="wk-note">Carry uses the same conservative model as plays-like (≈0.7%/mph into, 0.4%/mph behind). ' +
-          'Drift is a rule of thumb, ≈0.5% of the distance per mph of crosswind (~7–8 m on 150 m in a 10 mph cross) — ' +
-          'real drift depends on ball flight and spin. Dial lateral offset is exaggerated ×3 so it’s visible.</div>' +
+          'Height: ≈ +1 per metre/yard of climb, −0.7 per metre/yard of drop. ' +
+          'Drift is a rule of thumb, ≈0.5% of the plays-like distance per mph of crosswind (~7–8 m on 150 m in a 10 mph cross; ' +
+          'published rules of thumb run ~5–11 yd) — a high ball drifts more, a punch less. Dial lateral offset is exaggerated ×3 so it’s visible.</div>' +
       '</div>';
     document.body.appendChild(w);
     _wkDialInit(document.getElementById('wk-dial'));
@@ -7485,7 +7502,12 @@ function closeWindCalc(){
 function _wkSyncInputs(){
   const du = _wkDU(), dv = Math.round(_wkD(_wk.dist)), wv = Math.round(_wkW(_wk.spd));
   const set = (id, v) => { const el = document.getElementById(id); if(el && document.activeElement !== el) el.value = v; };
-  set('wk-dist', dv); set('wk-distr', dv); set('wk-spd', wv); set('wk-spdr', wv);
+  const ev = Math.round(_wkH(_wk.elev));
+  set('wk-dist', dv); set('wk-distr', dv); set('wk-spd', wv); set('wk-spdr', wv); set('wk-elev', ev);
+  const er = document.getElementById('wk-elevr');
+  if(er){ const lim = _wkHU() === 'ft' ? 130 : 40; er.min = -lim; er.max = lim; if(document.activeElement !== er) er.value = ev; }
+  document.getElementById('wk-hu').textContent = _wkHU();
+  document.getElementById('wk-elevtag').textContent = ev > 0 ? '· uphill' : ev < 0 ? '· downhill' : '· flat';
   document.getElementById('wk-du').textContent = du;
   document.getElementById('wk-wu').textContent = _wk.wu === 'mph' ? 'mph' : 'km/h';
   document.getElementById('wk-live').style.display = _wkLiveWind() ? '' : 'none';
@@ -7493,15 +7515,16 @@ function _wkSyncInputs(){
 function _wkInput(k, val){
   const n = parseFloat(val); if(!isFinite(n)) return;
   if(k === 'dist') _wk.dist = Math.max(1, Math.min(400, _wkDU() === 'yd' ? n / 1.09361 : n));
+  else if(k === 'elev') _wk.elev = Math.max(-150, Math.min(150, _wkHU() === 'ft' ? n / 3.28084 : n));
   else _wk.spd = Math.max(0, Math.min(120, _wk.wu === 'mph' ? n * 1.60934 : n));
   _wkSave(); _wkSyncInputs(); _wkRender();
 }
 function _wkStep(k, d){
-  const cur = k === 'dist' ? Math.round(_wkD(_wk.dist)) : Math.round(_wkW(_wk.spd));
+  const cur = k === 'dist' ? Math.round(_wkD(_wk.dist)) : k === 'elev' ? Math.round(_wkH(_wk.elev)) : Math.round(_wkW(_wk.spd));
   _wkInput(k, cur + d);
 }
-function _wkToggleDU(){ localStorage.setItem('gf_units', _wkDU() === 'yd' ? 'm' : 'yd'); _wkSyncInputs(); _wkRender(); }
-function _wkToggleWU(){ _wk.wu = _wk.wu === 'mph' ? 'kmh' : 'mph'; _wkSave(); _wkSyncInputs(); _wkRender(); }
+function _wkToggleDU(){ try { document.activeElement.blur(); } catch(e){} localStorage.setItem('gf_units', _wkDU() === 'yd' ? 'm' : 'yd'); _wkSyncInputs(); _wkRender(); }
+function _wkToggleWU(){ try { document.activeElement.blur(); } catch(e){} _wk.wu = _wk.wu === 'mph' ? 'kmh' : 'mph'; _wkSave(); _wkSyncInputs(); _wkRender(); }
 function _wkUseLive(){
   const l = _wkLiveWind(); if(!l) return;
   _wk.spd = Math.round(l.spd * 10) / 10; _wk.rel = Math.round(l.rel / 5) * 5 % 360;
@@ -7529,13 +7552,16 @@ function _wkRender(){
   const r = wcShotCalc(_wk.dist, _wk.spd,  _wk.rel,
     typeof window._playWindHead === 'number' ? window._playWindHead : 0.007,
     typeof window._playWindTail === 'number' ? window._playWindTail : 0.004,
-    typeof window._windCross === 'number' ? window._windCross : 0.005);
+    typeof window._windCross === 'number' ? window._windCross : 0.005, _wk.elev || 0);
   const svg = document.getElementById('wk-dial'), out = document.getElementById('wk-out');
   if(!svg || !out || !r) return;
   const calm = _wk.spd < 0.5, col = calm ? '#b7d2e8' : _WK_COL[r.cls], du = _wkDU(), wu = _wk.wu === 'mph' ? 'mph' : 'km/h';
   const rad = _wk.rel * Math.PI / 180, R = 112, hx = Math.sin(rad) * R, hy = -Math.cos(rad) * R;
-  // ball flight: tee at the bottom, flag at the top; aim point offset (×3) the opposite way to drift
-  const L = 134, ax = Math.max(-70, Math.min(70, r.aimM / _wk.dist * L * 3));
+  // ball flight: tee at the bottom, flag at the top; aim point offset (×3) the opposite way to drift.
+  // The flight leaves ALONG the dashed aim line and the wind bends it back to the flag: x(t)=ax·(t−t²),
+  // i.e. a quadratic with its control point at the aim line's midpoint (ax/2, 5) — tangent to the line
+  // at launch. (The first cut put the control at 1.05·ax, so the ball launched OUTSIDE the aim line.)
+  const L = 134, ax = Math.max(-70, Math.min(70, r.aimM / r.playsM * L * 3));
   let ticks = '';
   for(let a = 0; a < 360; a += 15){
     const t = a * Math.PI / 180, big = a % 90 === 0, r1 = big ? 100 : 104;
@@ -7548,7 +7574,7 @@ function _wkRender(){
     `<circle r="118" fill="rgba(10,14,30,.85)" stroke="${col}" stroke-opacity=".35" stroke-width="2"/>` + ticks +
     // target + ball + aim line + curved flight that the wind brings back to the flag
     `<line x1="0" y1="72" x2="${ax.toFixed(1)}" y2="-62" stroke="#fff" stroke-opacity=".35" stroke-dasharray="4 4"/>` +
-    `<path d="M0 72 Q${(ax * 1.05).toFixed(1)} -20 0 -62" fill="none" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>` +
+    `<path d="M0 72 Q${(ax / 2).toFixed(1)} 5 0 -62" fill="none" stroke="${col}" stroke-width="2.5" stroke-linecap="round"/>` +
     `<line x1="0" y1="-62" x2="0" y2="-84" stroke="#fff" stroke-width="1.6"/><path d="M0 -84 L13 -79 L0 -74Z" fill="#ff4d4d"/>` +
     `<circle cx="0" cy="-62" r="3" fill="#000" stroke="#fff" stroke-width="1"/>` +
     `<circle cx="0" cy="72" r="5" fill="#fff"/>` +
@@ -7563,13 +7589,16 @@ function _wkRender(){
     `<text x="-90" y="3" text-anchor="middle" font-size="9" fill="#ffc233" opacity=".75" font-family="monospace">L</text>` +
     `<text x="90" y="3" text-anchor="middle" font-size="9" fill="#ffc233" opacity=".75" font-family="monospace">R</text>`;
   const plays = Math.round(_wkD(r.playsM)), dlt = Math.round(_wkD(r.deltaM)), aim = Math.round(_wkD(Math.abs(r.aimM)));
+  const wm = calm ? 0 : Math.round(_wkD(r.windM)), hm = Math.round(_wkD(r.heightM));
   const clk = Math.round(_wk.rel / 30) % 12 || 12;
   let club = '';
   try { const sc = typeof suggestClub === 'function' ? suggestClub(r.playsM, 'reach', true) : null;
         if(sc) club = `≈ ${sc.club} (${Math.round(_wkD(sc.avg))} ${du})`; } catch(e){}
   out.innerHTML =
     `<div class="wk-card"><div class="l">Plays like</div><div class="v" style="color:${col}">${plays}<small style="font-size:13px"> ${du}</small></div>` +
-      `<div class="s">${calm || !dlt ? 'as the number' : (dlt > 0 ? '+' : '−') + Math.abs(dlt) + ' ' + du + ' (' + (r.pct >= 0 ? '+' : '') + r.pct.toFixed(0) + '%)'}${club ? '<br>' + club : ''}</div></div>` +
+      `<div class="s">${!dlt ? 'as the number' : (dlt > 0 ? '+' : '−') + Math.abs(dlt) + ' ' + du}` +
+        `${[wm ? 'wind ' + (wm > 0 ? '+' : '−') + Math.abs(wm) : '', hm ? 'height ' + (hm > 0 ? '+' : '−') + Math.abs(hm) : ''].filter(Boolean).map(x => '<br>' + x).join('')}` +
+        `${club ? '<br>' + club : ''}</div></div>` +
     `<div class="wk-card"><div class="l">Aim</div><div class="v" style="color:${aim ? '#ffc233' : '#16e0a3'}">${aim ? aim + '<small style="font-size:13px"> ' + du + '</small> ' + (r.aimM > 0 ? 'R' : 'L') : 'at flag'}</div>` +
       `<div class="s">${aim ? (r.aimM > 0 ? 'right' : 'left') + ' of target · ball drifts ' + (r.aimM > 0 ? 'left' : 'right') : 'no meaningful crosswind'}</div></div>` +
     `<div class="wk-comp">from ${String(_wk.rel).padStart(3, '0')}° (${clk} o’clock) · ${calm ? 'calm' : `${r.help >= 0 ? 'helping' : 'into'} ${Math.abs(_wkW(r.help)).toFixed(0)} · cross ${Math.abs(_wkW(r.cross)).toFixed(0)} ${wu}`}</div>`;
